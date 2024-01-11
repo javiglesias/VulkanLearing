@@ -7,14 +7,41 @@
 
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
 #include <vector>
+#include <array>
 #include <cstring>
 #include <fstream>
 #include <string>
 
+struct Vertex {
+	glm::vec2 mPos;
+	glm::vec3 mColor;
+	VkVertexInputBindingDescription getBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription {};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof (Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		return bindingDescription;
+	}
+	std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		return attributeDescriptions;
+	}
+};
+
 const int FRAMES_IN_FLIGHT = 2;
 
+const Vertex mTriangleVertices[3] =
+{
+	{glm::vec2(0.0, -0.5), glm::vec3(1.f, 0.f, 0.f)},
+    {glm::vec2(0.5, 0.5), glm::vec3(0.f, 1.f, 0.f)},
+    {glm::vec2(-0.5, 0.5), glm::vec3(0.f, 0.f, 1.f)}
+};
+
 bool mNeedToRecreateSwapchain = false;
+unsigned int mGPUSelected = 0;
 unsigned int mGraphicsQueueFamilyIndex = 0;
 unsigned int mCurrentLocalFrame = 0;
 unsigned int mSwapchainImagesCount;
@@ -514,6 +541,7 @@ void CreateSyncObjects(unsigned int _frameIdx)
 
 void RecreateSwapChain()
 {
+	printf("\n\tRe-create Swapchain\n");
 	// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(mWindow, &width, &height);
@@ -615,6 +643,7 @@ int main()
 		mInstanceExtensions.push_back(ext.extensionName);
 	}
 	mInstanceExtensions.push_back("VK_EXT_debug_utils");
+
 	//mInstanceExtensions.push_back("VK_KHR_swapchain");
 	
 	VkInstanceCreateInfo mInstanceCreateInfo = {};
@@ -657,15 +686,22 @@ int main()
 	}
 	std::vector<VkPhysicalDevice> mPhysicalDevices(deviceCount);
 	vkEnumeratePhysicalDevices(mInstance, &deviceCount, mPhysicalDevices.data());
-	VkPhysicalDeviceProperties deviceProp;
-	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceProperties(mPhysicalDevices[0], &deviceProp);
-	vkGetPhysicalDeviceFeatures(mPhysicalDevices[0], &deviceFeatures);
+	VkPhysicalDeviceProperties deviceProp[deviceCount];
+	VkPhysicalDeviceFeatures deviceFeatures[deviceCount];
+	mGPUSelected = 0;
+	for(int it = 0; it < deviceCount; it++)
+	{
+		vkGetPhysicalDeviceProperties(mPhysicalDevices[it], &deviceProp[it]);
+		if(strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName,"AMD"))
+			mGPUSelected = it;
+	printf("\nGPU %d: %s\n", it, deviceProp[mGPUSelected].deviceName);
+	vkGetPhysicalDeviceFeatures(mPhysicalDevices[it], &deviceFeatures[it]);
+	}
 	/// Comprobamos que tengamos la extension VK_KHR_swapchain soportada en el device GPU
 	unsigned int deviceExtensionCount;
-	vkEnumerateDeviceExtensionProperties(mPhysicalDevices[0], nullptr, &deviceExtensionCount, nullptr);
+	vkEnumerateDeviceExtensionProperties(mPhysicalDevices[mGPUSelected], nullptr, &deviceExtensionCount, nullptr);
 	std::vector<VkExtensionProperties> deviceAvailableExtensions(deviceExtensionCount);
-	vkEnumerateDeviceExtensionProperties(mPhysicalDevices[0], nullptr, &deviceExtensionCount, deviceAvailableExtensions.data());
+	vkEnumerateDeviceExtensionProperties(mPhysicalDevices[mGPUSelected], nullptr, &deviceExtensionCount, deviceAvailableExtensions.data());
 	for (const auto& ext : deviceAvailableExtensions)
 	{
 		// VK_KHR_buffer_device_address and VK_EXT_buffer_device_address not at the same time
@@ -675,9 +711,9 @@ int main()
 	}
 	/// Buscamos las familias de Colas.
 	unsigned int queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[0], &queueFamilyCount, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[mGPUSelected], &queueFamilyCount, nullptr);
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[0], &queueFamilyCount, queueFamilies.data());
+	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[mGPUSelected], &queueFamilyCount, queueFamilies.data());
 	// VK_QUEUE_GRAPHICS_BIT
 	for (const auto& queueFamily : queueFamilies)
 	{
@@ -699,7 +735,7 @@ int main()
 		});
 
 	// Create logical device associated to physical device
-	CreateLogicalDevice(&mPhysicalDevices[0], &deviceFeatures);
+	CreateLogicalDevice(&mPhysicalDevices[mGPUSelected], &deviceFeatures[mGPUSelected]);
 	vkGetDeviceQueue(mLogicDevice, mGraphicsQueueFamilyIndex, 0, &mGraphicsQueue);
 
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
@@ -709,23 +745,23 @@ int main()
 
 	// Present support on the Physical Device
 	VkBool32 presentSupport = false;
-	vkGetPhysicalDeviceSurfaceSupportKHR(mPhysicalDevices[0], mGraphicsQueueFamilyIndex, mSurface, &presentSupport);
+	vkGetPhysicalDeviceSurfaceSupportKHR(mPhysicalDevices[mGPUSelected], mGraphicsQueueFamilyIndex, mSurface, &presentSupport);
 	if (!presentSupport)
-		printf("CANNOT PRESENT ON THIS DEVICE: %s\n", deviceProp.deviceName);
+		printf("CANNOT PRESENT ON THIS DEVICE: %s\n", deviceProp[mGPUSelected].deviceName);
 	vkGetDeviceQueue(mLogicDevice, mGraphicsQueueFamilyIndex, 0, &mPresentQueue);
 
 	/* Ahora tenemos que ver que nuestro device soporta la swapchain
 	 * y sus capacidades.
 	*/
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mPhysicalDevices[0], mSurface, &mCapabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mPhysicalDevices[mGPUSelected], mSurface, &mCapabilities);
 	unsigned int surfaceFormatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevices[0], mSurface, &surfaceFormatCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevices[mGPUSelected], mSurface, &surfaceFormatCount, nullptr);
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevices[0], mSurface, &surfaceFormatCount, surfaceFormats.data());
+	vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevices[mGPUSelected], mSurface, &surfaceFormatCount, surfaceFormats.data());
 	unsigned int presentModesCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevices[0], mSurface, &presentModesCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevices[mGPUSelected], mSurface, &presentModesCount, nullptr);
 	std::vector<VkPresentModeKHR> presentModes(presentModesCount);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevices[0], mSurface, &presentModesCount, presentModes.data());
+	vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevices[mGPUSelected], mSurface, &presentModesCount, presentModes.data());
 	/// Ahora elegimos el formato que cumpla nuestras necesidades.
 	unsigned int formatChoosen = 0;
 	for(const auto& format : surfaceFormats)
@@ -765,8 +801,8 @@ int main()
 	/// Vamos a crear los shader module para cargar el bytecode de los shaders
 	VkShaderModule mVertShaderModule;
 	VkShaderModule mFragShaderModule;
-	CreateShaderModule("resources\\Shaders\\vert.spv", &mVertShaderModule);
-	CreateShaderModule("resources\\Shaders\\frag.spv", &mFragShaderModule);
+	CreateShaderModule("resources/Shaders/vert.spv", &mVertShaderModule);
+	CreateShaderModule("resources/Shaders/frag.spv", &mFragShaderModule);
 
 	// Create Pipeline Layout
 	VkPipelineShaderStageCreateInfo mShaderStages[2] = {};
