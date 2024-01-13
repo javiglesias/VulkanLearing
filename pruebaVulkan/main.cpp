@@ -17,7 +17,7 @@
 struct Vertex {
 	glm::vec2 mPos;
 	glm::vec3 mColor;
-	VkVertexInputBindingDescription getBindingDescription()
+	static VkVertexInputBindingDescription getBindingDescription()
 	{
 		VkVertexInputBindingDescription bindingDescription {};
 		bindingDescription.binding = 0;
@@ -25,19 +25,30 @@ struct Vertex {
 		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		return bindingDescription;
 	}
-	std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+
 		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		attributeDescriptions[0].binding  = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Vertex, mPos);
+
+		attributeDescriptions[1].binding  = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(Vertex, mColor);
+
 		return attributeDescriptions;
 	}
 };
 
 const int FRAMES_IN_FLIGHT = 2;
 
-const Vertex mTriangleVertices[3] =
+const std::vector<Vertex> mTriangleVertices =
 {
-	{glm::vec2(0.0, -0.5), glm::vec3(1.f, 0.f, 0.f)},
-    {glm::vec2(0.5, 0.5), glm::vec3(0.f, 1.f, 0.f)},
-    {glm::vec2(-0.5, 0.5), glm::vec3(0.f, 0.f, 1.f)}
+	{glm::vec2(0.f, -0.5f), glm::vec3(1.f, 0.f, 0.f)},
+    {glm::vec2(0.5f, 0.5f), glm::vec3(1.f, 1.f, 0.f)},
+    {glm::vec2(-0.5f, 0.5f), glm::vec3(0.f, 1.f, 1.f)}
 };
 
 bool mNeedToRecreateSwapchain = false;
@@ -53,6 +64,9 @@ std::vector< VkDeviceQueueCreateInfo> mQueueCreateInfos;
 std::vector<VkImage> mSwapChainImages;
 std::vector<VkImageView> mSwapChainImagesViews;
 std::vector<VkFramebuffer> mSwapChainFramebuffers;
+std::vector<VkPhysicalDevice> mPhysicalDevices;
+auto mBindingDescription = Vertex::getBindingDescription();
+auto mAttributeDescriptions = Vertex::getAttributeDescriptions();
 GLFWwindow* mWindow;
 VkResult mPresentResult;
 VkInstance mInstance;
@@ -73,6 +87,10 @@ VkRenderPass mRenderPass;
 VkPipeline mGraphicsPipeline;
 VkCommandPool mCommandPool;
 VkQueue mPresentQueue;
+VkBufferCreateInfo mBufferInfo {};
+VkBuffer mVertexBuffer;
+VkDeviceMemory mVertexBufferMemory;
+VkPhysicalDeviceMemoryProperties mMemProps;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
 VkCommandBuffer mCommandBuffer[FRAMES_IN_FLIGHT];
@@ -176,6 +194,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 			break;
 			// Mesaje de comportamiento que puede ser un BUG en la app
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			break;
 			// Mensaje sobre un comportamiento invalido y que puede provocar CRASH
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 			fprintf(stderr, "\tVLayer message: %s\n", pCallbackData->pMessage);
@@ -199,6 +218,8 @@ void Cleanup()
 {
 	vkDeviceWaitIdle(mLogicDevice);
 	printf("Cleanup\n");
+	vkDestroyBuffer(mLogicDevice, mVertexBuffer, nullptr);
+	vkFreeMemory(mLogicDevice, mVertexBufferMemory, nullptr);
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[0], nullptr);
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[1], nullptr);
 	vkDestroySemaphore(mLogicDevice, mRenderFinish[0], nullptr);
@@ -352,10 +373,10 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	mDynamicState->pDynamicStates = mDynamicStates.data();
 	/// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
 	mVertexInputInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	mVertexInputInfo->vertexBindingDescriptionCount = 0;
-	mVertexInputInfo->pVertexBindingDescriptions = nullptr;
-	mVertexInputInfo->vertexAttributeDescriptionCount = 0;
-	mVertexInputInfo->pVertexAttributeDescriptions = nullptr;
+	mVertexInputInfo->vertexBindingDescriptionCount = 1;
+	mVertexInputInfo->vertexAttributeDescriptionCount = static_cast<unsigned int>(mAttributeDescriptions.size());
+	mVertexInputInfo->pVertexBindingDescriptions = &mBindingDescription;
+	mVertexInputInfo->pVertexAttributeDescriptions = mAttributeDescriptions.data();
 	/// Definimos la geometria que vamos a pintar
 	mInputAssembly->sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	mInputAssembly->topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -475,6 +496,9 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	vkCmdBindPipeline(mCommandBuffer[_frameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 	vkCmdSetViewport(mCommandBuffer[_frameIdx], 0, 1, &mViewport);
 	vkCmdSetScissor(mCommandBuffer[_frameIdx], 0, 1, &mScissor);
+	VkBuffer vertesBuffers[] = {mVertexBuffer};
+	VkDeviceSize offsets[] = {0};
+	vkCmdBindVertexBuffers(mCommandBuffer[_frameIdx], 0, 1, vertesBuffers, offsets);
 	vkCmdDraw(mCommandBuffer[_frameIdx], 3, 1, 0, 0);
 	vkCmdEndRenderPass(mCommandBuffer[_frameIdx]);
 	if (vkEndCommandBuffer(mCommandBuffer[_frameIdx]) != VK_SUCCESS)
@@ -601,7 +625,10 @@ void DrawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 	if (vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlight[mCurrentLocalFrame]) != VK_SUCCESS)
-		exit(-999);
+	{
+		fprintf(stderr, "Error on the Submit");
+		exit(-1);
+	}
 	// Presentacion: devolver el frame al swapchain para que salga por pantalla
 	VkPresentInfoKHR presentInfo {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -618,6 +645,19 @@ void DrawFrame()
 void FramebufferResizeCallback(GLFWwindow* _window, int _newW, int _newH)
 {
 	mNeedToRecreateSwapchain = true;
+}
+
+unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties)
+{
+	for(unsigned int i = 0; i < mMemProps.memoryTypeCount; i++)
+	{
+		if (typeFilter & (1 << i) && (mMemProps.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			printf("\nmemType %d\n", i);
+			return i;
+		}
+	}
+	exit(-9);
 }
 
 int main()
@@ -684,7 +724,7 @@ int main()
 		fprintf(stderr, "Not GPU FOUND\n");
 		exit(-1);
 	}
-	std::vector<VkPhysicalDevice> mPhysicalDevices(deviceCount);
+	mPhysicalDevices.resize(deviceCount);
 	vkEnumeratePhysicalDevices(mInstance, &deviceCount, mPhysicalDevices.data());
 	VkPhysicalDeviceProperties deviceProp[deviceCount];
 	VkPhysicalDeviceFeatures deviceFeatures[deviceCount];
@@ -693,8 +733,10 @@ int main()
 	{
 		vkGetPhysicalDeviceProperties(mPhysicalDevices[it], &deviceProp[it]);
 		if(strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName,"AMD"))
+		{
 			mGPUSelected = it;
-	printf("\nGPU %d: %s\n", it, deviceProp[mGPUSelected].deviceName);
+			printf("\nGPU %d: %s\n", it, deviceProp[mGPUSelected].deviceName);
+		}
 	vkGetPhysicalDeviceFeatures(mPhysicalDevices[it], &deviceFeatures[it]);
 	}
 	/// Comprobamos que tengamos la extension VK_KHR_swapchain soportada en el device GPU
@@ -825,8 +867,7 @@ int main()
 	mColorBlending.attachmentCount = 1;
 	mColorBlending.pAttachments = &mColorBlendAttachment;
 
-	CreatePipelineLayout(&mVertShaderModule, &mFragShaderModule, mShaderStages, &mInputAssembly,
-		&mDynamicState, &mVertexInputInfo,&mViewportState, &mRasterizer, 
+	CreatePipelineLayout(&mVertShaderModule, &mFragShaderModule, mShaderStages, &mInputAssembly, &mDynamicState, &mVertexInputInfo,&mViewportState, &mRasterizer,
 		&mMultisampling, &mDepthStencil, &mColorBlending);
 	CreateRenderPass(&mSwapChainCreateInfo);
 
@@ -858,6 +899,33 @@ int main()
 
 	CreateFramebuffers();
 	CreateCommandBuffer();
+	/*
+		Create Vertex Buffers
+	 */
+	mBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	mBufferInfo.size = sizeof(mTriangleVertices[0]) * mTriangleVertices.size();
+	mBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	mBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	if(vkCreateBuffer(mLogicDevice, &mBufferInfo, nullptr, &mVertexBuffer) != VK_SUCCESS)
+		exit(-6);
+	VkMemoryRequirements memRequ;
+	vkGetBufferMemoryRequirements(mLogicDevice, mVertexBuffer, &memRequ);
+
+	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevices[mGPUSelected], &mMemProps);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequ.size;
+	allocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	if(vkAllocateMemory(mLogicDevice, &allocInfo, nullptr, &mVertexBufferMemory) != VK_SUCCESS)
+		exit(-8);
+
+	vkBindBufferMemory(mLogicDevice, mVertexBuffer, mVertexBufferMemory, 0);
+
+	void* data;
+	vkMapMemory(mLogicDevice, mVertexBufferMemory, 0, mBufferInfo.size, 0, &data);
+	memcpy(data, mTriangleVertices.data(), (size_t) mBufferInfo.size);
+	vkUnmapMemory(mLogicDevice, mVertexBufferMemory);
 
 	RecordCommandBuffer(mCommandBuffer[0], 0, 0);
 	RecordCommandBuffer(mCommandBuffer[1], 0, 1);
@@ -869,11 +937,11 @@ int main()
 		glfwPollEvents();
 		// Draw a Frame!
 		DrawFrame();
-		if ((mPresentResult == VK_ERROR_OUT_OF_DATE_KHR || mPresentResult == VK_SUBOPTIMAL_KHR)
-			&& mNeedToRecreateSwapchain)
-			RecreateSwapChain();
-		else if (mPresentResult != VK_SUCCESS && mPresentResult != VK_SUBOPTIMAL_KHR)
-			exit(-69);
+// 		if ((mPresentResult == VK_ERROR_OUT_OF_DATE_KHR || mPresentResult == VK_SUBOPTIMAL_KHR)
+// 			&& mNeedToRecreateSwapchain)
+// 			RecreateSwapChain();
+// 		else if (mPresentResult != VK_SUCCESS && mPresentResult != VK_SUBOPTIMAL_KHR)
+// 			exit(-69);
 		mCurrentLocalFrame = (mCurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
 	}
 	Cleanup();
