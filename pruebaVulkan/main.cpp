@@ -54,6 +54,7 @@ const std::vector<Vertex> mTriangleVertices =
 bool mNeedToRecreateSwapchain = false;
 unsigned int mGPUSelected = 0;
 unsigned int mGraphicsQueueFamilyIndex = 0;
+unsigned int mTransferQueueFamilyIndex = 0;
 unsigned int mCurrentLocalFrame = 0;
 unsigned int mSwapchainImagesCount;
 const std::vector<const char*> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -82,6 +83,7 @@ VkSurfaceCapabilitiesKHR mCapabilities;
 VkSwapchainCreateInfoKHR mSwapChainCreateInfo{};
 VkSwapchainKHR mSwapChain;
 VkQueue mGraphicsQueue;
+VkQueue mTransferQueue;
 VkPipelineLayout mPipelineLayout;
 VkRenderPass mRenderPass;
 VkPipeline mGraphicsPipeline;
@@ -89,7 +91,9 @@ VkCommandPool mCommandPool;
 VkQueue mPresentQueue;
 VkBufferCreateInfo mBufferInfo {};
 VkBuffer mVertexBuffer;
+VkBuffer mStagingBuffer;
 VkDeviceMemory mVertexBufferMemory;
+VkDeviceMemory mStaggingBufferMemory;
 VkPhysicalDeviceMemoryProperties mMemProps;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
@@ -216,10 +220,14 @@ void CleanSwapChain()
 
 void Cleanup()
 {
-	vkDeviceWaitIdle(mLogicDevice);
 	printf("Cleanup\n");
+	vkDeviceWaitIdle(mLogicDevice);
+
 	vkDestroyBuffer(mLogicDevice, mVertexBuffer, nullptr);
+	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
 	vkFreeMemory(mLogicDevice, mVertexBufferMemory, nullptr);
+	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
+
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[0], nullptr);
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[1], nullptr);
 	vkDestroySemaphore(mLogicDevice, mRenderFinish[0], nullptr);
@@ -480,6 +488,9 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	mBeginInfo.pInheritanceInfo = nullptr;
 	if (vkBeginCommandBuffer(mCommandBuffer[_frameIdx], &mBeginInfo) != VK_SUCCESS)
 		exit(-13);
+	VkBufferCopy copyRegion {};
+	copyRegion.size = sizeof(mTriangleVertices[0]) * mTriangleVertices.size();
+	vkCmdCopyBuffer(_commandBuffer, mStagingBuffer, mVertexBuffer, 1, &copyRegion);
 	// Render pass
 	VkRenderPassBeginInfo mRenderPassInfo{};
 	mRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -660,6 +671,38 @@ unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags prope
 	exit(-9);
 }
 
+void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode, VkMemoryPropertyFlags _memFlags,VkBuffer& buffer_,
+				  VkDeviceMemory& bufferMem_)
+{
+	/*
+		Create Vertex Buffers
+	 */
+	unsigned int queueFamilyIndices[] = {mGraphicsQueueFamilyIndex, mTransferQueueFamilyIndex};
+	mBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	mBufferInfo.size = _size;
+	mBufferInfo.usage = _usage;
+	mBufferInfo.sharingMode = _shareMode;
+	mBufferInfo.pQueueFamilyIndices = queueFamilyIndices;
+	mBufferInfo.queueFamilyIndexCount = 2;
+
+	if(vkCreateBuffer(mLogicDevice, &mBufferInfo, nullptr, &buffer_) != VK_SUCCESS)
+		exit(-6);
+	VkMemoryRequirements memRequ;
+	vkGetBufferMemoryRequirements(mLogicDevice, buffer_, &memRequ);
+
+	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevices[mGPUSelected], &mMemProps);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequ.size;
+	allocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, _memFlags);
+	if(vkAllocateMemory(mLogicDevice, &allocInfo, nullptr, &bufferMem_) != VK_SUCCESS)
+		exit(-8);
+
+	vkBindBufferMemory(mLogicDevice, buffer_, bufferMem_, 0);
+
+}
+
 int main()
 {
 	uint32_t mExtensionCount = 0;
@@ -757,13 +800,24 @@ int main()
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[mGPUSelected], &queueFamilyCount, queueFamilies.data());
 	// VK_QUEUE_GRAPHICS_BIT
+	bool searchingGraphics = true, searchingTransfer = true;
 	for (const auto& queueFamily : queueFamilies)
 	{
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
-			break;
+			printf("\nGraphics Family: %d\n", mTransferQueueFamilyIndex);
+			searchingGraphics = false;
 		}
-		++mGraphicsQueueFamilyIndex;
+		if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+		{
+			printf("\nTransfer Family: %d\n", mTransferQueueFamilyIndex);
+			searchingTransfer = false;
+		}
+
+		mGraphicsQueueFamilyIndex += searchingGraphics;
+		mTransferQueueFamilyIndex += searchingTransfer;
+		if(!searchingGraphics && !searchingTransfer)
+			break;
 	}
 
 	/// Ahora vamos a crear el device logico para interactuar con él
@@ -776,9 +830,17 @@ int main()
 		.pQueuePriorities = &queuePriority
 		});
 
+	mQueueCreateInfos.push_back({
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.queueFamilyIndex = mTransferQueueFamilyIndex,
+		.queueCount = 1,
+		.pQueuePriorities = &queuePriority
+		});
+
 	// Create logical device associated to physical device
 	CreateLogicalDevice(&mPhysicalDevices[mGPUSelected], &deviceFeatures[mGPUSelected]);
 	vkGetDeviceQueue(mLogicDevice, mGraphicsQueueFamilyIndex, 0, &mGraphicsQueue);
+	vkGetDeviceQueue(mLogicDevice, mTransferQueueFamilyIndex, 0, &mTransferQueue);
 
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
@@ -899,33 +961,23 @@ int main()
 
 	CreateFramebuffers();
 	CreateCommandBuffer();
-	/*
-		Create Vertex Buffers
-	 */
-	mBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	mBufferInfo.size = sizeof(mTriangleVertices[0]) * mTriangleVertices.size();
-	mBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	mBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	if(vkCreateBuffer(mLogicDevice, &mBufferInfo, nullptr, &mVertexBuffer) != VK_SUCCESS)
-		exit(-6);
-	VkMemoryRequirements memRequ;
-	vkGetBufferMemoryRequirements(mLogicDevice, mVertexBuffer, &memRequ);
 
-	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevices[mGPUSelected], &mMemProps);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequ.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	if(vkAllocateMemory(mLogicDevice, &allocInfo, nullptr, &mVertexBufferMemory) != VK_SUCCESS)
-		exit(-8);
-
-	vkBindBufferMemory(mLogicDevice, mVertexBuffer, mVertexBufferMemory, 0);
+	CreateBuffer(sizeof(mTriangleVertices[0]) * mTriangleVertices.size(),
+				 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			  mStagingBuffer, mStaggingBufferMemory);
 
 	void* data;
-	vkMapMemory(mLogicDevice, mVertexBufferMemory, 0, mBufferInfo.size, 0, &data);
+	vkMapMemory(mLogicDevice, mStaggingBufferMemory, 0, mBufferInfo.size, 0, &data);
 	memcpy(data, mTriangleVertices.data(), (size_t) mBufferInfo.size);
-	vkUnmapMemory(mLogicDevice, mVertexBufferMemory);
+	vkUnmapMemory(mLogicDevice, mStaggingBufferMemory);
+
+	CreateBuffer(sizeof(mTriangleVertices[0]) * mTriangleVertices.size(),
+				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+				 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_CONCURRENT,
+				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			  mVertexBuffer, mVertexBufferMemory);
 
 	RecordCommandBuffer(mCommandBuffer[0], 0, 0);
 	RecordCommandBuffer(mCommandBuffer[1], 0, 1);
