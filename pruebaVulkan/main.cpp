@@ -46,9 +46,15 @@ const int FRAMES_IN_FLIGHT = 2;
 
 const std::vector<Vertex> mTriangleVertices =
 {
-	{glm::vec2(0.f, -0.5f), glm::vec3(1.f, 0.f, 0.f)},
-    {glm::vec2(0.5f, 0.5f), glm::vec3(1.f, 1.f, 0.f)},
-    {glm::vec2(-0.5f, 0.5f), glm::vec3(0.f, 1.f, 1.f)}
+	{{-0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+};
+
+const std::vector<uint16_t> mIndices =
+{
+	0, 1, 2, 2, 3, 0
 };
 
 bool mNeedToRecreateSwapchain = false;
@@ -89,11 +95,12 @@ VkRenderPass mRenderPass;
 VkPipeline mGraphicsPipeline;
 VkCommandPool mCommandPool;
 VkQueue mPresentQueue;
-VkBufferCreateInfo mBufferInfo {};
 VkBuffer mVertexBuffer;
 VkBuffer mStagingBuffer;
+VkBuffer mIndexBuffer;
 VkDeviceMemory mVertexBufferMemory;
 VkDeviceMemory mStaggingBufferMemory;
+VkDeviceMemory mIndexBufferMemory;
 VkPhysicalDeviceMemoryProperties mMemProps;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
@@ -222,11 +229,10 @@ void Cleanup()
 {
 	printf("Cleanup\n");
 	vkDeviceWaitIdle(mLogicDevice);
-
+	vkDestroyBuffer(mLogicDevice, mIndexBuffer, nullptr);
+	vkFreeMemory(mLogicDevice, mIndexBufferMemory, nullptr);
 	vkDestroyBuffer(mLogicDevice, mVertexBuffer, nullptr);
-	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
 	vkFreeMemory(mLogicDevice, mVertexBufferMemory, nullptr);
-	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
 
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[0], nullptr);
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[1], nullptr);
@@ -479,6 +485,39 @@ void CreateRenderPass(VkSwapchainCreateInfoKHR* mSwapChainCreateInfo)
 		exit(-8);
 }
 
+
+void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size)
+{
+	VkCommandBufferAllocateInfo mAllocInfo{};
+	mAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	mAllocInfo.commandPool = mCommandPool;
+	mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	mAllocInfo.commandBufferCount = 1;
+	VkCommandBuffer commandBuffer;
+	if (vkAllocateCommandBuffers(mLogicDevice, &mAllocInfo, &commandBuffer) != VK_SUCCESS)
+		exit(-12);
+	VkCommandBufferBeginInfo mBeginInfo{};
+	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	mBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	if (vkBeginCommandBuffer(commandBuffer, &mBeginInfo) != VK_SUCCESS)
+		exit(-13);
+	// Copiar desde el Stagging buffer al buffer
+	VkBufferCopy copyRegion {};
+	copyRegion.size = _size;
+	vkCmdCopyBuffer(commandBuffer, _src, dst_, 1, &copyRegion);
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+		exit(-17);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(mGraphicsQueue);
+	vkFreeCommandBuffers(mLogicDevice, mCommandPool, 1, &commandBuffer);
+}
+
 void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx)
 {
 	// Record command buffer
@@ -486,11 +525,8 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	mBeginInfo.flags = 0;
 	mBeginInfo.pInheritanceInfo = nullptr;
-	if (vkBeginCommandBuffer(mCommandBuffer[_frameIdx], &mBeginInfo) != VK_SUCCESS)
+	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
 		exit(-13);
-	VkBufferCopy copyRegion {};
-	copyRegion.size = sizeof(mTriangleVertices[0]) * mTriangleVertices.size();
-	vkCmdCopyBuffer(_commandBuffer, mStagingBuffer, mVertexBuffer, 1, &copyRegion);
 	// Render pass
 	VkRenderPassBeginInfo mRenderPassInfo{};
 	mRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -502,17 +538,21 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	VkClearValue mClearColor = { {{0.f, 0.f, 0.f, 1.f}} };
 	mRenderPassInfo.clearValueCount = 1;
 	mRenderPassInfo.pClearValues = &mClearColor;
-	vkCmdBeginRenderPass(mCommandBuffer[_frameIdx], &mRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_commandBuffer, &mRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	// Drawing Commands
-	vkCmdBindPipeline(mCommandBuffer[_frameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
-	vkCmdSetViewport(mCommandBuffer[_frameIdx], 0, 1, &mViewport);
-	vkCmdSetScissor(mCommandBuffer[_frameIdx], 0, 1, &mScissor);
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
+	vkCmdSetViewport(_commandBuffer, 0, 1, &mViewport);
+	vkCmdSetScissor(_commandBuffer, 0, 1, &mScissor);
 	VkBuffer vertesBuffers[] = {mVertexBuffer};
+	VkBuffer indexBuffer = mIndexBuffer;
 	VkDeviceSize offsets[] = {0};
-	vkCmdBindVertexBuffers(mCommandBuffer[_frameIdx], 0, 1, vertesBuffers, offsets);
-	vkCmdDraw(mCommandBuffer[_frameIdx], 3, 1, 0, 0);
-	vkCmdEndRenderPass(mCommandBuffer[_frameIdx]);
-	if (vkEndCommandBuffer(mCommandBuffer[_frameIdx]) != VK_SUCCESS)
+	vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
+	vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	//vkCmdDraw(_commandBuffer, 3, 1, 0, 0);
+	vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mIndices.size()),
+					 1, 0, 0, 0);
+	vkCmdEndRenderPass(_commandBuffer);
+	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
 }
 
@@ -678,6 +718,7 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 		Create Vertex Buffers
 	 */
 	unsigned int queueFamilyIndices[] = {mGraphicsQueueFamilyIndex, mTransferQueueFamilyIndex};
+	VkBufferCreateInfo mBufferInfo {};
 	mBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	mBufferInfo.size = _size;
 	mBufferInfo.usage = _usage;
@@ -962,22 +1003,48 @@ int main()
 	CreateFramebuffers();
 	CreateCommandBuffer();
 
-	CreateBuffer(sizeof(mTriangleVertices[0]) * mTriangleVertices.size(),
+	// Vertex buffer
+	VkDeviceSize bufferSize = sizeof(mTriangleVertices[0]) * mTriangleVertices.size();
+	// Stagin buffer
+	CreateBuffer(bufferSize,
 				 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			  mStagingBuffer, mStaggingBufferMemory);
-
 	void* data;
-	vkMapMemory(mLogicDevice, mStaggingBufferMemory, 0, mBufferInfo.size, 0, &data);
-	memcpy(data, mTriangleVertices.data(), (size_t) mBufferInfo.size);
+	vkMapMemory(mLogicDevice, mStaggingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, mTriangleVertices.data(), (size_t) bufferSize);
 	vkUnmapMemory(mLogicDevice, mStaggingBufferMemory);
-
-	CreateBuffer(sizeof(mTriangleVertices[0]) * mTriangleVertices.size(),
+	CreateBuffer(bufferSize,
 				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-				 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_CONCURRENT,
+				 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				 VK_SHARING_MODE_CONCURRENT,
 				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			  mVertexBuffer, mVertexBufferMemory);
+	CopyBuffer(mVertexBuffer, mStagingBuffer, bufferSize);
+	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
+	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
+
+	// Index buffer
+	bufferSize = sizeof(mIndices[0]) * mIndices.size();
+	// Stagin buffer
+	CreateBuffer(bufferSize,
+				 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			  mStagingBuffer, mStaggingBufferMemory);
+	vkMapMemory(mLogicDevice, mStaggingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, mIndices.data(), (size_t) bufferSize);
+	vkUnmapMemory(mLogicDevice, mStaggingBufferMemory);
+	CreateBuffer(bufferSize,
+				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+				 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				 VK_SHARING_MODE_CONCURRENT,
+				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			  mIndexBuffer, mIndexBufferMemory);
+	CopyBuffer(mIndexBuffer, mStagingBuffer, bufferSize);
+	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
+	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
 
 	RecordCommandBuffer(mCommandBuffer[0], 0, 0);
 	RecordCommandBuffer(mCommandBuffer[1], 0, 1);
