@@ -4,16 +4,24 @@
 #include <GLFW/glfw3.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
 #include <vector>
 #include <array>
 #include <cstring>
 #include <fstream>
 #include <string>
 
+struct UniformBufferObject
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
+};
 struct Vertex {
 	glm::vec2 mPos;
 	glm::vec3 mColor;
@@ -90,6 +98,7 @@ VkSwapchainCreateInfoKHR mSwapChainCreateInfo{};
 VkSwapchainKHR mSwapChain;
 VkQueue mGraphicsQueue;
 VkQueue mTransferQueue;
+VkDescriptorSetLayout mDescSetLayout;
 VkPipelineLayout mPipelineLayout;
 VkRenderPass mRenderPass;
 VkPipeline mGraphicsPipeline;
@@ -98,6 +107,9 @@ VkQueue mPresentQueue;
 VkBuffer mVertexBuffer;
 VkBuffer mStagingBuffer;
 VkBuffer mIndexBuffer;
+std::vector<VkBuffer> mUniformBuffers;
+std::vector<VkDeviceMemory> mUniformBuffersMemory;
+std::vector<void*> mUniformsBuffersMapped;
 VkDeviceMemory mVertexBufferMemory;
 VkDeviceMemory mStaggingBufferMemory;
 VkDeviceMemory mIndexBufferMemory;
@@ -233,7 +245,11 @@ void Cleanup()
 	vkFreeMemory(mLogicDevice, mIndexBufferMemory, nullptr);
 	vkDestroyBuffer(mLogicDevice, mVertexBuffer, nullptr);
 	vkFreeMemory(mLogicDevice, mVertexBufferMemory, nullptr);
-
+	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+	{
+		vkDestroyBuffer(mLogicDevice, mUniformBuffers[i], nullptr);
+		vkFreeMemory(mLogicDevice, mUniformBuffersMemory[i], nullptr);
+	}
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[0], nullptr);
 	vkDestroySemaphore(mLogicDevice, mImageAvailable[1], nullptr);
 	vkDestroySemaphore(mLogicDevice, mRenderFinish[0], nullptr);
@@ -242,6 +258,7 @@ void Cleanup()
 	vkDestroyFence(mLogicDevice, mInFlight[1], nullptr);
 	vkDestroyCommandPool(mLogicDevice, mCommandPool, nullptr);
 	vkDestroyPipeline(mLogicDevice, mGraphicsPipeline, nullptr);
+	vkDestroyDescriptorSetLayout(mLogicDevice, mDescSetLayout, nullptr);
 	vkDestroyPipelineLayout(mLogicDevice, mPipelineLayout, nullptr);
 	vkDestroyRenderPass(mLogicDevice, mRenderPass, nullptr);
 	CleanSwapChain();
@@ -431,11 +448,24 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	mMultisampling->alphaToOneEnable = VK_FALSE;
 	/// Depth and stencil
 	mDepthStencil->sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	// Descriptors Set
+	VkDescriptorSetLayoutBinding uboLayoutBinding {};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+	VkDescriptorSetLayoutCreateInfo layoutInfo {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+	if(vkCreateDescriptorSetLayout(mLogicDevice, &layoutInfo, nullptr, &mDescSetLayout) != VK_SUCCESS)
+		exit(-99);
 	/// Pipeline Layout
 	VkPipelineLayoutCreateInfo mPipelineLayoutCreateInfo{};
 	mPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	mPipelineLayoutCreateInfo.setLayoutCount = 0;
-	mPipelineLayoutCreateInfo.pSetLayouts = nullptr;
+	mPipelineLayoutCreateInfo.pSetLayouts = &mDescSetLayout;
 	mPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	mPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	if (vkCreatePipelineLayout(mLogicDevice, &mPipelineLayoutCreateInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
@@ -663,6 +693,19 @@ void DrawFrame()
 	vkAcquireNextImageKHR(mLogicDevice, mSwapChain, UINT64_MAX, mImageAvailable[mCurrentLocalFrame],
 		VK_NULL_HANDLE, &imageIdx);
 	RecordCommandBuffer(mCommandBuffer[mCurrentLocalFrame], imageIdx, mCurrentLocalFrame);
+	// Update Uniform buffers
+	static auto startTime = std::chrono::high_resolution_clock::now();
+	auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	UniformBufferObject ubo {};
+	ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f),
+							glm::vec3(0.f, 0.f, 1.f));
+	ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f),
+						   glm::vec3(0.f, 0.f, 1.f));
+	ubo.projection = glm::perspective(glm::radians(45.f), mCurrentExtent.width / (float) mCurrentExtent.height, 0.1f, 10.f);
+	ubo.projection[1][1] *= -1; // para invertir el eje Y
+	memcpy(mUniformsBuffersMapped[mCurrentLocalFrame], &ubo, sizeof(ubo));
+
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	VkSemaphore waitSemaphores[] = {mImageAvailable[mCurrentLocalFrame] };
@@ -1045,7 +1088,21 @@ int main()
 	CopyBuffer(mIndexBuffer, mStagingBuffer, bufferSize);
 	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
 	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
-
+	// Uniform buffers
+	mUniformBuffers.resize(FRAMES_IN_FLIGHT);
+	mUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+	mUniformsBuffersMapped.resize(FRAMES_IN_FLIGHT);
+	bufferSize = sizeof(UniformBufferObject);
+	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+	{
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				 VK_SHARING_MODE_CONCURRENT,
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			  mUniformBuffers[i], mUniformBuffersMemory[i]);
+		vkMapMemory(mLogicDevice, mUniformBuffersMemory[i], 0,
+					bufferSize, 0, &mUniformsBuffersMapped[i]);
+	}
 	RecordCommandBuffer(mCommandBuffer[0], 0, 0);
 	RecordCommandBuffer(mCommandBuffer[1], 0, 1);
 	CreateSyncObjects(0);
