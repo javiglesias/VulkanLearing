@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -18,9 +19,9 @@
 
 struct UniformBufferObject
 {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 projection;
 };
 struct Vertex {
 	glm::vec2 mPos;
@@ -99,6 +100,8 @@ VkSwapchainKHR mSwapChain;
 VkQueue mGraphicsQueue;
 VkQueue mTransferQueue;
 VkDescriptorSetLayout mDescSetLayout;
+VkDescriptorPool mDescriptorPool;
+std::vector<VkDescriptorSet> mDescriptorSets;
 VkPipelineLayout mPipelineLayout;
 VkRenderPass mRenderPass;
 VkPipeline mGraphicsPipeline;
@@ -195,14 +198,14 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		// Un evento no relacionado con la spec y el rendimiento
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
 		// Evento que incumple la especificacion y puede provocar errores.
-		//fprintf(stderr, "\tMessage Type: VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT\n");
+// 		fprintf(stderr, "\tMessage GENERAL: %s\n", pCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
 		// Uso no optimo de la API de Vulkan.
-		//fprintf(stderr, "\tMessage Type: VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT\n");
+// 		fprintf(stderr, "\tMessage VALIDATION: %s\n", pCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
-		fprintf(stderr, "\tMessage Type: VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT\n");
+		fprintf(stderr, "\tMessage PERFORMANCE: %s\n", pCallbackData->pMessage);
 		break;
 	default:
 		break;
@@ -217,10 +220,11 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 			break;
 			// Mesaje de comportamiento que puede ser un BUG en la app
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+// 			fprintf(stderr, "\n\tVLayer message: %s\n", pCallbackData->pMessage);
 			break;
 			// Mensaje sobre un comportamiento invalido y que puede provocar CRASH
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-			fprintf(stderr, "\tVLayer message: %s\n", pCallbackData->pMessage);
+			fprintf(stderr, "\n\tVLayer message: %s\n", pCallbackData->pMessage);
 			break;
 		default:
 			break;
@@ -258,6 +262,7 @@ void Cleanup()
 	vkDestroyFence(mLogicDevice, mInFlight[1], nullptr);
 	vkDestroyCommandPool(mLogicDevice, mCommandPool, nullptr);
 	vkDestroyPipeline(mLogicDevice, mGraphicsPipeline, nullptr);
+	vkDestroyDescriptorPool(mLogicDevice, mDescriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(mLogicDevice, mDescSetLayout, nullptr);
 	vkDestroyPipelineLayout(mLogicDevice, mPipelineLayout, nullptr);
 	vkDestroyRenderPass(mLogicDevice, mRenderPass, nullptr);
@@ -436,7 +441,7 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	mRasterizer->polygonMode = VK_POLYGON_MODE_FILL;
 	mRasterizer->lineWidth = 1.f;
 	mRasterizer->cullMode = VK_CULL_MODE_BACK_BIT;
-	mRasterizer->frontFace = VK_FRONT_FACE_CLOCKWISE;
+	mRasterizer->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	mRasterizer->depthBiasEnable = VK_FALSE;
 	/// Multisampling para evitar los bordes de sierra (anti-aliasing).
 	mMultisampling->sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -455,16 +460,18 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	uboLayoutBinding.descriptorCount = 1;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	uboLayoutBinding.pImmutableSamplers = nullptr;
+
 	VkDescriptorSetLayoutCreateInfo layoutInfo {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings = &uboLayoutBinding;
 	if(vkCreateDescriptorSetLayout(mLogicDevice, &layoutInfo, nullptr, &mDescSetLayout) != VK_SUCCESS)
 		exit(-99);
+
 	/// Pipeline Layout
 	VkPipelineLayoutCreateInfo mPipelineLayoutCreateInfo{};
 	mPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	mPipelineLayoutCreateInfo.setLayoutCount = 0;
+	mPipelineLayoutCreateInfo.setLayoutCount = 1;
 	mPipelineLayoutCreateInfo.pSetLayouts = &mDescSetLayout;
 	mPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	mPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
@@ -576,8 +583,12 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	VkBuffer vertesBuffers[] = {mVertexBuffer};
 	VkBuffer indexBuffer = mIndexBuffer;
 	VkDeviceSize offsets[] = {0};
+
 	vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 	vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mCurrentLocalFrame], 0, nullptr);
+
 	//vkCmdDraw(_commandBuffer, 3, 1, 0, 0);
 	vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mIndices.size()),
 					 1, 0, 0, 0);
@@ -692,7 +703,7 @@ void DrawFrame()
 	uint32_t imageIdx;
 	vkAcquireNextImageKHR(mLogicDevice, mSwapChain, UINT64_MAX, mImageAvailable[mCurrentLocalFrame],
 		VK_NULL_HANDLE, &imageIdx);
-	RecordCommandBuffer(mCommandBuffer[mCurrentLocalFrame], imageIdx, mCurrentLocalFrame);
+
 	// Update Uniform buffers
 	static auto startTime = std::chrono::high_resolution_clock::now();
 	auto currentTime = std::chrono::high_resolution_clock::now();
@@ -700,11 +711,17 @@ void DrawFrame()
 	UniformBufferObject ubo {};
 	ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f),
 							glm::vec3(0.f, 0.f, 1.f));
+// 	glm::translate(ubo.model, glm::vec3(0.f, time * glm::radians(10.f), 0.f));
+
 	ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f),
 						   glm::vec3(0.f, 0.f, 1.f));
+
 	ubo.projection = glm::perspective(glm::radians(45.f), mCurrentExtent.width / (float) mCurrentExtent.height, 0.1f, 10.f);
+
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	memcpy(mUniformsBuffersMapped[mCurrentLocalFrame], &ubo, sizeof(ubo));
+
+	RecordCommandBuffer(mCommandBuffer[mCurrentLocalFrame], imageIdx, mCurrentLocalFrame);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1103,6 +1120,49 @@ int main()
 		vkMapMemory(mLogicDevice, mUniformBuffersMemory[i], 0,
 					bufferSize, 0, &mUniformsBuffersMapped[i]);
 	}
+	// Descriptor Pool
+	VkDescriptorPoolSize descPoolSize {};
+	descPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descPoolSize.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+	VkDescriptorPoolCreateInfo descPoolInfo {};
+	descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descPoolInfo.poolSizeCount = 1;
+	descPoolInfo.pPoolSizes = &descPoolSize;
+	descPoolInfo.maxSets = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+	if(vkCreateDescriptorPool(mLogicDevice, &descPoolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
+		exit(-66);
+	// Descriptor Sets
+	std::vector<VkDescriptorSetLayout> mDescLayouts(FRAMES_IN_FLIGHT, mDescSetLayout);
+	VkDescriptorSetAllocateInfo descAllocInfo {};
+	descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descAllocInfo.descriptorPool = mDescriptorPool;
+	descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+	descAllocInfo.pSetLayouts = mDescLayouts.data();
+
+	mDescriptorSets.resize(FRAMES_IN_FLIGHT);
+	if(vkAllocateDescriptorSets(mLogicDevice, &descAllocInfo, mDescriptorSets.data()) != VK_SUCCESS)
+		exit(-67);
+
+	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorBufferInfo bufferInfo {};
+		bufferInfo.buffer = mUniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
+
+		VkWriteDescriptorSet descriptorWrite {};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = mDescriptorSets[i];
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+		descriptorWrite.pImageInfo = nullptr;
+		descriptorWrite.pTexelBufferView = nullptr;
+		vkUpdateDescriptorSets(mLogicDevice, 1, &descriptorWrite, 0, nullptr);
+	}
+
 	RecordCommandBuffer(mCommandBuffer[0], 0, 0);
 	RecordCommandBuffer(mCommandBuffer[1], 0, 1);
 	CreateSyncObjects(0);
