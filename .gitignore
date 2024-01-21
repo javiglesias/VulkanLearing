@@ -373,6 +373,8 @@ MigrationBackup/
 
 #Dependendies
 dependencies/
+#resources
+resources/[Mm]odels
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/

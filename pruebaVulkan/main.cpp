@@ -9,6 +9,8 @@
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define CGLTF_IMPLEMENTATION
+#include "../dependencies/cgltf/cgltf.h"
 
 #include <chrono>
 #include <vector>
@@ -23,14 +25,14 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
 };
-struct Vertex {
-	glm::vec2 mPos;
-	glm::vec3 mColor;
+struct Vertex2D {
+	glm::vec2 m_Pos;
+	glm::vec3 m_Color;
 	static VkVertexInputBindingDescription getBindingDescription()
 	{
 		VkVertexInputBindingDescription bindingDescription {};
 		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof (Vertex);
+		bindingDescription.stride = sizeof (Vertex2D);
 		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		return bindingDescription;
 	}
@@ -40,12 +42,40 @@ struct Vertex {
 		attributeDescriptions[0].binding  = 0;
 		attributeDescriptions[0].location = 0;
 		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, mPos);
+		attributeDescriptions[0].offset = offsetof(Vertex2D, m_Pos);
 
 		attributeDescriptions[1].binding  = 0;
 		attributeDescriptions[1].location = 1;
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, mColor);
+		attributeDescriptions[1].offset = offsetof(Vertex2D, m_Color);
+
+		return attributeDescriptions;
+	}
+};
+
+struct Vertex3D {
+	glm::vec3 m_Pos;
+	glm::vec3 m_Color;
+	static VkVertexInputBindingDescription getBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription {};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof (Vertex3D);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		return bindingDescription;
+	}
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		attributeDescriptions[0].binding  = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Vertex3D, m_Pos);
+
+		attributeDescriptions[1].binding  = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(Vertex3D, m_Color);
 
 		return attributeDescriptions;
 	}
@@ -53,76 +83,154 @@ struct Vertex {
 
 const int FRAMES_IN_FLIGHT = 2;
 
-const std::vector<Vertex> mTriangleVertices =
+const std::vector<Vertex2D> m_TriangleVertices =
 {
 	{{-0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
     {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
     {{0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
     {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 };
+std::vector<Vertex3D> m_ModelTriangles;
 
-const std::vector<uint16_t> mIndices =
+const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
+const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
+
+std::vector<uint16_t> m_Indices =
 {
-	0, 1, 2, 2, 3, 0
+// 	0, 1, 2, 2, 3, 0
 };
 
-bool mNeedToRecreateSwapchain = false;
-unsigned int mGPUSelected = 0;
-unsigned int mGraphicsQueueFamilyIndex = 0;
-unsigned int mTransferQueueFamilyIndex = 0;
-unsigned int mCurrentLocalFrame = 0;
-unsigned int mSwapchainImagesCount;
-const std::vector<const char*> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
-std::vector<VkDynamicState> mDynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-std::vector<const char*> mDeviceExtensions;
-std::vector<const char*> mInstanceExtensions;
-std::vector< VkDeviceQueueCreateInfo> mQueueCreateInfos;
-std::vector<VkImage> mSwapChainImages;
-std::vector<VkImageView> mSwapChainImagesViews;
-std::vector<VkFramebuffer> mSwapChainFramebuffers;
-std::vector<VkPhysicalDevice> mPhysicalDevices;
-auto mBindingDescription = Vertex::getBindingDescription();
-auto mAttributeDescriptions = Vertex::getAttributeDescriptions();
+bool m_NeedToRecreateSwapchain = false;
+unsigned int m_GPUSelected = 0;
+unsigned int m_GraphicsQueueFamilyIndex = 0;
+unsigned int m_TransferQueueFamilyIndex = 0;
+unsigned int m_CurrentLocalFrame = 0;
+unsigned int m_SwapchainImagesCount;
+const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
+std::vector<VkDynamicState> m_DynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+std::vector<const char*> m_DeviceExtensions;
+std::vector<const char*> m_InstanceExtensions;
+std::vector< VkDeviceQueueCreateInfo> m_QueueCreateInfos;
+std::vector<VkImage> m_SwapChainImages;
+std::vector<VkImageView> m_SwapChainImagesViews;
+std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+std::vector<VkPhysicalDevice> m_PhysicalDevices;
+auto mBindingDescription = Vertex3D::getBindingDescription();
+auto mAttributeDescriptions = Vertex3D::getAttributeDescriptions();
 GLFWwindow* mWindow;
-VkResult mPresentResult;
-VkInstance mInstance;
-VkDebugUtilsMessengerEXT mDebugMessenger {};
+VkResult m_PresentResult;
+VkInstance m_Instance;
+VkDebugUtilsMessengerEXT m_DebugMessenger {};
 VkDevice mLogicDevice;
-VkSurfaceKHR mSurface;
-VkSurfaceFormatKHR mSurfaceFormat;
-VkExtent2D mCurrentExtent;
-VkViewport mViewport {};
-VkRect2D mScissor {};
-VkPresentModeKHR mPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-VkSurfaceCapabilitiesKHR mCapabilities;
-VkSwapchainCreateInfoKHR mSwapChainCreateInfo{};
-VkSwapchainKHR mSwapChain;
-VkQueue mGraphicsQueue;
-VkQueue mTransferQueue;
-VkDescriptorSetLayout mDescSetLayout;
-VkDescriptorPool mDescriptorPool;
-std::vector<VkDescriptorSet> mDescriptorSets;
-VkPipelineLayout mPipelineLayout;
-VkRenderPass mRenderPass;
-VkPipeline mGraphicsPipeline;
-VkCommandPool mCommandPool;
-VkQueue mPresentQueue;
-VkBuffer mVertexBuffer;
-VkBuffer mStagingBuffer;
-VkBuffer mIndexBuffer;
-std::vector<VkBuffer> mUniformBuffers;
-std::vector<VkDeviceMemory> mUniformBuffersMemory;
-std::vector<void*> mUniformsBuffersMapped;
-VkDeviceMemory mVertexBufferMemory;
-VkDeviceMemory mStaggingBufferMemory;
-VkDeviceMemory mIndexBufferMemory;
-VkPhysicalDeviceMemoryProperties mMemProps;
+VkSurfaceKHR m_Surface;
+VkSurfaceFormatKHR m_SurfaceFormat;
+VkExtent2D m_CurrentExtent;
+VkViewport m_Viewport {};
+VkRect2D m_Scissor {};
+VkPresentModeKHR m_PresentMode = VK_PRESENT_MODE_FIFO_KHR;
+VkSurfaceCapabilitiesKHR m_Capabilities;
+VkSwapchainCreateInfoKHR m_SwapChainCreateInfo{};
+VkSwapchainKHR m_SwapChain;
+VkQueue m_GraphicsQueue;
+VkQueue m_TransferQueue;
+VkDescriptorSetLayout m_DescSetLayout;
+VkDescriptorPool m_DescriptorPool;
+std::vector<VkDescriptorSet> m_DescriptorSets;
+VkPipelineLayout m_PipelineLayout;
+VkRenderPass m_RenderPass;
+VkPipeline m_GraphicsPipeline;
+VkCommandPool m_CommandPool;
+VkQueue m_PresentQueue;
+VkBuffer m_VertexBuffer;
+VkBuffer m_StagingBuffer;
+VkBuffer m_IndexBuffer;
+std::vector<VkBuffer> m_UniformBuffers;
+std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+std::vector<void*> m_Uniform_SBuffersMapped;
+VkDeviceMemory m_VertexBufferMemory;
+VkDeviceMemory m_StaggingBufferMemory;
+VkDeviceMemory m_IndexBufferMemory;
+VkPhysicalDeviceMemoryProperties m_Mem_Props;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
-VkCommandBuffer mCommandBuffer[FRAMES_IN_FLIGHT];
-VkSemaphore mImageAvailable[FRAMES_IN_FLIGHT];
-VkSemaphore mRenderFinish[FRAMES_IN_FLIGHT];
-VkFence		mInFlight[FRAMES_IN_FLIGHT];
+VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];
+VkSemaphore m_ImageAvailable[FRAMES_IN_FLIGHT];
+VkSemaphore m_RenderFinish[FRAMES_IN_FLIGHT];
+VkFence		m_InFlight[FRAMES_IN_FLIGHT];
+
+cgltf_data* LoadModel(const char* _filepath, const char* _modelName)
+{
+	cgltf_options options {};
+	cgltf_data* modelData = NULL;
+	char filename[128];
+	sprintf(filename, "%s%s",_filepath, _modelName);
+	cgltf_parse_file(&options, filename, &modelData);
+	printf("\nLoading %s", _modelName);
+	cgltf_load_buffers(&options, modelData, _filepath);
+	if(cgltf_validate(modelData) == cgltf_result_success)
+	{
+		printf("\nModel file validated");
+// 		for (cgltf_size s = 0; s < modelData->scenes_count; ++s)
+// 		{
+			for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
+			{
+				auto mesh = modelData->nodes[n].mesh;
+				if(mesh)
+				{
+					for(cgltf_size p = 0; p < mesh->primitives_count; p++)
+					{
+ 						auto idxAccessor = mesh->primitives[p].indices;
+ 						auto nIdxComponents = cgltf_num_components(idxAccessor->type);
+ 						auto elementSize = cgltf_calc_size(idxAccessor->type, idxAccessor->component_type);
+ 						unsigned int indices[elementSize];
+ 						cgltf_size componentSize;
+ 						if(cgltf_accessor_read_uint(idxAccessor, p, indices, elementSize))
+ 						{
+ 							for(size_t i = 0; i < elementSize; i++)
+ 							{
+ 								printf("\nINDEX %zd: %i", i, indices[i]);
+ 								m_Indices.push_back(indices[i]);
+ 							}
+ 						}
+ 						else
+ 						{
+ 							fprintf(stderr, "No se admiten modelos sin Indizar\n");
+ 							exit(-99);
+ 						}
+
+
+						for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
+						{
+							if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)
+							{
+								auto accessor = mesh->primitives[p].attributes[a].data;
+								auto index 	  = mesh->primitives[p].attributes[a].index;
+								auto nComponents = cgltf_num_components(accessor->type);
+								cgltf_size element_size = cgltf_calc_size(accessor->type, accessor->component_type);
+								float *position = (float*)malloc(element_size * sizeof(cgltf_float));
+								/*cgltf_accessor_unpack_floats(accessor, position,element_size)*/;
+								if(cgltf_accessor_unpack_floats(accessor, position,element_size))
+									for(size_t p = 0; p < 4; p++)
+									{
+										int idx = 3*p;
+										printf("\nVertex %zd: %f, %f, %f", p, position[idx], position[idx+1], position[idx+2]);
+										m_ModelTriangles.push_back({glm::vec3(position[idx], position[idx+1], position[idx+2]), {1.0f, 0.0f, 0.0f}});
+									}
+								else
+								{
+									printf("Error Reading Floats gltf");
+								}
+							}
+						}
+					}
+				}
+			}
+// 		}
+	}
+	else
+		exit(-88);
+	return modelData;
+}
 
 std::vector<char> LoadShader(const std::string& _filename)
 {
@@ -141,7 +249,7 @@ bool checkValidationLayerSupport()
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 	std::vector<VkLayerProperties> availableLayers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-	for (const char* layerName : mValidationLayers)
+	for (const char* layerName : m_ValidationLayers)
 	{
 		bool layerFound = false;
 		for (const auto& layerProperties : availableLayers)
@@ -156,9 +264,9 @@ bool checkValidationLayerSupport()
 	return false;
 }
 /// Busqueda de la Addr para la funcion cargada vkCreateDebugUtilsMessengerEXT
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, 
-	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, 
-	const VkAllocationCallbacks* pAllocator, 
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+	const VkAllocationCallbacks* pAllocator,
 	VkDebugUtilsMessengerEXT* pDebugMessenger)
 {
 	auto function = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,
@@ -174,8 +282,8 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	}
 }
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, 
-	VkDebugUtilsMessengerEXT debugMessenger, 
+void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+	VkDebugUtilsMessengerEXT debugMessenger,
 	const VkAllocationCallbacks* pAllocator)
 {
 	auto function = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,
@@ -186,7 +294,7 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 	}
 }
 
-/// Callback para la capa de validacion de Debug 
+/// Callback para la capa de validacion de Debug
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -234,44 +342,47 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 void CleanSwapChain()
 {
-	for (auto& framebuffer : mSwapChainFramebuffers)
+	for (auto& framebuffer : m_SwapChainFramebuffers)
 		vkDestroyFramebuffer(mLogicDevice, framebuffer, nullptr);
-	for (auto& imageView : mSwapChainImagesViews)
+	for (auto& imageView : m_SwapChainImagesViews)
 		vkDestroyImageView(mLogicDevice, imageView, nullptr);
-	vkDestroySwapchainKHR(mLogicDevice, mSwapChain, nullptr);
+	vkDestroySwapchainKHR(mLogicDevice, m_SwapChain, nullptr);
 }
 
 void Cleanup()
 {
 	printf("Cleanup\n");
 	vkDeviceWaitIdle(mLogicDevice);
-	vkDestroyBuffer(mLogicDevice, mIndexBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, mIndexBufferMemory, nullptr);
-	vkDestroyBuffer(mLogicDevice, mVertexBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, mVertexBufferMemory, nullptr);
+	if(m_Indices.size() > 0)
+	{
+		vkDestroyBuffer(mLogicDevice, m_IndexBuffer, nullptr);
+		vkFreeMemory(mLogicDevice, m_IndexBufferMemory, nullptr);
+	}
+	vkDestroyBuffer(mLogicDevice, m_VertexBuffer, nullptr);
+	vkFreeMemory(mLogicDevice, m_VertexBufferMemory, nullptr);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroyBuffer(mLogicDevice, mUniformBuffers[i], nullptr);
-		vkFreeMemory(mLogicDevice, mUniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer(mLogicDevice, m_UniformBuffers[i], nullptr);
+		vkFreeMemory(mLogicDevice, m_UniformBuffersMemory[i], nullptr);
 	}
-	vkDestroySemaphore(mLogicDevice, mImageAvailable[0], nullptr);
-	vkDestroySemaphore(mLogicDevice, mImageAvailable[1], nullptr);
-	vkDestroySemaphore(mLogicDevice, mRenderFinish[0], nullptr);
-	vkDestroySemaphore(mLogicDevice, mRenderFinish[1], nullptr);
-	vkDestroyFence(mLogicDevice, mInFlight[0], nullptr);
-	vkDestroyFence(mLogicDevice, mInFlight[1], nullptr);
-	vkDestroyCommandPool(mLogicDevice, mCommandPool, nullptr);
-	vkDestroyPipeline(mLogicDevice, mGraphicsPipeline, nullptr);
-	vkDestroyDescriptorPool(mLogicDevice, mDescriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(mLogicDevice, mDescSetLayout, nullptr);
-	vkDestroyPipelineLayout(mLogicDevice, mPipelineLayout, nullptr);
-	vkDestroyRenderPass(mLogicDevice, mRenderPass, nullptr);
+	vkDestroySemaphore(mLogicDevice, m_ImageAvailable[0], nullptr);
+	vkDestroySemaphore(mLogicDevice, m_ImageAvailable[1], nullptr);
+	vkDestroySemaphore(mLogicDevice, m_RenderFinish[0], nullptr);
+	vkDestroySemaphore(mLogicDevice, m_RenderFinish[1], nullptr);
+	vkDestroyFence(mLogicDevice, m_InFlight[0], nullptr);
+	vkDestroyFence(mLogicDevice, m_InFlight[1], nullptr);
+	vkDestroyCommandPool(mLogicDevice, m_CommandPool, nullptr);
+	vkDestroyPipeline(mLogicDevice, m_GraphicsPipeline, nullptr);
+	vkDestroyDescriptorPool(mLogicDevice, m_DescriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(mLogicDevice, m_DescSetLayout, nullptr);
+	vkDestroyPipelineLayout(mLogicDevice, m_PipelineLayout, nullptr);
+	vkDestroyRenderPass(mLogicDevice, m_RenderPass, nullptr);
 	CleanSwapChain();
-	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+	vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 	vkDestroyDevice(mLogicDevice, nullptr);
-	if (mDebugMessenger != nullptr)
-		DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
-	vkDestroyInstance(mInstance, nullptr);
+	if (m_DebugMessenger != nullptr)
+		DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
+	vkDestroyInstance(m_Instance, nullptr);
 	glfwDestroyWindow(mWindow);
 	glfwTerminate();
 }
@@ -292,24 +403,24 @@ void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appIn
 	_createInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	_createInfo->pApplicationInfo = _appInfo;
 	_createInfo->enabledExtensionCount = m_extensionCount;
-	_createInfo->ppEnabledExtensionNames = mInstanceExtensions.data();
-	_createInfo->enabledLayerCount = mValidationLayers.size();
-	_createInfo->ppEnabledLayerNames = mValidationLayers.data();
+	_createInfo->ppEnabledExtensionNames = m_InstanceExtensions.data();
+	_createInfo->enabledLayerCount = m_ValidationLayers.size();
+	_createInfo->ppEnabledLayerNames = m_ValidationLayers.data();
 }
 
-void CreateLogicalDevice(VkPhysicalDevice* _phisicaldevice, 
+void CreateLogicalDevice(VkPhysicalDevice* _phisicaldevice,
 	VkPhysicalDeviceFeatures* _deviceFeatures)
 {
-	VkDeviceCreateInfo mCreateInfo{};
-	mCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	mCreateInfo.pQueueCreateInfos = mQueueCreateInfos.data();
-	mCreateInfo.queueCreateInfoCount = mQueueCreateInfos.size();
-	mCreateInfo.pEnabledFeatures = _deviceFeatures;
-	mCreateInfo.enabledExtensionCount = mDeviceExtensions.size();
-	mCreateInfo.ppEnabledExtensionNames = mDeviceExtensions.data();
-	mCreateInfo.enabledLayerCount = 0;
+	VkDeviceCreateInfo m_CreateInfo{};
+	m_CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	m_CreateInfo.pQueueCreateInfos = m_QueueCreateInfos.data();
+	m_CreateInfo.queueCreateInfoCount = m_QueueCreateInfos.size();
+	m_CreateInfo.pEnabledFeatures = _deviceFeatures;
+	m_CreateInfo.enabledExtensionCount = m_DeviceExtensions.size();
+	m_CreateInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
+	m_CreateInfo.enabledLayerCount = 0;
 
-	if (vkCreateDevice(*_phisicaldevice, &mCreateInfo, nullptr, &mLogicDevice) !=
+	if (vkCreateDevice(*_phisicaldevice, &m_CreateInfo, nullptr, &mLogicDevice) !=
 		VK_SUCCESS)
 	{
 		printf("Failed to create Logical Device");
@@ -320,38 +431,38 @@ void CreateLogicalDevice(VkPhysicalDevice* _phisicaldevice,
 
 void CreateSwapChain()
 {
-	mSwapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	mSwapChainCreateInfo.surface = mSurface;
-	mSwapChainCreateInfo.minImageCount = mSwapchainImagesCount;
-	mSwapChainCreateInfo.imageFormat = mSurfaceFormat.format;
-	mSwapChainCreateInfo.imageColorSpace = mSurfaceFormat.colorSpace;
-	mSwapChainCreateInfo.imageExtent = mCurrentExtent;
-	mSwapChainCreateInfo.imageArrayLayers = 1;
-	//VK_IMAGE_USAGE_TRANSFER_DST_BIT 
-	mSwapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	mSwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	//_swapChainCreateInfo->pQueueFamilyIndices = mgr;
-	mSwapChainCreateInfo.preTransform = mCapabilities.currentTransform;
-	mSwapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	mSwapChainCreateInfo.presentMode = mPresentMode;
-	mSwapChainCreateInfo.clipped = VK_TRUE;
-	mSwapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
-	if (vkCreateSwapchainKHR(mLogicDevice, &mSwapChainCreateInfo, nullptr, &mSwapChain) != VK_SUCCESS)
+	m_SwapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	m_SwapChainCreateInfo.surface = m_Surface;
+	m_SwapChainCreateInfo.minImageCount = m_SwapchainImagesCount;
+	m_SwapChainCreateInfo.imageFormat = m_SurfaceFormat.format;
+	m_SwapChainCreateInfo.imageColorSpace = m_SurfaceFormat.colorSpace;
+	m_SwapChainCreateInfo.imageExtent = m_CurrentExtent;
+	m_SwapChainCreateInfo.imageArrayLayers = 1;
+	//VK_IMAGE_USAGE_TRANSFER_DST_BIT
+	m_SwapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	m_SwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	//_swapChainCreateInfo->pQueueFamilyIndices = m_Gr;
+	m_SwapChainCreateInfo.preTransform = m_Capabilities.currentTransform;
+	m_SwapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	m_SwapChainCreateInfo.presentMode = m_PresentMode;
+	m_SwapChainCreateInfo.clipped = VK_TRUE;
+	m_SwapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+	if (vkCreateSwapchainKHR(mLogicDevice, &m_SwapChainCreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
 		exit(-3);
 }
 
 void CreateImageViews()
 {
 	/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
-	mSwapChainImagesViews.resize(mSwapchainImagesCount);
+	m_SwapChainImagesViews.resize(m_SwapchainImagesCount);
 	int currentSwapchaingImageView = 0;
-	for (auto& image : mSwapChainImages)
+	for (auto& image : m_SwapChainImages)
 	{
 		VkImageViewCreateInfo imageViewCreateInfo{};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.image = image;
 		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = mSurfaceFormat.format;
+		imageViewCreateInfo.format = m_SurfaceFormat.format;
 		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -362,7 +473,7 @@ void CreateImageViews()
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 		imageViewCreateInfo.subresourceRange.layerCount = 1;
 		if (vkCreateImageView(mLogicDevice, &imageViewCreateInfo, nullptr,
-			&mSwapChainImagesViews[currentSwapchaingImageView]) != VK_SUCCESS)
+			&m_SwapChainImagesViews[currentSwapchaingImageView]) != VK_SUCCESS)
 			exit(-4);
 		++currentSwapchaingImageView;
 	}
@@ -382,77 +493,77 @@ void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule)
 		exit(-5);
 }
 
-void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fragShaderModule, 
-	VkPipelineShaderStageCreateInfo* _shaderStages,		VkPipelineInputAssemblyStateCreateInfo* mInputAssembly,
-	VkPipelineDynamicStateCreateInfo* mDynamicState,		VkPipelineVertexInputStateCreateInfo* mVertexInputInfo,
-	VkPipelineViewportStateCreateInfo* mViewportState,	
-	VkPipelineRasterizationStateCreateInfo* mRasterizer, VkPipelineMultisampleStateCreateInfo* mMultisampling, 
-	VkPipelineDepthStencilStateCreateInfo* mDepthStencil, VkPipelineColorBlendStateCreateInfo* mColorBlending)
+void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fragShaderModule,
+	VkPipelineShaderStageCreateInfo* _shaderStages,		VkPipelineInputAssemblyStateCreateInfo* m_InputAssembly,
+	VkPipelineDynamicStateCreateInfo* m_DynamicState,		VkPipelineVertexInputStateCreateInfo* m_VertexInputInfo,
+	VkPipelineViewportStateCreateInfo* m_ViewportState,
+	VkPipelineRasterizationStateCreateInfo* m_Rasterizer, VkPipelineMultisampleStateCreateInfo* m_Multisampling,
+	VkPipelineDepthStencilStateCreateInfo* m_DepthStencil, VkPipelineColorBlendStateCreateInfo* m_ColorBlending)
 {
 	/// Creacion de los shader stage de la Pipeline
-	VkPipelineShaderStageCreateInfo mVertShaderStageInfo{};
-	mVertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	mVertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	mVertShaderStageInfo.module = *_vertShaderModule;
-	mVertShaderStageInfo.pName = "main";
+	VkPipelineShaderStageCreateInfo m_VertShaderStageInfo{};
+	m_VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	m_VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	m_VertShaderStageInfo.module = *_vertShaderModule;
+	m_VertShaderStageInfo.pName = "main";
 	VkPipelineShaderStageCreateInfo mFragShaderStageInfo{};
 	mFragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	mFragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	mFragShaderStageInfo.module = *_fragShaderModule;
 	mFragShaderStageInfo.pName = "main";
 
-	_shaderStages[0] = mVertShaderStageInfo;
+	_shaderStages[0] = m_VertShaderStageInfo;
 	_shaderStages[1] = mFragShaderStageInfo;
 	/// Dynamic State (stados que permiten ser cambiados sin re-crear toda la pipeline)
-	mDynamicState->sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	mDynamicState->dynamicStateCount = static_cast<uint32_t>(mDynamicStates.size());
-	mDynamicState->pDynamicStates = mDynamicStates.data();
+	m_DynamicState->sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	m_DynamicState->dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
+	m_DynamicState->pDynamicStates = m_DynamicStates.data();
 	/// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-	mVertexInputInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	mVertexInputInfo->vertexBindingDescriptionCount = 1;
-	mVertexInputInfo->vertexAttributeDescriptionCount = static_cast<unsigned int>(mAttributeDescriptions.size());
-	mVertexInputInfo->pVertexBindingDescriptions = &mBindingDescription;
-	mVertexInputInfo->pVertexAttributeDescriptions = mAttributeDescriptions.data();
+	m_VertexInputInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	m_VertexInputInfo->vertexBindingDescriptionCount = 1;
+	m_VertexInputInfo->vertexAttributeDescriptionCount = static_cast<unsigned int>(mAttributeDescriptions.size());
+	m_VertexInputInfo->pVertexBindingDescriptions = &mBindingDescription;
+	m_VertexInputInfo->pVertexAttributeDescriptions = mAttributeDescriptions.data();
 	/// Definimos la geometria que vamos a pintar
-	mInputAssembly->sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	mInputAssembly->topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	mInputAssembly->primitiveRestartEnable = VK_FALSE;
+	m_InputAssembly->sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	m_InputAssembly->topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	m_InputAssembly->primitiveRestartEnable = VK_FALSE;
 	/// Definimos el Viewport de la app
-	mViewport.x = 0.f;
-	mViewport.y = 0.f;
-	mViewport.width = mCurrentExtent.width;
-	mViewport.height = mCurrentExtent.height;
-	mViewport.minDepth = 0.f;
-	mViewport.maxDepth = 1.f;
+	m_Viewport.x = 0.f;
+	m_Viewport.y = 0.f;
+	m_Viewport.width = m_CurrentExtent.width;
+	m_Viewport.height = m_CurrentExtent.height;
+	m_Viewport.minDepth = 0.f;
+	m_Viewport.maxDepth = 1.f;
 	/// definamos el Scissor Rect de la app
-	mScissor.offset = { 0, 0 };
-	mScissor.extent = mCurrentExtent;
-	mViewportState->viewportCount = 1;
-	mViewportState->scissorCount = 1;
-	mViewportState->pViewports = &mViewport;
-	mViewportState->pScissors = &mScissor;
+	m_Scissor.offset = { 0, 0 };
+	m_Scissor.extent = m_CurrentExtent;
+	m_ViewportState->viewportCount = 1;
+	m_ViewportState->scissorCount = 1;
+	m_ViewportState->pViewports = &m_Viewport;
+	m_ViewportState->pScissors = &m_Scissor;
 	/* Si no estuvieramos en modo Dynamico, necesitariamos establecer la
 	 * informacion de creacion del ViewportState y los Vewport punteros.
 	 */
 	 /// El rasterizador convierte los vertices en fragmentos para darles color
-	mRasterizer->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	mRasterizer->depthClampEnable = VK_FALSE;
-	mRasterizer->rasterizerDiscardEnable = VK_FALSE;
-	mRasterizer->polygonMode = VK_POLYGON_MODE_FILL;
-	mRasterizer->lineWidth = 1.f;
-	mRasterizer->cullMode = VK_CULL_MODE_BACK_BIT;
-	mRasterizer->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	mRasterizer->depthBiasEnable = VK_FALSE;
+	m_Rasterizer->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	m_Rasterizer->depthClampEnable = VK_FALSE;
+	m_Rasterizer->rasterizerDiscardEnable = VK_FALSE;
+	m_Rasterizer->polygonMode = VK_POLYGON_MODE_FILL;
+	m_Rasterizer->lineWidth = 1.f;
+	m_Rasterizer->cullMode = VK_CULL_MODE_BACK_BIT;
+	m_Rasterizer->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	m_Rasterizer->depthBiasEnable = VK_FALSE;
 	/// Multisampling para evitar los bordes de sierra (anti-aliasing).
-	mMultisampling->sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	mMultisampling->sampleShadingEnable = VK_FALSE;
-	mMultisampling->rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	mMultisampling->minSampleShading = 1.f;
-	mMultisampling->pSampleMask = nullptr;
-	mMultisampling->alphaToCoverageEnable = VK_FALSE;
-	mMultisampling->alphaToOneEnable = VK_FALSE;
+	m_Multisampling->sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	m_Multisampling->sampleShadingEnable = VK_FALSE;
+	m_Multisampling->rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	m_Multisampling->minSampleShading = 1.f;
+	m_Multisampling->pSampleMask = nullptr;
+	m_Multisampling->alphaToCoverageEnable = VK_FALSE;
+	m_Multisampling->alphaToOneEnable = VK_FALSE;
 	/// Depth and stencil
-	mDepthStencil->sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	m_DepthStencil->sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	// Descriptors Set
 	VkDescriptorSetLayoutBinding uboLayoutBinding {};
 	uboLayoutBinding.binding = 0;
@@ -465,60 +576,60 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings = &uboLayoutBinding;
-	if(vkCreateDescriptorSetLayout(mLogicDevice, &layoutInfo, nullptr, &mDescSetLayout) != VK_SUCCESS)
+	if(vkCreateDescriptorSetLayout(mLogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
 		exit(-99);
 
 	/// Pipeline Layout
-	VkPipelineLayoutCreateInfo mPipelineLayoutCreateInfo{};
-	mPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	mPipelineLayoutCreateInfo.setLayoutCount = 1;
-	mPipelineLayoutCreateInfo.pSetLayouts = &mDescSetLayout;
-	mPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	mPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-	if (vkCreatePipelineLayout(mLogicDevice, &mPipelineLayoutCreateInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
+	VkPipelineLayoutCreateInfo m_PipelineLayoutCreateInfo{};
+	m_PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	m_PipelineLayoutCreateInfo.setLayoutCount = 1;
+	m_PipelineLayoutCreateInfo.pSetLayouts = &m_DescSetLayout;
+	m_PipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	m_PipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+	if (vkCreatePipelineLayout(mLogicDevice, &m_PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		exit(-7);
 }
 
-void CreateRenderPass(VkSwapchainCreateInfoKHR* mSwapChainCreateInfo)
+void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
 {
 	// RENDER PASES
 	/// Attachment description
-	VkAttachmentDescription mColorAttachment{};
-	mColorAttachment.format = mSwapChainCreateInfo->imageFormat;
-	mColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	mColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	mColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	mColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	mColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	VkAttachmentDescription m_ColorAttachment{};
+	m_ColorAttachment.format = m_SwapChainCreateInfo->imageFormat;
+	m_ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	m_ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	m_ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	m_ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	m_ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	// SUB-PASSES
 	/// Attachment References
-	VkAttachmentReference mColorAttachmentRef{};
-	mColorAttachmentRef.attachment = 0;
-	mColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference m_ColorAttachmentRef{};
+	m_ColorAttachmentRef.attachment = 0;
+	m_ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	/// Sub-pass
-	VkSubpassDescription mSubpass{};
-	mSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	mSubpass.colorAttachmentCount = 1;
-	mSubpass.pColorAttachments = &mColorAttachmentRef;
+	VkSubpassDescription m_Subpass{};
+	m_Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	m_Subpass.colorAttachmentCount = 1;
+	m_Subpass.pColorAttachments = &m_ColorAttachmentRef;
 	/// Subpass dependencies
-	VkSubpassDependency mSubpassDep{};
-	mSubpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
-	mSubpassDep.dstSubpass = 0;
-	mSubpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	mSubpassDep.srcAccessMask = 0;
-	mSubpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	mSubpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency m_SubpassDep{};
+	m_SubpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
+	m_SubpassDep.dstSubpass = 0;
+	m_SubpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	m_SubpassDep.srcAccessMask = 0;
+	m_SubpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	m_SubpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	/// Render pass
-	VkRenderPassCreateInfo mRenderPassInfo{};
-	mRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	mRenderPassInfo.attachmentCount = 1;
-	mRenderPassInfo.pAttachments = &mColorAttachment;
-	mRenderPassInfo.subpassCount = 1;
-	mRenderPassInfo.pSubpasses = &mSubpass;
-	mRenderPassInfo.dependencyCount = 1;
-	mRenderPassInfo.pDependencies = &mSubpassDep;
-	if (vkCreateRenderPass(mLogicDevice, &mRenderPassInfo, nullptr,
-		&mRenderPass) != VK_SUCCESS)
+	VkRenderPassCreateInfo m_RenderPassInfo{};
+	m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	m_RenderPassInfo.attachmentCount = 1;
+	m_RenderPassInfo.pAttachments = &m_ColorAttachment;
+	m_RenderPassInfo.subpassCount = 1;
+	m_RenderPassInfo.pSubpasses = &m_Subpass;
+	m_RenderPassInfo.dependencyCount = 1;
+	m_RenderPassInfo.pDependencies = &m_SubpassDep;
+	if (vkCreateRenderPass(mLogicDevice, &m_RenderPassInfo, nullptr,
+		&m_RenderPass) != VK_SUCCESS)
 		exit(-8);
 }
 
@@ -527,7 +638,7 @@ void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size)
 {
 	VkCommandBufferAllocateInfo mAllocInfo{};
 	mAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	mAllocInfo.commandPool = mCommandPool;
+	mAllocInfo.commandPool = m_CommandPool;
 	mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	mAllocInfo.commandBufferCount = 1;
 	VkCommandBuffer commandBuffer;
@@ -550,9 +661,9 @@ void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size)
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 
-	vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(mGraphicsQueue);
-	vkFreeCommandBuffers(mLogicDevice, mCommandPool, 1, &commandBuffer);
+	vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(m_GraphicsQueue);
+	vkFreeCommandBuffers(mLogicDevice, m_CommandPool, 1, &commandBuffer);
 }
 
 void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx)
@@ -565,33 +676,38 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
 		exit(-13);
 	// Render pass
-	VkRenderPassBeginInfo mRenderPassInfo{};
-	mRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	mRenderPassInfo.renderPass = mRenderPass;
-	mRenderPassInfo.framebuffer = mSwapChainFramebuffers[_imageIdx];
-	mRenderPassInfo.renderArea.offset = { 0,0 };
-	mRenderPassInfo.renderArea.extent = mCurrentExtent;
+	VkRenderPassBeginInfo m_RenderPassInfo{};
+	m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	m_RenderPassInfo.renderPass = m_RenderPass;
+	m_RenderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+	m_RenderPassInfo.renderArea.offset = { 0,0 };
+	m_RenderPassInfo.renderArea.extent = m_CurrentExtent;
 	// Clear Color
-	VkClearValue mClearColor = { {{0.f, 0.f, 0.f, 1.f}} };
-	mRenderPassInfo.clearValueCount = 1;
-	mRenderPassInfo.pClearValues = &mClearColor;
-	vkCmdBeginRenderPass(_commandBuffer, &mRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	VkClearValue m_ClearColor = { {{0.f, 0.f, 0.f, 1.f}} };
+	m_RenderPassInfo.clearValueCount = 1;
+	m_RenderPassInfo.pClearValues = &m_ClearColor;
+	vkCmdBeginRenderPass(_commandBuffer, &m_RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	// Drawing Commands
-	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
-	vkCmdSetViewport(_commandBuffer, 0, 1, &mViewport);
-	vkCmdSetScissor(_commandBuffer, 0, 1, &mScissor);
-	VkBuffer vertesBuffers[] = {mVertexBuffer};
-	VkBuffer indexBuffer = mIndexBuffer;
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
+	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
+	VkBuffer vertesBuffers[] = {m_VertexBuffer};
 	VkDeviceSize offsets[] = {0};
 
 	vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-	vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	if(m_Indices.size() > 0)
+	{
+		VkBuffer indexBuffer = m_IndexBuffer;
+		vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	}
+	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentLocalFrame], 0, nullptr);
 
-	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mCurrentLocalFrame], 0, nullptr);
-
-	//vkCmdDraw(_commandBuffer, 3, 1, 0, 0);
-	vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mIndices.size()),
+	if(m_Indices.size() > 0)
+		vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(m_Indices.size()),
 					 1, 0, 0, 0);
+	else
+		vkCmdDraw(_commandBuffer, m_ModelTriangles.size(), 1, 0, 0);
+
 	vkCmdEndRenderPass(_commandBuffer);
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
@@ -600,22 +716,22 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 void CreateFramebuffers()
 {
 	// FRAMEBUFFERS
-	mSwapChainFramebuffers.resize(mSwapChainImagesViews.size());
-	for (size_t i = 0; i < mSwapChainImagesViews.size(); i++)
+	m_SwapChainFramebuffers.resize(m_SwapChainImagesViews.size());
+	for (size_t i = 0; i < m_SwapChainImagesViews.size(); i++)
 	{
 		VkImageView attachments[] = {
-			mSwapChainImagesViews[i]
+			m_SwapChainImagesViews[i]
 		};
 		VkFramebufferCreateInfo mFramebufferInfo{};
 		mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		mFramebufferInfo.renderPass = mRenderPass;
+		mFramebufferInfo.renderPass = m_RenderPass;
 		mFramebufferInfo.attachmentCount = 1;
 		mFramebufferInfo.pAttachments = attachments;
-		mFramebufferInfo.width = mCurrentExtent.width;
-		mFramebufferInfo.height = mCurrentExtent.height;
+		mFramebufferInfo.width = m_CurrentExtent.width;
+		mFramebufferInfo.height = m_CurrentExtent.height;
 		mFramebufferInfo.layers = 1;
 		if (vkCreateFramebuffer(mLogicDevice, &mFramebufferInfo, nullptr,
-			&mSwapChainFramebuffers[i]) != VK_SUCCESS)
+			&m_SwapChainFramebuffers[i]) != VK_SUCCESS)
 			exit(-10);
 	}
 }
@@ -624,33 +740,33 @@ void CreateCommandBuffer()
 {
 	// COMMAND BUFFERS
 	/// Command Pool
-	///	mGraphicsQueueFamilyIndex
-	VkCommandPoolCreateInfo mPoolInfo{};
-	mPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	mPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	mPoolInfo.queueFamilyIndex = mGraphicsQueueFamilyIndex;
-	if (vkCreateCommandPool(mLogicDevice, &mPoolInfo, nullptr, &mCommandPool) != VK_SUCCESS)
+	///	m_GraphicsQueueFamilyIndex
+	VkCommandPoolCreateInfo m_PoolInfo{};
+	m_PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	m_PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	m_PoolInfo.queueFamilyIndex = m_GraphicsQueueFamilyIndex;
+	if (vkCreateCommandPool(mLogicDevice, &m_PoolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
 		exit(-11);
 	VkCommandBufferAllocateInfo mAllocInfo{};
 	mAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	mAllocInfo.commandPool = mCommandPool;
+	mAllocInfo.commandPool = m_CommandPool;
 	mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	mAllocInfo.commandBufferCount = 2;
-	if (vkAllocateCommandBuffers(mLogicDevice, &mAllocInfo, mCommandBuffer) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(mLogicDevice, &mAllocInfo, m_CommandBuffer) != VK_SUCCESS)
 		exit(-12);
 }
 
 void CreateSyncObjects(unsigned int _frameIdx)
 {
 	// Creamos los elementos de sincronizacion
-	VkSemaphoreCreateInfo mSemaphoreInfo{};
-	mSemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	VkSemaphoreCreateInfo m_SemaphoreInfo{};
+	m_SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	VkFenceCreateInfo mFenceInfo{};
 	mFenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	mFenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-	if (vkCreateSemaphore(mLogicDevice, &mSemaphoreInfo, nullptr, &mImageAvailable[_frameIdx]) != VK_SUCCESS
-		|| vkCreateSemaphore(mLogicDevice, &mSemaphoreInfo, nullptr, &mRenderFinish[_frameIdx]) != VK_SUCCESS
-		|| vkCreateFence(mLogicDevice, &mFenceInfo, nullptr, &mInFlight[_frameIdx]) != VK_SUCCESS
+	if (vkCreateSemaphore(mLogicDevice, &m_SemaphoreInfo, nullptr, &m_ImageAvailable[_frameIdx]) != VK_SUCCESS
+		|| vkCreateSemaphore(mLogicDevice, &m_SemaphoreInfo, nullptr, &m_RenderFinish[_frameIdx]) != VK_SUCCESS
+		|| vkCreateFence(mLogicDevice, &mFenceInfo, nullptr, &m_InFlight[_frameIdx]) != VK_SUCCESS
 		)
 		exit(-666);
 }
@@ -669,12 +785,12 @@ void RecreateSwapChain()
 	// Esperamos a que termine de pintarse y recreamos la swapchain con los nuevos parametros
 	CleanSwapChain();
 	CreateSwapChain();
-	vkGetSwapchainImagesKHR(mLogicDevice, mSwapChain, &mSwapchainImagesCount, nullptr);
-	mSwapChainImages.resize(mSwapchainImagesCount);
-	vkGetSwapchainImagesKHR(mLogicDevice, mSwapChain, &mSwapchainImagesCount, mSwapChainImages.data());
+	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
+	m_SwapChainImages.resize(m_SwapchainImagesCount);
+	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
 	CreateFramebuffers();
-	mNeedToRecreateSwapchain = false;
+	m_NeedToRecreateSwapchain = false;
 }
 /* Un Frame en Vulkan
  *  1. esperar a que el frame anterior acabe
@@ -693,15 +809,15 @@ void RecreateSwapChain()
 	Vallas: son igual que los semaforos pero estos sirven para ordenar ejecucion
 		entre la CPU y GPU. Los usamos cuando la CPU debe esperar a que acabe la GPU
 		para continuar.
-*/ 
+*/
 void DrawFrame()
 {
 	// Esperamos por el frame anterior y reseteamos la Fence
-	vkWaitForFences(mLogicDevice, 1, &mInFlight[mCurrentLocalFrame], VK_TRUE, UINT64_MAX);
-	vkResetFences(mLogicDevice, 1, &mInFlight[mCurrentLocalFrame]);
-	vkResetCommandBuffer(mCommandBuffer[mCurrentLocalFrame], 0);
+	vkWaitForFences(mLogicDevice, 1, &m_InFlight[m_CurrentLocalFrame], VK_TRUE, UINT64_MAX);
+	vkResetFences(mLogicDevice, 1, &m_InFlight[m_CurrentLocalFrame]);
+	vkResetCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], 0);
 	uint32_t imageIdx;
-	vkAcquireNextImageKHR(mLogicDevice, mSwapChain, UINT64_MAX, mImageAvailable[mCurrentLocalFrame],
+	vkAcquireNextImageKHR(mLogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[m_CurrentLocalFrame],
 		VK_NULL_HANDLE, &imageIdx);
 
 	// Update Uniform buffers
@@ -716,26 +832,26 @@ void DrawFrame()
 	ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f),
 						   glm::vec3(0.f, 0.f, 1.f));
 
-	ubo.projection = glm::perspective(glm::radians(45.f), mCurrentExtent.width / (float) mCurrentExtent.height, 0.1f, 10.f);
+	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 10.f);
 
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
-	memcpy(mUniformsBuffersMapped[mCurrentLocalFrame], &ubo, sizeof(ubo));
+	memcpy(m_Uniform_SBuffersMapped[m_CurrentLocalFrame], &ubo, sizeof(ubo));
 
-	RecordCommandBuffer(mCommandBuffer[mCurrentLocalFrame], imageIdx, mCurrentLocalFrame);
+	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	VkSemaphore waitSemaphores[] = {mImageAvailable[mCurrentLocalFrame] };
+	VkSemaphore waitSemaphores[] = {m_ImageAvailable[m_CurrentLocalFrame] };
 	VkPipelineStageFlags waitStages[] ={VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &mCommandBuffer[mCurrentLocalFrame];
-	VkSemaphore signalSemaphores[] = {mRenderFinish[mCurrentLocalFrame] };
+	submitInfo.pCommandBuffers = &m_CommandBuffer[m_CurrentLocalFrame];
+	VkSemaphore signalSemaphores[] = {m_RenderFinish[m_CurrentLocalFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
-	if (vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlight[mCurrentLocalFrame]) != VK_SUCCESS)
+	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_InFlight[m_CurrentLocalFrame]) != VK_SUCCESS)
 	{
 		fprintf(stderr, "Error on the Submit");
 		exit(-1);
@@ -745,26 +861,26 @@ void DrawFrame()
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
-	VkSwapchainKHR swapChains[] = {mSwapChain};
+	VkSwapchainKHR swapChains[] = {m_SwapChain};
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIdx;
 	presentInfo.pResults = nullptr;
-	mPresentResult = vkQueuePresentKHR(mPresentQueue, &presentInfo);
+	m_PresentResult = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
 }
 
 void FramebufferResizeCallback(GLFWwindow* _window, int _newW, int _newH)
 {
-	mNeedToRecreateSwapchain = true;
+	m_NeedToRecreateSwapchain = true;
 }
 
 unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties)
 {
-	for(unsigned int i = 0; i < mMemProps.memoryTypeCount; i++)
+	for(unsigned int i = 0; i < m_Mem_Props.memoryTypeCount; i++)
 	{
-		if (typeFilter & (1 << i) && (mMemProps.memoryTypes[i].propertyFlags & properties) == properties)
+		if (typeFilter & (1 << i) && (m_Mem_Props.memoryTypes[i].propertyFlags & properties) == properties)
 		{
-			printf("\nmemType %d\n", i);
+			printf("\nmem_Type %d\n", i);
 			return i;
 		}
 	}
@@ -777,7 +893,7 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 	/*
 		Create Vertex Buffers
 	 */
-	unsigned int queueFamilyIndices[] = {mGraphicsQueueFamilyIndex, mTransferQueueFamilyIndex};
+	unsigned int queueFamilyIndices[] = {m_GraphicsQueueFamilyIndex, m_TransferQueueFamilyIndex};
 	VkBufferCreateInfo mBufferInfo {};
 	mBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	mBufferInfo.size = _size;
@@ -788,15 +904,15 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 
 	if(vkCreateBuffer(mLogicDevice, &mBufferInfo, nullptr, &buffer_) != VK_SUCCESS)
 		exit(-6);
-	VkMemoryRequirements memRequ;
-	vkGetBufferMemoryRequirements(mLogicDevice, buffer_, &memRequ);
+	VkMemoryRequirements mem_Requ;
+	vkGetBufferMemoryRequirements(mLogicDevice, buffer_, &mem_Requ);
 
-	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevices[mGPUSelected], &mMemProps);
+	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequ.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, _memFlags);
+	allocInfo.allocationSize = mem_Requ.size;
+	allocInfo.memoryTypeIndex = FindMemoryType(mem_Requ.memoryTypeBits, _memFlags);
 	if(vkAllocateMemory(mLogicDevice, &allocInfo, nullptr, &bufferMem_) != VK_SUCCESS)
 		exit(-8);
 
@@ -804,7 +920,7 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 
 }
 
-int main()
+int main(int _argc, char** _args)
 {
 	uint32_t mExtensionCount = 0;
 	const char** mExtensions;
@@ -812,7 +928,20 @@ int main()
 	glm::vec4 m_vec;
 	const int m_Width = 800;
 	const int m_Height = 600;
-
+// 	cgltf_data* m_ModelData;
+	if(_argc >= 1)
+	{
+		char modelPath[512], modelName[64];
+		sprintf(modelPath, "resources/Models/%s/glTF/", _args[1]);
+		sprintf(modelName, "%s.gltf", _args[1]);
+		printf("\n\tApplication launched with Params(%s): %s", modelPath, modelName);
+		LoadModel(modelPath, modelName);
+	}
+	else
+	{
+		LoadModel(g_SponzaPath, "Sponza.gltf");
+	}
+// 	printf("\n%s Loaded: %ld bytes, images: %zu\n", _args[1], sizeof(*m_ModelData),	m_ModelData->images_count);
 	/// VULKAN THINGS
 	if (!checkValidationLayerSupport()) return -2;
 	VkApplicationInfo mAppInfo = {};
@@ -824,15 +953,15 @@ int main()
 	vkEnumerateInstanceExtensionProperties(nullptr, &mExtensionCount, mExtensionsProps.data());
 	for (const auto& ext : mExtensionsProps)
 	{
-		mInstanceExtensions.push_back(ext.extensionName);
+		m_InstanceExtensions.push_back(ext.extensionName);
 	}
-	mInstanceExtensions.push_back("VK_EXT_debug_utils");
+	m_InstanceExtensions.push_back("VK_EXT_debug_utils");
 
-	//mInstanceExtensions.push_back("VK_KHR_swapchain");
-	
-	VkInstanceCreateInfo mInstanceCreateInfo = {};
-	CreateInstance( &mInstanceCreateInfo, &mAppInfo, mExtensions, mExtensionCount );
-	VkResult m_result = vkCreateInstance(&mInstanceCreateInfo, nullptr, &mInstance);
+	//m_InstanceExtensions.push_back("VK_KHR_swapchain");
+
+	VkInstanceCreateInfo m_InstanceCreateInfo = {};
+	CreateInstance( &m_InstanceCreateInfo, &mAppInfo, mExtensions, mExtensionCount );
+	VkResult m_result = vkCreateInstance(&m_InstanceCreateInfo, nullptr, &m_Instance);
 	if(m_result != VK_SUCCESS)
 	{
 		printf("ERROR CREATING INSTANCE VULKAN");
@@ -855,68 +984,68 @@ int main()
 		| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	debugCreateInfo.pfnUserCallback = debugCallback;
 	debugCreateInfo.pUserData = nullptr;
-	if(CreateDebugUtilsMessengerEXT(mInstance, &debugCreateInfo, nullptr, &mDebugMessenger) != VK_SUCCESS)
+	if(CreateDebugUtilsMessengerEXT(m_Instance, &debugCreateInfo, nullptr, &m_DebugMessenger) != VK_SUCCESS)
 	{
 		fprintf(stderr, "ERROR CREATING DEBUG MESSENGER\n");
 	}
 
 	/// Asociamos el VkDevice a la GPU
 	unsigned int deviceCount = 0;
-	vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr);
 	if (deviceCount == 0)
 	{
 		fprintf(stderr, "Not GPU FOUND\n");
 		exit(-1);
 	}
-	mPhysicalDevices.resize(deviceCount);
-	vkEnumeratePhysicalDevices(mInstance, &deviceCount, mPhysicalDevices.data());
+	m_PhysicalDevices.resize(deviceCount);
+	vkEnumeratePhysicalDevices(m_Instance, &deviceCount, m_PhysicalDevices.data());
 	VkPhysicalDeviceProperties deviceProp[deviceCount];
 	VkPhysicalDeviceFeatures deviceFeatures[deviceCount];
-	mGPUSelected = 0;
+	m_GPUSelected = 0;
 	for(int it = 0; it < deviceCount; it++)
 	{
-		vkGetPhysicalDeviceProperties(mPhysicalDevices[it], &deviceProp[it]);
-		if(strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName,"AMD"))
+		vkGetPhysicalDeviceProperties(m_PhysicalDevices[it], &deviceProp[it]);
+		if(strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName,"Am_D"))
 		{
-			mGPUSelected = it;
-			printf("\nGPU %d: %s\n", it, deviceProp[mGPUSelected].deviceName);
+			m_GPUSelected = it;
+			printf("\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
 		}
-	vkGetPhysicalDeviceFeatures(mPhysicalDevices[it], &deviceFeatures[it]);
+	vkGetPhysicalDeviceFeatures(m_PhysicalDevices[it], &deviceFeatures[it]);
 	}
 	/// Comprobamos que tengamos la extension VK_KHR_swapchain soportada en el device GPU
 	unsigned int deviceExtensionCount;
-	vkEnumerateDeviceExtensionProperties(mPhysicalDevices[mGPUSelected], nullptr, &deviceExtensionCount, nullptr);
+	vkEnumerateDeviceExtensionProperties(m_PhysicalDevices[m_GPUSelected], nullptr, &deviceExtensionCount, nullptr);
 	std::vector<VkExtensionProperties> deviceAvailableExtensions(deviceExtensionCount);
-	vkEnumerateDeviceExtensionProperties(mPhysicalDevices[mGPUSelected], nullptr, &deviceExtensionCount, deviceAvailableExtensions.data());
+	vkEnumerateDeviceExtensionProperties(m_PhysicalDevices[m_GPUSelected], nullptr, &deviceExtensionCount, deviceAvailableExtensions.data());
 	for (const auto& ext : deviceAvailableExtensions)
 	{
 		// VK_KHR_buffer_device_address and VK_EXT_buffer_device_address not at the same time
 		if (strcmp(ext.extensionName, "VK_EXT_buffer_device_address") == 0)
 			continue;
-		mDeviceExtensions.push_back(ext.extensionName);
+		m_DeviceExtensions.push_back(ext.extensionName);
 	}
 	/// Buscamos las familias de Colas.
 	unsigned int queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[mGPUSelected], &queueFamilyCount, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevices[m_GPUSelected], &queueFamilyCount, nullptr);
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices[mGPUSelected], &queueFamilyCount, queueFamilies.data());
+	vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevices[m_GPUSelected], &queueFamilyCount, queueFamilies.data());
 	// VK_QUEUE_GRAPHICS_BIT
 	bool searchingGraphics = true, searchingTransfer = true;
 	for (const auto& queueFamily : queueFamilies)
 	{
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
-			printf("\nGraphics Family: %d\n", mTransferQueueFamilyIndex);
+			printf("\nGraphics Family: %d\n", m_TransferQueueFamilyIndex);
 			searchingGraphics = false;
 		}
 		if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
 		{
-			printf("\nTransfer Family: %d\n", mTransferQueueFamilyIndex);
+			printf("\nTransfer Family: %d\n", m_TransferQueueFamilyIndex);
 			searchingTransfer = false;
 		}
 
-		mGraphicsQueueFamilyIndex += searchingGraphics;
-		mTransferQueueFamilyIndex += searchingTransfer;
+		m_GraphicsQueueFamilyIndex += searchingGraphics;
+		m_TransferQueueFamilyIndex += searchingTransfer;
 		if(!searchingGraphics && !searchingTransfer)
 			break;
 	}
@@ -924,49 +1053,49 @@ int main()
 	/// Ahora vamos a crear el device logico para interactuar con él
 	float queuePriority = 1.f;
 
-	mQueueCreateInfos.push_back({
+	m_QueueCreateInfos.push_back({
 		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-		.queueFamilyIndex = mGraphicsQueueFamilyIndex,
+		.queueFamilyIndex = m_GraphicsQueueFamilyIndex,
 		.queueCount = 1,
 		.pQueuePriorities = &queuePriority
 		});
 
-	mQueueCreateInfos.push_back({
+	m_QueueCreateInfos.push_back({
 		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-		.queueFamilyIndex = mTransferQueueFamilyIndex,
+		.queueFamilyIndex = m_TransferQueueFamilyIndex,
 		.queueCount = 1,
 		.pQueuePriorities = &queuePriority
 		});
 
 	// Create logical device associated to physical device
-	CreateLogicalDevice(&mPhysicalDevices[mGPUSelected], &deviceFeatures[mGPUSelected]);
-	vkGetDeviceQueue(mLogicDevice, mGraphicsQueueFamilyIndex, 0, &mGraphicsQueue);
-	vkGetDeviceQueue(mLogicDevice, mTransferQueueFamilyIndex, 0, &mTransferQueue);
+	CreateLogicalDevice(&m_PhysicalDevices[m_GPUSelected], &deviceFeatures[m_GPUSelected]);
+	vkGetDeviceQueue(mLogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_GraphicsQueue);
+	vkGetDeviceQueue(mLogicDevice, m_TransferQueueFamilyIndex, 0, &m_TransferQueue);
 
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
-	if(glfwCreateWindowSurface(mInstance, mWindow, nullptr, &mSurface) != VK_SUCCESS)
+	if(glfwCreateWindowSurface(m_Instance, mWindow, nullptr, &m_Surface) != VK_SUCCESS)
 		exit(-2);
 
 	// Present support on the Physical Device
 	VkBool32 presentSupport = false;
-	vkGetPhysicalDeviceSurfaceSupportKHR(mPhysicalDevices[mGPUSelected], mGraphicsQueueFamilyIndex, mSurface, &presentSupport);
+	vkGetPhysicalDeviceSurfaceSupportKHR(m_PhysicalDevices[m_GPUSelected], m_GraphicsQueueFamilyIndex, m_Surface, &presentSupport);
 	if (!presentSupport)
-		printf("CANNOT PRESENT ON THIS DEVICE: %s\n", deviceProp[mGPUSelected].deviceName);
-	vkGetDeviceQueue(mLogicDevice, mGraphicsQueueFamilyIndex, 0, &mPresentQueue);
+		printf("CANNOT PRESENT ON THIS DEVICE: %s\n", deviceProp[m_GPUSelected].deviceName);
+	vkGetDeviceQueue(mLogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_PresentQueue);
 
 	/* Ahora tenemos que ver que nuestro device soporta la swapchain
 	 * y sus capacidades.
 	*/
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mPhysicalDevices[mGPUSelected], mSurface, &mCapabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevices[m_GPUSelected], m_Surface, &m_Capabilities);
 	unsigned int surfaceFormatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevices[mGPUSelected], mSurface, &surfaceFormatCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevices[m_GPUSelected], m_Surface, &surfaceFormatCount, nullptr);
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevices[mGPUSelected], mSurface, &surfaceFormatCount, surfaceFormats.data());
+	vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevices[m_GPUSelected], m_Surface, &surfaceFormatCount, surfaceFormats.data());
 	unsigned int presentModesCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevices[mGPUSelected], mSurface, &presentModesCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevices[m_GPUSelected], m_Surface, &presentModesCount, nullptr);
 	std::vector<VkPresentModeKHR> presentModes(presentModesCount);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevices[mGPUSelected], mSurface, &presentModesCount, presentModes.data());
+	vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevices[m_GPUSelected], m_Surface, &presentModesCount, presentModes.data());
 	/// Ahora elegimos el formato que cumpla nuestras necesidades.
 	unsigned int formatChoosen = 0;
 	for(const auto& format : surfaceFormats)
@@ -974,7 +1103,7 @@ int main()
 		if (format.format == VK_FORMAT_B8G8R8A8_SRGB
 			&& format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 		{
-			mSurfaceFormat = surfaceFormats[formatChoosen];
+			m_SurfaceFormat = surfaceFormats[formatChoosen];
 			break;
 		}
 		++formatChoosen;
@@ -988,127 +1117,135 @@ int main()
 	{
 		if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
 		{
-			mPresentMode = presentMode;
+			m_PresentMode = presentMode;
 			break;
 		}
 	}
 	/// ahora vamos a establecer el swap extent, que es la resolucion de las imagnes de la swapchain
-	mCurrentExtent = mCapabilities.currentExtent;
+	m_CurrentExtent = m_Capabilities.currentExtent;
 	/// Ahora creamos la swapchain como tal.
-	mSwapchainImagesCount = mCapabilities.minImageCount;
+	m_SwapchainImagesCount = m_Capabilities.minImageCount;
 
 	CreateSwapChain();
-	vkGetSwapchainImagesKHR(mLogicDevice, mSwapChain, &mSwapchainImagesCount, nullptr);
-	mSwapChainImages.resize(mSwapchainImagesCount);
-	vkGetSwapchainImagesKHR(mLogicDevice, mSwapChain, &mSwapchainImagesCount, mSwapChainImages.data());
+	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
+	m_SwapChainImages.resize(m_SwapchainImagesCount);
+	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
 
 	/// Vamos a crear los shader module para cargar el bytecode de los shaders
-	VkShaderModule mVertShaderModule;
+	VkShaderModule m_VertShaderModule;
 	VkShaderModule mFragShaderModule;
-	CreateShaderModule("resources/Shaders/vert.spv", &mVertShaderModule);
+	CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
 	CreateShaderModule("resources/Shaders/frag.spv", &mFragShaderModule);
 
 	// Create Pipeline Layout
-	VkPipelineShaderStageCreateInfo mShaderStages[2] = {};
-	VkPipelineInputAssemblyStateCreateInfo mInputAssembly{};
-	VkPipelineDynamicStateCreateInfo mDynamicState{};
-	VkPipelineVertexInputStateCreateInfo mVertexInputInfo{};
-	VkPipelineViewportStateCreateInfo mViewportState{
+	VkPipelineShaderStageCreateInfo m_ShaderStages[2] = {};
+	VkPipelineInputAssemblyStateCreateInfo m_InputAssembly{};
+	VkPipelineDynamicStateCreateInfo m_DynamicState{};
+	VkPipelineVertexInputStateCreateInfo m_VertexInputInfo{};
+	VkPipelineViewportStateCreateInfo m_ViewportState{
 		VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
 	};
-	VkPipelineRasterizationStateCreateInfo mRasterizer{};
-	VkPipelineMultisampleStateCreateInfo mMultisampling{};
-	VkPipelineDepthStencilStateCreateInfo mDepthStencil{};
-	VkPipelineColorBlendStateCreateInfo mColorBlending{};
+	VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
+	VkPipelineMultisampleStateCreateInfo m_Multisampling{};
+	VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
+	VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
 	/// Color Blending
-	VkPipelineColorBlendAttachmentState mColorBlendAttachment{};
-	mColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	mColorBlendAttachment.blendEnable = VK_FALSE;
-	mColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	mColorBlending.logicOpEnable = VK_FALSE;
-	mColorBlending.attachmentCount = 1;
-	mColorBlending.pAttachments = &mColorBlendAttachment;
+	VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
+	m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	m_ColorBlendAttachment.blendEnable = VK_FALSE;
+	m_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	m_ColorBlending.logicOpEnable = VK_FALSE;
+	m_ColorBlending.attachmentCount = 1;
+	m_ColorBlending.pAttachments = &m_ColorBlendAttachment;
 
-	CreatePipelineLayout(&mVertShaderModule, &mFragShaderModule, mShaderStages, &mInputAssembly, &mDynamicState, &mVertexInputInfo,&mViewportState, &mRasterizer,
-		&mMultisampling, &mDepthStencil, &mColorBlending);
-	CreateRenderPass(&mSwapChainCreateInfo);
+	CreatePipelineLayout(&m_VertShaderModule, &mFragShaderModule, m_ShaderStages, &m_InputAssembly, &m_DynamicState, &m_VertexInputInfo,&m_ViewportState, &m_Rasterizer,
+		&m_Multisampling, &m_DepthStencil, &m_ColorBlending);
+	CreateRenderPass(&m_SwapChainCreateInfo);
 
 	/// Create Graphics pipeline
-	VkGraphicsPipelineCreateInfo mPipelineInfoCreateInfo {};
-	mPipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	mPipelineInfoCreateInfo.stageCount = 2;
-	mPipelineInfoCreateInfo.pStages = mShaderStages;
-	mPipelineInfoCreateInfo.pVertexInputState = &mVertexInputInfo;
-	mPipelineInfoCreateInfo.pInputAssemblyState = &mInputAssembly;
-	mPipelineInfoCreateInfo.pViewportState = &mViewportState;
-	mPipelineInfoCreateInfo.pRasterizationState = &mRasterizer;
-	mPipelineInfoCreateInfo.pMultisampleState = &mMultisampling;
-	mPipelineInfoCreateInfo.pDepthStencilState = nullptr;
-	mPipelineInfoCreateInfo.pColorBlendState = &mColorBlending;
-	mPipelineInfoCreateInfo.pDynamicState = &mDynamicState;
-	mPipelineInfoCreateInfo.layout = mPipelineLayout;
-	mPipelineInfoCreateInfo.renderPass = mRenderPass;
-	mPipelineInfoCreateInfo.subpass = 0;
-	mPipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-	mPipelineInfoCreateInfo.basePipelineIndex = -1;
-	mGraphicsPipeline = VkPipeline {};
+	VkGraphicsPipelineCreateInfo m_PipelineInfoCreateInfo {};
+	m_PipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	m_PipelineInfoCreateInfo.stageCount = 2;
+	m_PipelineInfoCreateInfo.pStages = m_ShaderStages;
+	m_PipelineInfoCreateInfo.pVertexInputState = &m_VertexInputInfo;
+	m_PipelineInfoCreateInfo.pInputAssemblyState = &m_InputAssembly;
+	m_PipelineInfoCreateInfo.pViewportState = &m_ViewportState;
+	m_PipelineInfoCreateInfo.pRasterizationState = &m_Rasterizer;
+	m_PipelineInfoCreateInfo.pMultisampleState = &m_Multisampling;
+	m_PipelineInfoCreateInfo.pDepthStencilState = nullptr;
+	m_PipelineInfoCreateInfo.pColorBlendState = &m_ColorBlending;
+	m_PipelineInfoCreateInfo.pDynamicState = &m_DynamicState;
+	m_PipelineInfoCreateInfo.layout = m_PipelineLayout;
+	m_PipelineInfoCreateInfo.renderPass = m_RenderPass;
+	m_PipelineInfoCreateInfo.subpass = 0;
+	m_PipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+	m_PipelineInfoCreateInfo.basePipelineIndex = -1;
+	m_GraphicsPipeline = VkPipeline {};
 
-	if (vkCreateGraphicsPipelines(mLogicDevice, VK_NULL_HANDLE, 1, &mPipelineInfoCreateInfo, nullptr, &mGraphicsPipeline) != VK_SUCCESS)
+	if (vkCreateGraphicsPipelines(mLogicDevice, VK_NULL_HANDLE, 1, &m_PipelineInfoCreateInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
 		exit(-9);
 	// Destruymos los ShaderModule ahora que ya no se necesitan.
-	vkDestroyShaderModule(mLogicDevice, mVertShaderModule, nullptr);
+	vkDestroyShaderModule(mLogicDevice, m_VertShaderModule, nullptr);
 	vkDestroyShaderModule(mLogicDevice, mFragShaderModule, nullptr);
 
 	CreateFramebuffers();
 	CreateCommandBuffer();
 
 	// Vertex buffer
-	VkDeviceSize bufferSize = sizeof(mTriangleVertices[0]) * mTriangleVertices.size();
+	if(m_ModelTriangles.size() <= 0)
+	{
+		fprintf(stderr, "There is no Triangles to inser on the buffer");
+		exit(-57);
+	}
+	VkDeviceSize bufferSize = sizeof(m_ModelTriangles[0]) * m_ModelTriangles.size();
 	// Stagin buffer
 	CreateBuffer(bufferSize,
 				 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			  mStagingBuffer, mStaggingBufferMemory);
+			  m_StagingBuffer, m_StaggingBufferMemory);
 	void* data;
-	vkMapMemory(mLogicDevice, mStaggingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, mTriangleVertices.data(), (size_t) bufferSize);
-	vkUnmapMemory(mLogicDevice, mStaggingBufferMemory);
+	vkMapMemory(mLogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, m_ModelTriangles.data(), (size_t) bufferSize);
+	vkUnmapMemory(mLogicDevice, m_StaggingBufferMemory);
 	CreateBuffer(bufferSize,
 				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 				 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				 VK_SHARING_MODE_CONCURRENT,
 				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			  mVertexBuffer, mVertexBufferMemory);
-	CopyBuffer(mVertexBuffer, mStagingBuffer, bufferSize);
-	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
+			  m_VertexBuffer, m_VertexBufferMemory);
+	CopyBuffer(m_VertexBuffer, m_StagingBuffer, bufferSize);
+	vkDestroyBuffer(mLogicDevice, m_StagingBuffer, nullptr);
+	vkFreeMemory(mLogicDevice, m_StaggingBufferMemory, nullptr);
 
-	// Index buffer
-	bufferSize = sizeof(mIndices[0]) * mIndices.size();
-	// Stagin buffer
-	CreateBuffer(bufferSize,
-				 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			  mStagingBuffer, mStaggingBufferMemory);
-	vkMapMemory(mLogicDevice, mStaggingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, mIndices.data(), (size_t) bufferSize);
-	vkUnmapMemory(mLogicDevice, mStaggingBufferMemory);
-	CreateBuffer(bufferSize,
-				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-				 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-				 VK_SHARING_MODE_CONCURRENT,
-				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			  mIndexBuffer, mIndexBufferMemory);
-	CopyBuffer(mIndexBuffer, mStagingBuffer, bufferSize);
-	vkDestroyBuffer(mLogicDevice, mStagingBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, mStaggingBufferMemory, nullptr);
+	if(m_Indices.size() > 0)
+	{
+		// Index buffer
+		bufferSize = sizeof(m_Indices[0]) * m_Indices.size();
+		// Stagin buffer
+		CreateBuffer(bufferSize,
+					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				m_StagingBuffer, m_StaggingBufferMemory);
+		vkMapMemory(mLogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, m_Indices.data(), (size_t) bufferSize);
+		vkUnmapMemory(mLogicDevice, m_StaggingBufferMemory);
+		CreateBuffer(bufferSize,
+					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+					VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				m_IndexBuffer, m_IndexBufferMemory);
+		CopyBuffer(m_IndexBuffer, m_StagingBuffer, bufferSize);
+		vkDestroyBuffer(mLogicDevice, m_StagingBuffer, nullptr);
+		vkFreeMemory(mLogicDevice, m_StaggingBufferMemory, nullptr);
+	}
 	// Uniform buffers
-	mUniformBuffers.resize(FRAMES_IN_FLIGHT);
-	mUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-	mUniformsBuffersMapped.resize(FRAMES_IN_FLIGHT);
+	m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
+	m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+	m_Uniform_SBuffersMapped.resize(FRAMES_IN_FLIGHT);
 	bufferSize = sizeof(UniformBufferObject);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
@@ -1116,9 +1253,9 @@ int main()
 				 VK_SHARING_MODE_CONCURRENT,
 				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			  mUniformBuffers[i], mUniformBuffersMemory[i]);
-		vkMapMemory(mLogicDevice, mUniformBuffersMemory[i], 0,
-					bufferSize, 0, &mUniformsBuffersMapped[i]);
+			  m_UniformBuffers[i], m_UniformBuffersMemory[i]);
+		vkMapMemory(mLogicDevice, m_UniformBuffersMemory[i], 0,
+					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
 	}
 	// Descriptor Pool
 	VkDescriptorPoolSize descPoolSize {};
@@ -1129,30 +1266,30 @@ int main()
 	descPoolInfo.poolSizeCount = 1;
 	descPoolInfo.pPoolSizes = &descPoolSize;
 	descPoolInfo.maxSets = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-	if(vkCreateDescriptorPool(mLogicDevice, &descPoolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS)
+	if(vkCreateDescriptorPool(mLogicDevice, &descPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
 		exit(-66);
 	// Descriptor Sets
-	std::vector<VkDescriptorSetLayout> mDescLayouts(FRAMES_IN_FLIGHT, mDescSetLayout);
+	std::vector<VkDescriptorSetLayout> m_DescLayouts(FRAMES_IN_FLIGHT, m_DescSetLayout);
 	VkDescriptorSetAllocateInfo descAllocInfo {};
 	descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	descAllocInfo.descriptorPool = mDescriptorPool;
+	descAllocInfo.descriptorPool = m_DescriptorPool;
 	descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-	descAllocInfo.pSetLayouts = mDescLayouts.data();
+	descAllocInfo.pSetLayouts = m_DescLayouts.data();
 
-	mDescriptorSets.resize(FRAMES_IN_FLIGHT);
-	if(vkAllocateDescriptorSets(mLogicDevice, &descAllocInfo, mDescriptorSets.data()) != VK_SUCCESS)
+	m_DescriptorSets.resize(FRAMES_IN_FLIGHT);
+	if(vkAllocateDescriptorSets(mLogicDevice, &descAllocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
 		exit(-67);
 
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorBufferInfo bufferInfo {};
-		bufferInfo.buffer = mUniformBuffers[i];
+		bufferInfo.buffer = m_UniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
 		VkWriteDescriptorSet descriptorWrite {};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = mDescriptorSets[i];
+		descriptorWrite.dstSet = m_DescriptorSets[i];
 		descriptorWrite.dstBinding = 0;
 		descriptorWrite.dstArrayElement = 0;
 		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1163,8 +1300,8 @@ int main()
 		vkUpdateDescriptorSets(mLogicDevice, 1, &descriptorWrite, 0, nullptr);
 	}
 
-	RecordCommandBuffer(mCommandBuffer[0], 0, 0);
-	RecordCommandBuffer(mCommandBuffer[1], 0, 1);
+	RecordCommandBuffer(m_CommandBuffer[0], 0, 0);
+	RecordCommandBuffer(m_CommandBuffer[1], 0, 1);
 	CreateSyncObjects(0);
 	CreateSyncObjects(1);
 
@@ -1173,12 +1310,12 @@ int main()
 		glfwPollEvents();
 		// Draw a Frame!
 		DrawFrame();
-// 		if ((mPresentResult == VK_ERROR_OUT_OF_DATE_KHR || mPresentResult == VK_SUBOPTIMAL_KHR)
-// 			&& mNeedToRecreateSwapchain)
+// 		if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
+// 			&& m_NeedToRecreateSwapchain)
 // 			RecreateSwapChain();
-// 		else if (mPresentResult != VK_SUCCESS && mPresentResult != VK_SUBOPTIMAL_KHR)
+// 		else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
 // 			exit(-69);
-		mCurrentLocalFrame = (mCurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
+		m_CurrentLocalFrame = (m_CurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
 	}
 	Cleanup();
 
