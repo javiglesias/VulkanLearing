@@ -1,3 +1,9 @@
 [submodule "dependencies/glfw"]
 	path = dependencies/glfw
 	url = https://github.com/glfw/glfw
+[submodule "dependencies/assimp"]
+	path = dependencies/assimp
+	url = https://github.com/assimp/assimp
+[submodule "dependencies/dependencies/cgltf"]
+	path = dependencies/dependencies/cgltf
+	url = https://github.com/jkuhlmann/cgltf

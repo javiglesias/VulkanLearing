@@ -11,6 +11,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #define CGLTF_IMPLEMENTATION
 #include "../dependencies/cgltf/cgltf.h"
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
 
 #include <chrono>
 #include <vector>
@@ -18,6 +21,20 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+// raylib https://github.com/raysan5/raylib/blob/c133fee286cfb3dad2fbfa40ab61f968850fd031/src/rmodels.c#L4891
+#define LOAD_ATTRIBUTE(accesor, numComp, dataType, dstPtr) \
+    { \
+        int n = 0; \
+        dataType *buffer = (dataType *)accesor->buffer_view->buffer->data + accesor->buffer_view->offset/sizeof(dataType) + accesor->offset/sizeof(dataType); \
+        for (unsigned int k = 0; k < accesor->count; k++) \
+        {\
+            for (int l = 0; l < numComp; l++) \
+            {\
+                dstPtr[numComp*k + l] = buffer[n + l];\
+            }\
+            n += (int)(accesor->stride/sizeof(dataType));\
+        }\
+	}\
 
 struct UniformBufferObject
 {
@@ -106,6 +123,7 @@ unsigned int m_GraphicsQueueFamilyIndex = 0;
 unsigned int m_TransferQueueFamilyIndex = 0;
 unsigned int m_CurrentLocalFrame = 0;
 unsigned int m_SwapchainImagesCount;
+glm::vec3 m_CameraPos = glm::vec3(2.f, 2.f, 2.f);
 const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 std::vector<VkDynamicState> m_DynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 std::vector<const char*> m_DeviceExtensions;
@@ -117,7 +135,7 @@ std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 std::vector<VkPhysicalDevice> m_PhysicalDevices;
 auto mBindingDescription = Vertex3D::getBindingDescription();
 auto mAttributeDescriptions = Vertex3D::getAttributeDescriptions();
-GLFWwindow* mWindow;
+GLFWwindow* m_Window;
 VkResult m_PresentResult;
 VkInstance m_Instance;
 VkDebugUtilsMessengerEXT m_DebugMessenger {};
@@ -158,46 +176,57 @@ VkSemaphore m_ImageAvailable[FRAMES_IN_FLIGHT];
 VkSemaphore m_RenderFinish[FRAMES_IN_FLIGHT];
 VkFence		m_InFlight[FRAMES_IN_FLIGHT];
 
-cgltf_data* LoadModel(const char* _filepath, const char* _modelName)
+void LoadModel(const char* _filepath, const char* _modelName)
 {
-	cgltf_options options {};
-	cgltf_data* modelData = NULL;
 	char filename[128];
 	sprintf(filename, "%s%s",_filepath, _modelName);
-	cgltf_parse_file(&options, filename, &modelData);
 	printf("\nLoading %s", _modelName);
+	const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
+	if(!scene->HasMeshes())
+		exit(-225);
+	for(int m = 0; m < scene->mNumMeshes; m++)
+	{
+		const aiMesh* mesh = scene->mMeshes[m];
+		for(unsigned int f = 0; f < mesh->mNumFaces; f++)
+		{
+			const aiFace& face = mesh->mFaces[f];
+			m_Indices.push_back(face.mIndices[0]);
+			m_Indices.push_back(face.mIndices[1]);
+			m_Indices.push_back(face.mIndices[2]);
+		}
+		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
+		{
+			m_ModelTriangles.push_back({{mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z},{1.f, 0.f, 0.f}});
+		}
+	}
+#if 0
+	cgltf_options options {};
+	cgltf_parse_file(&options, filename, &modelData);
+	cgltf_data* modelData = NULL;
 	cgltf_load_buffers(&options, modelData, _filepath);
 	if(cgltf_validate(modelData) == cgltf_result_success)
 	{
 		printf("\nModel file validated");
 // 		for (cgltf_size s = 0; s < modelData->scenes_count; ++s)
 // 		{
-			for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
+			for (cgltf_size n = 0; n < modelData->meshes_count; ++n)
 			{
-				auto mesh = modelData->nodes[n].mesh;
+				auto mesh = &modelData->meshes[n];
 				if(mesh)
 				{
+					printf("\n\tMesh %zd", n);
 					for(cgltf_size p = 0; p < mesh->primitives_count; p++)
 					{
+						printf("\n\tPrimitive %zd", p);
  						auto idxAccessor = mesh->primitives[p].indices;
- 						auto nIdxComponents = cgltf_num_components(idxAccessor->type);
- 						auto elementSize = cgltf_calc_size(idxAccessor->type, idxAccessor->component_type);
- 						unsigned int indices[elementSize];
- 						cgltf_size componentSize;
- 						if(cgltf_accessor_read_uint(idxAccessor, p, indices, elementSize))
- 						{
- 							for(size_t i = 0; i < elementSize; i++)
- 							{
- 								printf("\nINDEX %zd: %i", i, indices[i]);
- 								m_Indices.push_back(indices[i]);
- 							}
- 						}
- 						else
- 						{
- 							fprintf(stderr, "No se admiten modelos sin Indizar\n");
- 							exit(-99);
- 						}
-
+						auto trigCount = idxAccessor->count/3;
+ 						unsigned int indices[idxAccessor->count];
+						cgltf_accessor_unpack_indices(mesh->primitives[p].indices, &indices, sizeof(unsigned int), idxAccessor->count);
+// 						LOAD_ATTRIBUTE(idxAccessor, 1, unsigned short, indices)
+						for(cgltf_size i = 0; i < idxAccessor->count; i++)
+						{
+							m_Indices.push_back(indices[i]);
+						}
 
 						for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 						{
@@ -205,14 +234,14 @@ cgltf_data* LoadModel(const char* _filepath, const char* _modelName)
 							{
 								auto accessor = mesh->primitives[p].attributes[a].data;
 								auto index 	  = mesh->primitives[p].attributes[a].index;
-								auto nComponents = cgltf_num_components(accessor->type);
 								cgltf_size element_size = cgltf_calc_size(accessor->type, accessor->component_type);
-								float *position = (float*)malloc(element_size * sizeof(cgltf_float));
-								/*cgltf_accessor_unpack_floats(accessor, position,element_size)*/;
-								if(cgltf_accessor_unpack_floats(accessor, position,element_size))
-									for(size_t p = 0; p < 4; p++)
+								float position[element_size];
+								/*cgltf_accessor_unpack_floats(accessor, position,element_size);*/
+// 								cgltf_accessor_unpack_floats(accessor, position, element_size)
+								if(cgltf_accessor_unpack_floats(accessor, position, element_size))
+									for(size_t pos = 0; pos < element_size/3; pos++)
 									{
-										int idx = 3*p;
+										int idx = 3*pos;
 										printf("\nVertex %zd: %f, %f, %f", p, position[idx], position[idx+1], position[idx+2]);
 										m_ModelTriangles.push_back({glm::vec3(position[idx], position[idx+1], position[idx+2]), {1.0f, 0.0f, 0.0f}});
 									}
@@ -230,6 +259,7 @@ cgltf_data* LoadModel(const char* _filepath, const char* _modelName)
 	else
 		exit(-88);
 	return modelData;
+#endif
 }
 
 std::vector<char> LoadShader(const std::string& _filename)
@@ -261,6 +291,7 @@ bool checkValidationLayerSupport()
 			}
 		}
 	}
+
 	return false;
 }
 /// Busqueda de la Addr para la funcion cargada vkCreateDebugUtilsMessengerEXT
@@ -340,6 +371,31 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	return VK_FALSE;
 }
 
+void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
+{
+	if (_key == GLFW_KEY_W && _action == GLFW_PRESS)
+	{
+		m_CameraPos -= glm::vec3(0,0,1);
+	}
+	if (_key == GLFW_KEY_A && _action == GLFW_PRESS)
+	{
+		m_CameraPos -= glm::vec3(1,0,0);
+	}
+	if (_key == GLFW_KEY_S && _action == GLFW_PRESS)
+	{
+		m_CameraPos += glm::vec3(0,0,1);
+	}
+	if (_key == GLFW_KEY_D && _action == GLFW_PRESS)
+	{
+		m_CameraPos += glm::vec3(1,0,0);
+	}
+
+	if (_key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(m_Window, true);
+	}
+}
+
 void CleanSwapChain()
 {
 	for (auto& framebuffer : m_SwapChainFramebuffers)
@@ -383,7 +439,7 @@ void Cleanup()
 	if (m_DebugMessenger != nullptr)
 		DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 	vkDestroyInstance(m_Instance, nullptr);
-	glfwDestroyWindow(mWindow);
+	glfwDestroyWindow(m_Window);
 	glfwTerminate();
 }
 
@@ -776,9 +832,9 @@ void RecreateSwapChain()
 	printf("\n\tRe-create Swapchain\n");
 	// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 	int width = 0, height = 0;
-	glfwGetFramebufferSize(mWindow, &width, &height);
+	glfwGetFramebufferSize(m_Window, &width, &height);
 	while (width == 0 || height == 0) {
-		glfwGetFramebufferSize(mWindow, &width, &height);
+		glfwGetFramebufferSize(m_Window, &width, &height);
 		glfwWaitEvents();
 	}
 	vkDeviceWaitIdle(mLogicDevice);
@@ -829,7 +885,7 @@ void DrawFrame()
 							glm::vec3(0.f, 0.f, 1.f));
 // 	glm::translate(ubo.model, glm::vec3(0.f, time * glm::radians(10.f), 0.f));
 
-	ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f),
+	ubo.view = glm::lookAt(m_CameraPos, glm::vec3(0.f, 0.f, 0.f),
 						   glm::vec3(0.f, 0.f, 1.f));
 
 	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 10.f);
@@ -970,8 +1026,9 @@ int main(int _argc, char** _args)
 	/// NORMAL RENDER THINGS
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	mWindow = glfwCreateWindow(m_Width, m_Height, "Vulkan test", nullptr, nullptr);
-	glfwSetFramebufferSizeCallback(mWindow, FramebufferResizeCallback);
+	m_Window = glfwCreateWindow(m_Width, m_Height, "Vulkan test", nullptr, nullptr);
+	glfwSetFramebufferSizeCallback(m_Window, FramebufferResizeCallback);
+	glfwSetKeyCallback(m_Window, KeyboardInputCallback);
 	/// Create the Debug Messenger
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 	debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -1074,7 +1131,7 @@ int main(int _argc, char** _args)
 
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
-	if(glfwCreateWindowSurface(m_Instance, mWindow, nullptr, &m_Surface) != VK_SUCCESS)
+	if(glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
 		exit(-2);
 
 	// Present support on the Physical Device
@@ -1305,7 +1362,7 @@ int main(int _argc, char** _args)
 	CreateSyncObjects(0);
 	CreateSyncObjects(1);
 
-	while (!glfwWindowShouldClose(mWindow))
+	while (!glfwWindowShouldClose(m_Window))
 	{
 		glfwPollEvents();
 		// Draw a Frame!
