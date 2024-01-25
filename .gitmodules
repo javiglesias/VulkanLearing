@@ -7,3 +7,6 @@
 [submodule "dependencies/dependencies/cgltf"]
 	path = dependencies/dependencies/cgltf
 	url = https://github.com/jkuhlmann/cgltf
+[submodule "dependencies/stb"]
+	path = dependencies/stb
+	url = https://github.com/nothings/stb
