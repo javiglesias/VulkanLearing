@@ -1,7 +1,12 @@
 ﻿// pruebaVulkan.cpp: define el punto de entrada de la aplicación de consola.
 // TODO optimizar los commandos que se lanzan al command buffer, haciendolos todos a la vez
+#include "../dependencies/imgui/misc/single_file/imgui_single_file.h"
+#include "../dependencies/imgui/backends/imgui_impl_glfw.h"
+#include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
@@ -47,7 +52,8 @@ void LoadModel(const char* _filepath, const char* _modelName)
 		}
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
-			m_ModelTriangles.push_back({{mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z},{1.f, 0.f, 0.f}});
+			m_ModelTriangles.push_back({{mesh->mVertices[v].x, mesh->mVertices[v].y,
+				mesh->mVertices[v].z},{1.f, 0.f, 0.f}});
 		}
 	}
 #if 0
@@ -72,7 +78,8 @@ void LoadModel(const char* _filepath, const char* _modelName)
  						auto idxAccessor = mesh->primitives[p].indices;
 						auto trigCount = idxAccessor->count/3;
  						unsigned int indices[idxAccessor->count];
-						cgltf_accessor_unpack_indices(mesh->primitives[p].indices, &indices, sizeof(unsigned int), idxAccessor->count);
+						cgltf_accessor_unpack_indices(mesh->primitives[p].indices, &indices,
+							sizeof(unsigned int), idxAccessor->count);
 // 						LOAD_ATTRIBUTE(idxAccessor, 1, unsigned short, indices)
 						for(cgltf_size i = 0; i < idxAccessor->count; i++)
 						{
@@ -221,10 +228,40 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	}
 	return VK_FALSE;
 }
-// INPUT CALLBACKS
-void MouseInputCallback(GLFWwindow* window, double xpos, double ypos)
-{
 
+static void check_vk_result(VkResult err)
+{
+	if (err == 0)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
+}
+// INPUT CALLBACKS
+void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
+{
+	float x_offset = (_xPos - m_LastXPosition);
+	float y_offset = (m_LastYPosition - _yPos);
+	float senseo = 0.1f;
+	m_LastXPosition = _xPos;
+	m_LastYPosition = _yPos;
+	if(m_MouseCaptured)
+	{
+		x_offset *= senseo;
+		y_offset *= senseo;
+		m_CameraYaw += y_offset;
+		m_CameraPitch += x_offset;
+		// CONSTRAINTS
+		if (m_CameraPitch > 89.0f)  m_CameraPitch = 89.0f;
+		if (m_CameraPitch< -89.0f) m_CameraPitch= -89.0f;
+		glm::vec3 camera_direction;
+		camera_direction.x = cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch)));
+		camera_direction.y = sin(glm::radians(m_CameraPitch));
+		camera_direction.z = sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch));
+		m_CameraForward = glm::normalize(camera_direction);
+		m_LastXPosition = _xPos;
+		m_LastYPosition = _yPos;
+	}
 }
 
 void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
@@ -232,19 +269,26 @@ void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _ac
 	auto state = glfwGetKey(_window, _key);
 	if (_key == GLFW_KEY_W && state)
 	{
-		m_CameraPos -= glm::vec3(0,0,0.1f);
+		m_CameraPos += m_CameraSpeed * m_CameraForward;
 	}
 	if (_key == GLFW_KEY_A && state)
 	{
-		m_CameraPos -= glm::vec3(0.1f,0,0);
+		m_CameraPos += m_CameraSpeed * glm::normalize(glm::cross(
+			m_CameraUp, m_CameraForward));
 	}
 	if (_key == GLFW_KEY_S && state)
 	{
-		m_CameraPos += glm::vec3(0,0,0.1f);
+		m_CameraPos -= m_CameraSpeed * m_CameraForward;
 	}
 	if (_key == GLFW_KEY_D && state)
 	{
-		m_CameraPos += glm::vec3(0.1f,0,0);
+		m_CameraPos -= m_CameraSpeed * glm::normalize(glm::cross(
+			m_CameraUp, m_CameraForward));
+	}
+
+	if (_key == GLFW_KEY_R && _action == GLFW_PRESS)
+	{
+		m_CameraPos = glm::vec3(0.f);
 	}
 
 	if (_key == GLFW_KEY_ESCAPE && state)
@@ -256,45 +300,49 @@ void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _ac
 void CleanSwapChain()
 {
 	for (auto& framebuffer : m_SwapChainFramebuffers)
-		vkDestroyFramebuffer(mLogicDevice, framebuffer, nullptr);
+		vkDestroyFramebuffer(m_LogicDevice, framebuffer, nullptr);
 	for (auto& imageView : m_SwapChainImagesViews)
-		vkDestroyImageView(mLogicDevice, imageView, nullptr);
-	vkDestroySwapchainKHR(mLogicDevice, m_SwapChain, nullptr);
+		vkDestroyImageView(m_LogicDevice, imageView, nullptr);
+	vkDestroySwapchainKHR(m_LogicDevice, m_SwapChain, nullptr);
 }
 
 void Cleanup()
 {
 	printf("Cleanup\n");
-	vkDeviceWaitIdle(mLogicDevice);
+	vkDeviceWaitIdle(m_LogicDevice);
 	if(m_Indices.size() > 0)
 	{
-		vkDestroyBuffer(mLogicDevice, m_IndexBuffer, nullptr);
-		vkFreeMemory(mLogicDevice, m_IndexBufferMemory, nullptr);
+		vkDestroyBuffer(m_LogicDevice, m_IndexBuffer, nullptr);
+		vkFreeMemory(m_LogicDevice, m_IndexBufferMemory, nullptr);
 	}
-	vkDestroyBuffer(mLogicDevice, m_VertexBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, m_VertexBufferMemory, nullptr);
+	vkDestroyBuffer(m_LogicDevice, m_VertexBuffer, nullptr);
+	vkFreeMemory(m_LogicDevice, m_VertexBufferMemory, nullptr);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroyBuffer(mLogicDevice, m_UniformBuffers[i], nullptr);
-		vkFreeMemory(mLogicDevice, m_UniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
+		vkFreeMemory(m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
 	}
-	vkDestroySemaphore(mLogicDevice, m_ImageAvailable[0], nullptr);
-	vkDestroySemaphore(mLogicDevice, m_ImageAvailable[1], nullptr);
-	vkDestroySemaphore(mLogicDevice, m_RenderFinish[0], nullptr);
-	vkDestroySemaphore(mLogicDevice, m_RenderFinish[1], nullptr);
-	vkDestroyFence(mLogicDevice, m_InFlight[0], nullptr);
-	vkDestroyFence(mLogicDevice, m_InFlight[1], nullptr);
-	vkDestroyCommandPool(mLogicDevice, m_CommandPool, nullptr);
-	vkDestroyPipeline(mLogicDevice, m_GraphicsPipeline, nullptr);
-	vkDestroyDescriptorPool(mLogicDevice, m_DescriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(mLogicDevice, m_DescSetLayout, nullptr);
-	vkDestroyPipelineLayout(mLogicDevice, m_PipelineLayout, nullptr);
-	vkDestroyRenderPass(mLogicDevice, m_RenderPass, nullptr);
+	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[0], nullptr);
+	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[1], nullptr);
+	vkDestroySemaphore(m_LogicDevice, m_RenderFinish[0], nullptr);
+	vkDestroySemaphore(m_LogicDevice, m_RenderFinish[1], nullptr);
+	vkDestroyFence(m_LogicDevice, m_InFlight[0], nullptr);
+	vkDestroyFence(m_LogicDevice, m_InFlight[1], nullptr);
+	vkDestroyCommandPool(m_LogicDevice, m_CommandPool, nullptr);
+	vkDestroyPipeline(m_LogicDevice, m_GraphicsPipeline, nullptr);
+	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
+	vkDestroyDescriptorPool(m_LogicDevice, m_DescriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
+	vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
+	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
+	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
 	CleanSwapChain();
-	vkDestroyImage(mLogicDevice, tImage, nullptr);
-	vkFreeMemory(mLogicDevice, tImageMemory, nullptr);
+	vkDestroySampler(m_LogicDevice, m_TextureSampler, nullptr);
+	vkDestroyImageView(m_LogicDevice, m_TextureImageView, nullptr);
+	vkDestroyImage(m_LogicDevice, m_TextureImage, nullptr);
+	vkFreeMemory(m_LogicDevice, m_TextureImageMemory, nullptr);
 	vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-	vkDestroyDevice(mLogicDevice, nullptr);
+	vkDestroyDevice(m_LogicDevice, nullptr);
 	if (m_DebugMessenger != nullptr)
 		DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 	vkDestroyInstance(m_Instance, nullptr);
@@ -335,7 +383,7 @@ void CreateLogicalDevice(VkPhysicalDevice* _phisicaldevice,
 	m_CreateInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 	m_CreateInfo.enabledLayerCount = 0;
 
-	if (vkCreateDevice(*_phisicaldevice, &m_CreateInfo, nullptr, &mLogicDevice) !=
+	if (vkCreateDevice(*_phisicaldevice, &m_CreateInfo, nullptr, &m_LogicDevice) !=
 		VK_SUCCESS)
 	{
 		printf("Failed to create Logical Device");
@@ -362,36 +410,8 @@ void CreateSwapChain()
 	m_SwapChainCreateInfo.presentMode = m_PresentMode;
 	m_SwapChainCreateInfo.clipped = VK_TRUE;
 	m_SwapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
-	if (vkCreateSwapchainKHR(mLogicDevice, &m_SwapChainCreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
+	if (vkCreateSwapchainKHR(m_LogicDevice, &m_SwapChainCreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
 		exit(-3);
-}
-
-void CreateImageViews()
-{
-	/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
-	m_SwapChainImagesViews.resize(m_SwapchainImagesCount);
-	int currentSwapchaingImageView = 0;
-	for (auto& image : m_SwapChainImages)
-	{
-		VkImageViewCreateInfo imageViewCreateInfo{};
-		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfo.image = image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = m_SurfaceFormat.format;
-		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-		imageViewCreateInfo.subresourceRange.levelCount = 1;
-		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-		imageViewCreateInfo.subresourceRange.layerCount = 1;
-		if (vkCreateImageView(mLogicDevice, &imageViewCreateInfo, nullptr,
-			&m_SwapChainImagesViews[currentSwapchaingImageView]) != VK_SUCCESS)
-			exit(-4);
-		++currentSwapchaingImageView;
-	}
 }
 
 void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule)
@@ -403,7 +423,7 @@ void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule)
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	shaderModuleCreateInfo.codeSize = shadercode.size();
 	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shadercode.data());
-	if (vkCreateShaderModule(mLogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
+	if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
 		!= VK_SUCCESS)
 		exit(-5);
 }
@@ -491,7 +511,7 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings = &uboLayoutBinding;
-	if(vkCreateDescriptorSetLayout(mLogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
+	if(vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
 		exit(-99);
 
 	/// Pipeline Layout
@@ -501,7 +521,7 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_PipelineLayoutCreateInfo.pSetLayouts = &m_DescSetLayout;
 	m_PipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	m_PipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-	if (vkCreatePipelineLayout(mLogicDevice, &m_PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(m_LogicDevice, &m_PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		exit(-7);
 }
 
@@ -543,8 +563,19 @@ void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
 	m_RenderPassInfo.pSubpasses = &m_Subpass;
 	m_RenderPassInfo.dependencyCount = 1;
 	m_RenderPassInfo.pDependencies = &m_SubpassDep;
-	if (vkCreateRenderPass(mLogicDevice, &m_RenderPassInfo, nullptr,
+	if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
 		&m_RenderPass) != VK_SUCCESS)
+		exit(-8);
+
+	m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	m_RenderPassInfo.attachmentCount = 1;
+	m_RenderPassInfo.pAttachments = &m_ColorAttachment;
+	m_RenderPassInfo.subpassCount = 1;
+	m_RenderPassInfo.pSubpasses = &m_Subpass;
+	m_RenderPassInfo.dependencyCount = 1;
+	m_RenderPassInfo.pDependencies = &m_SubpassDep;
+	if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
+		&m_UIRenderPass) != VK_SUCCESS)
 		exit(-8);
 }
 
@@ -556,7 +587,7 @@ VkCommandBuffer BeginSingleTimeCommandBuffer()
 	mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	mAllocInfo.commandBufferCount = 1;
 	VkCommandBuffer commandBuffer;
-	if (vkAllocateCommandBuffers(mLogicDevice, &mAllocInfo, &commandBuffer) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(m_LogicDevice, &mAllocInfo, &commandBuffer) != VK_SUCCESS)
 		exit(-12);
 	VkCommandBufferBeginInfo mBeginInfo{};
 	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -575,7 +606,7 @@ void EndSingleTimeCommandBuffer(VkCommandBuffer _commandBuffer)
 
 	vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(m_GraphicsQueue);
-	vkFreeCommandBuffers(mLogicDevice, m_CommandPool, 1, &_commandBuffer);
+	vkFreeCommandBuffers(m_LogicDevice, m_CommandPool, 1, &_commandBuffer);
 
 }
 void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size)
@@ -642,6 +673,94 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 	EndSingleTimeCommandBuffer(commandBuffer);
 }
 
+VkImageView CreateImageView(VkImage _tImage, VkFormat _format)
+{
+	VkImageView tImageView;
+	VkImageViewCreateInfo viewInfo {};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = _tImage;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = _format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+	VK_ASSERT(vkCreateImageView(m_LogicDevice, &viewInfo, nullptr, &tImageView));
+	return tImageView;
+}
+
+void CreateImageViews()
+{
+	/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
+	m_SwapChainImagesViews.resize(m_SwapchainImagesCount);
+	int currentSwapchaingImageView = 0;
+	for (auto& image : m_SwapChainImages)
+	{
+		m_SwapChainImagesViews[currentSwapchaingImageView] = CreateImageView(image, m_SurfaceFormat.format);
+		++currentSwapchaingImageView;
+	}
+}
+
+void CreateTextureImageView()
+{
+	m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+}
+
+void CreateTextureSampler()
+{
+	VkPhysicalDeviceProperties deviceProp;
+	VkSamplerCreateInfo samplerInfo {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	vkGetPhysicalDeviceProperties(m_PhysicalDevices[m_GPUSelected], &deviceProp);
+	samplerInfo.maxAnisotropy = deviceProp.limits.maxSamplerAnisotropy;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.f;
+	samplerInfo.minLod = 0.f;
+	samplerInfo.maxLod = 0.f;
+	VK_ASSERT(vkCreateSampler(m_LogicDevice, &samplerInfo,nullptr, &m_TextureSampler));
+}
+
+void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx, ImDrawData* draw_data)
+{
+	// Record command buffer
+	VkCommandBufferBeginInfo mBeginInfo{};
+	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	mBeginInfo.flags = 0;
+	mBeginInfo.pInheritanceInfo = nullptr;
+	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
+		exit(-13);
+	VkClearValue m_ClearColor = { {{0.f, 0.f, 0.f, 0.5f}} };
+
+	// IMGUI renderPass
+	VkRenderPassBeginInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	info.renderPass = m_UIRenderPass;
+	info.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+	info.renderArea.extent = m_CurrentExtent;
+	info.clearValueCount = 1;
+	info.pClearValues = &m_ClearColor;
+	vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+	// Record dear imgui primitives into command buffer
+	ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
+	// Submit command buffer
+	vkCmdEndRenderPass(_commandBuffer);
+	// -- IMGUI renderPass
+
+	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
+		exit(-17);
+}
+
 void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx)
 {
 	// Record command buffer
@@ -683,7 +802,6 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 					 1, 0, 0, 0);
 	else
 		vkCmdDraw(_commandBuffer, m_ModelTriangles.size(), 1, 0, 0);
-
 	vkCmdEndRenderPass(_commandBuffer);
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
@@ -706,7 +824,7 @@ void CreateFramebuffers()
 		mFramebufferInfo.width = m_CurrentExtent.width;
 		mFramebufferInfo.height = m_CurrentExtent.height;
 		mFramebufferInfo.layers = 1;
-		if (vkCreateFramebuffer(mLogicDevice, &mFramebufferInfo, nullptr,
+		if (vkCreateFramebuffer(m_LogicDevice, &mFramebufferInfo, nullptr,
 			&m_SwapChainFramebuffers[i]) != VK_SUCCESS)
 			exit(-10);
 	}
@@ -721,14 +839,14 @@ void CreateCommandBuffer()
 	m_PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	m_PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	m_PoolInfo.queueFamilyIndex = m_GraphicsQueueFamilyIndex;
-	if (vkCreateCommandPool(mLogicDevice, &m_PoolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
+	if (vkCreateCommandPool(m_LogicDevice, &m_PoolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
 		exit(-11);
 	VkCommandBufferAllocateInfo mAllocInfo{};
 	mAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	mAllocInfo.commandPool = m_CommandPool;
 	mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	mAllocInfo.commandBufferCount = 2;
-	if (vkAllocateCommandBuffers(mLogicDevice, &mAllocInfo, m_CommandBuffer) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(m_LogicDevice, &mAllocInfo, m_CommandBuffer) != VK_SUCCESS)
 		exit(-12);
 }
 
@@ -740,9 +858,9 @@ void CreateSyncObjects(unsigned int _frameIdx)
 	VkFenceCreateInfo mFenceInfo{};
 	mFenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	mFenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-	if (vkCreateSemaphore(mLogicDevice, &m_SemaphoreInfo, nullptr, &m_ImageAvailable[_frameIdx]) != VK_SUCCESS
-		|| vkCreateSemaphore(mLogicDevice, &m_SemaphoreInfo, nullptr, &m_RenderFinish[_frameIdx]) != VK_SUCCESS
-		|| vkCreateFence(mLogicDevice, &mFenceInfo, nullptr, &m_InFlight[_frameIdx]) != VK_SUCCESS
+	if (vkCreateSemaphore(m_LogicDevice, &m_SemaphoreInfo, nullptr, &m_ImageAvailable[_frameIdx]) != VK_SUCCESS
+		|| vkCreateSemaphore(m_LogicDevice, &m_SemaphoreInfo, nullptr, &m_RenderFinish[_frameIdx]) != VK_SUCCESS
+		|| vkCreateFence(m_LogicDevice, &mFenceInfo, nullptr, &m_InFlight[_frameIdx]) != VK_SUCCESS
 		)
 		exit(-666);
 }
@@ -757,13 +875,13 @@ void RecreateSwapChain()
 		glfwGetFramebufferSize(m_Window, &width, &height);
 		glfwWaitEvents();
 	}
-	vkDeviceWaitIdle(mLogicDevice);
+	vkDeviceWaitIdle(m_LogicDevice);
 	// Esperamos a que termine de pintarse y recreamos la swapchain con los nuevos parametros
 	CleanSwapChain();
 	CreateSwapChain();
-	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
+	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
-	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
+	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
 	CreateFramebuffers();
 	m_NeedToRecreateSwapchain = false;
@@ -789,30 +907,33 @@ void RecreateSwapChain()
 void DrawFrame()
 {
 	// Esperamos por el frame anterior y reseteamos la Fence
-	vkWaitForFences(mLogicDevice, 1, &m_InFlight[m_CurrentLocalFrame], VK_TRUE, UINT64_MAX);
-	vkResetFences(mLogicDevice, 1, &m_InFlight[m_CurrentLocalFrame]);
+	vkWaitForFences(m_LogicDevice, 1, &m_InFlight[m_CurrentLocalFrame], VK_TRUE, UINT64_MAX);
+	vkResetFences(m_LogicDevice, 1, &m_InFlight[m_CurrentLocalFrame]);
 	vkResetCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], 0);
 	uint32_t imageIdx;
-	vkAcquireNextImageKHR(mLogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[m_CurrentLocalFrame],
+	vkAcquireNextImageKHR(m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[m_CurrentLocalFrame],
 		VK_NULL_HANDLE, &imageIdx);
 
 	// Update Uniform buffers
-	static auto startTime = std::chrono::high_resolution_clock::now();
-	auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+// 	static auto startTime = std::chrono::high_resolution_clock::now();
+// 	auto currentTime = std::chrono::high_resolution_clock::now();
+// //     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 	UniformBufferObject ubo {};
-	ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f),
-							glm::vec3(0.f, 0.f, 1.f));
+ 	ubo.model = glm::mat4(1.f);
 // 	glm::translate(ubo.model, glm::vec3(0.f, time * glm::radians(10.f), 0.f));
 
-	ubo.view = glm::lookAt(m_CameraPos, glm::vec3(0.f, 0.f, 0.f),
-						   glm::vec3(0.f, 0.f, 1.f));
+	ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
+						   m_CameraUp);
 
 	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 10.f);
 
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	memcpy(m_Uniform_SBuffersMapped[m_CurrentLocalFrame], &ubo, sizeof(ubo));
 
+	// Render ImGui
+	ImGui::Render();
+	ImDrawData* draw_data = ImGui::GetDrawData();
+	UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
 	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame);
 
 	VkSubmitInfo submitInfo{};
@@ -878,10 +999,10 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 	mBufferInfo.pQueueFamilyIndices = queueFamilyIndices;
 	mBufferInfo.queueFamilyIndexCount = 2;
 
-	if(vkCreateBuffer(mLogicDevice, &mBufferInfo, nullptr, &buffer_) != VK_SUCCESS)
+	if(vkCreateBuffer(m_LogicDevice, &mBufferInfo, nullptr, &buffer_) != VK_SUCCESS)
 		exit(-6);
 	VkMemoryRequirements mem_Requ;
-	vkGetBufferMemoryRequirements(mLogicDevice, buffer_, &mem_Requ);
+	vkGetBufferMemoryRequirements(m_LogicDevice, buffer_, &mem_Requ);
 
 	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
 
@@ -889,11 +1010,10 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = mem_Requ.size;
 	allocInfo.memoryTypeIndex = FindMemoryType(mem_Requ.memoryTypeBits, _memFlags);
-	if(vkAllocateMemory(mLogicDevice, &allocInfo, nullptr, &bufferMem_) != VK_SUCCESS)
+	if(vkAllocateMemory(m_LogicDevice, &allocInfo, nullptr, &bufferMem_) != VK_SUCCESS)
 		exit(-8);
 
-	vkBindBufferMemory(mLogicDevice, buffer_, bufferMem_, 0);
-
+	vkBindBufferMemory(m_LogicDevice, buffer_, bufferMem_, 0);
 }
 
 int main(int _argc, char** _args)
@@ -902,8 +1022,8 @@ int main(int _argc, char** _args)
 	const char** mExtensions;
 	glm::mat4 m_matrix;
 	glm::vec4 m_vec;
-	const int m_Width = 800;
-	const int m_Height = 600;
+	const int m_Width = 1280;
+	const int m_Height = 720;
 // 	cgltf_data* m_ModelData;
 	if(_argc >= 1)
 	{
@@ -950,6 +1070,12 @@ int main(int _argc, char** _args)
 	glfwSetFramebufferSizeCallback(m_Window, FramebufferResizeCallback);
 	glfwSetKeyCallback(m_Window, KeyboardInputCallback);
 	glfwSetCursorPosCallback(m_Window, MouseInputCallback);
+	glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+	// INICIALIZAMOS IMGUI
+//   	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui_ImplGlfw_InitForVulkan(m_Window, true);
 	/// Create the Debug Messenger
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 	debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -1047,8 +1173,8 @@ int main(int _argc, char** _args)
 
 	// Create logical device associated to physical device
 	CreateLogicalDevice(&m_PhysicalDevices[m_GPUSelected], &deviceFeatures[m_GPUSelected]);
-	vkGetDeviceQueue(mLogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_GraphicsQueue);
-	vkGetDeviceQueue(mLogicDevice, m_TransferQueueFamilyIndex, 0, &m_TransferQueue);
+	vkGetDeviceQueue(m_LogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_GraphicsQueue);
+	vkGetDeviceQueue(m_LogicDevice, m_TransferQueueFamilyIndex, 0, &m_TransferQueue);
 
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
@@ -1060,7 +1186,7 @@ int main(int _argc, char** _args)
 	vkGetPhysicalDeviceSurfaceSupportKHR(m_PhysicalDevices[m_GPUSelected], m_GraphicsQueueFamilyIndex, m_Surface, &presentSupport);
 	if (!presentSupport)
 		printf("CANNOT PRESENT ON THIS DEVICE: %s\n", deviceProp[m_GPUSelected].deviceName);
-	vkGetDeviceQueue(mLogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_PresentQueue);
+	vkGetDeviceQueue(m_LogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_PresentQueue);
 
 	/* Ahora tenemos que ver que nuestro device soporta la swapchain
 	 * y sus capacidades.
@@ -1105,9 +1231,9 @@ int main(int _argc, char** _args)
 	m_SwapchainImagesCount = m_Capabilities.minImageCount;
 
 	CreateSwapChain();
-	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
+	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
-	vkGetSwapchainImagesKHR(mLogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
+	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
 
 	/// Vamos a crear los shader module para cargar el bytecode de los shaders
@@ -1161,14 +1287,15 @@ int main(int _argc, char** _args)
 	m_PipelineInfoCreateInfo.basePipelineIndex = -1;
 	m_GraphicsPipeline = VkPipeline {};
 
-	if (vkCreateGraphicsPipelines(mLogicDevice, VK_NULL_HANDLE, 1, &m_PipelineInfoCreateInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
+	if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &m_PipelineInfoCreateInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
 		exit(-9);
 	// Destruymos los ShaderModule ahora que ya no se necesitan.
-	vkDestroyShaderModule(mLogicDevice, m_VertShaderModule, nullptr);
-	vkDestroyShaderModule(mLogicDevice, mFragShaderModule, nullptr);
+	vkDestroyShaderModule(m_LogicDevice, m_VertShaderModule, nullptr);
+	vkDestroyShaderModule(m_LogicDevice, mFragShaderModule, nullptr);
 
 	CreateFramebuffers();
 	CreateCommandBuffer();
+
 	// Crear Textures
 	int tWidth, tHeight, tChannels;
 	stbi_uc* pixels = stbi_load("resources/Textures/texture.jpg", &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
@@ -1182,9 +1309,9 @@ int main(int _argc, char** _args)
 			  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			  m_StagingBuffer, m_StaggingBufferMemory);
 	void* data;
-	vkMapMemory(mLogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
+	vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
 	memcpy(data, pixels, (size_t) tSize);
-	vkUnmapMemory(mLogicDevice, m_StaggingBufferMemory);
+	vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
 	stbi_image_free(pixels);
 	VkImageCreateInfo tImageInfo{};
 	tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1201,20 +1328,20 @@ int main(int _argc, char** _args)
 	tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	tImageInfo.flags = 0;
-	VK_CHECK(vkCreateImage(mLogicDevice, &tImageInfo, nullptr, &tImage));
+	VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, &m_TextureImage));
 	VkMemoryRequirements memRequ;
-	vkGetImageMemoryRequirements(mLogicDevice, tImage, &memRequ);
+	vkGetImageMemoryRequirements(m_LogicDevice, m_TextureImage, &memRequ);
 	VkMemoryAllocateInfo tAllocInfo {};
 	tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	tAllocInfo.allocationSize = memRequ.size;
 	tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(mLogicDevice, &tAllocInfo, nullptr, &tImageMemory));
-	vkBindImageMemory(mLogicDevice, tImage, tImageMemory, 0);
-	TransitionImageLayout(tImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight));
-	TransitionImageLayout(tImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	vkDestroyBuffer(mLogicDevice, m_StagingBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, m_StaggingBufferMemory, nullptr);
+	VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_TextureImageMemory));
+	vkBindImageMemory(m_LogicDevice, m_TextureImage, m_TextureImageMemory, 0);
+	TransitionImageLayout(m_TextureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	CopyBufferToImage(m_StagingBuffer, m_TextureImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight));
+	TransitionImageLayout(m_TextureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+	vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
 
 	// Vertex buffer
 	if(m_ModelTriangles.size() <= 0)
@@ -1231,9 +1358,9 @@ int main(int _argc, char** _args)
 			  m_StagingBuffer, m_StaggingBufferMemory);
 // 	void* data;
 	data = nullptr;
-	vkMapMemory(mLogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+	vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, m_ModelTriangles.data(), (size_t) bufferSize);
-	vkUnmapMemory(mLogicDevice, m_StaggingBufferMemory);
+	vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
 	CreateBuffer(bufferSize,
 				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 				 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -1241,8 +1368,8 @@ int main(int _argc, char** _args)
 				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			  m_VertexBuffer, m_VertexBufferMemory);
 	CopyBuffer(m_VertexBuffer, m_StagingBuffer, bufferSize);
-	vkDestroyBuffer(mLogicDevice, m_StagingBuffer, nullptr);
-	vkFreeMemory(mLogicDevice, m_StaggingBufferMemory, nullptr);
+	vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+	vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
 
 	if(m_Indices.size() > 0)
 	{
@@ -1254,9 +1381,9 @@ int main(int _argc, char** _args)
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
-		vkMapMemory(mLogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+		vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, m_Indices.data(), (size_t) bufferSize);
-		vkUnmapMemory(mLogicDevice, m_StaggingBufferMemory);
+		vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
 		CreateBuffer(bufferSize,
 					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 					VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -1264,8 +1391,8 @@ int main(int _argc, char** _args)
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				m_IndexBuffer, m_IndexBufferMemory);
 		CopyBuffer(m_IndexBuffer, m_StagingBuffer, bufferSize);
-		vkDestroyBuffer(mLogicDevice, m_StagingBuffer, nullptr);
-		vkFreeMemory(mLogicDevice, m_StaggingBufferMemory, nullptr);
+		vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+		vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
 	}
 	// Uniform buffers
 	m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
@@ -1279,7 +1406,7 @@ int main(int _argc, char** _args)
 				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			  m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-		vkMapMemory(mLogicDevice, m_UniformBuffersMemory[i], 0,
+		vkMapMemory(m_LogicDevice, m_UniformBuffersMemory[i], 0,
 					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
 	}
 	// Descriptor Pool
@@ -1291,8 +1418,46 @@ int main(int _argc, char** _args)
 	descPoolInfo.poolSizeCount = 1;
 	descPoolInfo.pPoolSizes = &descPoolSize;
 	descPoolInfo.maxSets = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-	if(vkCreateDescriptorPool(mLogicDevice, &descPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+	if(vkCreateDescriptorPool(m_LogicDevice, &descPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
 		exit(-66);
+	// UI descriptor Pool
+	VkDescriptorPoolSize pool_sizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+	};
+	VkDescriptorPoolCreateInfo pool_info = {};
+	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+	pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+	pool_info.pPoolSizes = pool_sizes;
+	VK_CHECK(vkCreateDescriptorPool(m_LogicDevice, &pool_info, nullptr, &m_UIDescriptorPool));
+
+	// IMGUI
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.Instance = m_Instance;
+	init_info.PhysicalDevice = m_PhysicalDevices[m_GPUSelected];
+	init_info.Device = m_LogicDevice;
+	init_info.QueueFamily = m_GraphicsQueueFamilyIndex;
+	init_info.Queue = m_GraphicsQueue;
+	init_info.PipelineCache = VK_NULL_HANDLE;
+	init_info.DescriptorPool = m_UIDescriptorPool;
+	init_info.Allocator = nullptr;
+	init_info.MinImageCount = m_Capabilities.minImageCount;
+	init_info.ImageCount = m_SwapchainImagesCount;
+	init_info.CheckVkResultFn = nullptr;
+	ImGui_ImplVulkan_Init(&init_info, m_RenderPass);
+
 	// Descriptor Sets
 	std::vector<VkDescriptorSetLayout> m_DescLayouts(FRAMES_IN_FLIGHT, m_DescSetLayout);
 	VkDescriptorSetAllocateInfo descAllocInfo {};
@@ -1302,7 +1467,7 @@ int main(int _argc, char** _args)
 	descAllocInfo.pSetLayouts = m_DescLayouts.data();
 
 	m_DescriptorSets.resize(FRAMES_IN_FLIGHT);
-	if(vkAllocateDescriptorSets(mLogicDevice, &descAllocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
+	if(vkAllocateDescriptorSets(m_LogicDevice, &descAllocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
 		exit(-67);
 
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -1322,7 +1487,7 @@ int main(int _argc, char** _args)
 		descriptorWrite.pBufferInfo = &bufferInfo;
 		descriptorWrite.pImageInfo = nullptr;
 		descriptorWrite.pTexelBufferView = nullptr;
-		vkUpdateDescriptorSets(mLogicDevice, 1, &descriptorWrite, 0, nullptr);
+		vkUpdateDescriptorSets(m_LogicDevice, 1, &descriptorWrite, 0, nullptr);
 	}
 
 	RecordCommandBuffer(m_CommandBuffer[0], 0, 0);
@@ -1334,6 +1499,14 @@ int main(int _argc, char** _args)
 	{
 		glfwPollEvents();
 		// Draw a Frame!
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGui::Begin("World");
+		{
+			ImGui::End();
+		}
+		ImGui::EndFrame();
 		DrawFrame();
 // 		if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
 // 			&& m_NeedToRecreateSwapchain)
@@ -1342,6 +1515,9 @@ int main(int _argc, char** _args)
 // 			exit(-69);
 		m_CurrentLocalFrame = (m_CurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
 	}
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	Cleanup();
 
 	return 0;
