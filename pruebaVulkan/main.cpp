@@ -4,6 +4,7 @@
 #include "../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #include <cstdint>
+#include <cstdio>
 #include <sys/types.h>
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -30,6 +31,7 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <unordered_map>
 
 #include "defines.h"
 #include "debugUtils.h"
@@ -60,6 +62,10 @@ void LoadModel(const char* _filepath, const char* _modelName)
 				{mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y},
 				{mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z}
 				});
+			int texIndex = 0;
+			aiString path;
+			scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+			m_ModelTextures[mesh->mMaterialIndex] = Texture(std::string(path.data));
 		}
 	}
 #if 0
@@ -353,9 +359,12 @@ void Cleanup()
 	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
 	CleanSwapChain();
 	vkDestroySampler(m_LogicDevice, m_TextureSampler, nullptr);
-	vkDestroyImageView(m_LogicDevice, m_TextureImageView, nullptr);
-	vkDestroyImage(m_LogicDevice, m_TextureImage, nullptr);
-	vkFreeMemory(m_LogicDevice, m_TextureImageMemory, nullptr);
+	for(auto [idx, texture] : m_ModelTextures)
+	{
+		vkDestroyImageView(m_LogicDevice, m_ModelTextures[idx].tImageView, nullptr);
+		vkDestroyImage(m_LogicDevice, m_ModelTextures[idx].tImage, nullptr);
+		vkFreeMemory(m_LogicDevice, m_ModelTextures[idx].tImageMem, nullptr);
+	}
 	vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 	vkDestroyDevice(m_LogicDevice, nullptr);
 	if (m_DebugMessenger != nullptr)
@@ -725,9 +734,9 @@ void CreateImageViews()
 	}
 }
 
-void CreateTextureImageView()
+VkImageView CreateTextureImageView(VkImage _tImage)
 {
-	m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	return CreateImageView(_tImage, VK_FORMAT_R8G8B8A8_SRGB);
 }
 
 void CreateTextureSampler()
@@ -908,8 +917,8 @@ void RecreateSwapChain()
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
 	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
-	CreateTextureImageView();
-	CreateTextureSampler();
+	// CreateTextureImageView();
+	// CreateTextureSampler();
 	CreateFramebuffers();
 	m_NeedToRecreateSwapchain = false;
 }
@@ -1044,10 +1053,11 @@ void EditorLoop()
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	ImGui::Begin("Light");
+	ImGui::Begin("Tools");
 	{
 		float tempLightPos[3];
 		ImGui::SliderFloat3("Light Position", tempLightPos, 0.1f, 1.f);
+		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
 		ImGui::End();
 	}
 	ImGui::Begin("DEBUG PANEL");
@@ -1066,9 +1076,9 @@ int main(int _argc, char** _args)
 	const int m_Width = 1280;
 	const int m_Height = 720;
 // 	cgltf_data* m_ModelData;
+	char modelPath[512], modelName[64];
 	if(_argc >= 1)
 	{
-		char modelPath[512], modelName[64];
 		sprintf(modelPath, "resources/Models/%s/glTF/", _args[1]);
 		sprintf(modelName, "%s.gltf", _args[1]);
 		printf("\n\tApplication launched with Params(%s): %s", modelPath, modelName);
@@ -1339,51 +1349,56 @@ int main(int _argc, char** _args)
 
 	// Crear Textures
 	int tWidth, tHeight, tChannels;
-	stbi_uc* pixels = stbi_load("resources/Textures/texture.jpg", &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
-	VkDeviceSize tSize = tWidth * tHeight * 4;
-	if(tSize < 0)
+	for(auto [idx, texture] : m_ModelTextures)
 	{
-		printf("No Pixels: %zd", tSize);
-		exit(-69);
+		char textPath[512];
+		sprintf(textPath, "%s%s", modelPath, texture.sPath.c_str());
+		stbi_uc* pixels = stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+		VkDeviceSize tSize = tWidth * tHeight * 4;
+		if(tSize < 0)
+		{
+			printf("No Pixels: %zd", tSize);
+			exit(-69);
+		}
+		CreateBuffer(tSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				m_StagingBuffer, m_StaggingBufferMemory);
+		void* data;
+		vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
+		memcpy(data, pixels, (size_t) tSize);
+		vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
+		stbi_image_free(pixels);
+		VkImageCreateInfo tImageInfo{};
+		tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		tImageInfo.imageType = VK_IMAGE_TYPE_2D;
+		tImageInfo.extent.width  = static_cast<uint32_t>(tWidth);
+		tImageInfo.extent.height = static_cast<uint32_t>(tHeight);
+		tImageInfo.extent.depth = 1;
+		tImageInfo.mipLevels = 1;
+		tImageInfo.arrayLayers = 1;
+		tImageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		tImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		tImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		tImageInfo.flags = 0;
+		VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, &m_ModelTextures[idx].tImage));
+		VkMemoryRequirements memRequ;
+		vkGetImageMemoryRequirements(m_LogicDevice, m_ModelTextures[idx].tImage, &memRequ);
+		VkMemoryAllocateInfo tAllocInfo {};
+		tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		tAllocInfo.allocationSize = memRequ.size;
+		tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_ModelTextures[idx].tImageMem));
+		vkBindImageMemory(m_LogicDevice, m_ModelTextures[idx].tImage, m_ModelTextures[idx].tImageMem, 0);
+		TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		CopyBufferToImage(m_StagingBuffer, m_ModelTextures[idx].tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight));
+		TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+		vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
+		m_ModelTextures[idx].tImageView = CreateTextureImageView(m_ModelTextures[idx].tImage);
 	}
-	CreateBuffer(tSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-			  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			  m_StagingBuffer, m_StaggingBufferMemory);
-	void* data;
-	vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
-	memcpy(data, pixels, (size_t) tSize);
-	vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
-	stbi_image_free(pixels);
-	VkImageCreateInfo tImageInfo{};
-	tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	tImageInfo.imageType = VK_IMAGE_TYPE_2D;
-	tImageInfo.extent.width  = static_cast<uint32_t>(tWidth);
-	tImageInfo.extent.height = static_cast<uint32_t>(tHeight);
-	tImageInfo.extent.depth = 1;
-	tImageInfo.mipLevels = 1;
-	tImageInfo.arrayLayers = 1;
-	tImageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-	tImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	tImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	tImageInfo.flags = 0;
-	VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, &m_TextureImage));
-	VkMemoryRequirements memRequ;
-	vkGetImageMemoryRequirements(m_LogicDevice, m_TextureImage, &memRequ);
-	VkMemoryAllocateInfo tAllocInfo {};
-	tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	tAllocInfo.allocationSize = memRequ.size;
-	tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_TextureImageMemory));
-	vkBindImageMemory(m_LogicDevice, m_TextureImage, m_TextureImageMemory, 0);
-	TransitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	CopyBufferToImage(m_StagingBuffer, m_TextureImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight));
-	TransitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
-	vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
-	CreateTextureImageView();
 	CreateTextureSampler();
 
 	// Vertex buffer
@@ -1400,7 +1415,7 @@ int main(int _argc, char** _args)
 				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			  m_StagingBuffer, m_StaggingBufferMemory);
 // 	void* data;
-	data = nullptr;
+	void* data;
 	vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 	memcpy(data, m_ModelTriangles.data(), (size_t) bufferSize);
 	vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
@@ -1524,12 +1539,7 @@ int main(int _argc, char** _args)
 		bufferInfo.buffer = m_UniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
-
-		VkDescriptorImageInfo textureimage {};
-		textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		textureimage.imageView = m_TextureImageView;
-		textureimage.sampler = m_TextureSampler;
-
+		
 		std::array<VkWriteDescriptorSet, 2> descriptorsWrite {};
 		descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorsWrite[0].dstSet = m_DescriptorSets[i];
@@ -1540,6 +1550,12 @@ int main(int _argc, char** _args)
 		descriptorsWrite[0].pBufferInfo = &bufferInfo;
 		descriptorsWrite[0].pImageInfo = nullptr;
 		descriptorsWrite[0].pTexelBufferView = nullptr;
+		// Textures
+		VkDescriptorImageInfo textureimage {};
+		textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		textureimage.imageView = m_ModelTextures[0].tImageView;
+		textureimage.sampler = m_TextureSampler;
+
 
 		descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorsWrite[1].dstSet = m_DescriptorSets[i];
@@ -1550,7 +1566,8 @@ int main(int _argc, char** _args)
 		descriptorsWrite[1].pBufferInfo = nullptr;
 		descriptorsWrite[1].pImageInfo = &textureimage;
 		descriptorsWrite[1].pTexelBufferView = nullptr;
-		
+		g_ConsoleMSG += m_ModelTextures[0].sPath;
+		g_ConsoleMSG += '\n';
 		vkUpdateDescriptorSets(m_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 	}
 

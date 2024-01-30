@@ -5,32 +5,11 @@ layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosition;
 layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 normal;
+layout(location = 4) in vec3 lightPosition;
+layout(location = 5) in vec3 viewerPosition;
 
 layout(location = 0) out vec4 outColor;
 
-struct DirectionalLight 
-{
-	vec3 direction;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	vec3 color;
-};
-
-struct PointLight
-{
-	vec3 position;
-
-	float k_constant;
-	float k_linear;
-	float k_quadratic;
-};
-
-struct SpotLight 
-{
-	float cutoff;
-	float outer_cutoff;
-};
 vec3 LightPosition = vec3(1.f, 1.f, 1.f);
 vec3 ViewerPosition = vec3(0.f, 0.f, 0.f);
 vec3 Normal = vec3(0.f, 1.f, 0.f);

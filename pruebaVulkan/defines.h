@@ -99,6 +99,23 @@ const std::vector<Vertex2D> m_TriangleVertices =
 };
 std::vector<Vertex3D> m_ModelTriangles;
 
+struct Texture 
+{
+	std::string sPath;
+	VkImage tImage;
+	VkDeviceMemory tImageMem;
+	VkImageView tImageView;
+	Texture()
+	{
+		sPath[0] = 0;
+	}
+	Texture(std::string _path)
+	{
+		sPath= _path;
+	}
+};
+std::unordered_map<unsigned int, Texture> m_ModelTextures;
+
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
 const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
 
