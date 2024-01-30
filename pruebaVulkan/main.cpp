@@ -3,6 +3,8 @@
 #include "../dependencies/imgui/misc/single_file/imgui_single_file.h"
 #include "../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#include <cstdint>
+#include <sys/types.h>
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -53,7 +55,11 @@ void LoadModel(const char* _filepath, const char* _modelName)
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
 			m_ModelTriangles.push_back({{mesh->mVertices[v].x, mesh->mVertices[v].y,
-				mesh->mVertices[v].z},{1.f, 0.f, 0.f}});
+				mesh->mVertices[v].z},
+				{1.f, 0.f, 0.f}, 
+				{mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y},
+				{mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z}
+				});
 		}
 	}
 #if 0
@@ -64,8 +70,6 @@ void LoadModel(const char* _filepath, const char* _modelName)
 	if(cgltf_validate(modelData) == cgltf_result_success)
 	{
 		printf("\nModel file validated");
-// 		for (cgltf_size s = 0; s < modelData->scenes_count; ++s)
-// 		{
 			for (cgltf_size n = 0; n < modelData->meshes_count; ++n)
 			{
 				auto mesh = &modelData->meshes[n];
@@ -80,7 +84,6 @@ void LoadModel(const char* _filepath, const char* _modelName)
  						unsigned int indices[idxAccessor->count];
 						cgltf_accessor_unpack_indices(mesh->primitives[p].indices, &indices,
 							sizeof(unsigned int), idxAccessor->count);
-// 						LOAD_ATTRIBUTE(idxAccessor, 1, unsigned short, indices)
 						for(cgltf_size i = 0; i < idxAccessor->count; i++)
 						{
 							m_Indices.push_back(indices[i]);
@@ -94,8 +97,6 @@ void LoadModel(const char* _filepath, const char* _modelName)
 								auto index 	  = mesh->primitives[p].attributes[a].index;
 								cgltf_size element_size = cgltf_calc_size(accessor->type, accessor->component_type);
 								float position[element_size];
-								/*cgltf_accessor_unpack_floats(accessor, position,element_size);*/
-// 								cgltf_accessor_unpack_floats(accessor, position, element_size)
 								if(cgltf_accessor_unpack_floats(accessor, position, element_size))
 									for(size_t pos = 0; pos < element_size/3; pos++)
 									{
@@ -112,7 +113,6 @@ void LoadModel(const char* _filepath, const char* _modelName)
 					}
 				}
 			}
-// 		}
 	}
 	else
 		exit(-88);
@@ -203,6 +203,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
 		fprintf(stderr, "\tMessage PERFORMANCE: %s\n", pCallbackData->pMessage);
+		g_ConsoleMSG += "\tMessage PERFORMANCE:";
+		g_ConsoleMSG += pCallbackData->pMessage;
 		break;
 	default:
 		break;
@@ -249,8 +251,8 @@ void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 	{
 		x_offset *= senseo;
 		y_offset *= senseo;
-		m_CameraYaw += y_offset;
-		m_CameraPitch += x_offset;
+		m_CameraYaw += x_offset;
+		m_CameraPitch += y_offset;
 		// CONSTRAINTS
 		if (m_CameraPitch > 89.0f)  m_CameraPitch = 89.0f;
 		if (m_CameraPitch< -89.0f) m_CameraPitch= -89.0f;
@@ -262,6 +264,16 @@ void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 		m_LastXPosition = _xPos;
 		m_LastYPosition = _yPos;
 	}
+}
+
+void MouseBPressCallback(GLFWwindow* _window, int _button, int _action, int _mods)
+{
+	if (_button == GLFW_MOUSE_BUTTON_RIGHT && _action == GLFW_PRESS && !m_MouseCaptured)
+	{
+		m_MouseCaptured = true;
+	}
+	else
+		m_MouseCaptured = false;
 }
 
 void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
@@ -310,6 +322,9 @@ void Cleanup()
 {
 	printf("Cleanup\n");
 	vkDeviceWaitIdle(m_LogicDevice);
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	if(m_Indices.size() > 0)
 	{
 		vkDestroyBuffer(m_LogicDevice, m_IndexBuffer, nullptr);
@@ -500,17 +515,25 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	/// Depth and stencil
 	m_DepthStencil->sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	// Descriptors Set
+	// estructura UBO
 	VkDescriptorSetLayoutBinding uboLayoutBinding {};
 	uboLayoutBinding.binding = 0;
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.descriptorCount = 1;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	uboLayoutBinding.pImmutableSamplers = nullptr;
-
+	// Textura
+	VkDescriptorSetLayoutBinding textureLayoutBinding {};
+	textureLayoutBinding.binding = 1;
+	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureLayoutBinding.descriptorCount = 1;
+	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	textureLayoutBinding.pImmutableSamplers = nullptr;
+	std::array<VkDescriptorSetLayoutBinding, 2> ShaderBindings = {uboLayoutBinding, textureLayoutBinding};
 	VkDescriptorSetLayoutCreateInfo layoutInfo {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
+	layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
+	layoutInfo.pBindings = ShaderBindings.data();
 	if(vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
 		exit(-99);
 
@@ -731,6 +754,7 @@ void CreateTextureSampler()
 	VK_ASSERT(vkCreateSampler(m_LogicDevice, &samplerInfo,nullptr, &m_TextureSampler));
 }
 
+// TODO esto pa otro momento, lo de tener 2 renderpasses una de UI y otra de mundo.
 void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx, ImDrawData* draw_data)
 {
 	// Record command buffer
@@ -745,7 +769,7 @@ void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _
 	// IMGUI renderPass
 	VkRenderPassBeginInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	info.renderPass = m_UIRenderPass;
+	info.renderPass = m_RenderPass;
 	info.framebuffer = m_SwapChainFramebuffers[_imageIdx];
 	info.renderArea.extent = m_CurrentExtent;
 	info.clearValueCount = 1;
@@ -761,7 +785,7 @@ void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _
 		exit(-17);
 }
 
-void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx)
+void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx, ImDrawData* draw_data = nullptr)
 {
 	// Record command buffer
 	VkCommandBufferBeginInfo mBeginInfo{};
@@ -796,12 +820,13 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 		vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 	}
 	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentLocalFrame], 0, nullptr);
-
 	if(m_Indices.size() > 0)
 		vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(m_Indices.size()),
 					 1, 0, 0, 0);
 	else
 		vkCmdDraw(_commandBuffer, m_ModelTriangles.size(), 1, 0, 0);
+	if(draw_data)
+		ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
 	vkCmdEndRenderPass(_commandBuffer);
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
@@ -883,6 +908,8 @@ void RecreateSwapChain()
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
 	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
+	CreateTextureImageView();
+	CreateTextureSampler();
 	CreateFramebuffers();
 	m_NeedToRecreateSwapchain = false;
 }
@@ -915,17 +942,13 @@ void DrawFrame()
 		VK_NULL_HANDLE, &imageIdx);
 
 	// Update Uniform buffers
-// 	static auto startTime = std::chrono::high_resolution_clock::now();
-// 	auto currentTime = std::chrono::high_resolution_clock::now();
-// //     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 	UniformBufferObject ubo {};
  	ubo.model = glm::mat4(1.f);
-// 	glm::translate(ubo.model, glm::vec3(0.f, time * glm::radians(10.f), 0.f));
 
 	ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 						   m_CameraUp);
 
-	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 10.f);
+	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 1000.f);
 
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	memcpy(m_Uniform_SBuffersMapped[m_CurrentLocalFrame], &ubo, sizeof(ubo));
@@ -933,8 +956,8 @@ void DrawFrame()
 	// Render ImGui
 	ImGui::Render();
 	ImDrawData* draw_data = ImGui::GetDrawData();
-	UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
-	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame);
+	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
+	// UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1016,6 +1039,24 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 	vkBindBufferMemory(m_LogicDevice, buffer_, bufferMem_, 0);
 }
 
+void EditorLoop()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+	ImGui::Begin("Light");
+	{
+		float tempLightPos[3];
+		ImGui::SliderFloat3("Light Position", tempLightPos, 0.1f, 1.f);
+		ImGui::End();
+	}
+	ImGui::Begin("DEBUG PANEL");
+	{
+		ImGui::Text("%s", g_ConsoleMSG.c_str());
+		ImGui::End();
+	}
+	ImGui::EndFrame();
+}
 int main(int _argc, char** _args)
 {
 	uint32_t mExtensionCount = 0;
@@ -1071,7 +1112,7 @@ int main(int _argc, char** _args)
 	glfwSetKeyCallback(m_Window, KeyboardInputCallback);
 	glfwSetCursorPosCallback(m_Window, MouseInputCallback);
 	glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
+	glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
 	// INICIALIZAMOS IMGUI
 //   	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -1321,7 +1362,7 @@ int main(int _argc, char** _args)
 	tImageInfo.extent.depth = 1;
 	tImageInfo.mipLevels = 1;
 	tImageInfo.arrayLayers = 1;
-	tImageInfo.format = VK_FORMAT_B8G8R8A8_SRGB;
+	tImageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
 	tImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	tImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -1337,11 +1378,13 @@ int main(int _argc, char** _args)
 	tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_TextureImageMemory));
 	vkBindImageMemory(m_LogicDevice, m_TextureImage, m_TextureImageMemory, 0);
-	TransitionImageLayout(m_TextureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	TransitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	CopyBufferToImage(m_StagingBuffer, m_TextureImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight));
-	TransitionImageLayout(m_TextureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	TransitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
 	vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
+	CreateTextureImageView();
+	CreateTextureSampler();
 
 	// Vertex buffer
 	if(m_ModelTriangles.size() <= 0)
@@ -1410,13 +1453,18 @@ int main(int _argc, char** _args)
 					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
 	}
 	// Descriptor Pool
-	VkDescriptorPoolSize descPoolSize {};
-	descPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descPoolSize.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+	std::array<VkDescriptorPoolSize, 2> descPoolSize {};
+	// UBO
+	descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+	// Textura
+	descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
 	VkDescriptorPoolCreateInfo descPoolInfo {};
 	descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	descPoolInfo.poolSizeCount = 1;
-	descPoolInfo.pPoolSizes = &descPoolSize;
+	descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
+	descPoolInfo.pPoolSizes = descPoolSize.data();
 	descPoolInfo.maxSets = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 	if(vkCreateDescriptorPool(m_LogicDevice, &descPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
 		exit(-66);
@@ -1469,7 +1517,7 @@ int main(int _argc, char** _args)
 	m_DescriptorSets.resize(FRAMES_IN_FLIGHT);
 	if(vkAllocateDescriptorSets(m_LogicDevice, &descAllocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
 		exit(-67);
-
+// Escribimos la info de los descriptors
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorBufferInfo bufferInfo {};
@@ -1477,17 +1525,33 @@ int main(int _argc, char** _args)
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
-		VkWriteDescriptorSet descriptorWrite {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = m_DescriptorSets[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		descriptorWrite.pImageInfo = nullptr;
-		descriptorWrite.pTexelBufferView = nullptr;
-		vkUpdateDescriptorSets(m_LogicDevice, 1, &descriptorWrite, 0, nullptr);
+		VkDescriptorImageInfo textureimage {};
+		textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		textureimage.imageView = m_TextureImageView;
+		textureimage.sampler = m_TextureSampler;
+
+		std::array<VkWriteDescriptorSet, 2> descriptorsWrite {};
+		descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorsWrite[0].dstSet = m_DescriptorSets[i];
+		descriptorsWrite[0].dstBinding = 0;
+		descriptorsWrite[0].dstArrayElement = 0;
+		descriptorsWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorsWrite[0].descriptorCount = 1;
+		descriptorsWrite[0].pBufferInfo = &bufferInfo;
+		descriptorsWrite[0].pImageInfo = nullptr;
+		descriptorsWrite[0].pTexelBufferView = nullptr;
+
+		descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorsWrite[1].dstSet = m_DescriptorSets[i];
+		descriptorsWrite[1].dstBinding = 1;
+		descriptorsWrite[1].dstArrayElement = 0;
+		descriptorsWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorsWrite[1].descriptorCount = 1;
+		descriptorsWrite[1].pBufferInfo = nullptr;
+		descriptorsWrite[1].pImageInfo = &textureimage;
+		descriptorsWrite[1].pTexelBufferView = nullptr;
+		
+		vkUpdateDescriptorSets(m_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 	}
 
 	RecordCommandBuffer(m_CommandBuffer[0], 0, 0);
@@ -1499,27 +1563,16 @@ int main(int _argc, char** _args)
 	{
 		glfwPollEvents();
 		// Draw a Frame!
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-		ImGui::Begin("World");
-		{
-			ImGui::End();
-		}
-		ImGui::EndFrame();
+		EditorLoop();
 		DrawFrame();
-// 		if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
-// 			&& m_NeedToRecreateSwapchain)
-// 			RecreateSwapChain();
-// 		else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
-// 			exit(-69);
+		// if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
+		// 	&& m_NeedToRecreateSwapchain)
+		// 	RecreateSwapChain();
+		// else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
+		// 	exit(-69);
 		m_CurrentLocalFrame = (m_CurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
 	}
-	ImGui_ImplVulkan_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
 	Cleanup();
-
 	return 0;
 }
 

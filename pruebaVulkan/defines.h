@@ -50,6 +50,9 @@ struct Vertex2D {
 struct Vertex3D {
 	glm::vec3 m_Pos;
 	glm::vec3 m_Color;
+	glm::vec2 m_TexCoord;
+	glm::vec3  m_Normal;
+
 	static VkVertexInputBindingDescription getBindingDescription()
 	{
 		VkVertexInputBindingDescription bindingDescription {};
@@ -58,9 +61,9 @@ struct Vertex3D {
 		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		return bindingDescription;
 	}
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
 
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
 		attributeDescriptions[0].binding  = 0;
 		attributeDescriptions[0].location = 0;
 		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -70,6 +73,16 @@ struct Vertex3D {
 		attributeDescriptions[1].location = 1;
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(Vertex3D, m_Color);
+
+		attributeDescriptions[2].binding  = 0;
+		attributeDescriptions[2].location = 2;
+		attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[2].offset = offsetof(Vertex3D, m_TexCoord);
+
+		attributeDescriptions[3].binding  = 0;
+		attributeDescriptions[3].location = 3;
+		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[3].offset = offsetof(Vertex3D, m_TexCoord);
 
 		return attributeDescriptions;
 	}
@@ -95,18 +108,19 @@ std::vector<uint16_t> m_Indices =
 };
 
 bool m_NeedToRecreateSwapchain = false;
-bool m_MouseCaptured = true;
+bool m_MouseCaptured = false;
 unsigned int m_GPUSelected = 0;
 unsigned int m_GraphicsQueueFamilyIndex = 0;
 unsigned int m_TransferQueueFamilyIndex = 0;
 unsigned int m_CurrentLocalFrame = 0;
 unsigned int m_SwapchainImagesCount;
-float m_LastYPosition, m_LastXPosition;
-float m_CameraYaw, m_CameraPitch;
+std::string g_ConsoleMSG;
+float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
+float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
 float m_CameraSpeed = 0.1f;
-glm::vec3 m_CameraPos = glm::vec3(2.f, 2.f, 2.f);
-glm::vec3 m_CameraForward = glm::vec3(0, 0, 0);
-glm::vec3 m_CameraUp = glm::vec3(0.f, 0.f, 1.f);
+glm::vec3 m_CameraPos = glm::vec3(0.f);
+glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
+glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 std::vector<VkDynamicState> m_DynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 std::vector<const char*> m_DeviceExtensions;
