@@ -18,6 +18,8 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
+	alignas(16) glm::vec3 cameraPosition;
+	alignas(16) glm::vec3 lightPosition;
 };
 struct Vertex2D {
 	glm::vec2 m_Pos;
@@ -42,6 +44,36 @@ struct Vertex2D {
 		attributeDescriptions[1].location = 1;
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(Vertex2D, m_Color);
+
+		return attributeDescriptions;
+	}
+};
+
+struct DBG_Vertex3D 
+{
+	glm::vec3 m_Pos;
+	glm::vec3 m_Color;
+
+	static VkVertexInputBindingDescription getBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription {};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof (DBG_Vertex3D);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		return bindingDescription;
+	}
+	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
+		attributeDescriptions[0].binding  = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(DBG_Vertex3D, m_Pos);
+
+		attributeDescriptions[1].binding  = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(DBG_Vertex3D, m_Color);
 
 		return attributeDescriptions;
 	}
@@ -82,7 +114,7 @@ struct Vertex3D {
 		attributeDescriptions[3].binding  = 0;
 		attributeDescriptions[3].location = 3;
 		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[3].offset = offsetof(Vertex3D, m_TexCoord);
+		attributeDescriptions[3].offset = offsetof(Vertex3D, m_Normal);
 
 		return attributeDescriptions;
 	}
@@ -97,6 +129,26 @@ const std::vector<Vertex2D> m_TriangleVertices =
     {{0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
     {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 };
+std::vector<DBG_Vertex3D> Dbg_Cube =
+    {   // x     y     z
+        {{-1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}}, // 1  left    First Strip
+        {{-1.0,  1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 3
+        {{-1.0, -1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 0
+        {{-1.0,  1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 2
+        {{ 1.0, -1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 4  back
+        {{ 1.0,  1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 6
+        {{ 1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 5  right
+        {{ 1.0,  1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 7
+        {{ 1.0,  1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 6  top     Second Strip
+        {{-1.0,  1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 2
+        {{ 1.0,  1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 7
+        {{-1.0,  1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 3
+        {{ 1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 5  front
+        {{-1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 1
+        {{ 1.0, -1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 4  bottom
+        {{-1.0, -1.0, -1.0},  {1.0f, 1.0f, 0.0f}}// 0
+    };
+
 std::vector<Vertex3D> m_ModelTriangles;
 
 struct Texture 
@@ -126,16 +178,19 @@ std::vector<uint16_t> m_Indices =
 
 bool m_NeedToRecreateSwapchain = false;
 bool m_MouseCaptured = false;
+bool m_IndexedRender = true;
 unsigned int m_GPUSelected = 0;
 unsigned int m_GraphicsQueueFamilyIndex = 0;
 unsigned int m_TransferQueueFamilyIndex = 0;
 unsigned int m_CurrentLocalFrame = 0;
 unsigned int m_SwapchainImagesCount;
+int m_CullMode = 1;
 std::string g_ConsoleMSG;
 float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
 float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
 float m_CameraSpeed = 0.1f;
 glm::vec3 m_CameraPos = glm::vec3(0.f);
+glm::vec3 m_LightPos = glm::vec3(1.f);
 glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
 glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -170,9 +225,12 @@ VkDescriptorPool m_DescriptorPool;
 VkDescriptorPool m_UIDescriptorPool;
 std::vector<VkDescriptorSet> m_DescriptorSets;
 VkPipelineLayout m_PipelineLayout;
+VkPipelineLayout m_DebugPipelineLayout;
 VkRenderPass m_RenderPass;
 VkRenderPass m_UIRenderPass;
+VkRenderPass m_DebugRenderPass;
 VkPipeline m_GraphicsPipeline;
+VkPipeline m_DebugPipeline;
 VkCommandPool m_CommandPool;
 VkQueue m_PresentQueue;
 VkBuffer m_VertexBuffer;

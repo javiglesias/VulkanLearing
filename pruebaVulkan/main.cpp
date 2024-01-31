@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <sys/types.h>
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -201,11 +202,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		// Un evento no relacionado con la spec y el rendimiento
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
 		// Evento que incumple la especificacion y puede provocar errores.
-// 		fprintf(stderr, "\tMessage GENERAL: %s\n", pCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
 		// Uso no optimo de la API de Vulkan.
-// 		fprintf(stderr, "\tMessage VALIDATION: %s\n", pCallbackData->pMessage);
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
 		fprintf(stderr, "\tMessage PERFORMANCE: %s\n", pCallbackData->pMessage);
@@ -225,7 +224,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 			break;
 			// Mesaje de comportamiento que puede ser un BUG en la app
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-// 			fprintf(stderr, "\n\tVLayer message: %s\n", pCallbackData->pMessage);
 			break;
 			// Mensaje sobre un comportamiento invalido y que puede provocar CRASH
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
@@ -351,10 +349,12 @@ void Cleanup()
 	vkDestroyFence(m_LogicDevice, m_InFlight[1], nullptr);
 	vkDestroyCommandPool(m_LogicDevice, m_CommandPool, nullptr);
 	vkDestroyPipeline(m_LogicDevice, m_GraphicsPipeline, nullptr);
+	vkDestroyPipeline(m_LogicDevice, m_DebugPipeline, nullptr);
 	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
 	vkDestroyDescriptorPool(m_LogicDevice, m_DescriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
 	vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
+	vkDestroyPipelineLayout(m_LogicDevice, m_DebugPipelineLayout, nullptr);
 	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
 	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
 	CleanSwapChain();
@@ -447,9 +447,13 @@ void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule)
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	shaderModuleCreateInfo.codeSize = shadercode.size();
 	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shadercode.data());
+	g_ConsoleMSG += "Compiling Shader ";
+	g_ConsoleMSG += _shaderPath;
+	g_ConsoleMSG += '\n';
 	if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
 		!= VK_SUCCESS)
 		exit(-5);
+	g_ConsoleMSG += "Shader compiled.\n";
 }
 
 void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fragShaderModule,
@@ -457,7 +461,8 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	VkPipelineDynamicStateCreateInfo* m_DynamicState,		VkPipelineVertexInputStateCreateInfo* m_VertexInputInfo,
 	VkPipelineViewportStateCreateInfo* m_ViewportState,
 	VkPipelineRasterizationStateCreateInfo* m_Rasterizer, VkPipelineMultisampleStateCreateInfo* m_Multisampling,
-	VkPipelineDepthStencilStateCreateInfo* m_DepthStencil, VkPipelineColorBlendStateCreateInfo* m_ColorBlending)
+	VkPipelineDepthStencilStateCreateInfo* m_DepthStencil, VkPipelineColorBlendStateCreateInfo* m_ColorBlending, 
+	VkPipelineLayout* _PipelineLayout)
 {
 	/// Creacion de los shader stage de la Pipeline
 	VkPipelineShaderStageCreateInfo m_VertShaderStageInfo{};
@@ -465,14 +470,14 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 	m_VertShaderStageInfo.module = *_vertShaderModule;
 	m_VertShaderStageInfo.pName = "main";
-	VkPipelineShaderStageCreateInfo mFragShaderStageInfo{};
-	mFragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	mFragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	mFragShaderStageInfo.module = *_fragShaderModule;
-	mFragShaderStageInfo.pName = "main";
+	VkPipelineShaderStageCreateInfo m_FragShaderStageInfo{};
+	m_FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	m_FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	m_FragShaderStageInfo.module = *_fragShaderModule;
+	m_FragShaderStageInfo.pName = "main";
 
 	_shaderStages[0] = m_VertShaderStageInfo;
-	_shaderStages[1] = mFragShaderStageInfo;
+	_shaderStages[1] = m_FragShaderStageInfo;
 	/// Dynamic State (stados que permiten ser cambiados sin re-crear toda la pipeline)
 	m_DynamicState->sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	m_DynamicState->dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
@@ -510,7 +515,7 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_Rasterizer->rasterizerDiscardEnable = VK_FALSE;
 	m_Rasterizer->polygonMode = VK_POLYGON_MODE_FILL;
 	m_Rasterizer->lineWidth = 1.f;
-	m_Rasterizer->cullMode = VK_CULL_MODE_BACK_BIT;
+	m_Rasterizer->cullMode = m_CullMode;
 	m_Rasterizer->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	m_Rasterizer->depthBiasEnable = VK_FALSE;
 	/// Multisampling para evitar los bordes de sierra (anti-aliasing).
@@ -538,6 +543,7 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	textureLayoutBinding.descriptorCount = 1;
 	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	textureLayoutBinding.pImmutableSamplers = nullptr;
+
 	std::array<VkDescriptorSetLayoutBinding, 2> ShaderBindings = {uboLayoutBinding, textureLayoutBinding};
 	VkDescriptorSetLayoutCreateInfo layoutInfo {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -553,11 +559,11 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_PipelineLayoutCreateInfo.pSetLayouts = &m_DescSetLayout;
 	m_PipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	m_PipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-	if (vkCreatePipelineLayout(m_LogicDevice, &m_PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(m_LogicDevice, &m_PipelineLayoutCreateInfo, nullptr, _PipelineLayout) != VK_SUCCESS)
 		exit(-7);
 }
 
-void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
+void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo, VkRenderPass* _RenderPass)
 {
 	// RENDER PASES
 	/// Attachment description
@@ -596,19 +602,19 @@ void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
 	m_RenderPassInfo.dependencyCount = 1;
 	m_RenderPassInfo.pDependencies = &m_SubpassDep;
 	if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
-		&m_RenderPass) != VK_SUCCESS)
+		_RenderPass) != VK_SUCCESS)
 		exit(-8);
 
-	m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	m_RenderPassInfo.attachmentCount = 1;
-	m_RenderPassInfo.pAttachments = &m_ColorAttachment;
-	m_RenderPassInfo.subpassCount = 1;
-	m_RenderPassInfo.pSubpasses = &m_Subpass;
-	m_RenderPassInfo.dependencyCount = 1;
-	m_RenderPassInfo.pDependencies = &m_SubpassDep;
-	if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
-		&m_UIRenderPass) != VK_SUCCESS)
-		exit(-8);
+	// m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	// m_RenderPassInfo.attachmentCount = 1;
+	// m_RenderPassInfo.pAttachments = &m_ColorAttachment;
+	// m_RenderPassInfo.subpassCount = 1;
+	// m_RenderPassInfo.pSubpasses = &m_Subpass;
+	// m_RenderPassInfo.dependencyCount = 1;
+	// m_RenderPassInfo.pDependencies = &m_SubpassDep;
+	// if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
+	// 	&m_UIRenderPass) != VK_SUCCESS)
+	// 	exit(-8);
 }
 
 VkCommandBuffer BeginSingleTimeCommandBuffer()
@@ -688,11 +694,11 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 	EndSingleTimeCommandBuffer(commandBuffer);
 }
 
-void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h)
+void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h, VkDeviceSize _bufferOffset = 0)
 {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer();
 	VkBufferImageCopy region {};
-	region.bufferOffset = 0;
+	region.bufferOffset = _bufferOffset;
 	region.bufferRowLength = 0;
 	region.bufferImageHeight = 0;
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -763,6 +769,64 @@ void CreateTextureSampler()
 	VK_ASSERT(vkCreateSampler(m_LogicDevice, &samplerInfo,nullptr, &m_TextureSampler));
 }
 
+void CreateVulkanPipeline(VkShaderModule _VertShaderModule, VkShaderModule _FragShaderModule,  VkPipelineLayout* _PipelineLayout,
+														VkRenderPass* _RenderPass, VkPipeline* _Pipeline)
+{
+	// Create Pipeline Layout
+	VkPipelineShaderStageCreateInfo m_ShaderStages[2] = {};
+	VkPipelineInputAssemblyStateCreateInfo m_InputAssembly{};
+	VkPipelineDynamicStateCreateInfo m_DynamicState{};
+	VkPipelineVertexInputStateCreateInfo m_VertexInputInfo{};
+	VkPipelineViewportStateCreateInfo m_ViewportState{
+		VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
+	};
+	VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
+	VkPipelineMultisampleStateCreateInfo m_Multisampling{};
+	VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
+	VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
+	/// Color Blending
+	VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
+	m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	m_ColorBlendAttachment.blendEnable = VK_FALSE;
+	m_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	m_ColorBlending.logicOpEnable = VK_FALSE;
+	m_ColorBlending.attachmentCount = 1;
+	m_ColorBlending.pAttachments = &m_ColorBlendAttachment;
+
+	CreatePipelineLayout(&_VertShaderModule, &_FragShaderModule, m_ShaderStages,  &m_InputAssembly, &m_DynamicState, &m_VertexInputInfo,
+		&m_ViewportState, &m_Rasterizer, &m_Multisampling, &m_DepthStencil, &m_ColorBlending, _PipelineLayout);
+
+	CreateRenderPass(&m_SwapChainCreateInfo, _RenderPass);
+
+	/// Create Graphics pipeline
+	VkGraphicsPipelineCreateInfo m_PipelineInfoCreateInfo {};
+	m_PipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	m_PipelineInfoCreateInfo.stageCount = 2;
+	m_PipelineInfoCreateInfo.pStages = m_ShaderStages;
+	m_PipelineInfoCreateInfo.pVertexInputState = &m_VertexInputInfo;
+	m_PipelineInfoCreateInfo.pInputAssemblyState = &m_InputAssembly;
+	m_PipelineInfoCreateInfo.pViewportState = &m_ViewportState;
+	m_PipelineInfoCreateInfo.pRasterizationState = &m_Rasterizer;
+	m_PipelineInfoCreateInfo.pMultisampleState = &m_Multisampling;
+	m_PipelineInfoCreateInfo.pDepthStencilState = nullptr;
+	m_PipelineInfoCreateInfo.pColorBlendState = &m_ColorBlending;
+	m_PipelineInfoCreateInfo.pDynamicState = &m_DynamicState;
+	m_PipelineInfoCreateInfo.layout = *_PipelineLayout;
+	m_PipelineInfoCreateInfo.renderPass = *_RenderPass;
+	m_PipelineInfoCreateInfo.subpass = 0;
+	m_PipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+	m_PipelineInfoCreateInfo.basePipelineIndex = -1;
+	*_Pipeline = VkPipeline {};
+
+	if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &m_PipelineInfoCreateInfo, 
+																nullptr, _Pipeline) != VK_SUCCESS)
+		exit(-9);
+	// Destruymos los ShaderModule ahora que ya no se necesitan.
+	vkDestroyShaderModule(m_LogicDevice, _VertShaderModule, nullptr);
+	vkDestroyShaderModule(m_LogicDevice, _FragShaderModule, nullptr);
+/////////////////////////////////////////////////// CREATE PIPELINE ///////////////////////////////////////////////////////////
+}
+
 // TODO esto pa otro momento, lo de tener 2 renderpasses una de UI y otra de mundo.
 void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx, ImDrawData* draw_data)
 {
@@ -823,17 +887,20 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	VkDeviceSize offsets[] = {0};
 
 	vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-	if(m_Indices.size() > 0)
+	if(m_IndexedRender && m_Indices.size() > 0)
 	{
 		VkBuffer indexBuffer = m_IndexBuffer;
 		vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 	}
 	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentLocalFrame], 0, nullptr);
-	if(m_Indices.size() > 0)
+	if(m_IndexedRender && m_Indices.size() > 0)
 		vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(m_Indices.size()),
 					 1, 0, 0, 0);
 	else
 		vkCmdDraw(_commandBuffer, m_ModelTriangles.size(), 1, 0, 0);
+	// DEBUG Render
+	// vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipeline);
+	// UI Render
 	if(draw_data)
 		ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
 	vkCmdEndRenderPass(_commandBuffer);
@@ -957,9 +1024,11 @@ void DrawFrame()
 	ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 						   m_CameraUp);
 
-	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 1000.f);
+	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 10000.f);
 
-	ubo.projection[1][1] *= -1; // para invertir el eje Y
+	// ubo.projection[1][1] *= -1; // para invertir el eje Y
+	ubo.cameraPosition = m_CameraPos;
+	ubo.lightPosition = m_LightPos;
 	memcpy(m_Uniform_SBuffersMapped[m_CurrentLocalFrame], &ubo, sizeof(ubo));
 
 	// Render ImGui
@@ -1009,7 +1078,6 @@ unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags prope
 	{
 		if (typeFilter & (1 << i) && (m_Mem_Props.memoryTypes[i].propertyFlags & properties) == properties)
 		{
-			printf("\nmem_Type %d\n", i);
 			return i;
 		}
 	}
@@ -1056,8 +1124,16 @@ void EditorLoop()
 	ImGui::Begin("Tools");
 	{
 		float tempLightPos[3];
+		tempLightPos[0] = m_LightPos.x;
+		tempLightPos[1] = m_LightPos.y;
+		tempLightPos[2] = m_LightPos.z;
 		ImGui::SliderFloat3("Light Position", tempLightPos, 0.1f, 1.f);
+		m_LightPos.x = tempLightPos[0];
+		m_LightPos.y = tempLightPos[1];
+		m_LightPos.z = tempLightPos[2];
 		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
+		ImGui::SliderInt("Culling", &m_CullMode, 1, 3);
+		ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
 		ImGui::End();
 	}
 	ImGui::Begin("DEBUG PANEL");
@@ -1067,6 +1143,7 @@ void EditorLoop()
 	}
 	ImGui::EndFrame();
 }
+
 int main(int _argc, char** _args)
 {
 	uint32_t mExtensionCount = 0;
@@ -1076,6 +1153,7 @@ int main(int _argc, char** _args)
 	const int m_Width = 1280;
 	const int m_Height = 720;
 // 	cgltf_data* m_ModelData;
+
 	char modelPath[512], modelName[64];
 	if(_argc >= 1)
 	{
@@ -1088,8 +1166,8 @@ int main(int _argc, char** _args)
 	{
 		LoadModel(g_SponzaPath, "Sponza.gltf");
 	}
-// 	printf("\n%s Loaded: %ld bytes, images: %zu\n", _args[1], sizeof(*m_ModelData),	m_ModelData->images_count);
-	/// VULKAN THINGS
+
+	/// VULKAN/glfw THINGS
 	if (!checkValidationLayerSupport()) return -2;
 	VkApplicationInfo mAppInfo = {};
 	InitializeVulkan(&mAppInfo);
@@ -1124,7 +1202,7 @@ int main(int _argc, char** _args)
 	glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
 	// INICIALIZAMOS IMGUI
-//   	IMGUI_CHECKVERSION();
+	// IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui_ImplGlfw_InitForVulkan(m_Window, true);
 	/// Create the Debug Messenger
@@ -1152,6 +1230,7 @@ int main(int _argc, char** _args)
 		fprintf(stderr, "Not GPU FOUND\n");
 		exit(-1);
 	}
+	// Comprobamos que los Physical device cumplan lo necesario
 	m_PhysicalDevices.resize(deviceCount);
 	vkEnumeratePhysicalDevices(m_Instance, &deviceCount, m_PhysicalDevices.data());
 	VkPhysicalDeviceProperties deviceProp[deviceCount];
@@ -1160,10 +1239,12 @@ int main(int _argc, char** _args)
 	for(int it = 0; it < deviceCount; it++)
 	{
 		vkGetPhysicalDeviceProperties(m_PhysicalDevices[it], &deviceProp[it]);
-		if(strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName,"Am_D"))
+		if(strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName,"AMD"))
 		{
 			m_GPUSelected = it;
-			printf("\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
+			char tmp [512];
+			sprintf(tmp, "\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
+			g_ConsoleMSG += tmp;
 		}
 	vkGetPhysicalDeviceFeatures(m_PhysicalDevices[it], &deviceFeatures[it]);
 	}
@@ -1190,12 +1271,16 @@ int main(int _argc, char** _args)
 	{
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
-			printf("\nGraphics Family: %d\n", m_TransferQueueFamilyIndex);
+			char tmp [256];
+			sprintf(tmp, "Graphics Family: %d\n", m_TransferQueueFamilyIndex);
+			g_ConsoleMSG += tmp;
 			searchingGraphics = false;
 		}
 		if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
 		{
-			printf("\nTransfer Family: %d\n", m_TransferQueueFamilyIndex);
+			char tmp [256];
+			sprintf(tmp, "Transfer Family: %d\n", m_TransferQueueFamilyIndex);
+			g_ConsoleMSG += tmp;
 			searchingTransfer = false;
 		}
 
@@ -1268,6 +1353,7 @@ int main(int _argc, char** _args)
 	/// VK_PRESENT_MODE_FIFO_KHR (el unico que nos aseguran que este disponible)
 	/// VK_PRESENT_MODE_FIFO_RELAXED_KHR
 	/// VK_PRESENT_MODE_MAILBOX_KHR
+	m_PresentMode = VK_PRESENT_MODE_FIFO_KHR;
 	for (const auto& presentMode : presentModes)
 	{
 		if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
@@ -1286,121 +1372,94 @@ int main(int _argc, char** _args)
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
 	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
-
-	/// Vamos a crear los shader module para cargar el bytecode de los shaders
+		/// Vamos a crear los shader module para cargar el bytecode de los shaders
 	VkShaderModule m_VertShaderModule;
-	VkShaderModule mFragShaderModule;
+	VkShaderModule m_FragShaderModule;
 	CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
-	CreateShaderModule("resources/Shaders/frag.spv", &mFragShaderModule);
+	CreateShaderModule("resources/Shaders/frag.spv", &m_FragShaderModule);
 
-	// Create Pipeline Layout
-	VkPipelineShaderStageCreateInfo m_ShaderStages[2] = {};
-	VkPipelineInputAssemblyStateCreateInfo m_InputAssembly{};
-	VkPipelineDynamicStateCreateInfo m_DynamicState{};
-	VkPipelineVertexInputStateCreateInfo m_VertexInputInfo{};
-	VkPipelineViewportStateCreateInfo m_ViewportState{
-		VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
-	};
-	VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
-	VkPipelineMultisampleStateCreateInfo m_Multisampling{};
-	VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
-	VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
-	/// Color Blending
-	VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
-	m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	m_ColorBlendAttachment.blendEnable = VK_FALSE;
-	m_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	m_ColorBlending.logicOpEnable = VK_FALSE;
-	m_ColorBlending.attachmentCount = 1;
-	m_ColorBlending.pAttachments = &m_ColorBlendAttachment;
-
-	CreatePipelineLayout(&m_VertShaderModule, &mFragShaderModule, m_ShaderStages, &m_InputAssembly, &m_DynamicState, &m_VertexInputInfo,&m_ViewportState, &m_Rasterizer,
-		&m_Multisampling, &m_DepthStencil, &m_ColorBlending);
-	CreateRenderPass(&m_SwapChainCreateInfo);
-
-	/// Create Graphics pipeline
-	VkGraphicsPipelineCreateInfo m_PipelineInfoCreateInfo {};
-	m_PipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	m_PipelineInfoCreateInfo.stageCount = 2;
-	m_PipelineInfoCreateInfo.pStages = m_ShaderStages;
-	m_PipelineInfoCreateInfo.pVertexInputState = &m_VertexInputInfo;
-	m_PipelineInfoCreateInfo.pInputAssemblyState = &m_InputAssembly;
-	m_PipelineInfoCreateInfo.pViewportState = &m_ViewportState;
-	m_PipelineInfoCreateInfo.pRasterizationState = &m_Rasterizer;
-	m_PipelineInfoCreateInfo.pMultisampleState = &m_Multisampling;
-	m_PipelineInfoCreateInfo.pDepthStencilState = nullptr;
-	m_PipelineInfoCreateInfo.pColorBlendState = &m_ColorBlending;
-	m_PipelineInfoCreateInfo.pDynamicState = &m_DynamicState;
-	m_PipelineInfoCreateInfo.layout = m_PipelineLayout;
-	m_PipelineInfoCreateInfo.renderPass = m_RenderPass;
-	m_PipelineInfoCreateInfo.subpass = 0;
-	m_PipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-	m_PipelineInfoCreateInfo.basePipelineIndex = -1;
-	m_GraphicsPipeline = VkPipeline {};
-
-	if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &m_PipelineInfoCreateInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
-		exit(-9);
-	// Destruymos los ShaderModule ahora que ya no se necesitan.
-	vkDestroyShaderModule(m_LogicDevice, m_VertShaderModule, nullptr);
-	vkDestroyShaderModule(m_LogicDevice, mFragShaderModule, nullptr);
-
+	CreateVulkanPipeline(m_VertShaderModule, m_FragShaderModule, &m_PipelineLayout,
+														&m_RenderPass, &m_GraphicsPipeline);
+	// DEBUG SHADERS
+	VkShaderModule m_DebugVertShaderModule;
+	VkShaderModule m_DebugFragShaderModule;
+	CreateShaderModule("resources/Shaders/dbgVert.spv", &m_DebugVertShaderModule);
+	CreateShaderModule("resources/Shaders/dbgFrag.spv", &m_DebugFragShaderModule);
+	// CreateVulkanPipeline(m_DebugVertShaderModule, m_DebugFragShaderModule, &m_DebugPipelineLayout, 
+	// 											&m_DebugRenderPass, &m_DebugPipeline );
+	
 	CreateFramebuffers();
 	CreateCommandBuffer();
 
 	// Crear Textures
-	int tWidth, tHeight, tChannels;
-	for(auto [idx, texture] : m_ModelTextures)
+	if(m_ModelTextures.size() > 0)
 	{
-		char textPath[512];
-		sprintf(textPath, "%s%s", modelPath, texture.sPath.c_str());
-		stbi_uc* pixels = stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
-		VkDeviceSize tSize = tWidth * tHeight * 4;
-		if(tSize < 0)
+		int tWidth, tHeight, tChannels;
+		std::vector<stbi_uc*> pixels;
+		VkDeviceSize tSize = 0;
+		for(auto [idx, texture] : m_ModelTextures)
 		{
-			printf("No Pixels: %zd", tSize);
-			exit(-69);
+			char textPath[512];
+			sprintf(textPath, "%s%s", modelPath, texture.sPath.c_str());
+			pixels.push_back(stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha));
+			tSize += tWidth * tHeight * 4;
+			if(tSize <= 0)
+			{
+				printf("No Pixels: %zd", tSize);
+				exit(-69);
+			}
 		}
+		printf("Total Size Textures: %zd", tSize);
 		CreateBuffer(tSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 		void* data;
 		vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
-		memcpy(data, pixels, (size_t) tSize);
+		memcpy(data, *pixels.data(), (size_t) tSize);
 		vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
-		stbi_image_free(pixels);
-		VkImageCreateInfo tImageInfo{};
-		tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		tImageInfo.imageType = VK_IMAGE_TYPE_2D;
-		tImageInfo.extent.width  = static_cast<uint32_t>(tWidth);
-		tImageInfo.extent.height = static_cast<uint32_t>(tHeight);
-		tImageInfo.extent.depth = 1;
-		tImageInfo.mipLevels = 1;
-		tImageInfo.arrayLayers = 1;
-		tImageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-		tImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		tImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		tImageInfo.flags = 0;
-		VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, &m_ModelTextures[idx].tImage));
-		VkMemoryRequirements memRequ;
-		vkGetImageMemoryRequirements(m_LogicDevice, m_ModelTextures[idx].tImage, &memRequ);
-		VkMemoryAllocateInfo tAllocInfo {};
-		tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		tAllocInfo.allocationSize = memRequ.size;
-		tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_ModelTextures[idx].tImageMem));
-		vkBindImageMemory(m_LogicDevice, m_ModelTextures[idx].tImage, m_ModelTextures[idx].tImageMem, 0);
-		TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CopyBufferToImage(m_StagingBuffer, m_ModelTextures[idx].tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight));
-		TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		for(auto tPixels : pixels)
+		{
+			stbi_image_free(tPixels);
+		}
+		pixels.clear();
+		int count = 0;
+		auto texSize = tWidth * tHeight * 4;
+		for(auto [idx, texture] : m_ModelTextures)
+		{
+			VkImageCreateInfo tImageInfo{};
+			tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			tImageInfo.imageType = VK_IMAGE_TYPE_2D;
+			tImageInfo.extent.width  = static_cast<uint32_t>(tWidth);
+			tImageInfo.extent.height = static_cast<uint32_t>(tHeight);
+			tImageInfo.extent.depth = 1;
+			tImageInfo.mipLevels = 1;
+			tImageInfo.arrayLayers = 1;
+			tImageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+			tImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+			tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			tImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+			tImageInfo.flags = 0;
+			VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, &m_ModelTextures[idx].tImage));
+			VkMemoryRequirements memRequ;
+			vkGetImageMemoryRequirements(m_LogicDevice, m_ModelTextures[idx].tImage, &memRequ);
+			VkMemoryAllocateInfo tAllocInfo {};
+			tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			tAllocInfo.allocationSize = memRequ.size;
+			tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_ModelTextures[idx].tImageMem));
+			vkBindImageMemory(m_LogicDevice, m_ModelTextures[idx].tImage, m_ModelTextures[idx].tImageMem, 0);
+			TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			CopyBufferToImage(m_StagingBuffer, m_ModelTextures[idx].tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), count * texSize);
+			TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			m_ModelTextures[idx].tImageView = CreateTextureImageView(m_ModelTextures[idx].tImage);
+			++count;
+		}
 		vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
 		vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
-		m_ModelTextures[idx].tImageView = CreateTextureImageView(m_ModelTextures[idx].tImage);
+		CreateTextureSampler();
 	}
-	CreateTextureSampler();
-
 	// Vertex buffer
 	if(m_ModelTriangles.size() <= 0)
 	{
@@ -1555,7 +1614,6 @@ int main(int _argc, char** _args)
 		textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		textureimage.imageView = m_ModelTextures[0].tImageView;
 		textureimage.sampler = m_TextureSampler;
-
 
 		descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorsWrite[1].dstSet = m_DescriptorSets[i];

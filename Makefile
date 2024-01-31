@@ -5,6 +5,8 @@ run:  shaders
 shaders:
 	./build/Vulkan_1.3.268.0/x86_64/bin/glslc resources/Shaders/Standard.vert -o resources/Shaders/vert.spv
 	./build/Vulkan_1.3.268.0/x86_64/bin/glslc resources/Shaders/Standard.frag -o resources/Shaders/frag.spv
+	./build/Vulkan_1.3.268.0/x86_64/bin/glslc resources/Shaders/Debug.vert -o resources/Shaders/dbgVert.spv
+	./build/Vulkan_1.3.268.0/x86_64/bin/glslc resources/Shaders/Debug.frag -o resources/Shaders/dbgFrag.spv
 
 clean:
 	rm -f VulkanLearning.out

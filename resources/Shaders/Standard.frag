@@ -10,21 +10,19 @@ layout(location = 5) in vec3 viewerPosition;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 LightPosition = vec3(1.f, 1.f, 1.f);
-vec3 ViewerPosition = vec3(0.f, 0.f, 0.f);
-vec3 Normal = vec3(0.f, 1.f, 0.f);
 vec3 directional_light_calculations(vec3 _normal, vec3 _fragPos, vec3 _viewDir);
+
 void main() 
 {
-	vec3 viewer_direction = normalize(ViewerPosition - fragPosition);
+	vec3 viewer_direction = normalize(viewerPosition - fragPosition);
 	vec3 result;
-	result =  directional_light_calculations(Normal,  fragPosition,  viewer_direction);
+	result =  directional_light_calculations(normal,  fragPosition,  viewer_direction);
     outColor = vec4(result, 1.0);
 }
 
 vec3 directional_light_calculations(vec3 _normal, vec3 _fragPos, vec3 _viewDir)
 {
-	vec3 light_dir = normalize(LightPosition - _fragPos);
+	vec3 light_dir = normalize(lightPosition - _fragPos);
 	float diff = max(dot(_normal, light_dir), 0.0f);
 	vec3 reflect_dir = reflect(light_dir,  _normal);
 	float spec = pow(max(dot(_viewDir, reflect_dir), 0.0f), 32);//material.shininess);

@@ -13,3 +13,4 @@ inline static void VK_ASSERT(bool _check)
 {
 	if(_check) exit(-69);
 }
+
