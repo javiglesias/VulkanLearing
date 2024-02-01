@@ -184,7 +184,7 @@ unsigned int m_GraphicsQueueFamilyIndex = 0;
 unsigned int m_TransferQueueFamilyIndex = 0;
 unsigned int m_CurrentLocalFrame = 0;
 unsigned int m_SwapchainImagesCount;
-int m_CullMode = 1;
+int m_CullMode = 2;
 std::string g_ConsoleMSG;
 float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
 float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
@@ -247,6 +247,9 @@ VkImage m_TextureImage;
 VkImageView m_TextureImageView;
 VkDeviceMemory m_TextureImageMemory;
 VkSampler m_TextureSampler;
+VkImage m_DepthImage;
+VkDeviceMemory m_DepthImageMemory;
+VkImageView m_DepthImageView;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
 VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];

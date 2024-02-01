@@ -37,23 +37,22 @@
 #include "defines.h"
 #include "debugUtils.h"
 
-void LoadModel(const char* _filepath, const char* _modelName)
+void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 {
-	char filename[128];
-	sprintf(filename, "%s%s",_filepath, _modelName);
-	printf("\nLoading %s", _modelName);
-	const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
-	if(!scene->HasMeshes())
-		exit(-225);
-	for(int m = 0; m < scene->mNumMeshes; m++)
+	for(int m = 0; m < _node->mNumMeshes; m++)
 	{
-		const aiMesh* mesh = scene->mMeshes[m];
+		const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
+		//Process Mesh
 		for(unsigned int f = 0; f < mesh->mNumFaces; f++)
 		{
 			const aiFace& face = mesh->mFaces[f];
-			m_Indices.push_back(face.mIndices[0]);
-			m_Indices.push_back(face.mIndices[1]);
-			m_Indices.push_back(face.mIndices[2]);
+			// m_Indices.push_back(face.mIndices[0]);
+			// m_Indices.push_back(face.mIndices[1]);
+			// m_Indices.push_back(face.mIndices[2]);
+			for (unsigned int j = 0; j < face.mNumIndices; j++)
+			{
+				m_Indices.push_back(face.mIndices[j]);
+			}
 		}
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
@@ -65,66 +64,28 @@ void LoadModel(const char* _filepath, const char* _modelName)
 				});
 			int texIndex = 0;
 			aiString path;
-			scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
 			m_ModelTextures[mesh->mMaterialIndex] = Texture(std::string(path.data));
 		}
 	}
-#if 0
-	cgltf_options options {};
-	cgltf_parse_file(&options, filename, &modelData);
-	cgltf_data* modelData = NULL;
-	cgltf_load_buffers(&options, modelData, _filepath);
-	if(cgltf_validate(modelData) == cgltf_result_success)
+	// CHILDREN
+	for (unsigned int i = 0; i < _node->mNumChildren; i++)
 	{
-		printf("\nModel file validated");
-			for (cgltf_size n = 0; n < modelData->meshes_count; ++n)
-			{
-				auto mesh = &modelData->meshes[n];
-				if(mesh)
-				{
-					printf("\n\tMesh %zd", n);
-					for(cgltf_size p = 0; p < mesh->primitives_count; p++)
-					{
-						printf("\n\tPrimitive %zd", p);
- 						auto idxAccessor = mesh->primitives[p].indices;
-						auto trigCount = idxAccessor->count/3;
- 						unsigned int indices[idxAccessor->count];
-						cgltf_accessor_unpack_indices(mesh->primitives[p].indices, &indices,
-							sizeof(unsigned int), idxAccessor->count);
-						for(cgltf_size i = 0; i < idxAccessor->count; i++)
-						{
-							m_Indices.push_back(indices[i]);
-						}
-
-						for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
-						{
-							if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)
-							{
-								auto accessor = mesh->primitives[p].attributes[a].data;
-								auto index 	  = mesh->primitives[p].attributes[a].index;
-								cgltf_size element_size = cgltf_calc_size(accessor->type, accessor->component_type);
-								float position[element_size];
-								if(cgltf_accessor_unpack_floats(accessor, position, element_size))
-									for(size_t pos = 0; pos < element_size/3; pos++)
-									{
-										int idx = 3*pos;
-										printf("\nVertex %zd: %f, %f, %f", p, position[idx], position[idx+1], position[idx+2]);
-										m_ModelTriangles.push_back({glm::vec3(position[idx], position[idx+1], position[idx+2]), {1.0f, 0.0f, 0.0f}});
-									}
-								else
-								{
-									printf("Error Reading Floats gltf");
-								}
-							}
-						}
-					}
-				}
-			}
+		ProcessModelNode(_node->mChildren[i], _scene);
 	}
-	else
-		exit(-88);
-	return modelData;
-#endif
+}
+
+void LoadModel(const char* _filepath, const char* _modelName)
+{
+	char filename[128];
+	sprintf(filename, "%s%s",_filepath, _modelName);
+	printf("\nLoading %s", _modelName);
+	const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
+	if(!scene->HasMeshes())
+		exit(-225);
+	//Process Node
+	auto node = scene->mRootNode;
+	ProcessModelNode(node, scene);
 }
 
 std::vector<char> LoadShader(const std::string& _filename)
@@ -243,6 +204,36 @@ static void check_vk_result(VkResult err)
 	if (err < 0)
 		abort();
 }
+
+unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties)
+{
+	for(unsigned int i = 0; i < m_Mem_Props.memoryTypeCount; i++)
+	{
+		if (typeFilter & (1 << i) && (m_Mem_Props.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			printf("Found Memory Type %d", properties);
+			return i;
+		}
+	}
+	printf("Not Found Memory Type %d", properties);
+	exit(-9);
+}
+
+VkFormat FindSupportedFormat(const std::vector<VkFormat>& _candidates, VkImageTiling _tiling, VkFormatFeatureFlags _features) 
+{
+	for(VkFormat format : _candidates)
+	{
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(m_PhysicalDevices[m_GPUSelected], format, &props);
+		if(_tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & _features) == _features)
+			return format;
+		if(_tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & _features) == _features)
+			return format;
+	}
+	g_ConsoleMSG += "No found supported format\n";
+	printf("No found supported format\n");
+	exit(-79);
+}
 // INPUT CALLBACKS
 void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 {
@@ -358,6 +349,9 @@ void Cleanup()
 	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
 	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
 	CleanSwapChain();
+	vkDestroyImageView(m_LogicDevice, m_DepthImageView, nullptr);
+	vkDestroyImage(m_LogicDevice, m_DepthImage, nullptr);
+	vkFreeMemory(m_LogicDevice, m_DepthImageMemory, nullptr);
 	vkDestroySampler(m_LogicDevice, m_TextureSampler, nullptr);
 	for(auto [idx, texture] : m_ModelTextures)
 	{
@@ -515,7 +509,7 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_Rasterizer->rasterizerDiscardEnable = VK_FALSE;
 	m_Rasterizer->polygonMode = VK_POLYGON_MODE_FILL;
 	m_Rasterizer->lineWidth = 1.f;
-	m_Rasterizer->cullMode = m_CullMode;
+	m_Rasterizer->cullMode = VK_CULL_MODE_FRONT_BIT;
 	m_Rasterizer->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	m_Rasterizer->depthBiasEnable = VK_FALSE;
 	/// Multisampling para evitar los bordes de sierra (anti-aliasing).
@@ -657,6 +651,10 @@ void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size)
 	EndSingleTimeCommandBuffer(commandBuffer);
 }
 
+bool HasStencilComponent(VkFormat format)
+{
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
 void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, VkImageLayout _new)
 {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer();
@@ -667,7 +665,17 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 	iBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	iBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	iBarrier.image = _image;
-	iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	if (_new == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+	{
+		iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		if (HasStencilComponent(_format))
+		{
+			iBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+	}
+	else
+		iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	iBarrier.subresourceRange.baseMipLevel = 0;
 	iBarrier.subresourceRange.levelCount = 1;
 	iBarrier.subresourceRange.baseArrayLayer = 0;
@@ -681,13 +689,24 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 
 		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	} else if (_old == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _new == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+	} 
+	else if (_old == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _new == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) 
+	{
 		iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	} else {
+	} 
+	else if (_old == VK_IMAGE_LAYOUT_UNDEFINED && _new == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+	{
+		iBarrier.srcAccessMask = 0;
+		iBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	}	
+	else {
 		throw std::invalid_argument("unsupported layout transition!");
 	}
 	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &iBarrier);
@@ -711,7 +730,36 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 	EndSingleTimeCommandBuffer(commandBuffer);
 }
 
-VkImageView CreateImageView(VkImage _tImage, VkFormat _format)
+void CreateImage(unsigned int _Width, unsigned int _Height, VkFormat _format, VkImageTiling _tiling,
+									VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties,
+									VkImage* _image, VkDeviceMemory* _imageMem)
+{
+	VkImageCreateInfo tImageInfo{};
+	tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	tImageInfo.imageType = VK_IMAGE_TYPE_2D;
+	tImageInfo.extent.width  = static_cast<uint32_t>(_Width);
+	tImageInfo.extent.height = static_cast<uint32_t>(_Height);
+	tImageInfo.extent.depth = 1;
+	tImageInfo.mipLevels = 1;
+	tImageInfo.arrayLayers = 1;
+	tImageInfo.format = _format;
+	tImageInfo.tiling = _tiling;
+	tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	tImageInfo.usage = _usage;
+	tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	tImageInfo.flags = 0;
+	VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, _image));	
+	VkMemoryRequirements memRequ;
+	vkGetImageMemoryRequirements(m_LogicDevice, *_image, &memRequ);
+	VkMemoryAllocateInfo tAllocInfo {};
+	tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	tAllocInfo.allocationSize = memRequ.size;
+	tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, _memProperties);
+	VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, _imageMem));
+}
+
+VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT)
 {
 	VkImageView tImageView;
 	VkImageViewCreateInfo viewInfo {};
@@ -719,7 +767,7 @@ VkImageView CreateImageView(VkImage _tImage, VkFormat _format)
 	viewInfo.image = _tImage;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = _format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = _aspectMask;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -735,14 +783,36 @@ void CreateImageViews()
 	int currentSwapchaingImageView = 0;
 	for (auto& image : m_SwapChainImages)
 	{
-		m_SwapChainImagesViews[currentSwapchaingImageView] = CreateImageView(image, m_SurfaceFormat.format);
+		m_SwapChainImagesViews[currentSwapchaingImageView] = CreateImageView(image, m_SurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
 		++currentSwapchaingImageView;
 	}
 }
 
+VkFormat FindDepthTestFormat()
+{
+	auto candidates = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
+	auto tiling =  VK_IMAGE_TILING_OPTIMAL;
+	auto features = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	return FindSupportedFormat( candidates, tiling, features);
+}
+
+void CreateDepthTestingResources()
+{
+	VkFormat depthFormat = FindDepthTestFormat();
+	CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat, 
+							VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
+							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_DepthImage, &m_DepthImageMemory);
+	m_DepthImageView = CreateImageView(m_DepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+	// Transicionamos la imagen
+	vkBindImageMemory(m_LogicDevice, m_DepthImage, m_DepthImageMemory, 0);
+	TransitionImageLayout(m_DepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	// CopyBufferToImage(m_StagingBuffer, m_ModelTextures[idx].tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), count * texSize);
+	// TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
 VkImageView CreateTextureImageView(VkImage _tImage)
 {
-	return CreateImageView(_tImage, VK_FORMAT_R8G8B8A8_SRGB);
+	return CreateImageView(_tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CreateTextureSampler()
@@ -1026,7 +1096,7 @@ void DrawFrame()
 
 	ubo.projection = glm::perspective(glm::radians(45.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 10000.f);
 
-	// ubo.projection[1][1] *= -1; // para invertir el eje Y
+	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	ubo.cameraPosition = m_CameraPos;
 	ubo.lightPosition = m_LightPos;
 	memcpy(m_Uniform_SBuffersMapped[m_CurrentLocalFrame], &ubo, sizeof(ubo));
@@ -1072,19 +1142,7 @@ void FramebufferResizeCallback(GLFWwindow* _window, int _newW, int _newH)
 	m_NeedToRecreateSwapchain = true;
 }
 
-unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties)
-{
-	for(unsigned int i = 0; i < m_Mem_Props.memoryTypeCount; i++)
-	{
-		if (typeFilter & (1 << i) && (m_Mem_Props.memoryTypes[i].propertyFlags & properties) == properties)
-		{
-			return i;
-		}
-	}
-	exit(-9);
-}
-
-void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode, VkMemoryPropertyFlags _memFlags,VkBuffer& buffer_,
+void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode, VkMemoryPropertyFlags _memFlags, VkBuffer& buffer_,
 				  VkDeviceMemory& bufferMem_)
 {
 	/*
@@ -1103,8 +1161,8 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 		exit(-6);
 	VkMemoryRequirements mem_Requ;
 	vkGetBufferMemoryRequirements(m_LogicDevice, buffer_, &mem_Requ);
-
-	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
+	// WTF que hace esto solo aqui si se necesita para todo
+	// vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1387,10 +1445,11 @@ int main(int _argc, char** _args)
 	CreateShaderModule("resources/Shaders/dbgFrag.spv", &m_DebugFragShaderModule);
 	// CreateVulkanPipeline(m_DebugVertShaderModule, m_DebugFragShaderModule, &m_DebugPipelineLayout, 
 	// 											&m_DebugRenderPass, &m_DebugPipeline );
-	
+	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
 	CreateFramebuffers();
 	CreateCommandBuffer();
-
+	// Creamos los recursos para el Depth testing
+	CreateDepthTestingResources();
 	// Crear Textures
 	if(m_ModelTextures.size() > 0)
 	{
@@ -1426,29 +1485,9 @@ int main(int _argc, char** _args)
 		auto texSize = tWidth * tHeight * 4;
 		for(auto [idx, texture] : m_ModelTextures)
 		{
-			VkImageCreateInfo tImageInfo{};
-			tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			tImageInfo.imageType = VK_IMAGE_TYPE_2D;
-			tImageInfo.extent.width  = static_cast<uint32_t>(tWidth);
-			tImageInfo.extent.height = static_cast<uint32_t>(tHeight);
-			tImageInfo.extent.depth = 1;
-			tImageInfo.mipLevels = 1;
-			tImageInfo.arrayLayers = 1;
-			tImageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-			tImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-			tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			tImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-			tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-			tImageInfo.flags = 0;
-			VK_CHECK(vkCreateImage(m_LogicDevice, &tImageInfo, nullptr, &m_ModelTextures[idx].tImage));
-			VkMemoryRequirements memRequ;
-			vkGetImageMemoryRequirements(m_LogicDevice, m_ModelTextures[idx].tImage, &memRequ);
-			VkMemoryAllocateInfo tAllocInfo {};
-			tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			tAllocInfo.allocationSize = memRequ.size;
-			tAllocInfo.memoryTypeIndex = FindMemoryType(memRequ.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-			VK_CHECK(vkAllocateMemory(m_LogicDevice, &tAllocInfo, nullptr, &m_ModelTextures[idx].tImageMem));
+			CreateImage(tWidth, tHeight, VK_FORMAT_R8G8B8A8_SRGB, 
+							VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), 
+							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_ModelTextures[idx].tImage, &m_ModelTextures[idx].tImageMem);
 			vkBindImageMemory(m_LogicDevice, m_ModelTextures[idx].tImage, m_ModelTextures[idx].tImageMem, 0);
 			TransitionImageLayout(m_ModelTextures[idx].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 			CopyBufferToImage(m_StagingBuffer, m_ModelTextures[idx].tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), count * texSize);
