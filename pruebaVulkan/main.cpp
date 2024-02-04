@@ -34,44 +34,53 @@
 #include <string>
 #include <unordered_map>
 
+#include "Types.h"
+#include "VKRModel.h"
 #include "defines.h"
 #include "debugUtils.h"
 
 void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 {
-	for(int m = 0; m < _node->mNumMeshes; m++)
-	{
-		const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
-		//Process Mesh
-		for(unsigned int f = 0; f < mesh->mNumFaces; f++)
-		{
-			const aiFace& face = mesh->mFaces[f];
-			// m_Indices.push_back(face.mIndices[0]);
-			// m_Indices.push_back(face.mIndices[1]);
-			// m_Indices.push_back(face.mIndices[2]);
-			for (unsigned int j = 0; j < face.mNumIndices; j++)
-			{
-				m_Indices.push_back(face.mIndices[j]);
-			}
-		}
-		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
-		{
-			m_ModelTriangles.push_back({{mesh->mVertices[v].x, mesh->mVertices[v].y,
-				mesh->mVertices[v].z},
-				{1.f, 0.f, 0.f}, 
-				{mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y},
-				{mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z}
-				});
-			int texIndex = 0;
-			aiString path;
-			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-			m_ModelTextures[mesh->mMaterialIndex] = Texture(std::string(path.data));
-		}
-	}
 	// CHILDREN
 	for (unsigned int i = 0; i < _node->mNumChildren; i++)
 	{
 		ProcessModelNode(_node->mChildren[i], _scene);
+	}
+	for(int m = 0; m < _node->mNumMeshes; m++)
+	{
+		const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
+		R_Mesh* tempMesh = new R_Mesh();
+		//Process Mesh
+		for(unsigned int f = 0; f < mesh->mNumFaces; f++)
+		{
+			const aiFace& face = mesh->mFaces[f];
+			for (unsigned int j = 0; j < face.mNumIndices; j++)
+			{
+				m_Indices.push_back(face.mIndices[j]);
+				tempMesh->m_Indices.push_back(face.mIndices[j]);
+			}
+		}
+		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
+		{
+			Vertex3D tempVertex;
+			tempVertex.m_Pos = {mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z};
+			tempVertex.m_Color = {1.f, 0.f, 0.f};
+			if(mesh->mTextureCoords[0])
+				tempVertex.m_TexCoord = {mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y};
+			else
+				tempVertex.m_TexCoord = {0.f, 0.f};
+			tempVertex.m_Normal = {mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z};
+			int texIndex = 0;
+			aiString path;
+			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+			m_ModelTextures[mesh->mMaterialIndex] = Texture(std::string(path.data));
+			tempMesh->m_Texture = m_ModelTextures[mesh->mMaterialIndex];
+			m_ModelTriangles.push_back(tempVertex);
+			tempMesh->m_Vertices.push_back(tempVertex);
+			tempModel->m_Meshes.push_back(tempMesh);
+			totalVertices++;
+		}
+
 	}
 }
 
@@ -85,7 +94,9 @@ void LoadModel(const char* _filepath, const char* _modelName)
 		exit(-225);
 	//Process Node
 	auto node = scene->mRootNode;
+	tempModel = new R_Model();
 	ProcessModelNode(node, scene);
+	m_StaticModels.push_back(tempModel);
 }
 
 std::vector<char> LoadShader(const std::string& _filename)
@@ -210,10 +221,7 @@ unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags prope
 	for(unsigned int i = 0; i < m_Mem_Props.memoryTypeCount; i++)
 	{
 		if (typeFilter & (1 << i) && (m_Mem_Props.memoryTypes[i].propertyFlags & properties) == properties)
-		{
-			printf("Found Memory Type %d", properties);
 			return i;
-		}
 	}
 	printf("Not Found Memory Type %d", properties);
 	exit(-9);
@@ -962,12 +970,14 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 		VkBuffer indexBuffer = m_IndexBuffer;
 		vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 	}
+	// Draw Loop
 	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentLocalFrame], 0, nullptr);
 	if(m_IndexedRender && m_Indices.size() > 0)
 		vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(m_Indices.size()),
 					 1, 0, 0, 0);
 	else
 		vkCmdDraw(_commandBuffer, m_ModelTriangles.size(), 1, 0, 0);
+	// ---- Draw Loop
 	// DEBUG Render
 	// vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipeline);
 	// UI Render
@@ -1192,6 +1202,14 @@ void EditorLoop()
 		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
 		ImGui::SliderInt("Culling", &m_CullMode, 1, 3);
 		ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
+		if (ImGui::Button("Cam To Model"))
+		{
+			m_CameraPos = m_ModelTriangles[0].m_Pos;
+		}
+		ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
+		if (ImGui::Button("Rotate Model 90r"))
+		{
+		}
 		ImGui::End();
 	}
 	ImGui::Begin("DEBUG PANEL");
@@ -1211,18 +1229,17 @@ int main(int _argc, char** _args)
 	const int m_Width = 1280;
 	const int m_Height = 720;
 // 	cgltf_data* m_ModelData;
-
+	m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
 	char modelPath[512], modelName[64];
 	if(_argc >= 1)
 	{
-		sprintf(modelPath, "resources/Models/%s/glTF/", _args[1]);
-		sprintf(modelName, "%s.gltf", _args[1]);
+		sprintf(modelPath, "resources/Models/%s/", _args[1]);
+		sprintf(modelName, "%s", _args[2]);
 		printf("\n\tApplication launched with Params(%s): %s", modelPath, modelName);
 		LoadModel(modelPath, modelName);
-	}
-	else
+	} else 
 	{
-		LoadModel(g_SponzaPath, "Sponza.gltf");
+		exit(0);
 	}
 
 	/// VULKAN/glfw THINGS
@@ -1449,26 +1466,29 @@ int main(int _argc, char** _args)
 	CreateFramebuffers();
 	CreateCommandBuffer();
 	// Creamos los recursos para el Depth testing
-	CreateDepthTestingResources();
+	// CreateDepthTestingResources();
 	// Crear Textures
 	if(m_ModelTextures.size() > 0)
 	{
 		int tWidth, tHeight, tChannels;
 		std::vector<stbi_uc*> pixels;
-		VkDeviceSize tSize = 0;
-		for(auto [idx, texture] : m_ModelTextures)
-		{
-			char textPath[512];
-			sprintf(textPath, "%s%s", modelPath, texture.sPath.c_str());
-			pixels.push_back(stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha));
-			tSize += tWidth * tHeight * 4;
-			if(tSize <= 0)
-			{
-				printf("No Pixels: %zd", tSize);
-				exit(-69);
-			}
-		}
-		printf("Total Size Textures: %zd", tSize);
+		VkDeviceSize tSize = 128 * 128 * 4;
+		// for(auto [idx, texture] : m_ModelTextures)
+		// {
+			// char textPath[512];
+			// sprintf(textPath, "%s%s", modelPath, texture.sPath.c_str());
+			// stbi_uc* png = stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+			// if(png)
+			// {
+			// 	pixels.push_back(png);
+			// }
+			// else
+			// {
+				// printf("\tMissing Texture %s\n", textPath);
+				pixels.push_back(m_DefaultTexture);
+			// } 
+		// }
+		printf("Total Size Textures: %zd",  tSize);
 		CreateBuffer(tSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
@@ -1476,10 +1496,10 @@ int main(int _argc, char** _args)
 		vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
 		memcpy(data, *pixels.data(), (size_t) tSize);
 		vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
-		for(auto tPixels : pixels)
-		{
-			stbi_image_free(tPixels);
-		}
+		// for(auto tPixels : pixels)
+		// {
+		// 	stbi_image_free(tPixels);
+		// }
 		pixels.clear();
 		int count = 0;
 		auto texSize = tWidth * tHeight * 4;

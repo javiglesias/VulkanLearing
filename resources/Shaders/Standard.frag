@@ -16,7 +16,8 @@ void main()
 {
 	vec3 viewer_direction = normalize(viewerPosition - fragPosition);
 	vec3 result;
-	result =  directional_light_calculations(normal,  fragPosition,  viewer_direction);
+	restult = 0.1f * fragColor;
+	result +=  directional_light_calculations(normal,  fragPosition,  viewer_direction);
     outColor = vec4(result, 1.0);
 }
 

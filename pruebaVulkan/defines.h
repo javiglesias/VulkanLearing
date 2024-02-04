@@ -1,124 +1,3 @@
-// raylib https://github.com/raysan5/raylib/blob/c133fee286cfb3dad2fbfa40ab61f968850fd031/src/rmodels.c#L4891
-#define LOAD_ATTRIBUTE(accesor, numComp, dataType, dstPtr) \
-    { \
-        int n = 0; \
-        dataType *buffer = (dataType *)accesor->buffer_view->buffer->data + accesor->buffer_view->offset/sizeof(dataType) + accesor->offset/sizeof(dataType); \
-        for (unsigned int k = 0; k < accesor->count; k++) \
-        {\
-            for (int l = 0; l < numComp; l++) \
-            {\
-                dstPtr[numComp*k + l] = buffer[n + l];\
-            }\
-            n += (int)(accesor->stride/sizeof(dataType));\
-        }\
-	}\
-
-struct UniformBufferObject
-{
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 projection;
-	alignas(16) glm::vec3 cameraPosition;
-	alignas(16) glm::vec3 lightPosition;
-};
-struct Vertex2D {
-	glm::vec2 m_Pos;
-	glm::vec3 m_Color;
-	static VkVertexInputBindingDescription getBindingDescription()
-	{
-		VkVertexInputBindingDescription bindingDescription {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof (Vertex2D);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescription;
-	}
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-		attributeDescriptions[0].binding  = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex2D, m_Pos);
-
-		attributeDescriptions[1].binding  = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex2D, m_Color);
-
-		return attributeDescriptions;
-	}
-};
-
-struct DBG_Vertex3D 
-{
-	glm::vec3 m_Pos;
-	glm::vec3 m_Color;
-
-	static VkVertexInputBindingDescription getBindingDescription()
-	{
-		VkVertexInputBindingDescription bindingDescription {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof (DBG_Vertex3D);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescription;
-	}
-	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
-
-		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
-		attributeDescriptions[0].binding  = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(DBG_Vertex3D, m_Pos);
-
-		attributeDescriptions[1].binding  = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(DBG_Vertex3D, m_Color);
-
-		return attributeDescriptions;
-	}
-};
-
-struct Vertex3D {
-	glm::vec3 m_Pos;
-	glm::vec3 m_Color;
-	glm::vec2 m_TexCoord;
-	glm::vec3  m_Normal;
-
-	static VkVertexInputBindingDescription getBindingDescription()
-	{
-		VkVertexInputBindingDescription bindingDescription {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof (Vertex3D);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescription;
-	}
-	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
-
-		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
-		attributeDescriptions[0].binding  = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex3D, m_Pos);
-
-		attributeDescriptions[1].binding  = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex3D, m_Color);
-
-		attributeDescriptions[2].binding  = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex3D, m_TexCoord);
-
-		attributeDescriptions[3].binding  = 0;
-		attributeDescriptions[3].location = 3;
-		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[3].offset = offsetof(Vertex3D, m_Normal);
-
-		return attributeDescriptions;
-	}
-};
 
 const int FRAMES_IN_FLIGHT = 2;
 
@@ -150,24 +29,7 @@ std::vector<DBG_Vertex3D> Dbg_Cube =
     };
 
 std::vector<Vertex3D> m_ModelTriangles;
-
-struct Texture 
-{
-	std::string sPath;
-	VkImage tImage;
-	VkDeviceMemory tImageMem;
-	VkImageView tImageView;
-	Texture()
-	{
-		sPath[0] = 0;
-	}
-	Texture(std::string _path)
-	{
-		sPath= _path;
-	}
-};
-std::unordered_map<unsigned int, Texture> m_ModelTextures;
-
+unsigned int totalVertices;
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
 const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
 
@@ -186,6 +48,8 @@ unsigned int m_CurrentLocalFrame = 0;
 unsigned int m_SwapchainImagesCount;
 int m_CullMode = 2;
 std::string g_ConsoleMSG;
+stbi_uc* m_DefaultTexture;
+int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
 float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
 float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
 float m_CameraSpeed = 0.1f;
