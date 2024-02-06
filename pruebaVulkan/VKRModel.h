@@ -1,9 +1,11 @@
+#include <vulkan/vulkan_core.h>
 struct Texture 
 {
 	std::string sPath;
 	VkImage tImage;
 	VkDeviceMemory tImageMem;
 	VkImageView tImageView;
+	VkSampler m_Sampler;
 	Texture()
 	{
 		sPath[0] = 0;
@@ -34,9 +36,12 @@ public:
 	R_Mesh(){}
 public:
 	std::vector<Vertex3D> m_Vertices;
-	std::vector<unsigned int> m_Indices;
+	std::vector<uint16_t> m_Indices;
 	Texture m_Texture;
 	R_Material m_Material;
+	VkDescriptorPool m_DescriptorPool;
+	VkBuffer m_VertexBuffer;
+	VkBuffer m_IndexBuffer;
 };
 struct R_Model //Render Model
 {// lo necesario para poder renderizar un Modelo
@@ -45,6 +50,3 @@ public:
 public:
 	std::vector<R_Mesh*> m_Meshes;
 };
-
-std::vector<R_Model*> m_StaticModels;
-R_Model* tempModel;

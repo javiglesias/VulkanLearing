@@ -1,13 +1,6 @@
 
 const int FRAMES_IN_FLIGHT = 2;
 
-const std::vector<Vertex2D> m_TriangleVertices =
-{
-	{{-0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-};
 std::vector<DBG_Vertex3D> Dbg_Cube =
     {   // x     y     z
         {{-1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}}, // 1  left    First Strip
@@ -28,15 +21,13 @@ std::vector<DBG_Vertex3D> Dbg_Cube =
         {{-1.0, -1.0, -1.0},  {1.0f, 1.0f, 0.0f}}// 0
     };
 
+std::vector<R_Model*> m_StaticModels;
+R_Model* tempModel;
 std::vector<Vertex3D> m_ModelTriangles;
-unsigned int totalVertices;
+std::vector<uint16_t> m_Indices;
+
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
 const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
-
-std::vector<uint16_t> m_Indices =
-{
-// 	0, 1, 2, 2, 3, 0
-};
 
 bool m_NeedToRecreateSwapchain = false;
 bool m_MouseCaptured = false;
@@ -110,7 +101,6 @@ VkPhysicalDeviceMemoryProperties m_Mem_Props;
 VkImage m_TextureImage;
 VkImageView m_TextureImageView;
 VkDeviceMemory m_TextureImageMemory;
-VkSampler m_TextureSampler;
 VkImage m_DepthImage;
 VkDeviceMemory m_DepthImageMemory;
 VkImageView m_DepthImageView;
