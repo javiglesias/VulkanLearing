@@ -46,6 +46,7 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 	{
 		ProcessModelNode(_node->mChildren[i], _scene);
 	}
+	int lastTexIndex = 0;
 	for(int m = 0; m < _node->mNumMeshes; m++)
 	{
 		const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
@@ -56,8 +57,12 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 			const aiFace& face = mesh->mFaces[f];
 			for (unsigned int j = 0; j < face.mNumIndices; j++)
 			{
-				m_Indices.push_back(face.mIndices[j]);
-				tempMesh->m_Indices.push_back(face.mIndices[j]);
+				// m_Indices.push_back(face.mIndices[0]);
+				// m_Indices.push_back(face.mIndices[1]);
+				// m_Indices.push_back(face.mIndices[2]);
+				tempMesh->m_Indices.push_back(face.mIndices[0]);
+				tempMesh->m_Indices.push_back(face.mIndices[1]);
+				tempMesh->m_Indices.push_back(face.mIndices[2]);
 			}
 		}
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
@@ -66,19 +71,23 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 			tempVertex.m_Pos = {mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z};
 			tempVertex.m_Color = {1.f, 0.f, 0.f};
 			if(mesh->mTextureCoords[0])
-				tempVertex.m_TexCoord = {mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y};
+			{
+				tempVertex.m_TexCoord = { mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y};
+			}
 			else
+			{
 				tempVertex.m_TexCoord = {0.f, 0.f};
+			}
 			tempVertex.m_Normal = {mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z};
-			int texIndex = 0;
-			aiString path;
-			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-			m_ModelTextures[mesh->mMaterialIndex] = Texture(std::string(path.data));
-			m_ModelTriangles.push_back(tempVertex);
 			// New New Mexico
-			tempMesh->m_Texture = m_ModelTextures[mesh->mMaterialIndex];
 			tempMesh->m_Vertices.push_back(tempVertex);
 		}
+		// Textura por Mesh
+		int texIndex = 0;
+		aiString path;
+		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+		tempMesh->m_Texture = Texture(std::string(path.data));
+		++m_TotalTextures;
 		tempModel->m_Meshes.push_back(tempMesh);
 	}
 }
@@ -328,13 +337,31 @@ void Cleanup()
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-	if(m_Indices.size() > 0)
+	// if(m_Indices.size() > 0)
+	// {
+	// 	vkDestroyBuffer(m_LogicDevice, m_IndexBuffer, nullptr);
+	// 	vkFreeMemory(m_LogicDevice, m_IndexBufferMemory, nullptr);
+	// }
+	// vkDestroyBuffer(m_LogicDevice, m_VertexBuffer, nullptr);
+	// vkFreeMemory(m_LogicDevice, m_VertexBufferMemory, nullptr);
+	for(auto& model : m_StaticModels)
 	{
-		vkDestroyBuffer(m_LogicDevice, m_IndexBuffer, nullptr);
-		vkFreeMemory(m_LogicDevice, m_IndexBufferMemory, nullptr);
+		for(auto& mesh : model->m_Meshes)
+		{
+			if(mesh->m_Indices.size() > 0)
+			{
+				vkDestroyBuffer(m_LogicDevice, mesh->m_IndexBuffer, nullptr);
+				vkFreeMemory(m_LogicDevice, mesh->m_IndexBufferMemory, nullptr);
+			}
+			vkDestroyBuffer(m_LogicDevice, mesh->m_VertexBuffer, nullptr);
+			vkFreeMemory(m_LogicDevice, mesh->m_VertexBufferMemory, nullptr);
+			// Delete texture things
+			vkDestroySampler(m_LogicDevice, mesh->m_Texture.m_Sampler, nullptr);
+			vkDestroyImageView(m_LogicDevice, mesh->m_Texture.tImageView, nullptr);
+			vkDestroyImage(m_LogicDevice,mesh->m_Texture.tImage, nullptr);
+			vkFreeMemory(m_LogicDevice, mesh->m_Texture.tImageMem, nullptr);
+		}
 	}
-	vkDestroyBuffer(m_LogicDevice, m_VertexBuffer, nullptr);
-	vkFreeMemory(m_LogicDevice, m_VertexBufferMemory, nullptr);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
 		vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
@@ -360,15 +387,6 @@ void Cleanup()
 	vkDestroyImageView(m_LogicDevice, m_DepthImageView, nullptr);
 	vkDestroyImage(m_LogicDevice, m_DepthImage, nullptr);
 	vkFreeMemory(m_LogicDevice, m_DepthImageMemory, nullptr);
-	int count = 0;
-	for(auto [idx, texture] : m_ModelTextures)
-	{
-		vkDestroySampler(m_LogicDevice, m_ModelTextures[count].m_Sampler, nullptr);
-		vkDestroyImageView(m_LogicDevice, m_ModelTextures[idx].tImageView, nullptr);
-		vkDestroyImage(m_LogicDevice, m_ModelTextures[idx].tImage, nullptr);
-		vkFreeMemory(m_LogicDevice, m_ModelTextures[idx].tImageMem, nullptr);
-		++count;
-	}
 	vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 	vkDestroyDevice(m_LogicDevice, nullptr);
 	if (m_DebugMessenger != nullptr)
@@ -515,13 +533,13 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	 */
 	 /// El rasterizador convierte los vertices en fragmentos para darles color
 	m_Rasterizer->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	m_Rasterizer->depthClampEnable = VK_FALSE;
+	m_Rasterizer->depthClampEnable = VK_TRUE;
 	m_Rasterizer->rasterizerDiscardEnable = VK_FALSE;
-	m_Rasterizer->polygonMode = VK_POLYGON_MODE_FILL;
+	m_Rasterizer->polygonMode = (VkPolygonMode)m_PolygonMode;
 	m_Rasterizer->lineWidth = 1.f;
-	m_Rasterizer->cullMode = VK_CULL_MODE_FRONT_BIT;
+	m_Rasterizer->cullMode = VK_CULL_MODE_BACK_BIT;
 	m_Rasterizer->frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	m_Rasterizer->depthBiasEnable = VK_FALSE;
+	m_Rasterizer->depthBiasEnable = VK_TRUE;
 	/// Multisampling para evitar los bordes de sierra (anti-aliasing).
 	m_Multisampling->sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	m_Multisampling->sampleShadingEnable = VK_FALSE;
@@ -532,6 +550,9 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_Multisampling->alphaToOneEnable = VK_FALSE;
 	/// Depth and stencil
 	m_DepthStencil->sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	m_DepthStencil->depthCompareOp = VK_COMPARE_OP_LESS;
+	m_DepthStencil->depthTestEnable = VK_TRUE;
+	m_DepthStencil->depthWriteEnable = VK_TRUE;
 	// Descriptors Set
 	/// Pipeline Layout
 	VkPipelineLayoutCreateInfo m_PipelineLayoutCreateInfo{};
@@ -867,7 +888,7 @@ void CreateVulkanPipeline(VkShaderModule _VertShaderModule, VkShaderModule _Frag
 	m_PipelineInfoCreateInfo.pViewportState = &m_ViewportState;
 	m_PipelineInfoCreateInfo.pRasterizationState = &m_Rasterizer;
 	m_PipelineInfoCreateInfo.pMultisampleState = &m_Multisampling;
-	m_PipelineInfoCreateInfo.pDepthStencilState = nullptr;
+	m_PipelineInfoCreateInfo.pDepthStencilState = &m_DepthStencil;
 	m_PipelineInfoCreateInfo.pColorBlendState = &m_ColorBlending;
 	m_PipelineInfoCreateInfo.pDynamicState = &m_DynamicState;
 	m_PipelineInfoCreateInfo.layout = *_PipelineLayout;
@@ -893,7 +914,8 @@ void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _
 	mBeginInfo.pInheritanceInfo = nullptr;
 	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
 		exit(-13);
-	VkClearValue m_ClearColor = { {{0.f, 0.f, 0.f, 0.5f}} };
+	// VkClearValue m_ClearColor = { {{0.f, 0.f, 0.f, 0.5f}} };
+	// m_ClearColor.depthStencil = { 1.0f, 0 };
 
 	// IMGUI renderPass
 	VkRenderPassBeginInfo info = {};
@@ -901,8 +923,8 @@ void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _
 	info.renderPass = m_RenderPass;
 	info.framebuffer = m_SwapChainFramebuffers[_imageIdx];
 	info.renderArea.extent = m_CurrentExtent;
-	info.clearValueCount = 1;
-	info.pClearValues = &m_ClearColor;
+	// info.clearValueCount = 1;
+	// info.pClearValues = &m_ClearColor;
 	vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
 	// Record dear imgui primitives into command buffer
 	ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
@@ -923,6 +945,10 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	mBeginInfo.pInheritanceInfo = nullptr;
 	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
 		exit(-13);
+	// Clear Color
+	VkClearValue m_ClearColor;
+	m_ClearColor.color = defaultClearColor;
+	m_ClearColor.depthStencil = { 1.0f, 0 };
 	// Render pass
 	VkRenderPassBeginInfo m_RenderPassInfo{};
 	m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -930,8 +956,6 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	m_RenderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
 	m_RenderPassInfo.renderArea.offset = { 0,0 };
 	m_RenderPassInfo.renderArea.extent = m_CurrentExtent;
-	// Clear Color
-	VkClearValue m_ClearColor = { {{0.f, 0.f, 0.f, 1.f}} };
 	m_RenderPassInfo.clearValueCount = 1;
 	m_RenderPassInfo.pClearValues = &m_ClearColor;
 	vkCmdBeginRenderPass(_commandBuffer, &m_RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -939,30 +963,28 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-	VkBuffer vertesBuffers[] = {m_VertexBuffer};
-	VkDeviceSize offsets[] = {0};
-
-	vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-	if(m_IndexedRender && m_Indices.size() > 0)
-	{
-		VkBuffer indexBuffer = m_IndexBuffer;
-		vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-	}
+	vkCmdSetDepthCompareOp(_commandBuffer, VK_COMPARE_OP_LESS);
+	vkCmdSetDepthTestEnable(_commandBuffer, VK_TRUE);
 	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentLocalFrame], 0, nullptr);
-	// Draw Loop
-		for(auto& model : m_StaticModels)
+	for(auto& model : m_StaticModels)
+	{
+		for(auto& mesh : model->m_Meshes)
 		{
-			for(auto& mesh : model->m_Meshes)
+			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
+			VkDeviceSize offsets[] = {0};
+			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
+			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			// Draw Loop
+			if(m_IndexedRender && mesh->m_Indices.size() > 0)
 			{
-				if(m_IndexedRender && mesh->m_Indices.size() > 0)
-					vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()),
-								1, 0, 0, 0);
-				else
-				{
-						vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
-				}	
+						vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
 			}
+			else
+			{
+					vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
+			}	
 		}
+	}
 	// ---- Draw Loop
 	// DEBUG Render
 	// vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipeline);
@@ -982,7 +1004,7 @@ void CreateDescriptorPool()
 	descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 	// Textura
 	descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descPoolSize[1].descriptorCount = m_ModelTextures.size() * static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+	descPoolSize[1].descriptorCount = m_TotalTextures * static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 	VkDescriptorPoolCreateInfo descPoolInfo {};
 	descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1006,7 +1028,7 @@ void CreateDescriptorSet()
 	VkDescriptorSetLayoutBinding textureLayoutBinding {};
 	textureLayoutBinding.binding = 1;
 	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureLayoutBinding.descriptorCount = m_ModelTextures.size();
+	textureLayoutBinding.descriptorCount = m_TotalTextures;
 	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	textureLayoutBinding.pImmutableSamplers = nullptr;
 
@@ -1051,28 +1073,28 @@ void UpdateDescriptorSet()
 		descriptorsWrite[0].pTexelBufferView = nullptr;
 		// Textures
 		std::vector<VkDescriptorImageInfo> textureimages;
-		int count = 0;
-		for(auto [idx, texture] : m_ModelTextures)
+		for(auto& model : m_StaticModels)
 		{
-			VkDescriptorImageInfo textureimage{};
-			textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			textureimage.imageView = m_ModelTextures[count].tImageView;
-			if(m_ModelTextures[count].m_Sampler != nullptr)
+			for(auto& mesh : model->m_Meshes)
 			{
-				printf("Valid Sampler %d\n", count);
-				textureimage.sampler = m_ModelTextures[count].m_Sampler;
+				VkDescriptorImageInfo textureimage{};
+				textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				textureimage.imageView = mesh->m_Texture.tImageView;
+				if(mesh->m_Texture.m_Sampler != nullptr)
+				{
+					textureimage.sampler = mesh->m_Texture.m_Sampler;
+				}
+				else
+				{
+					printf("Invalid Sampler for frame %ld\n", i);
+					continue;
+				}
+				g_ConsoleMSG += mesh->m_Texture.sPath;
+				g_ConsoleMSG += '\n';
+				textureimages.push_back(textureimage);
 			}
-			else
-			{
-				printf("Invalid Sampler%d\n", count);
-				continue;
-			}
-			g_ConsoleMSG += m_ModelTextures[count].sPath;
-			g_ConsoleMSG += '\n';
-			textureimages.push_back(textureimage);
-			++count;
 		}
-		printf("Textures to Write %ld", textureimages.size());
+		printf("Textures to Write %ld\n", textureimages.size());
 		descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorsWrite[1].dstSet = m_DescriptorSets[i];
 		descriptorsWrite[1].dstBinding = 1;
@@ -1298,16 +1320,9 @@ void EditorLoop()
 		m_LightPos.y = tempLightPos[1];
 		m_LightPos.z = tempLightPos[2];
 		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
-		ImGui::SliderInt("Culling", &m_CullMode, 1, 3);
 		ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
-		if (ImGui::Button("Cam To Model"))
-		{
-			m_CameraPos = m_ModelTriangles[0].m_Pos;
-		}
 		ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
-		if (ImGui::Button("Rotate Model 90r"))
-		{
-		}
+		ImGui::SliderInt("Culling", &m_PolygonMode, 1, 3);
 		ImGui::End();
 	}
 	ImGui::Begin("DEBUG PANEL");
@@ -1327,7 +1342,7 @@ int main(int _argc, char** _args)
 	const int m_Width = 1280;
 	const int m_Height = 720;
 // 	cgltf_data* m_ModelData;
-	m_DefaultTexture = stbi_load("resources/Textures/checker.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
+	m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
 	char modelPath[512], modelName[64];
 	if(_argc >= 1)
 	{
@@ -1575,115 +1590,101 @@ int main(int _argc, char** _args)
 	// Creamos los recursos para el Depth testing
 	// CreateDepthTestingResources();
 	// Crear Textures
-	if(m_ModelTextures.size() > 0)
+	for(auto& model : m_StaticModels)
 	{
-		int tWidth, tHeight, tChannels;
-		std::vector<stbi_uc*> pixels;
-		VkDeviceSize tSize = 2048 * 2048 * 4;
-		for(auto [idx, texture] : m_ModelTextures)
+		for(auto& mesh : model->m_Meshes)
 		{
+			int tWidth, tHeight, tChannels;
+			stbi_uc* pixels;
+			VkDeviceSize tSize;
 			char textPath[512];
-			sprintf(textPath, "%s%s", modelPath, texture.sPath.c_str());
-			stbi_uc* png = stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
-			if(png)
+			sprintf(textPath, "%s%s", modelPath, mesh->m_Texture.sPath.c_str());
+			pixels = stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+			if(!pixels)
 			{
-				tSize = tWidth * tHeight * 4;
-				pixels.push_back(png);
-			}
-			else
-			{
-				printf("\tMissing Texture %s\n", textPath);
-				pixels.push_back(m_DefaultTexture);
+				printf("\rMissing Texture %s\n", textPath);
+				pixels = m_DefaultTexture;
+				tWidth = 2048;
+				tHeight = 2048;
 			} 
-		}
-		tSize *= m_ModelTextures.size();
-		printf("Total Size Textures(%d) Buffer: %zd\n",  m_ModelTextures.size(), tSize);
-		CreateBuffer(tSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				m_StagingBuffer, m_StaggingBufferMemory);
-		void* data;
-		vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
-		memcpy(data, *pixels.data(), (size_t) tSize);
-		vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
-		for(auto tPixels : pixels)
-		{
-			stbi_image_free(tPixels);
-		}
-		pixels.clear();
-		auto texSize = tWidth * tHeight * 4;
-		int count = 0;
-		for(auto [idx, texture] : m_ModelTextures)
-		{
+			tSize = tWidth * tHeight * 4;
+			// Buffer transfer of pixels
+			CreateBuffer(tSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_StagingBuffer, m_StaggingBufferMemory);
+			void* data;
+			vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, tSize, 0, &data);
+			memcpy(data, pixels, (size_t) tSize);
+			vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
+			stbi_image_free(pixels);
+
+			auto texSize = tWidth * tHeight * 4;
 			CreateImage(tWidth, tHeight, VK_FORMAT_R8G8B8A8_SRGB, 
 							VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), 
-							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_ModelTextures[count].tImage, &m_ModelTextures[count].tImageMem);
-			vkBindImageMemory(m_LogicDevice, m_ModelTextures[count].tImage,m_ModelTextures[count].tImageMem, 0);
-			TransitionImageLayout(m_ModelTextures[count].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-			CopyBufferToImage(m_StagingBuffer, m_ModelTextures[count].tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), count * texSize);
-			TransitionImageLayout(m_ModelTextures[count].tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			m_ModelTextures[count].tImageView = CreateTextureImageView(m_ModelTextures[count].tImage);
-			m_ModelTextures[count].m_Sampler = CreateTextureSampler();
-			count++;
+							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &mesh->m_Texture.tImage, &mesh->m_Texture.tImageMem);
+			vkBindImageMemory(m_LogicDevice, mesh->m_Texture.tImage, mesh->m_Texture.tImageMem, 0);
+			TransitionImageLayout(mesh->m_Texture.tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			CopyBufferToImage(m_StagingBuffer, mesh->m_Texture.tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight),  0);
+			TransitionImageLayout(mesh->m_Texture.tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			mesh->m_Texture.tImageView = CreateTextureImageView(mesh->m_Texture.tImage);
+			mesh->m_Texture.m_Sampler = CreateTextureSampler();
+			vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+			vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			// Vertex buffer
+			if(mesh->m_Vertices.size() <= 0)
+			{
+				fprintf(stderr, "There is no Triangles to inser on the buffer");
+				exit(-57);
+			}
+			VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
+			// Stagin buffer
+			CreateBuffer(bufferSize,
+						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_StagingBuffer, m_StaggingBufferMemory);
+			vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+			memcpy(data, mesh->m_Vertices.data(), (size_t) bufferSize);
+			vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
+			CreateBuffer(bufferSize,
+						VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					mesh->m_VertexBuffer, mesh->m_VertexBufferMemory);
+			CopyBuffer(mesh->m_VertexBuffer, m_StagingBuffer, bufferSize);
+			vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+			vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			if(mesh->m_Indices.size() > 0)
+			{
+				// Index buffer
+				bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
+				// Stagin buffer
+				CreateBuffer(bufferSize,
+							VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+							VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_StagingBuffer, m_StaggingBufferMemory);
+				vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+				memcpy(data, mesh->m_Indices.data(), (size_t) bufferSize);
+				vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
+				CreateBuffer(bufferSize,
+							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+							VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+							VK_SHARING_MODE_CONCURRENT,
+							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+						mesh->m_IndexBuffer, mesh->m_IndexBufferMemory);
+				CopyBuffer(mesh->m_IndexBuffer, m_StagingBuffer, bufferSize);
+				vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
+				vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			}
 		}
-		vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
-		vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
-	}
-	// Vertex buffer
-	if(m_ModelTriangles.size() <= 0)
-	{
-		fprintf(stderr, "There is no Triangles to inser on the buffer");
-		exit(-57);
-	}
-	VkDeviceSize bufferSize = sizeof(m_ModelTriangles[0]) * m_ModelTriangles.size();
-	// Stagin buffer
-	CreateBuffer(bufferSize,
-				 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			  m_StagingBuffer, m_StaggingBufferMemory);
-// 	void* data;
-	void* data;
-	vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, m_ModelTriangles.data(), (size_t) bufferSize);
-	vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
-	CreateBuffer(bufferSize,
-				 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-				 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-				 VK_SHARING_MODE_CONCURRENT,
-				 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			  m_VertexBuffer, m_VertexBufferMemory);
-	CopyBuffer(m_VertexBuffer, m_StagingBuffer, bufferSize);
-	vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
-	vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
-
-	if(m_Indices.size() > 0)
-	{
-		// Index buffer
-		bufferSize = sizeof(m_Indices[0]) * m_Indices.size();
-		// Stagin buffer
-		CreateBuffer(bufferSize,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				m_StagingBuffer, m_StaggingBufferMemory);
-		vkMapMemory(m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, m_Indices.data(), (size_t) bufferSize);
-		vkUnmapMemory(m_LogicDevice, m_StaggingBufferMemory);
-		CreateBuffer(bufferSize,
-					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-					VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				m_IndexBuffer, m_IndexBufferMemory);
-		CopyBuffer(m_IndexBuffer, m_StagingBuffer, bufferSize);
-		vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
-		vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
 	}
 	// Uniform buffers
 	m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
 	m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
 	m_Uniform_SBuffersMapped.resize(FRAMES_IN_FLIGHT);
-	bufferSize = sizeof(UniformBufferObject);
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -1733,8 +1734,6 @@ int main(int _argc, char** _args)
 	ImGui_ImplVulkan_Init(&init_info, m_RenderPass);
 	UpdateDescriptorSet();
 
-	RecordCommandBuffer(m_CommandBuffer[0], 0, 0);
-	RecordCommandBuffer(m_CommandBuffer[1], 0, 1);
 	CreateSyncObjects(0);
 	CreateSyncObjects(1);
 

@@ -1,6 +1,7 @@
 #include <vulkan/vulkan_core.h>
 struct Texture 
 {
+public:
 	std::string sPath;
 	VkImage tImage;
 	VkDeviceMemory tImageMem;
@@ -15,8 +16,6 @@ struct Texture
 		sPath= _path;
 	}
 };
-std::unordered_map<unsigned int, Texture> m_ModelTextures;
-
 struct R_Material
 {
 	VkShaderModule m_VertShaderModule;
@@ -41,7 +40,9 @@ public:
 	R_Material m_Material;
 	VkDescriptorPool m_DescriptorPool;
 	VkBuffer m_VertexBuffer;
+	VkDeviceMemory m_VertexBufferMemory;
 	VkBuffer m_IndexBuffer;
+	VkDeviceMemory m_IndexBufferMemory;
 };
 struct R_Model //Render Model
 {// lo necesario para poder renderizar un Modelo

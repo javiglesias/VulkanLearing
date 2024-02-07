@@ -1,5 +1,5 @@
 #version 450
-layout(binding=1) uniform sampler2D inTexture;
+layout(binding=1) uniform sampler2D inTexture[];
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosition;
@@ -26,9 +26,9 @@ vec3 directional_light_calculations(vec3 _normal, vec3 _fragPos, vec3 _viewDir)
 	float diff = max(dot(_normal, light_dir), 0.0f);
 	vec3 reflect_dir = reflect(light_dir,  _normal);
 	float spec = pow(max(dot(_viewDir, reflect_dir), 0.0f), 32);//material.shininess);
-	
-	vec3 ambient = vec3(texture(inTexture, texCoord));
-	vec3 diffuse = diff * vec3(texture(inTexture, texCoord));
-	vec3 specular = spec * vec3(texture(inTexture, texCoord));
+
+	vec3 ambient = vec3(texture(inTexture[0], texCoord));
+	vec3 diffuse = diff * vec3(texture(inTexture[1], texCoord));
+	vec3 specular = spec * vec3(texture(inTexture[2], texCoord));
 	return ambient + diffuse + specular;
 }

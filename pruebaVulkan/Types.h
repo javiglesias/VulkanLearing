@@ -1,3 +1,4 @@
+#include <vulkan/vulkan_core.h>
 struct UniformBufferObject
 {
 	alignas(16) glm::mat4 model;
@@ -67,7 +68,7 @@ struct DBG_Vertex3D
 struct Vertex3D {
 	glm::vec3 m_Pos;
 	glm::vec3 m_Color;
-	glm::vec2 m_TexCoord;
+	glm::vec2 m_TexCoord;// x, y
 	glm::vec3  m_Normal;
 
 	static VkVertexInputBindingDescription getBindingDescription()

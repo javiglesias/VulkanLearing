@@ -1,4 +1,5 @@
 
+#include <vulkan/vulkan_core.h>
 const int FRAMES_IN_FLIGHT = 2;
 
 std::vector<DBG_Vertex3D> Dbg_Cube =
@@ -23,8 +24,6 @@ std::vector<DBG_Vertex3D> Dbg_Cube =
 
 std::vector<R_Model*> m_StaticModels;
 R_Model* tempModel;
-std::vector<Vertex3D> m_ModelTriangles;
-std::vector<uint16_t> m_Indices;
 
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
 const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
@@ -40,16 +39,23 @@ unsigned int m_SwapchainImagesCount;
 int m_CullMode = 2;
 std::string g_ConsoleMSG;
 stbi_uc* m_DefaultTexture;
+int m_TotalTextures;
 int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
 float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
 float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
 float m_CameraSpeed = 0.1f;
 glm::vec3 m_CameraPos = glm::vec3(0.f);
 glm::vec3 m_LightPos = glm::vec3(1.f);
-glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
+glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
 glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
-std::vector<VkDynamicState> m_DynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+std::vector<VkDynamicState> m_DynamicStates = { 
+    VK_DYNAMIC_STATE_VIEWPORT, 
+    VK_DYNAMIC_STATE_SCISSOR, 
+    VK_DYNAMIC_STATE_DEPTH_COMPARE_OP,
+    VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE, 
+    VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE
+    };
 std::vector<const char*> m_DeviceExtensions;
 std::vector<const char*> m_InstanceExtensions;
 std::vector< VkDeviceQueueCreateInfo> m_QueueCreateInfos;
@@ -88,15 +94,11 @@ VkPipeline m_GraphicsPipeline;
 VkPipeline m_DebugPipeline;
 VkCommandPool m_CommandPool;
 VkQueue m_PresentQueue;
-VkBuffer m_VertexBuffer;
 VkBuffer m_StagingBuffer;
-VkBuffer m_IndexBuffer;
 std::vector<VkBuffer> m_UniformBuffers;
 std::vector<VkDeviceMemory> m_UniformBuffersMemory;
 std::vector<void*> m_Uniform_SBuffersMapped;
-VkDeviceMemory m_VertexBufferMemory;
 VkDeviceMemory m_StaggingBufferMemory;
-VkDeviceMemory m_IndexBufferMemory;
 VkPhysicalDeviceMemoryProperties m_Mem_Props;
 VkImage m_TextureImage;
 VkImageView m_TextureImageView;
@@ -104,6 +106,8 @@ VkDeviceMemory m_TextureImageMemory;
 VkImage m_DepthImage;
 VkDeviceMemory m_DepthImageMemory;
 VkImageView m_DepthImageView;
+VkClearColorValue defaultClearColor = { { 0.025f, 0.025f, 0.025f, 1.0f } };
+int m_PolygonMode = VK_POLYGON_MODE_FILL;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
 VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];
