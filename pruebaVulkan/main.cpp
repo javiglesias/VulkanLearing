@@ -96,7 +96,7 @@ void LoadModel(const char* _filepath, const char* _modelName)
 {
 	char filename[128];
 	sprintf(filename, "%s%s",_filepath, _modelName);
-	printf("\nLoading %s", _modelName);
+	printf("\nLoading %s\n", _modelName);
 	const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
 	if(!scene->HasMeshes())
 		exit(-225);
@@ -1002,6 +1002,41 @@ void CreateFramebuffers()
 	}
 }
 
+// Creamos el layout de los Descriptor set que vamos a utlizar
+void CreateDescriptorSetLayout()
+{
+	// estructura UBO
+	VkDescriptorSetLayoutBinding uboLayoutBinding {};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+	// Textura Diffuse
+	VkDescriptorSetLayoutBinding textureDiffuseLayoutBinding {};
+	textureDiffuseLayoutBinding.binding = 1;
+	textureDiffuseLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureDiffuseLayoutBinding.descriptorCount = 1;
+	textureDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	textureDiffuseLayoutBinding.pImmutableSamplers = nullptr;
+
+	// Textura specular
+	VkDescriptorSetLayoutBinding textureSpecularLayoutBinding {};
+	textureSpecularLayoutBinding.binding = 2;
+	textureSpecularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureSpecularLayoutBinding.descriptorCount = 1;
+	textureSpecularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	textureSpecularLayoutBinding.pImmutableSamplers = nullptr;
+
+	std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {uboLayoutBinding, textureDiffuseLayoutBinding, textureSpecularLayoutBinding};
+	VkDescriptorSetLayoutCreateInfo layoutInfo {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
+	layoutInfo.pBindings = ShaderBindings.data();
+		if(vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
+			exit(-99);
+}
+
 void CreateCommandBuffer()
 {
 	// COMMAND BUFFERS
@@ -1431,13 +1466,15 @@ int main(int _argc, char** _args)
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
 	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
+	// primero creamos el layout de los descriptors
+	CreateDescriptorSetLayout();
 	for(auto& model : m_StaticModels)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
 			// Descriptor Pool
 			mesh->CreateDescriptorPool(m_LogicDevice);
-			// Descriptor Sets en cada mesh
+			// ahora creamos los Descriptor Sets en cada mesh
 			mesh->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
 		}
 	}

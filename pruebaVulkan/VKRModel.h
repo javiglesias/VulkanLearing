@@ -69,37 +69,7 @@ public:
 			exit(-66);
 	}
 	void CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout)
-	{
-		// estructura UBO
-		VkDescriptorSetLayoutBinding uboLayoutBinding {};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.descriptorCount = 1;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-		// Textura Diffuse
-		VkDescriptorSetLayoutBinding textureDiffuseLayoutBinding {};
-		textureDiffuseLayoutBinding.binding = 1;
-		textureDiffuseLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		textureDiffuseLayoutBinding.descriptorCount = 1;
-		textureDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		textureDiffuseLayoutBinding.pImmutableSamplers = nullptr;
-
-		// Textura specular
-		VkDescriptorSetLayoutBinding textureSpecularLayoutBinding {};
-		textureSpecularLayoutBinding.binding = 2;
-		textureSpecularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		textureSpecularLayoutBinding.descriptorCount = 1;
-		textureSpecularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		textureSpecularLayoutBinding.pImmutableSamplers = nullptr;
-
-		std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {uboLayoutBinding, textureDiffuseLayoutBinding, textureSpecularLayoutBinding};
-		VkDescriptorSetLayoutCreateInfo layoutInfo {};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
-		layoutInfo.pBindings = ShaderBindings.data();
-		if(vkCreateDescriptorSetLayout(_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
-			exit(-99);
+	{	
 		m_DescLayouts.resize(FRAMES_IN_FLIGHT);
 		m_DescLayouts[0]= _DescSetLayout;
 		m_DescLayouts[1]= _DescSetLayout;
@@ -185,10 +155,6 @@ public:
 		vkDestroyImageView(_LogicDevice, m_Texture.tImageView, nullptr);
 		vkDestroyImage(_LogicDevice,m_Texture.tImage, nullptr);
 		vkFreeMemory(_LogicDevice, m_Texture.tImageMem, nullptr);
-		for(auto& descLayout : m_DescLayouts)
-		{
-			vkDestroyDescriptorSetLayout(_LogicDevice, descLayout, nullptr);
-		}
 		vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
 	}
 };
