@@ -1,4 +1,6 @@
 #include <vulkan/vulkan_core.h>
+
+const int FRAMES_IN_FLIGHT = 2;
 struct UniformBufferObject
 {
 	alignas(16) glm::mat4 model;

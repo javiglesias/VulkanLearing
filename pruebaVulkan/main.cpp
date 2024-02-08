@@ -337,29 +337,13 @@ void Cleanup()
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-	// if(m_Indices.size() > 0)
-	// {
-	// 	vkDestroyBuffer(m_LogicDevice, m_IndexBuffer, nullptr);
-	// 	vkFreeMemory(m_LogicDevice, m_IndexBufferMemory, nullptr);
-	// }
-	// vkDestroyBuffer(m_LogicDevice, m_VertexBuffer, nullptr);
-	// vkFreeMemory(m_LogicDevice, m_VertexBufferMemory, nullptr);
+
+	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
 	for(auto& model : m_StaticModels)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			if(mesh->m_Indices.size() > 0)
-			{
-				vkDestroyBuffer(m_LogicDevice, mesh->m_IndexBuffer, nullptr);
-				vkFreeMemory(m_LogicDevice, mesh->m_IndexBufferMemory, nullptr);
-			}
-			vkDestroyBuffer(m_LogicDevice, mesh->m_VertexBuffer, nullptr);
-			vkFreeMemory(m_LogicDevice, mesh->m_VertexBufferMemory, nullptr);
-			// Delete texture things
-			vkDestroySampler(m_LogicDevice, mesh->m_Texture.m_Sampler, nullptr);
-			vkDestroyImageView(m_LogicDevice, mesh->m_Texture.tImageView, nullptr);
-			vkDestroyImage(m_LogicDevice,mesh->m_Texture.tImage, nullptr);
-			vkFreeMemory(m_LogicDevice, mesh->m_Texture.tImageMem, nullptr);
+			mesh->CleanMeshData(m_LogicDevice);
 		}
 	}
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -367,6 +351,8 @@ void Cleanup()
 		vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
 		vkFreeMemory(m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
 	}
+
+	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[0], nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[1], nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_RenderFinish[0], nullptr);
@@ -376,9 +362,6 @@ void Cleanup()
 	vkDestroyCommandPool(m_LogicDevice, m_CommandPool, nullptr);
 	vkDestroyPipeline(m_LogicDevice, m_GraphicsPipeline, nullptr);
 	vkDestroyPipeline(m_LogicDevice, m_DebugPipeline, nullptr);
-	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
-	vkDestroyDescriptorPool(m_LogicDevice, m_DescriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
 	vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
 	vkDestroyPipelineLayout(m_LogicDevice, m_DebugPipelineLayout, nullptr);
 	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
@@ -553,7 +536,6 @@ void CreatePipelineLayout(VkShaderModule* _vertShaderModule, VkShaderModule* _fr
 	m_DepthStencil->depthCompareOp = VK_COMPARE_OP_LESS;
 	m_DepthStencil->depthTestEnable = VK_TRUE;
 	m_DepthStencil->depthWriteEnable = VK_TRUE;
-	// Descriptors Set
 	/// Pipeline Layout
 	VkPipelineLayoutCreateInfo m_PipelineLayoutCreateInfo{};
 	m_PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -965,13 +947,14 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
 	vkCmdSetDepthCompareOp(_commandBuffer, VK_COMPARE_OP_LESS);
 	vkCmdSetDepthTestEnable(_commandBuffer, VK_TRUE);
-	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentLocalFrame], 0, nullptr);
 	for(auto& model : m_StaticModels)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
 			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
 			VkDeviceSize offsets[] = {0};
+			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
+																&mesh->m_DescriptorSet[m_CurrentLocalFrame], 0, nullptr);
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 			// Draw Loop
@@ -994,118 +977,6 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	vkCmdEndRenderPass(_commandBuffer);
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
-}
-
-void CreateDescriptorPool()
-{
-	std::array<VkDescriptorPoolSize, 2> descPoolSize {};
-	// UBO
-	descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-	// Textura
-	descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descPoolSize[1].descriptorCount = m_TotalTextures * static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-
-	VkDescriptorPoolCreateInfo descPoolInfo {};
-	descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
-	descPoolInfo.pPoolSizes = descPoolSize.data();
-	descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
-	if(vkCreateDescriptorPool(m_LogicDevice, &descPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
-		exit(-66);
-}
-
-void CreateDescriptorSet()
-{
-	// estructura UBO
-	VkDescriptorSetLayoutBinding uboLayoutBinding {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	// Textura
-	VkDescriptorSetLayoutBinding textureLayoutBinding {};
-	textureLayoutBinding.binding = 1;
-	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureLayoutBinding.descriptorCount = m_TotalTextures;
-	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	textureLayoutBinding.pImmutableSamplers = nullptr;
-
-	std::array<VkDescriptorSetLayoutBinding, 2> ShaderBindings = {uboLayoutBinding, textureLayoutBinding};
-	VkDescriptorSetLayoutCreateInfo layoutInfo {};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
-	layoutInfo.pBindings = ShaderBindings.data();
-	if(vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
-		exit(-99);
-	std::vector<VkDescriptorSetLayout> m_DescLayouts(FRAMES_IN_FLIGHT, m_DescSetLayout);
-	VkDescriptorSetAllocateInfo descAllocInfo {};
-	descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	descAllocInfo.descriptorPool = m_DescriptorPool;
-	descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
-	descAllocInfo.pSetLayouts = m_DescLayouts.data();
-
-	m_DescriptorSets.resize(FRAMES_IN_FLIGHT);
-	if(vkAllocateDescriptorSets(m_LogicDevice, &descAllocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
-		exit(-67);
-}
-
-void UpdateDescriptorSet()
-{
-	// Escribimos la info de los descriptors
-	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-	{
-		VkDescriptorBufferInfo bufferInfo {};
-		bufferInfo.buffer = m_UniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
-		
-		std::array<VkWriteDescriptorSet, 2> descriptorsWrite {};
-		descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorsWrite[0].dstSet = m_DescriptorSets[i];
-		descriptorsWrite[0].dstBinding = 0;
-		descriptorsWrite[0].dstArrayElement = 0;
-		descriptorsWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorsWrite[0].descriptorCount = 1;
-		descriptorsWrite[0].pBufferInfo = &bufferInfo;
-		descriptorsWrite[0].pImageInfo = nullptr;
-		descriptorsWrite[0].pTexelBufferView = nullptr;
-		// Textures
-		std::vector<VkDescriptorImageInfo> textureimages;
-		for(auto& model : m_StaticModels)
-		{
-			for(auto& mesh : model->m_Meshes)
-			{
-				VkDescriptorImageInfo textureimage{};
-				textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureimage.imageView = mesh->m_Texture.tImageView;
-				if(mesh->m_Texture.m_Sampler != nullptr)
-				{
-					textureimage.sampler = mesh->m_Texture.m_Sampler;
-				}
-				else
-				{
-					printf("Invalid Sampler for frame %ld\n", i);
-					continue;
-				}
-				g_ConsoleMSG += mesh->m_Texture.sPath;
-				g_ConsoleMSG += '\n';
-				textureimages.push_back(textureimage);
-			}
-		}
-		printf("Textures to Write %ld\n", textureimages.size());
-		descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorsWrite[1].dstSet = m_DescriptorSets[i];
-		descriptorsWrite[1].dstBinding = 1;
-		descriptorsWrite[1].dstArrayElement = 0;
-		descriptorsWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorsWrite[1].descriptorCount = textureimages.size();
-		descriptorsWrite[1].pBufferInfo = nullptr;
-		descriptorsWrite[1].pImageInfo = textureimages.data();
-		descriptorsWrite[1].pTexelBufferView = nullptr;
-		vkUpdateDescriptorSets(m_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
-	}
 }
 
 void CreateFramebuffers()
@@ -1560,10 +1431,16 @@ int main(int _argc, char** _args)
 	m_SwapChainImages.resize(m_SwapchainImagesCount);
 	vkGetSwapchainImagesKHR(m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 	CreateImageViews();
-	// Descriptor Pool
-	CreateDescriptorPool();
-	// Descriptor Sets
-	CreateDescriptorSet();
+	for(auto& model : m_StaticModels)
+	{
+		for(auto& mesh : model->m_Meshes)
+		{
+			// Descriptor Pool
+			mesh->CreateDescriptorPool(m_LogicDevice);
+			// Descriptor Sets en cada mesh
+			mesh->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
+		}
+	}
 		/// Vamos a crear los shader module para cargar el bytecode de los shaders
 	VkShaderModule m_VertShaderModule;
 	VkShaderModule m_FragShaderModule;
@@ -1732,7 +1609,13 @@ int main(int _argc, char** _args)
 	init_info.ImageCount = m_SwapchainImagesCount;
 	init_info.CheckVkResultFn = nullptr;
 	ImGui_ImplVulkan_Init(&init_info, m_RenderPass);
-	UpdateDescriptorSet();
+	for(auto& model : m_StaticModels)
+	{
+		for(auto& mesh : model->m_Meshes)
+		{
+			mesh->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers);
+		}
+	}
 
 	CreateSyncObjects(0);
 	CreateSyncObjects(1);

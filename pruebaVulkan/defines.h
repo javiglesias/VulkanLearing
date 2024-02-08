@@ -1,7 +1,4 @@
-
 #include <vulkan/vulkan_core.h>
-const int FRAMES_IN_FLIGHT = 2;
-
 std::vector<DBG_Vertex3D> Dbg_Cube =
     {   // x     y     z
         {{-1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}}, // 1  left    First Strip
@@ -84,7 +81,6 @@ VkQueue m_TransferQueue;
 VkDescriptorSetLayout m_DescSetLayout;
 VkDescriptorPool m_DescriptorPool;
 VkDescriptorPool m_UIDescriptorPool;
-std::vector<VkDescriptorSet> m_DescriptorSets;
 VkPipelineLayout m_PipelineLayout;
 VkPipelineLayout m_DebugPipelineLayout;
 VkRenderPass m_RenderPass;
@@ -107,7 +103,7 @@ VkImage m_DepthImage;
 VkDeviceMemory m_DepthImageMemory;
 VkImageView m_DepthImageView;
 VkClearColorValue defaultClearColor = { { 0.025f, 0.025f, 0.025f, 1.0f } };
-int m_PolygonMode = VK_POLYGON_MODE_FILL;
+int m_PolygonMode = VK_POLYGON_MODE_LINE;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
 VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];
