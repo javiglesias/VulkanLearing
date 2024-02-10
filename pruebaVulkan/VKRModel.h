@@ -17,6 +17,13 @@ public:
 	{
 		sPath= _path;
 	}
+	void CleanTextureData(VkDevice _LogicDevice)
+	{
+		vkDestroySampler(_LogicDevice, m_Sampler, nullptr);
+		vkDestroyImageView(_LogicDevice, tImageView, nullptr);
+		vkDestroyImage(_LogicDevice,tImage, nullptr);
+		vkFreeMemory(_LogicDevice, tImageMem, nullptr);
+	}
 };
 struct R_Material
 {
@@ -36,7 +43,10 @@ struct R_Mesh
 public:
 	std::vector<Vertex3D> m_Vertices;
 	std::vector<uint16_t> m_Indices;
-	Texture m_Texture;
+	// Base_color, metallicRoughtness, normal Textures
+	Texture m_TextureDiffuse;
+	Texture m_TextureSpecular;
+	Texture m_TextureAmbient;
 	R_Material m_Material;
 	VkDescriptorPool m_DescriptorPool;
 	VkBuffer m_VertexBuffer;
@@ -49,16 +59,19 @@ public:
 	R_Mesh(){}
 	void CreateDescriptorPool(VkDevice _LogicDevice)
 	{
-		std::array<VkDescriptorPoolSize, 3> descPoolSize {};
+		std::array<VkDescriptorPoolSize, 4> descPoolSize {};
 		// UBO
 		descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 		// Textura diffuse
 		descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-		// Textura specular
+		// Textura Specular
 		descPoolSize[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descPoolSize[2].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+		// Textura Ambient
+		descPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descPoolSize[3].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 		VkDescriptorPoolCreateInfo descPoolInfo {};
 		descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -93,7 +106,7 @@ public:
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 			
-			std::array<VkWriteDescriptorSet, 3> descriptorsWrite {};
+			std::array<VkWriteDescriptorSet, 4> descriptorsWrite {};
 			descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 			descriptorsWrite[0].dstBinding = 0;
@@ -104,21 +117,21 @@ public:
 			descriptorsWrite[0].pImageInfo = nullptr;
 			descriptorsWrite[0].pTexelBufferView = nullptr;
 			// Texturas
-			VkDescriptorImageInfo textureimage{};
-			textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			textureimage.imageView = m_Texture.tImageView;
-			if(m_Texture.m_Sampler != nullptr)
+			// Diffuse
+			VkDescriptorImageInfo TextureDiffuseImage{};
+			TextureDiffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			TextureDiffuseImage.imageView = m_TextureDiffuse.tImageView;
+			if(m_TextureDiffuse.m_Sampler != nullptr)
 			{
-				textureimage.sampler = m_Texture.m_Sampler;
+				TextureDiffuseImage.sampler = m_TextureDiffuse.m_Sampler;
 			}
 			else
 			{
 				printf("Invalid Sampler for frame %ld\n", i);
 				continue;
 			}
-			g_ConsoleMSG += m_Texture.sPath;
+			g_ConsoleMSG += m_TextureDiffuse.sPath;
 			g_ConsoleMSG += '\n';
-			// Diffuse
 			descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorsWrite[1].dstSet = m_DescriptorSet[i];
 			descriptorsWrite[1].dstBinding = 1;
@@ -126,9 +139,23 @@ public:
 			descriptorsWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorsWrite[1].descriptorCount = 1;
 			descriptorsWrite[1].pBufferInfo = nullptr;
-			descriptorsWrite[1].pImageInfo = &textureimage;
+			descriptorsWrite[1].pImageInfo = &TextureDiffuseImage;
 			descriptorsWrite[1].pTexelBufferView = nullptr;
 			//Specular
+			VkDescriptorImageInfo TextureSpecularImage{};
+			TextureSpecularImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			TextureSpecularImage.imageView = m_TextureSpecular.tImageView;
+			if(m_TextureSpecular.m_Sampler != nullptr)
+			{
+				TextureSpecularImage.sampler = m_TextureSpecular.m_Sampler;
+			}
+			else
+			{
+				printf("Invalid Sampler for frame %ld\n", i);
+				continue;
+			}
+			g_ConsoleMSG += m_TextureSpecular.sPath;
+			g_ConsoleMSG += '\n';
 			descriptorsWrite[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorsWrite[2].dstSet = m_DescriptorSet[i];
 			descriptorsWrite[2].dstBinding = 2;
@@ -136,8 +163,32 @@ public:
 			descriptorsWrite[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorsWrite[2].descriptorCount = 1;
 			descriptorsWrite[2].pBufferInfo = nullptr;
-			descriptorsWrite[2].pImageInfo = &textureimage;
+			descriptorsWrite[2].pImageInfo = &TextureSpecularImage;
 			descriptorsWrite[2].pTexelBufferView = nullptr;
+			//Ambient
+			VkDescriptorImageInfo TextureAmbientImage{};
+			TextureAmbientImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			TextureAmbientImage.imageView = m_TextureAmbient.tImageView;
+			if(m_TextureAmbient.m_Sampler != nullptr)
+			{
+				TextureAmbientImage.sampler = m_TextureAmbient.m_Sampler;
+			}
+			else
+			{
+				printf("Invalid Sampler for frame %ld\n", i);
+				continue;
+			}
+			g_ConsoleMSG += m_TextureAmbient.sPath;
+			g_ConsoleMSG += '\n';
+			descriptorsWrite[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorsWrite[3].dstSet = m_DescriptorSet[i];
+			descriptorsWrite[3].dstBinding = 3;
+			descriptorsWrite[3].dstArrayElement = 0;
+			descriptorsWrite[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorsWrite[3].descriptorCount = 1;
+			descriptorsWrite[3].pBufferInfo = nullptr;
+			descriptorsWrite[3].pImageInfo = &TextureAmbientImage;
+			descriptorsWrite[3].pTexelBufferView = nullptr;
 			vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 		}
 	}
@@ -151,10 +202,9 @@ public:
 		vkDestroyBuffer(_LogicDevice, m_VertexBuffer, nullptr);
 		vkFreeMemory(_LogicDevice, m_VertexBufferMemory, nullptr);
 		// Delete texture things
-		vkDestroySampler(_LogicDevice, m_Texture.m_Sampler, nullptr);
-		vkDestroyImageView(_LogicDevice, m_Texture.tImageView, nullptr);
-		vkDestroyImage(_LogicDevice,m_Texture.tImage, nullptr);
-		vkFreeMemory(_LogicDevice, m_Texture.tImageMem, nullptr);
+		m_TextureDiffuse.CleanTextureData(_LogicDevice);
+		m_TextureSpecular.CleanTextureData(_LogicDevice);
+		m_TextureAmbient.CleanTextureData(_LogicDevice);
 		vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
 	}
 };
@@ -164,4 +214,5 @@ public:
 	R_Model() {}
 public:
 	std::vector<R_Mesh*> m_Meshes;
+	char m_Path[64];
 };

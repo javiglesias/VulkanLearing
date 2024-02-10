@@ -28,6 +28,8 @@ const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
 bool m_NeedToRecreateSwapchain = false;
 bool m_MouseCaptured = false;
 bool m_IndexedRender = true;
+bool m_DepthTest = true;
+bool m_DepthWrite = true;
 unsigned int m_GPUSelected = 0;
 unsigned int m_GraphicsQueueFamilyIndex = 0;
 unsigned int m_TransferQueueFamilyIndex = 0;
@@ -41,17 +43,20 @@ int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
 float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
 float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
 float m_CameraSpeed = 0.1f;
-glm::vec3 m_CameraPos = glm::vec3(0.f);
+float m_NewFrame = 0.0f;
+float m_AccumulatedTime = 0.0f;
+float m_DeltaTime = 0.0f;
+float m_CurrentFrame = 0.0f;
+float m_FrameCap = 0.016f; // 60fps
+glm::vec3 m_CameraPos = glm::vec3(1.f);
 glm::vec3 m_LightPos = glm::vec3(1.f);
+glm::vec3 m_LightColor = glm::vec3(1.f);
 glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
 glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 std::vector<VkDynamicState> m_DynamicStates = { 
     VK_DYNAMIC_STATE_VIEWPORT, 
-    VK_DYNAMIC_STATE_SCISSOR, 
-    VK_DYNAMIC_STATE_DEPTH_COMPARE_OP,
-    VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE, 
-    VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE
+    VK_DYNAMIC_STATE_SCISSOR
     };
 std::vector<const char*> m_DeviceExtensions;
 std::vector<const char*> m_InstanceExtensions;
@@ -102,8 +107,8 @@ VkDeviceMemory m_TextureImageMemory;
 VkImage m_DepthImage;
 VkDeviceMemory m_DepthImageMemory;
 VkImageView m_DepthImageView;
-VkClearColorValue defaultClearColor = { { 0.025f, 0.025f, 0.025f, 1.0f } };
-int m_PolygonMode = VK_POLYGON_MODE_LINE;
+VkClearColorValue defaultClearColor = { { 0.6f, 0.65f, 0.4f, 1.0f } };
+int m_PolygonMode = VK_POLYGON_MODE_FILL;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
 VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];
