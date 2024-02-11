@@ -1,6 +1,6 @@
 #version 450
-layout(binding=1) uniform sampler2D inDiffuseTexture;
-layout(binding=2) uniform sampler2D inSpecularTexture;
+layout(set=0, binding=1) uniform sampler2D inDiffuseTexture;
+layout(set=0, binding=2) uniform sampler2D inSpecularTexture;
 layout(set=0, binding=3) uniform sampler2D inAmbientTexture;
 
 layout(location = 0) in vec3 fragPosition;
@@ -27,7 +27,7 @@ vec3 directional_light_calculations(vec3 _viewDir)
 	float diff = max(dot(lightPosition, normal), 0.0);
 	vec3 reflect_dir = reflect(-light_dir,  normal);
 	float specStrength = max(dot(_viewDir, reflect_dir), 0.0f);
-	float spec = pow(specStrength, 64.f);//material.shininess);
+	float spec = pow(specStrength, 32.0f);//material.shininess);
 
 	vec3 ambient = lightColor *  vec3(texture(inAmbientTexture, texCoord));
 	vec3 diffuse = diff * vec3(texture(inDiffuseTexture, texCoord));

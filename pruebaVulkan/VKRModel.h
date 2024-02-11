@@ -29,34 +29,17 @@ struct R_Material
 {
 	VkShaderModule m_VertShaderModule;
 	VkShaderModule m_FragShaderModule;
-	char _vertPath[64];
-	char _fragPath[64];
-	public:
-		R_Material() {}
-		R_Material(const char* _vertPath, const char* _fragPath);
-	private:
-		void CreateShaderModule(const char* _shaderPath);
-};
-
-struct R_Mesh
-{// lo necesario para poder renderizar una Malla
-public:
-	std::vector<Vertex3D> m_Vertices;
-	std::vector<uint16_t> m_Indices;
-	// Base_color, metallicRoughtness, normal Textures
-	Texture m_TextureDiffuse;
-	Texture m_TextureSpecular;
-	Texture m_TextureAmbient;
-	R_Material m_Material;
 	VkDescriptorPool m_DescriptorPool;
-	VkBuffer m_VertexBuffer;
-	VkDeviceMemory m_VertexBufferMemory;
-	VkBuffer m_IndexBuffer;
-	VkDeviceMemory m_IndexBufferMemory;
 	std::vector<VkDescriptorSetLayout> m_DescLayouts;
 	std::vector<VkDescriptorSet> m_DescriptorSet;
 public:
-	R_Mesh(){}
+	char _vertPath[64];
+	char _fragPath[64];
+	Texture m_TextureDiffuse;
+	Texture m_TextureSpecular;
+	Texture m_TextureAmbient;
+public:
+	R_Material() {}
 	void CreateDescriptorPool(VkDevice _LogicDevice)
 	{
 		std::array<VkDescriptorPoolSize, 4> descPoolSize {};
@@ -192,7 +175,30 @@ public:
 			vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 		}
 	}
-	void CleanMeshData(VkDevice _LogicDevice)
+	void Cleanup(VkDevice _LogicDevice)
+	{
+		// Delete Material things
+		m_TextureDiffuse.CleanTextureData(_LogicDevice);
+		m_TextureSpecular.CleanTextureData(_LogicDevice);
+		m_TextureAmbient.CleanTextureData(_LogicDevice);
+		vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
+	}
+};
+
+struct R_Mesh
+{// lo necesario para poder renderizar una Malla
+public:
+	std::vector<Vertex3D> m_Vertices;
+	std::vector<uint16_t> m_Indices;
+	// Base_color, metallicRoughtness, normal Textures
+	R_Material m_Material;
+	VkBuffer m_VertexBuffer;
+	VkDeviceMemory m_VertexBufferMemory;
+	VkBuffer m_IndexBuffer;
+	VkDeviceMemory m_IndexBufferMemory;
+public:
+	R_Mesh(){}
+	void Cleanup(VkDevice _LogicDevice)
 	{
 		if(m_Indices.size() > 0)
 		{
@@ -201,11 +207,6 @@ public:
 		}
 		vkDestroyBuffer(_LogicDevice, m_VertexBuffer, nullptr);
 		vkFreeMemory(_LogicDevice, m_VertexBufferMemory, nullptr);
-		// Delete texture things
-		m_TextureDiffuse.CleanTextureData(_LogicDevice);
-		m_TextureSpecular.CleanTextureData(_LogicDevice);
-		m_TextureAmbient.CleanTextureData(_LogicDevice);
-		vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
 	}
 };
 struct R_Model //Render Model

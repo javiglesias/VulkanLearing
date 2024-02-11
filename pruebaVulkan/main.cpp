@@ -84,11 +84,11 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 		int texIndex = 0;
 		aiString path;
 		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-		tempMesh->m_TextureDiffuse = Texture(std::string(path.data));
+		tempMesh->m_Material.m_TextureDiffuse = Texture(std::string(path.data));
 		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
-		tempMesh->m_TextureSpecular = Texture(std::string(path.data));
+		tempMesh->m_Material.m_TextureSpecular = Texture(std::string(path.data));
 		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
-		tempMesh->m_TextureAmbient = Texture(std::string(path.data));
+		tempMesh->m_Material.m_TextureAmbient = Texture(std::string(path.data));
 		++m_TotalTextures;
 		tempModel->m_Meshes.push_back(tempMesh);
 	}
@@ -346,7 +346,8 @@ void Cleanup()
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			mesh->CleanMeshData(m_LogicDevice);
+			mesh->Cleanup(m_LogicDevice);
+			mesh->m_Material.Cleanup(m_LogicDevice);
 		}
 	}
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -987,7 +988,7 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
 			VkDeviceSize offsets[] = {0};
 			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
-																&mesh->m_DescriptorSet[m_CurrentLocalFrame], 0, nullptr);
+																&mesh->m_Material.m_DescriptorSet[m_CurrentLocalFrame], 0, nullptr);
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 			// Draw Loop
@@ -1586,9 +1587,9 @@ int main(int _argc, char** _args)
 		for(auto& mesh : model->m_Meshes)
 		{
 			// Descriptor Pool
-			mesh->CreateDescriptorPool(m_LogicDevice);
+			mesh->m_Material.CreateDescriptorPool(m_LogicDevice);
 			// ahora creamos los Descriptor Sets en cada mesh
-			mesh->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
+			mesh->m_Material.CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
 		}
 	}
 		/// Vamos a crear los shader module para cargar el bytecode de los shaders
@@ -1621,9 +1622,9 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			CreateAndTransitionImage(model->m_Path, &mesh->m_TextureDiffuse);
-			CreateAndTransitionImage(model->m_Path, &mesh->m_TextureSpecular);
-			CreateAndTransitionImage(model->m_Path, &mesh->m_TextureAmbient);
+			CreateAndTransitionImage(model->m_Path, &mesh->m_Material.m_TextureDiffuse);
+			CreateAndTransitionImage(model->m_Path, &mesh->m_Material.m_TextureSpecular);
+			CreateAndTransitionImage(model->m_Path, &mesh->m_Material.m_TextureAmbient);
 			// Vertex buffer
 			void* data;
 			if(mesh->m_Vertices.size() <= 0)
@@ -1731,7 +1732,7 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			mesh->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers);
+			mesh->m_Material.UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers);
 		}
 	}
 
