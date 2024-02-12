@@ -46,6 +46,7 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 		ProcessModelNode(_node->mChildren[i], _scene);
 	}
 	int lastTexIndex = 0;
+	uint32_t tempMaterial = -1;
 	for(int m = 0; m < _node->mNumMeshes; m++)
 	{
 		const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
@@ -83,12 +84,18 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 		// Textura por Mesh
 		int texIndex = 0;
 		aiString path;
-		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-		tempMesh->m_Material.m_TextureDiffuse = Texture(std::string(path.data));
-		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
-		tempMesh->m_Material.m_TextureSpecular = Texture(std::string(path.data));
-		_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
-		tempMesh->m_Material.m_TextureAmbient = Texture(std::string(path.data));
+		if( m_Materials[mesh->mMaterialIndex] == nullptr)
+		{
+			printf("\tNew Material %d\n", mesh->mMaterialIndex);
+			m_Materials[mesh->mMaterialIndex] = new R_Material();
+			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+			m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new Texture(std::string(path.data));
+			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
+			m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(std::string(path.data));
+			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
+			m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(std::string(path.data));
+		}
+		tempMesh->m_Material = mesh->mMaterialIndex;
 		++m_TotalTextures;
 		tempModel->m_Meshes.push_back(tempMesh);
 	}
@@ -340,23 +347,13 @@ void Cleanup()
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-
-	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
-	for(auto& model : m_StaticModels)
-	{
-		for(auto& mesh : model->m_Meshes)
-		{
-			mesh->Cleanup(m_LogicDevice);
-			mesh->m_Material.Cleanup(m_LogicDevice);
-		}
-	}
+	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
 		vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
 		vkFreeMemory(m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
 	}
-
-	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[0], nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[1], nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_RenderFinish[0], nullptr);
@@ -371,6 +368,17 @@ void Cleanup()
 	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
 	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
 	CleanSwapChain();
+	for(auto& [idx, mat] : m_Materials)
+	{
+		mat->Cleanup(m_LogicDevice);
+	}
+	for(auto& model : m_StaticModels)
+	{
+		for(auto& mesh : model->m_Meshes)
+		{
+			mesh->Cleanup(m_LogicDevice);
+		}
+	}
 	vkDestroyImageView(m_LogicDevice, m_DepthImageView, nullptr);
 	vkDestroyImage(m_LogicDevice, m_DepthImage, nullptr);
 	vkFreeMemory(m_LogicDevice, m_DepthImageMemory, nullptr);
@@ -988,7 +996,7 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
 			VkDeviceSize offsets[] = {0};
 			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
-																&mesh->m_Material.m_DescriptorSet[m_CurrentLocalFrame], 0, nullptr);
+																&m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 0, nullptr);
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 			// Draw Loop
@@ -1269,7 +1277,11 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 
 void CreateAndTransitionImage(char* _modelPath, Texture* _texture)
 {
-	int tWidth, tHeight, tChannels;
+	// Como utilizamos lightview, las texturas solo se crean una vez.
+	if(_texture->tImageView == nullptr   && _texture->m_Sampler == nullptr 
+			&& _texture->tImage == nullptr  && _texture->tImageMem == nullptr)
+	{
+		int tWidth, tHeight, tChannels;
 		stbi_uc* pixels;
 		VkDeviceSize tSize;
 		char textPath[512];
@@ -1305,6 +1317,7 @@ void CreateAndTransitionImage(char* _modelPath, Texture* _texture)
 		_texture->m_Sampler = CreateTextureSampler();
 		vkDestroyBuffer(m_LogicDevice, m_StagingBuffer, nullptr);
 		vkFreeMemory(m_LogicDevice, m_StaggingBufferMemory, nullptr);
+		}
 }
 
 void EditorLoop()
@@ -1355,19 +1368,7 @@ int main(int _argc, char** _args)
 	glm::vec4 m_vec;
 	const int m_Width = 1280;
 	const int m_Height = 720;
-// 	cgltf_data* m_ModelData;
-	m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
-	char modelPath[512], modelName[64];
-	if(_argc >= 1)
-	{
-		sprintf(modelPath, "resources/Models/%s/", _args[1]);
-		sprintf(modelName, "%s", _args[2]);
-		printf("\n\tApplication launched with Params(%s): %s", modelPath, modelName);
-		LoadModel(modelPath, modelName);
-	} else 
-	{
-		exit(0);
-	}
+	// 	cgltf_data* m_ModelData;
 	// sprintf(modelPath, "resources/Models/SciFiHelmet/glTF/");
 	// sprintf(modelName, "SciFiHelmet.gltf");
 	// LoadModel(modelPath, modelName);
@@ -1519,7 +1520,19 @@ int main(int _argc, char** _args)
 	CreateLogicalDevice(&m_PhysicalDevices[m_GPUSelected], &deviceFeatures[m_GPUSelected]);
 	vkGetDeviceQueue(m_LogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_GraphicsQueue);
 	vkGetDeviceQueue(m_LogicDevice, m_TransferQueueFamilyIndex, 0, &m_TransferQueue);
-
+	// Load Models
+	m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
+	char modelPath[512], modelName[64];
+	if(_argc >= 1)
+	{
+		sprintf(modelPath, "resources/Models/%s/", _args[1]);
+		sprintf(modelName, "%s", _args[2]);
+		printf("\n\tApplication launched with Params(%s): %s", modelPath, modelName);
+		LoadModel(modelPath, modelName);
+	} else 
+	{
+		exit(0);
+	}
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
 	if(glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
@@ -1587,9 +1600,9 @@ int main(int _argc, char** _args)
 		for(auto& mesh : model->m_Meshes)
 		{
 			// Descriptor Pool
-			mesh->m_Material.CreateDescriptorPool(m_LogicDevice);
+			m_Materials[mesh->m_Material]->CreateDescriptorPool(m_LogicDevice);
 			// ahora creamos los Descriptor Sets en cada mesh
-			mesh->m_Material.CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
+			m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
 		}
 	}
 		/// Vamos a crear los shader module para cargar el bytecode de los shaders
@@ -1622,9 +1635,9 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			CreateAndTransitionImage(model->m_Path, &mesh->m_Material.m_TextureDiffuse);
-			CreateAndTransitionImage(model->m_Path, &mesh->m_Material.m_TextureSpecular);
-			CreateAndTransitionImage(model->m_Path, &mesh->m_Material.m_TextureAmbient);
+			CreateAndTransitionImage(model->m_Path, m_Materials[mesh->m_Material]->m_TextureDiffuse);
+			CreateAndTransitionImage(model->m_Path, m_Materials[mesh->m_Material]->m_TextureSpecular);
+			CreateAndTransitionImage(model->m_Path, m_Materials[mesh->m_Material]->m_TextureAmbient);
 			// Vertex buffer
 			void* data;
 			if(mesh->m_Vertices.size() <= 0)
@@ -1732,7 +1745,7 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			mesh->m_Material.UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers);
+			m_Materials[mesh->m_Material]->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers);
 		}
 	}
 
@@ -1747,12 +1760,12 @@ int main(int _argc, char** _args)
 		m_NewFrame = static_cast<float>(glfwGetTime());
 		m_DeltaTime = m_NewFrame - m_CurrentFrame;
 		m_AccumulatedTime += m_DeltaTime;
-		if (m_AccumulatedTime >= m_FrameCap) // Render frame
-		{
+		// if (m_AccumulatedTime >= m_FrameCap) // Render frame
+		// {
 			m_AccumulatedTime = 0.0f;
 			DrawFrame();
 			m_CurrentLocalFrame = (m_CurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
-		}
+		// }
 		m_CurrentFrame = static_cast<float>(glfwGetTime());
 	}
 	Cleanup();

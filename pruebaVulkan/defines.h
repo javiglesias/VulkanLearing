@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include <vulkan/vulkan_core.h>
 std::vector<DBG_Vertex3D> Dbg_Cube =
     {   // x     y     z
@@ -20,6 +21,7 @@ std::vector<DBG_Vertex3D> Dbg_Cube =
     };
 
 std::vector<R_Model*> m_StaticModels;
+std::unordered_map<uint32_t, R_Material*> m_Materials;
 R_Model* tempModel;
 
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
@@ -101,9 +103,6 @@ std::vector<VkDeviceMemory> m_UniformBuffersMemory;
 std::vector<void*> m_Uniform_SBuffersMapped;
 VkDeviceMemory m_StaggingBufferMemory;
 VkPhysicalDeviceMemoryProperties m_Mem_Props;
-VkImage m_TextureImage;
-VkImageView m_TextureImageView;
-VkDeviceMemory m_TextureImageMemory;
 VkImage m_DepthImage;
 VkDeviceMemory m_DepthImageMemory;
 VkImageView m_DepthImageView;
