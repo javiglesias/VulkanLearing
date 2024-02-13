@@ -1,4 +1,6 @@
 #pragma once
+#include <glm/fwd.hpp>
+#include <vulkan/vulkan_core.h>
 extern std::string g_ConsoleMSG;
 
 struct Texture 
@@ -33,6 +35,15 @@ struct R_Material
 	std::vector<VkDescriptorSetLayout> m_DescLayouts;
 	std::vector<VkDescriptorSet> m_DescriptorSet;
 public:
+    enum STATE : uint16_t 
+    {
+        UNDEFINED,
+        CREATED,
+        INICIALITEZ,
+        READY,
+        DESTROYED
+    };
+    STATE m_Status = UNDEFINED;
 	char _vertPath[64];
 	char _fragPath[64];
 	Texture* m_TextureDiffuse;
@@ -43,7 +54,7 @@ public:
 	{
         if(m_DescriptorPool == nullptr)
         {
-            std::array<VkDescriptorPoolSize, 4> descPoolSize {};
+            std::array<VkDescriptorPoolSize, 5> descPoolSize {};
             // UBO
             descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
@@ -56,6 +67,10 @@ public:
             // Textura Ambient
             descPoolSize[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descPoolSize[3].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+			 // Model Matrix
+            descPoolSize[4].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            descPoolSize[4].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
             VkDescriptorPoolCreateInfo descPoolInfo {};
             descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -84,7 +99,7 @@ public:
         }
 	}
 
-	void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers)
+	void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers)
 	{
 		// Escribimos la info de los descriptors
 		for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -94,7 +109,7 @@ public:
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 			
-			std::array<VkWriteDescriptorSet, 4> descriptorsWrite {};
+			std::array<VkWriteDescriptorSet, 5> descriptorsWrite {};
 			descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 			descriptorsWrite[0].dstBinding = 0;
@@ -177,6 +192,21 @@ public:
 			descriptorsWrite[3].pBufferInfo = nullptr;
 			descriptorsWrite[3].pImageInfo = &TextureAmbientImage;
 			descriptorsWrite[3].pTexelBufferView = nullptr;
+		// Dynamic
+			VkDescriptorBufferInfo dynBufferInfo {};
+			dynBufferInfo.buffer = _DynamicBuffers[i];
+			dynBufferInfo.offset = 0;
+			dynBufferInfo.range = sizeof(DynamicBufferObject); // VK_WHOLE
+			
+			descriptorsWrite[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorsWrite[4].dstSet = m_DescriptorSet[i];
+			descriptorsWrite[4].dstBinding = 4;
+			descriptorsWrite[4].dstArrayElement = 0;
+			descriptorsWrite[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			descriptorsWrite[4].descriptorCount = 1;
+			descriptorsWrite[4].pBufferInfo = &dynBufferInfo;
+			descriptorsWrite[4].pImageInfo = nullptr;
+			descriptorsWrite[4].pTexelBufferView = nullptr;
 			vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 		}
 	}

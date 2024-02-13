@@ -5,6 +5,7 @@
 #include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #include <cstdint>
 #include <cstdio>
+#include <glm/ext/matrix_transform.hpp>
 #include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_NONE
@@ -17,8 +18,8 @@
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define CGLTF_IMPLEMENTATION
-#include "../dependencies/cgltf/cgltf.h"
+// #define CGLTF_IMPLEMENTATION
+// #include "../dependencies/cgltf/cgltf.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
@@ -350,6 +351,9 @@ void Cleanup()
 	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
 	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 	{
+		vkDestroyBuffer(m_LogicDevice, m_DynamicBuffers[i], nullptr);
+		vkFreeMemory(m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
+
 		vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
 		vkFreeMemory(m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
 	}
@@ -989,14 +993,29 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
 
+	auto dynamicAlignment = sizeof(glm::mat4);
+	uint32_t count = 0;
 	for(auto& model : m_StaticModels)
 	{
+		DynamicBufferObject dynO {};
+		dynO.model = glm::mat4(1.f);
+		dynO.model = glm::translate(glm::mat4(1.0f), model->m_Pos);
+		memcpy(m_DynamicBuffersMapped[m_CurrentLocalFrame], &dynO, sizeof(dynO));
+		uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+		// Flush to make changes visible to the host
+		VkMappedMemoryRange mappedMemoryRange {};
+		mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		mappedMemoryRange.memory = m_DynamicBuffersMemory[m_CurrentLocalFrame];
+		mappedMemoryRange.size = sizeof(dynO);
+		vkFlushMappedMemoryRanges(m_LogicDevice, 1, &mappedMemoryRange);
 		for(auto& mesh : model->m_Meshes)
 		{
+			// Update Uniform buffers
+
 			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
 			VkDeviceSize offsets[] = {0};
 			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
-																&m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 0, nullptr);
+																&m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 			// Draw Loop
@@ -1009,6 +1028,7 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 					vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
 			}	
 		}
+		++count;
 	}
 	// ---- Draw Loop
 	// DEBUG Render
@@ -1079,11 +1099,20 @@ void CreateDescriptorSetLayout()
 	textureAmbientLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	textureAmbientLayoutBinding.pImmutableSamplers = nullptr;
 
-	std::array<VkDescriptorSetLayoutBinding, 4> ShaderBindings = {
+	// estructura Dynamic Uniforms
+	VkDescriptorSetLayoutBinding dynOLayoutBinding {};
+	dynOLayoutBinding.binding = 4;
+	dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	dynOLayoutBinding.descriptorCount = 1;
+	dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	dynOLayoutBinding.pImmutableSamplers = nullptr;
+
+	std::array<VkDescriptorSetLayoutBinding, 5> ShaderBindings = {
 		uboLayoutBinding, 
 		textureDiffuseLayoutBinding, 
 		textureSpecularLayoutBinding, 
-		textureAmbientLayoutBinding
+		textureAmbientLayoutBinding,
+		dynOLayoutBinding
 		};
 	VkDescriptorSetLayoutCreateInfo layoutInfo {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1184,13 +1213,9 @@ void DrawFrame()
 		exit(-69);
 	// Update Uniform buffers
 	UniformBufferObject ubo {};
- 	ubo.model = glm::mat4(1.f);
-
 	ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 						   m_CameraUp);
-
 	ubo.projection = glm::perspective(glm::radians(70.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 1000000.f);
-
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	ubo.cameraPosition = m_CameraPos;
 	ubo.lightPosition = m_LightPos;
@@ -1338,6 +1363,10 @@ void EditorLoop()
 		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
 		ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
 		ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
+		if(ImGui::Button("Center Model"))
+		{
+			m_StaticModels[0]->m_Pos = glm::vec3(0.0f);
+		}
 		ImGui::End();
 	}
 	ImGui::Begin("Lighting");
@@ -1369,13 +1398,6 @@ int main(int _argc, char** _args)
 	const int m_Width = 1280;
 	const int m_Height = 720;
 	// 	cgltf_data* m_ModelData;
-	// sprintf(modelPath, "resources/Models/SciFiHelmet/glTF/");
-	// sprintf(modelName, "SciFiHelmet.gltf");
-	// LoadModel(modelPath, modelName);
-	// sprintf(modelPath, "resources/Models/WaterBottle/glTF/");
-	// sprintf(modelName, "WaterBottle.gltf");
-	// LoadModel(modelPath, modelName);
-
 	/// VULKAN/glfw THINGS
 	if (!checkValidationLayerSupport()) return -2;
 	VkApplicationInfo mAppInfo = {};
@@ -1533,6 +1555,14 @@ int main(int _argc, char** _args)
 	{
 		exit(0);
 	}
+	// TODO TEST MODELS
+	// sprintf(modelPath, "resources/Models/SciFiHelmet/glTF/");
+	// sprintf(modelName, "SciFiHelmet.gltf");
+	// LoadModel(modelPath, modelName);
+	// sprintf(modelPath, "resources/Models/WaterBottle/glTF/");
+	// sprintf(modelName, "WaterBottle.gltf");
+	// LoadModel(modelPath, modelName );
+	// m_StaticModels[1]->m_Pos = glm::vec3(m_LightPos);
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
 	if(glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
@@ -1704,6 +1734,21 @@ int main(int _argc, char** _args)
 		vkMapMemory(m_LogicDevice, m_UniformBuffersMemory[i], 0,
 					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
 	}
+	// Dynamic buffers
+	m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
+	m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+	m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+	VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
+	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+	{
+		CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				 VK_SHARING_MODE_CONCURRENT,
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			  m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
+		vkMapMemory(m_LogicDevice, m_DynamicBuffersMemory[i], 0,
+					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
+	}
 	// UI descriptor Pool
 	VkDescriptorPoolSize pool_sizes[] =
 	{
@@ -1745,7 +1790,7 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			m_Materials[mesh->m_Material]->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers);
+			m_Materials[mesh->m_Material]->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers, m_DynamicBuffers);
 		}
 	}
 
@@ -1760,12 +1805,12 @@ int main(int _argc, char** _args)
 		m_NewFrame = static_cast<float>(glfwGetTime());
 		m_DeltaTime = m_NewFrame - m_CurrentFrame;
 		m_AccumulatedTime += m_DeltaTime;
-		// if (m_AccumulatedTime >= m_FrameCap) // Render frame
-		// {
+		if (m_AccumulatedTime >= m_FrameCap) // Render frame
+		{
 			m_AccumulatedTime = 0.0f;
 			DrawFrame();
 			m_CurrentLocalFrame = (m_CurrentLocalFrame + 1) % FRAMES_IN_FLIGHT;
-		// }
+		 }
 		m_CurrentFrame = static_cast<float>(glfwGetTime());
 	}
 	Cleanup();

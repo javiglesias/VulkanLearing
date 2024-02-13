@@ -3,13 +3,17 @@
 const int FRAMES_IN_FLIGHT = 2;
 struct UniformBufferObject
 {
-	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
 	alignas(16) glm::vec3 cameraPosition;
 	alignas(16) glm::vec3 lightPosition;
 	alignas(16) glm::vec3 lightColor;
 };
+struct DynamicBufferObject
+{
+	alignas(16) glm::mat4 model;
+};
+
 struct Vertex2D {
 	glm::vec2 m_Pos;
 	glm::vec3 m_Color;

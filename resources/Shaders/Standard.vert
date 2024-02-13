@@ -2,13 +2,17 @@
 
 layout(set=0, binding=0) uniform UniformBufferObject
 {
-    mat4 model;
     mat4 view;
     mat4 projection;
     vec3 viewerPosition;
     vec3 lightPosition;
     vec3 lightColor;
 } ubo;
+
+layout(set=0, binding=4) uniform DynamicBufferObject
+{
+    mat4 model;
+} dynO;
 
 layout(location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 aTexCoord;
@@ -23,7 +27,7 @@ layout(location = 5) out vec3 lightColor;
 
 
 void main() {
-    gl_Position = ubo.model * ubo.projection * ubo.view  * vec4(inPosition, 1.0);
+    gl_Position = dynO.model * ubo.projection * ubo.view  * vec4(inPosition, 1.0);
     texCoord = aTexCoord;
 	fragPosition = inPosition;
 	normal = aNormal;

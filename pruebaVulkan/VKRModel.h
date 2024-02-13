@@ -31,6 +31,7 @@ struct R_Model //Render Model
 public:
 	R_Model() {}
 public:
+	glm::vec3 m_Pos {1.0f};
 	std::vector<R_Mesh*> m_Meshes;
 	char m_Path[64];
 };
