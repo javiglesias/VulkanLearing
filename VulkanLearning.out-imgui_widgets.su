@@ -1,0 +1,536 @@
+dependencies/imgui/imgui.h:266:15:constexpr ImVec2::ImVec2()	16	static
+dependencies/imgui/imgui.h:267:15:constexpr ImVec2::ImVec2(float, float)	16	static
+dependencies/imgui/imgui.h:268:12:float& ImVec2::operator[](size_t)	32	static
+dependencies/imgui/imgui.h:269:12:float ImVec2::operator[](size_t) const	32	static
+dependencies/imgui/imgui.h:280:15:constexpr ImVec4::ImVec4(float, float, float, float)	16	static
+dependencies/imgui/imgui.h:1880:14:void* operator new(size_t, ImNewWrapper, void*)	16	static
+dependencies/imgui/imgui.h:1881:14:void operator delete(void*, ImNewWrapper, void*)	16	static
+dependencies/imgui/imgui.h:2372:5:ImGuiTextBuffer::ImGuiTextBuffer()	32	static
+dependencies/imgui/imgui.h:2376:25:int ImGuiTextBuffer::size() const	16	static
+dependencies/imgui/imgui.h:2493:23:ImVec2 operator*(const ImVec2&, float)	48	static
+dependencies/imgui/imgui.h:2495:23:ImVec2 operator+(const ImVec2&, const ImVec2&)	48	static
+dependencies/imgui/imgui.h:2496:23:ImVec2 operator-(const ImVec2&, const ImVec2&)	48	static
+dependencies/imgui/imgui.h:2502:23:ImVec2& operator+=(ImVec2&, const ImVec2&)	16	static
+dependencies/imgui/imgui.h:2503:23:ImVec2& operator-=(ImVec2&, const ImVec2&)	16	static
+dependencies/imgui/imgui.h:2768:21:void ImDrawList::PathLineTo(const ImVec2&)	32	static
+dependencies/imgui/imgui.h:2770:21:void ImDrawList::PathFillConvex(ImU32)	32	static
+dependencies/imgui/imgui.h:2771:21:void ImDrawList::PathStroke(ImU32, ImDrawFlags, float)	48	static
+dependencies/imgui/imgui.h:2802:21:void ImDrawList::PrimWriteVtx(const ImVec2&, const ImVec2&, ImU32)	16	static
+dependencies/imgui/imgui.h:2803:21:void ImDrawList::PrimWriteIdx(ImDrawIdx)	16	static
+dependencies/imgui/imgui.h:2804:21:void ImDrawList::PrimVtx(const ImVec2&, const ImVec2&, ImU32)	48	static
+dependencies/imgui/imgui.h:3081:33:float ImFont::GetCharAdvance(ImWchar) const	32	static
+dependencies/imgui/imgui_internal.h:356:25:void ImQsort(void*, size_t, size_t, int (*)(const void*, const void*))	48	static
+dependencies/imgui/imgui_internal.h:363:25:bool ImIsPowerOfTwo(int)	16	static
+dependencies/imgui/imgui_internal.h:381:25:char ImToUpper(char)	16	static
+dependencies/imgui/imgui_internal.h:382:25:bool ImCharIsBlankA(char)	16	static
+dependencies/imgui/imgui_internal.h:383:25:bool ImCharIsBlankW(unsigned int)	16	static
+dependencies/imgui/imgui_internal.h:443:22:float ImPow(float, float)	32	static
+dependencies/imgui/imgui_internal.h:444:22:double ImPow(double, double)	32	static
+dependencies/imgui/imgui_internal.h:445:22:float ImLog(float)	32	static
+dependencies/imgui/imgui_internal.h:446:22:double ImLog(double)	32	static
+dependencies/imgui/imgui_internal.h:448:22:float ImAbs(float)	16	static
+dependencies/imgui/imgui_internal.h:449:22:double ImAbs(double)	16	static
+dependencies/imgui/imgui_internal.h:469:22:ImVec2 ImMin(const ImVec2&, const ImVec2&)	48	static
+dependencies/imgui/imgui_internal.h:470:22:ImVec2 ImMax(const ImVec2&, const ImVec2&)	48	static
+dependencies/imgui/imgui_internal.h:472:22:ImVec2 ImLerp(const ImVec2&, const ImVec2&, float)	64	static
+dependencies/imgui/imgui_internal.h:473:22:ImVec2 ImLerp(const ImVec2&, const ImVec2&, const ImVec2&)	64	static
+dependencies/imgui/imgui_internal.h:475:22:float ImSaturate(float)	16	static
+dependencies/imgui/imgui_internal.h:476:22:float ImLengthSqr(const ImVec2&)	16	static
+dependencies/imgui/imgui_internal.h:479:22:float ImTrunc(float)	16	static
+dependencies/imgui/imgui_internal.h:480:22:ImVec2 ImTrunc(const ImVec2&)	48	static
+dependencies/imgui/imgui_internal.h:485:22:ImVec2 ImRotate(const ImVec2&, float, float)	48	static
+dependencies/imgui/imgui_internal.h:486:22:float ImLinearSweep(float, float, float)	32	static
+dependencies/imgui/imgui_internal.h:529:15:constexpr ImRect::ImRect()	32	static
+dependencies/imgui/imgui_internal.h:530:15:constexpr ImRect::ImRect(const ImVec2&, const ImVec2&)	16	static
+dependencies/imgui/imgui_internal.h:531:15:constexpr ImRect::ImRect(const ImVec4&)	32	static
+dependencies/imgui/imgui_internal.h:532:15:constexpr ImRect::ImRect(float, float, float, float)	48	static
+dependencies/imgui/imgui_internal.h:534:17:ImVec2 ImRect::GetCenter() const	48	static
+dependencies/imgui/imgui_internal.h:535:17:ImVec2 ImRect::GetSize() const	48	static
+dependencies/imgui/imgui_internal.h:536:17:float ImRect::GetWidth() const	16	static
+dependencies/imgui/imgui_internal.h:537:17:float ImRect::GetHeight() const	16	static
+dependencies/imgui/imgui_internal.h:538:17:float ImRect::GetArea() const	16	static
+dependencies/imgui/imgui_internal.h:539:17:ImVec2 ImRect::GetTL() const	16	static
+dependencies/imgui/imgui_internal.h:540:17:ImVec2 ImRect::GetTR() const	48	static
+dependencies/imgui/imgui_internal.h:541:17:ImVec2 ImRect::GetBL() const	48	static
+dependencies/imgui/imgui_internal.h:542:17:ImVec2 ImRect::GetBR() const	16	static
+dependencies/imgui/imgui_internal.h:543:17:bool ImRect::Contains(const ImVec2&) const	16	static
+dependencies/imgui/imgui_internal.h:546:17:bool ImRect::Overlaps(const ImRect&) const	16	static
+dependencies/imgui/imgui_internal.h:549:17:void ImRect::Expand(float)	16	static
+dependencies/imgui/imgui_internal.h:550:17:void ImRect::Expand(const ImVec2&)	16	static
+dependencies/imgui/imgui_internal.h:551:17:void ImRect::Translate(const ImVec2&)	16	static
+dependencies/imgui/imgui_internal.h:554:17:void ImRect::ClipWith(const ImRect&)	48	static
+dependencies/imgui/imgui_internal.h:1091:17:void ImGuiInputTextState::CursorAnimReset()	16	static
+dependencies/imgui/imgui_internal.h:1092:17:void ImGuiInputTextState::CursorClamp()	32	static
+dependencies/imgui/imgui_internal.h:1093:17:bool ImGuiInputTextState::HasSelection() const	16	static
+dependencies/imgui/imgui_internal.h:1094:17:void ImGuiInputTextState::ClearSelection()	16	static
+dependencies/imgui/imgui_internal.h:1098:17:void ImGuiInputTextState::SelectAll()	16	static
+dependencies/imgui/imgui_internal.h:1136:17:void ImGuiNextWindowData::ClearFlags()	16	static
+dependencies/imgui/imgui_internal.h:1163:17:void ImGuiNextItemData::ClearFlags()	16	static
+dependencies/imgui/imgui_internal.h:1178:5:ImGuiLastItemData::ImGuiLastItemData()	32	static
+dependencies/imgui/imgui_internal.h:1228:5:ImGuiPtrOrIndex::ImGuiPtrOrIndex(void*)	16	static
+dependencies/imgui/imgui_internal.h:1229:5:ImGuiPtrOrIndex::ImGuiPtrOrIndex(int)	16	static
+dependencies/imgui/imgui_internal.h:1634:21:void ImGuiTypingSelectState::Clear()	16	static
+dependencies/imgui/imgui_internal.h:1733:13:ImVec2 ImGuiViewportP::CalcWorkRectPos(const ImVec2&) const	48	static
+dependencies/imgui/imgui_internal.h:1734:13:ImVec2 ImGuiViewportP::CalcWorkRectSize(const ImVec2&, const ImVec2&) const	80	static
+dependencies/imgui/imgui_internal.h:1740:13:ImRect ImGuiViewportP::GetBuildWorkRect() const	96	static
+dependencies/imgui/imgui_internal.h:2595:17:ImRect ImGuiWindow::Rect() const	80	static
+dependencies/imgui/imgui_internal.h:2596:17:float ImGuiWindow::CalcFontSize() const	16	static
+dependencies/imgui/imgui_internal.h:2597:17:float ImGuiWindow::TitleBarHeight() const	48	static
+dependencies/imgui/imgui_internal.h:2599:17:float ImGuiWindow::MenuBarHeight() const	48	static
+dependencies/imgui/imgui_internal.h:2600:17:ImRect ImGuiWindow::MenuBarRect() const	96	static
+dependencies/imgui/imgui_internal.h:2639:5:ImGuiTabItem::ImGuiTabItem()	32	static
+dependencies/imgui/imgui_internal.h:2973:29:ImGuiWindow* ImGui::GetCurrentWindow()	16	static
+dependencies/imgui/imgui_internal.h:2988:29:ImRect ImGui::WindowRectAbsToRel(ImGuiWindow*, const ImRect&)	96	static
+dependencies/imgui/imgui_internal.h:3079:29:void ImGui::ItemSize(const ImRect&, float)	48	static
+dependencies/imgui/imgui_internal.h:3178:29:ImGuiKeyData* ImGui::GetKeyData(ImGuiKey)	48	static
+dependencies/imgui/imgui_internal.h:3180:29:ImGuiKey ImGui::MouseButtonToKey(ImGuiMouseButton)	32	static
+dependencies/imgui/imgui_internal.h:3342:29:int ImGui::TabBarGetTabOrder(ImGuiTabBar*, ImGuiTabItem*)	32	static
+dependencies/imgui/imgui_internal.h:3433:29:bool ImGui::TempInputIsActive(ImGuiID)	16	static
+dependencies/imgui/imgui_internal.h:3434:33:ImGuiInputTextState* ImGui::GetInputTextState(ImGuiID)	16	static
+dependencies/imgui/imgui_widgets.cpp:148:6:void ImGui::TextEx(const char*, const char*, ImGuiTextFlags)	208	static
+dependencies/imgui/imgui_widgets.cpp:256:6:void ImGui::TextUnformatted(const char*, const char*)	32	static
+dependencies/imgui/imgui_widgets.cpp:261:6:)	240	static
+dependencies/imgui/imgui_widgets.cpp:269:6:void ImGui::TextV(const char*, __va_list_tag*)	64	static
+dependencies/imgui/imgui_widgets.cpp:280:6:)	240	static
+dependencies/imgui/imgui_widgets.cpp:288:6:void ImGui::TextColoredV(const ImVec4&, const char*, __va_list_tag*)	48	static
+dependencies/imgui/imgui_widgets.cpp:295:6:)	240	static
+dependencies/imgui/imgui_widgets.cpp:303:6:void ImGui::TextDisabledV(const char*, __va_list_tag*)	48	static
+dependencies/imgui/imgui_widgets.cpp:311:6:)	240	static
+dependencies/imgui/imgui_widgets.cpp:319:6:void ImGui::TextWrappedV(const char*, __va_list_tag*)	48	static
+dependencies/imgui/imgui_widgets.cpp:330:6:)	240	static
+dependencies/imgui/imgui_widgets.cpp:339:6:void ImGui::LabelTextV(const char*, const char*, __va_list_tag*)	224	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:367:6:)	240	static
+dependencies/imgui/imgui_widgets.cpp:376:6:void ImGui::BulletTextV(const char*, __va_list_tag*)	160	static
+dependencies/imgui/imgui_widgets.cpp:483:6:bool ImGui::ButtonBehavior(const ImRect&, ImGuiID, bool*, bool*, ImGuiButtonFlags)	176	static
+dependencies/imgui/imgui_widgets.cpp:693:6:bool ImGui::ButtonEx(const char*, const ImVec2&, ImGuiButtonFlags)	192	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:734:6:bool ImGui::Button(const char*, const ImVec2&)	32	static
+dependencies/imgui/imgui_widgets.cpp:740:6:bool ImGui::SmallButton(const char*)	64	static
+dependencies/imgui/imgui_widgets.cpp:752:6:bool ImGui::InvisibleButton(const char*, const ImVec2&, ImGuiButtonFlags)	128	static
+dependencies/imgui/imgui_widgets.cpp:776:6:bool ImGui::ArrowButtonEx(const char*, ImGuiDir, ImVec2, ImGuiButtonFlags)	144	static
+dependencies/imgui/imgui_widgets.cpp:804:6:bool ImGui::ArrowButton(const char*, ImGuiDir)	64	static
+dependencies/imgui/imgui_widgets.cpp:811:6:bool ImGui::CloseButton(ImGuiID, const ImVec2&)	176	static
+dependencies/imgui/imgui_widgets.cpp:849:6:bool ImGui::CollapseButton(ImGuiID, const ImVec2&)	144	static
+dependencies/imgui/imgui_widgets.cpp:875:9:ImGuiID ImGui::GetWindowScrollbarID(ImGuiWindow*, ImGuiAxis)	32	static
+dependencies/imgui/imgui_widgets.cpp:881:8:ImRect ImGui::GetWindowScrollbarRect(ImGuiWindow*, ImGuiAxis)	144	static
+dependencies/imgui/imgui_widgets.cpp:894:6:void ImGui::Scrollbar(ImGuiAxis)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:929:6:bool ImGui::ScrollbarEx(const ImRect&, ImGuiID, ImGuiAxis, ImS64*, ImS64, ImS64, ImDrawFlags)	256	static
+dependencies/imgui/imgui_widgets.cpp:1022:6:void ImGui::Image(ImTextureID, const ImVec2&, const ImVec2&, const ImVec2&, const ImVec4&, const ImVec4&)	176	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:1043:6:bool ImGui::ImageButtonEx(ImGuiID, ImTextureID, const ImVec2&, const ImVec2&, const ImVec2&, const ImVec4&, const ImVec4&, ImGuiButtonFlags)	208	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:1071:6:bool ImGui::ImageButton(const char*, ImTextureID, const ImVec2&, const ImVec2&, const ImVec2&, const ImVec4&, const ImVec4&)	96	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:1086:6:bool ImGui::ImageButton(ImTextureID, const ImVec2&, const ImVec2&, const ImVec2&, int, const ImVec4&, const ImVec4&)	144	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:1107:6:bool ImGui::Checkbox(const char*, bool*)	208	static
+dependencies/imgui/imgui_widgets.cpp:1191:6:bool ImGui::CheckboxFlags(const char*, int*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:1196:6:bool ImGui::CheckboxFlags(const char*, unsigned int*, unsigned int)	48	static
+dependencies/imgui/imgui_widgets.cpp:1201:6:bool ImGui::CheckboxFlags(const char*, ImS64*, ImS64)	48	static
+dependencies/imgui/imgui_widgets.cpp:1206:6:bool ImGui::CheckboxFlags(const char*, ImU64*, ImU64)	48	static
+dependencies/imgui/imgui_widgets.cpp:1211:6:bool ImGui::RadioButton(const char*, bool)	192	static
+dependencies/imgui/imgui_widgets.cpp:1266:6:bool ImGui::RadioButton(const char*, int*, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:1275:6:void ImGui::ProgressBar(float, const ImVec2&, const char*)	208	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:1311:6:void ImGui::Bullet()	112	static
+dependencies/imgui/imgui_widgets.cpp:1347:6:void ImGui::Spacing()	48	static
+dependencies/imgui/imgui_widgets.cpp:1355:6:void ImGui::Dummy(const ImVec2&)	80	static
+dependencies/imgui/imgui_widgets.cpp:1366:6:void ImGui::NewLine()	64	static
+dependencies/imgui/imgui_widgets.cpp:1383:6:void ImGui::AlignTextToFramePadding()	32	static
+dependencies/imgui/imgui_widgets.cpp:1397:6:void ImGui::SeparatorEx(ImGuiSeparatorFlags, float)	144	static
+dependencies/imgui/imgui_widgets.cpp:1461:6:void ImGui::Separator()	48	static
+dependencies/imgui/imgui_widgets.cpp:1479:6:void ImGui::SeparatorTextEx(ImGuiID, const char*, const char*, float)	224	static
+dependencies/imgui/imgui_widgets.cpp:1529:6:void ImGui::SeparatorText(const char*)	48	static
+dependencies/imgui/imgui_widgets.cpp:1545:6:bool ImGui::SplitterBehavior(const ImRect&, ImGuiID, ImGuiAxis, float*, float*, float, float, float, float, ImU32)	192	static
+dependencies/imgui/imgui_widgets.cpp:1603:24:int ShrinkWidthItemComparer(const void*, const void*)	16	static
+dependencies/imgui/imgui_widgets.cpp:1614:6:void ImGui::ShrinkWidths(ImGuiShrinkWidthItem*, int, float)	64	static
+dependencies/imgui/imgui_widgets.cpp:1667:14:float CalcMaxPopupHeightFromItemCount(int)	16	static
+dependencies/imgui/imgui_widgets.cpp:1675:6:bool ImGui::BeginCombo(const char*, const char*, ImGuiComboFlags)	256	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:1753:6:bool ImGui::BeginComboPopup(ImGuiID, const ImRect&, ImGuiComboFlags)	160	static
+dependencies/imgui/imgui_widgets.cpp:1817:6:void ImGui::EndCombo()	16	static
+dependencies/imgui/imgui_widgets.cpp:1824:6:bool ImGui::BeginComboPreview()	64	static
+dependencies/imgui/imgui_widgets.cpp:1851:6:void ImGui::EndComboPreview()	96	static
+dependencies/imgui/imgui_widgets.cpp:1876:20:const char* Items_ArrayGetter(void*, int)	16	static
+dependencies/imgui/imgui_widgets.cpp:1883:20:const char* Items_SingleStringGetter(void*, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:1899:6:bool ImGui::Combo(const char*, int*, const char* (*)(void*, int), void*, int, int)	128	static
+dependencies/imgui/imgui_widgets.cpp:1945:6:bool ImGui::Combo(const char*, int*, const char* const*, int, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:1952:6:bool ImGui::Combo(const char*, int*, const char*, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:1968:20:const char* ImGuiGetNameFromIndexOldToNewCallback(void*, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:1976:6:bool ImGui::ListBox(const char*, int*, bool (*)(void*, int, const char**), void*, int, int)	96	static
+dependencies/imgui/imgui_widgets.cpp:1981:6:bool ImGui::Combo(const char*, int*, bool (*)(void*, int, const char**), void*, int, int)	96	static
+dependencies/imgui/imgui_widgets.cpp:2022:26:const ImGuiDataTypeInfo* ImGui::DataTypeGetInfo(ImGuiDataType)	32	static
+dependencies/imgui/imgui_widgets.cpp:2028:5:int ImGui::DataTypeFormatString(char*, int, ImGuiDataType, const void*, const char*)	48	static
+dependencies/imgui/imgui_widgets.cpp:2051:6:void ImGui::DataTypeApplyOp(ImGuiDataType, int, void*, const void*, const void*)	48	static
+dependencies/imgui/imgui_widgets.cpp:2103:6:bool ImGui::DataTypeApplyFromText(const char*, ImGuiDataType, void*, const char*)	128	static
+dependencies/imgui/imgui_widgets.cpp:2153:5:int ImGui::DataTypeCompare(ImGuiDataType, const void*, const void*)	48	static
+dependencies/imgui/imgui_widgets.cpp:2182:6:bool ImGui::DataTypeClamp(ImGuiDataType, void*, const void*, const void*)	48	static
+dependencies/imgui/imgui_widgets.cpp:2202:14:float GetMinimumStepAtDecimalPrecision(int)	32	static
+dependencies/imgui/imgui_widgets.cpp:2374:6:bool ImGui::DragBehavior(ImGuiID, ImGuiDataType, void*, float, const void*, const void*, const char*, ImGuiSliderFlags)	96	static
+dependencies/imgui/imgui_widgets.cpp:2413:6:bool ImGui::DragScalar(const char*, ImGuiDataType, void*, float, const void*, const void*, const char*, ImGuiSliderFlags)	272	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2500:6:bool ImGui::DragScalarN(const char*, ImGuiDataType, void*, int, float, const void*, const void*, const char*, ImGuiSliderFlags)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2535:6:bool ImGui::DragFloat(const char*, float*, float, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2540:6:bool ImGui::DragFloat2(const char*, float*, float, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2545:6:bool ImGui::DragFloat3(const char*, float*, float, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2550:6:bool ImGui::DragFloat4(const char*, float*, float, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2556:6:bool ImGui::DragFloatRange2(const char*, float*, float*, float, float, float, const char*, const char*, ImGuiSliderFlags)	160	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2589:6:bool ImGui::DragInt(const char*, int*, float, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2594:6:bool ImGui::DragInt2(const char*, int*, float, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2599:6:bool ImGui::DragInt3(const char*, int*, float, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2604:6:bool ImGui::DragInt4(const char*, int*, float, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:2610:6:bool ImGui::DragIntRange2(const char*, int*, int*, float, int, int, const char*, const char*, ImGuiSliderFlags)	112	static
+dependencies/imgui/imgui_widgets.cpp:2967:6:bool ImGui::SliderBehavior(const ImRect&, ImGuiID, ImGuiDataType, void*, const void*, const void*, const char*, ImGuiSliderFlags, ImRect*)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3004:6:bool ImGui::SliderScalar(const char*, ImGuiDataType, void*, const void*, const void*, const char*, ImGuiSliderFlags)	320	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3087:6:bool ImGui::SliderScalarN(const char*, ImGuiDataType, void*, int, const void*, const void*, const char*, ImGuiSliderFlags)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3122:6:bool ImGui::SliderFloat(const char*, float*, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3127:6:bool ImGui::SliderFloat2(const char*, float*, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3132:6:bool ImGui::SliderFloat3(const char*, float*, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3137:6:bool ImGui::SliderFloat4(const char*, float*, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3142:6:bool ImGui::SliderAngle(const char*, float*, float, float, const char*, ImGuiSliderFlags)	80	static
+dependencies/imgui/imgui_widgets.cpp:3152:6:bool ImGui::SliderInt(const char*, int*, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3157:6:bool ImGui::SliderInt2(const char*, int*, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3162:6:bool ImGui::SliderInt3(const char*, int*, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3167:6:bool ImGui::SliderInt4(const char*, int*, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3172:6:bool ImGui::VSliderScalar(const char*, const ImVec2&, ImGuiDataType, void*, const void*, const void*, const char*, ImGuiSliderFlags)	336	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3232:6:bool ImGui::VSliderFloat(const char*, const ImVec2&, float*, float, float, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3237:6:bool ImGui::VSliderInt(const char*, const ImVec2&, int*, int, int, const char*, ImGuiSliderFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3266:13:const char* ImParseFormatFindStart(const char*)	16	static
+dependencies/imgui/imgui_widgets.cpp:3279:13:const char* ImParseFormatFindEnd(const char*)	16	static
+dependencies/imgui/imgui_widgets.cpp:3301:13:const char* ImParseFormatTrimDecorations(const char*, char*, size_t)	64	static
+dependencies/imgui/imgui_widgets.cpp:3316:6:void ImParseFormatSanitizeForPrinting(const char*, char*, size_t)	64	static
+dependencies/imgui/imgui_widgets.cpp:3331:13:const char* ImParseFormatSanitizeForScanning(const char*, char*, size_t)	80	static
+dependencies/imgui/imgui_widgets.cpp:3366:5:int ImParseFormatPrecision(const char*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3390:6:bool ImGui::TempInputText(const ImRect&, ImGuiID, const char*, char*, int, ImGuiInputTextFlags)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3413:6:bool ImGui::TempInputScalar(const ImRect&, ImGuiID, const char*, ImGuiDataType, void*, const char*, const void*, const void*)	192	static
+dependencies/imgui/imgui_widgets.cpp:3455:6:bool ImGui::InputScalar(const char*, ImGuiDataType, void*, const void*, const void*, const char*, ImGuiInputTextFlags)	208	static
+dependencies/imgui/imgui_widgets.cpp:3527:6:bool ImGui::InputScalarN(const char*, ImGuiDataType, void*, int, const void*, const void*, const char*, ImGuiInputTextFlags)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3562:6:bool ImGui::InputFloat(const char*, float*, float, float, const char*, ImGuiInputTextFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3567:6:bool ImGui::InputFloat2(const char*, float*, const char*, ImGuiInputTextFlags)	64	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3572:6:bool ImGui::InputFloat3(const char*, float*, const char*, ImGuiInputTextFlags)	64	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3577:6:bool ImGui::InputFloat4(const char*, float*, const char*, ImGuiInputTextFlags)	64	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3582:6:bool ImGui::InputInt(const char*, int*, int, int, ImGuiInputTextFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3589:6:bool ImGui::InputInt2(const char*, int*, ImGuiInputTextFlags)	64	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3594:6:bool ImGui::InputInt3(const char*, int*, ImGuiInputTextFlags)	64	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3599:6:bool ImGui::InputInt4(const char*, int*, ImGuiInputTextFlags)	64	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3604:6:bool ImGui::InputDouble(const char*, double*, double, double, const char*, ImGuiInputTextFlags)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3622:6:bool ImGui::InputText(const char*, char*, size_t, ImGuiInputTextFlags, ImGuiInputTextCallback, void*)	96	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3628:6:bool ImGui::InputTextMultiline(const char*, char*, size_t, const ImVec2&, ImGuiInputTextFlags, ImGuiInputTextCallback, void*)	80	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3633:6:bool ImGui::InputTextWithHint(const char*, const char*, char*, size_t, ImGuiInputTextFlags, ImGuiInputTextCallback, void*)	112	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:3639:12:int InputTextCalcTextLenAndLineCount(const char*, const char**)	16	static
+dependencies/imgui/imgui_widgets.cpp:3653:15:ImVec2 InputTextCalcTextSizeW(ImGuiContext*, const ImWchar*, const ImWchar*, const ImWchar**, ImVec2*, bool)	144	static
+dependencies/imgui/imgui_widgets.cpp:3702:16:int ImStb::STB_TEXTEDIT_STRINGLEN(const ImGuiInputTextState*)	16	static
+dependencies/imgui/imgui_widgets.cpp:3703:16:ImWchar ImStb::STB_TEXTEDIT_GETCHAR(const ImGuiInputTextState*, int)	32	static
+dependencies/imgui/imgui_widgets.cpp:3704:16:float ImStb::STB_TEXTEDIT_GETWIDTH(ImGuiInputTextState*, int, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3705:16:int ImStb::STB_TEXTEDIT_KEYTOTEXT(int)	16	static
+dependencies/imgui/imgui_widgets.cpp:3707:16:void ImStb::STB_TEXTEDIT_LAYOUTROW(ImStb::StbTexteditRow*, ImGuiInputTextState*, int)	80	static
+dependencies/imgui/imgui_widgets.cpp:3720:13:bool ImStb::is_separator(unsigned int)	16	static
+dependencies/imgui/imgui_widgets.cpp:3725:12:int ImStb::is_word_boundary_from_right(ImGuiInputTextState*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3737:12:int ImStb::is_word_boundary_from_left(ImGuiInputTextState*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3748:13:int ImStb::STB_TEXTEDIT_MOVEWORDLEFT_IMPL(ImGuiInputTextState*, int)	32	static
+dependencies/imgui/imgui_widgets.cpp:3749:13:int ImStb::STB_TEXTEDIT_MOVEWORDRIGHT_MAC(ImGuiInputTextState*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3750:13:int ImStb::STB_TEXTEDIT_MOVEWORDRIGHT_WIN(ImGuiInputTextState*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3751:13:int ImStb::STB_TEXTEDIT_MOVEWORDRIGHT_IMPL(ImGuiInputTextState*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3755:13:void ImStb::STB_TEXTEDIT_DELETECHARS(ImGuiInputTextState*, int, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:3771:13:bool ImStb::STB_TEXTEDIT_INSERTCHARS(ImGuiInputTextState*, int, const ImWchar*, int)	96	static
+dependencies/imgui/imstb_textedit.h:402:12:int ImStb::stb_text_locate_coord(ImGuiInputTextState*, float, float)	96	static
+dependencies/imgui/imstb_textedit.h:462:13:void ImStb::stb_textedit_click(ImGuiInputTextState*, ImStb::STB_TexteditState*, float, float)	80	static
+dependencies/imgui/imstb_textedit.h:480:13:void ImStb::stb_textedit_drag(ImGuiInputTextState*, ImStb::STB_TexteditState*, float, float)	96	static
+dependencies/imgui/imstb_textedit.h:522:13:void ImStb::stb_textedit_find_charpos(ImStb::StbFindState*, ImGuiInputTextState*, int, int)	96	static
+dependencies/imgui/imstb_textedit.h:573:13:void ImStb::stb_textedit_clamp(ImGuiInputTextState*, ImStb::STB_TexteditState*)	48	static
+dependencies/imgui/imstb_textedit.h:587:13:void ImStb::stb_textedit_delete(ImGuiInputTextState*, ImStb::STB_TexteditState*, int, int)	48	static
+dependencies/imgui/imstb_textedit.h:595:13:void ImStb::stb_textedit_delete_selection(ImGuiInputTextState*, ImStb::STB_TexteditState*)	32	static
+dependencies/imgui/imstb_textedit.h:611:13:void ImStb::stb_textedit_sortselection(ImStb::STB_TexteditState*)	16	static
+dependencies/imgui/imstb_textedit.h:621:13:void ImStb::stb_textedit_move_to_first(ImStb::STB_TexteditState*)	24	static
+dependencies/imgui/imstb_textedit.h:632:13:void ImStb::stb_textedit_move_to_last(ImGuiInputTextState*, ImStb::STB_TexteditState*)	32	static
+dependencies/imgui/imstb_textedit.h:683:13:void ImStb::stb_textedit_prep_selection_at_cursor(ImStb::STB_TexteditState*)	16	static
+dependencies/imgui/imstb_textedit.h:692:12:int ImStb::stb_textedit_cut(ImGuiInputTextState*, ImStb::STB_TexteditState*)	32	static
+dependencies/imgui/imstb_textedit.h:703:12:int ImStb::stb_textedit_paste_internal(ImGuiInputTextState*, ImStb::STB_TexteditState*, ImWchar*, int)	48	static
+dependencies/imgui/imstb_textedit.h:724:13:void ImStb::stb_textedit_key(ImGuiInputTextState*, ImStb::STB_TexteditState*, int)	224	static
+dependencies/imgui/imstb_textedit.h:1114:13:void ImStb::stb_textedit_flush_redo(ImStb::StbUndoState*)	16	static
+dependencies/imgui/imstb_textedit.h:1121:13:void ImStb::stb_textedit_discard_undo(ImStb::StbUndoState*)	48	static
+dependencies/imgui/imstb_textedit.h:1143:13:void ImStb::stb_textedit_discard_redo(ImStb::StbUndoState*)	80	static
+dependencies/imgui/imstb_textedit.h:1173:23:ImStb::StbUndoRecord* ImStb::stb_text_create_undo_record(ImStb::StbUndoState*, int)	32	static
+dependencies/imgui/imstb_textedit.h:1197:33:ImWchar* ImStb::stb_text_createundo(ImStb::StbUndoState*, int, int, int)	64	static
+dependencies/imgui/imstb_textedit.h:1217:13:void ImStb::stb_text_undo(ImGuiInputTextState*, ImStb::STB_TexteditState*)	112	static
+dependencies/imgui/imstb_textedit.h:1285:13:void ImStb::stb_text_redo(ImGuiInputTextState*, ImStb::STB_TexteditState*)	112	static
+dependencies/imgui/imstb_textedit.h:1336:13:void ImStb::stb_text_makeundo_insert(ImStb::STB_TexteditState*, int, int)	32	static
+dependencies/imgui/imstb_textedit.h:1341:13:void ImStb::stb_text_makeundo_delete(ImGuiInputTextState*, ImStb::STB_TexteditState*, int, int)	80	static
+dependencies/imgui/imstb_textedit.h:1351:13:void ImStb::stb_text_makeundo_replace(ImGuiInputTextState*, ImStb::STB_TexteditState*, int, int, int)	80	static
+dependencies/imgui/imstb_textedit.h:1362:13:void ImStb::stb_textedit_clear_state(ImStb::STB_TexteditState*, int)	16	static
+dependencies/imgui/imstb_textedit.h:1380:13:void ImStb::stb_textedit_initialize_state(ImStb::STB_TexteditState*, int)	32	static
+dependencies/imgui/imstb_textedit.h:1390:12:int ImStb::stb_textedit_paste(ImGuiInputTextState*, ImStb::STB_TexteditState*, const ImWchar*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3828:13:void ImStb::stb_textedit_replace(ImGuiInputTextState*, ImStb::STB_TexteditState*, const ImWchar*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:3846:6:void ImGuiInputTextState::OnKeyPressed(int)	32	static
+dependencies/imgui/imgui_widgets.cpp:3853:1:ImGuiInputTextCallbackData::ImGuiInputTextCallbackData()	32	static
+dependencies/imgui/imgui_widgets.cpp:3861:6:void ImGuiInputTextCallbackData::DeleteChars(int, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:3879:6:void ImGuiInputTextCallbackData::InsertChars(int, const char*, const char*)	96	static
+dependencies/imgui/imgui_widgets.cpp:3916:13:bool InputTextFilterCharacter(ImGuiContext*, unsigned int*, ImGuiInputTextFlags, ImGuiInputTextCallback, void*, ImGuiInputSource)	176	static
+dependencies/imgui/imgui_widgets.cpp:4020:13:void InputTextReconcileUndoStateAfterUserCallback(ImGuiInputTextState*, const char*, int)	144	static
+dependencies/imgui/imgui_widgets.cpp:4056:6:void ImGui::InputTextDeactivateHook(ImGuiID)	48	static
+dependencies/imgui/imgui_widgets.cpp:4083:6:bool ImGui::InputTextEx(const char*, const char*, char*, int, const ImVec2&, ImGuiInputTextFlags, ImGuiInputTextCallback, void*)	864	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:5041:6:void ImGui::DebugNodeInputTextState(ImGuiInputTextState*)	176	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:5092:6:bool ImGui::ColorEdit3(const char*, float*, ImGuiColorEditFlags)	48	static
+dependencies/imgui/imgui_widgets.cpp:5097:13:void ColorEditRestoreH(const float*, float*)	96	static
+dependencies/imgui/imgui_widgets.cpp:5108:13:void ColorEditRestoreHS(const float*, float*, float*, float*)	112	static
+dependencies/imgui/imgui_widgets.cpp:5128:6:bool ImGui::ColorEdit4(const char*, float*, ImGuiColorEditFlags)	416	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:5376:6:bool ImGui::ColorPicker3(const char*, float*, ImGuiColorEditFlags)	80	static
+dependencies/imgui/imgui_widgets.cpp:5386:13:void RenderArrowsForVerticalBar(ImDrawList*, ImVec2, ImVec2, float, float)	96	static
+dependencies/imgui/imgui_widgets.cpp:5399:6:bool ImGui::ColorPicker4(const char*, float*, ImGuiColorEditFlags, const float*)	560	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:5772:6:bool ImGui::ColorButton(const char*, const ImVec4&, ImGuiColorEditFlags, const ImVec2&)	224	static
+dependencies/imgui/imgui_widgets.cpp:5853:6:void ImGui::SetColorEditOptions(ImGuiColorEditFlags)	48	static
+dependencies/imgui/imgui_widgets.cpp:5872:6:void ImGui::ColorTooltip(const char*, const float*, ImGuiColorEditFlags)	160	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:5907:6:void ImGui::ColorEditOptionsPopup(const float*, ImGuiColorEditFlags)	176	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:5960:6:void ImGui::ColorPickerOptionsPopup(const float*, ImGuiColorEditFlags)	112	static
+dependencies/imgui/imgui_widgets.cpp:6015:6:)	256	static
+dependencies/imgui/imgui_widgets.cpp:6024:6:)	256	static
+dependencies/imgui/imgui_widgets.cpp:6033:6:bool ImGui::TreeNode(const char*)	48	static
+dependencies/imgui/imgui_widgets.cpp:6041:6:bool ImGui::TreeNodeV(const char*, const char*, __va_list_tag*)	48	static
+dependencies/imgui/imgui_widgets.cpp:6046:6:bool ImGui::TreeNodeV(const void*, const char*, __va_list_tag*)	48	static
+dependencies/imgui/imgui_widgets.cpp:6051:6:bool ImGui::TreeNodeEx(const char*, ImGuiTreeNodeFlags)	48	static
+dependencies/imgui/imgui_widgets.cpp:6060:6:)	272	static
+dependencies/imgui/imgui_widgets.cpp:6069:6:)	272	static
+dependencies/imgui/imgui_widgets.cpp:6078:6:bool ImGui::TreeNodeExV(const char*, ImGuiTreeNodeFlags, const char*, __va_list_tag*)	96	static
+dependencies/imgui/imgui_widgets.cpp:6089:6:bool ImGui::TreeNodeExV(const void*, ImGuiTreeNodeFlags, const char*, __va_list_tag*)	96	static
+dependencies/imgui/imgui_widgets.cpp:6100:6:void ImGui::TreeNodeSetOpen(ImGuiID, bool)	48	static
+dependencies/imgui/imgui_widgets.cpp:6107:6:bool ImGui::TreeNodeUpdateNextOpen(ImGuiID, ImGuiTreeNodeFlags)	64	static
+dependencies/imgui/imgui_widgets.cpp:6153:6:bool ImGui::TreeNodeBehavior(ImGuiID, ImGuiTreeNodeFlags, const char*, const char*)	256	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:6381:6:void ImGui::TreePush(const char*)	48	static
+dependencies/imgui/imgui_widgets.cpp:6389:6:void ImGui::TreePush(const void*)	48	static
+dependencies/imgui/imgui_widgets.cpp:6397:6:void ImGui::TreePushOverrideID(ImGuiID)	48	static
+dependencies/imgui/imgui_widgets.cpp:6406:6:void ImGui::TreePop()	64	static
+dependencies/imgui/imgui_widgets.cpp:6431:7:float ImGui::GetTreeNodeToLabelSpacing()	16	static
+dependencies/imgui/imgui_widgets.cpp:6438:6:void ImGui::SetNextItemOpen(bool, ImGuiCond)	16	static
+dependencies/imgui/imgui_widgets.cpp:6450:6:bool ImGui::CollapsingHeader(const char*, ImGuiTreeNodeFlags)	64	static
+dependencies/imgui/imgui_widgets.cpp:6463:6:bool ImGui::CollapsingHeader(const char*, bool*, ImGuiTreeNodeFlags)	208	static
+dependencies/imgui/imgui_widgets.cpp:6506:6:bool ImGui::Selectable(const char*, bool, ImGuiSelectableFlags, const ImVec2&)	240	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:6656:6:bool ImGui::Selectable(const char*, bool*, ImGuiSelectableFlags, const ImVec2&)	48	static
+dependencies/imgui/imgui_widgets.cpp:6678:27:ImGuiTypingSelectRequest* ImGui::GetTypingSelectRequest(ImGuiTypingSelectFlags)	160	static
+dependencies/imgui/imgui_widgets.cpp:6774:12:int ImStrimatchlen(const char*, const char*, const char*)	64	static
+dependencies/imgui/imgui_widgets.cpp:6788:5:int ImGui::TypingSelectFindMatch(ImGuiTypingSelectRequest*, int, const char* (*)(void*, int), void*, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:6803:5:int ImGui::TypingSelectFindNextSingleCharMatch(ImGuiTypingSelectRequest*, int, const char* (*)(void*, int), void*, int)	80	static
+dependencies/imgui/imgui_widgets.cpp:6828:5:int ImGui::TypingSelectFindBestLeadingMatch(ImGuiTypingSelectRequest*, int, const char* (*)(void*, int), void*)	80	static
+dependencies/imgui/imgui_widgets.cpp:6846:6:void ImGui::DebugNodeTypingSelectState(ImGuiTypingSelectState*)	32	static
+dependencies/imgui/imgui_widgets.cpp:6862:6:void ImGui::SetNextItemSelectionUserData(ImGuiSelectionUserData)	16	static
+dependencies/imgui/imgui_widgets.cpp:6883:6:bool ImGui::BeginListBox(const char*, const ImVec2&)	192	static
+dependencies/imgui/imgui_widgets.cpp:6923:6:void ImGui::EndListBox()	32	static
+dependencies/imgui/imgui_widgets.cpp:6934:6:bool ImGui::ListBox(const char*, int*, const char* const*, int, int)	64	static
+dependencies/imgui/imgui_widgets.cpp:6942:6:bool ImGui::ListBox(const char*, int*, const char* (*)(void*, int), void*, int, int)	176	static
+dependencies/imgui/imgui_widgets.cpp:6999:5:int ImGui::PlotEx(ImGuiPlotType, const char*, float (*)(void*, int), void*, int, int, const char*, float, float, const ImVec2&)	352	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:7119:5:ImGuiPlotArrayGetterData::ImGuiPlotArrayGetterData(const float*, int)	16	static
+dependencies/imgui/imgui_widgets.cpp:7122:14:float Plot_ArrayGetter(void*, int)	16	static
+dependencies/imgui/imgui_widgets.cpp:7129:6:void ImGui::PlotLines(const char*, const float*, int, int, const char*, float, float, ImVec2, int)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:7135:6:void ImGui::PlotLines(const char*, float (*)(void*, int), void*, int, int, const char*, float, float, ImVec2)	96	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:7140:6:void ImGui::PlotHistogram(const char*, const float*, int, int, const char*, float, float, ImVec2, int)	128	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:7146:6:void ImGui::PlotHistogram(const char*, float (*)(void*, int), void*, int, int, const char*, float, float, ImVec2)	96	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:7158:6:void ImGui::Value(const char*, bool)	32	static
+dependencies/imgui/imgui_widgets.cpp:7163:6:void ImGui::Value(const char*, int)	32	static
+dependencies/imgui/imgui_widgets.cpp:7168:6:void ImGui::Value(const char*, unsigned int)	32	static
+dependencies/imgui/imgui_widgets.cpp:7173:6:void ImGui::Value(const char*, float, const char*)	128	static
+dependencies/imgui/imgui_widgets.cpp:7202:6:void ImGuiMenuColumns::Update(float, bool)	32	static
+dependencies/imgui/imgui_widgets.cpp:7213:6:void ImGuiMenuColumns::CalcNextTotalWidth(bool)	16	static
+dependencies/imgui/imgui_widgets.cpp:7234:7:float ImGuiMenuColumns::DeclColumns(float, float, float, float)	48	static
+dependencies/imgui/imgui_widgets.cpp:7248:6:bool ImGui::BeginMenuBar()	96	static
+dependencies/imgui/imgui_widgets.cpp:7277:6:void ImGui::EndMenuBar()	80	static
+dependencies/imgui/imgui_widgets.cpp:7328:6:bool ImGui::BeginViewportSideBar(const char*, ImGuiViewport*, ImGuiDir, float, ImGuiWindowFlags)	128	static
+dependencies/imgui/imgui_widgets.cpp:7363:6:bool ImGui::BeginMainMenuBar()	64	static
+dependencies/imgui/imgui_widgets.cpp:7384:6:void ImGui::EndMainMenuBar()	32	static
+dependencies/imgui/imgui_widgets.cpp:7397:13:bool IsRootOfOpenMenuSet()	48	static
+dependencies/imgui/imgui_widgets.cpp:7421:6:bool ImGui::BeginMenuEx(const char*, const char*, bool)	320	static
+dependencies/imgui/imgui_widgets.cpp:7621:6:bool ImGui::BeginMenu(const char*, bool)	32	static
+dependencies/imgui/imgui_widgets.cpp:7626:6:void ImGui::EndMenu()	48	static
+dependencies/imgui/imgui_widgets.cpp:7644:6:bool ImGui::MenuItemEx(const char*, const char*, const char*, bool, bool)	192	static
+dependencies/imgui/imgui_widgets.cpp:7720:6:bool ImGui::MenuItem(const char*, const char*, bool, bool)	48	static
+dependencies/imgui/imgui_widgets.cpp:7725:6:bool ImGui::MenuItem(const char*, const char*, bool*, bool)	48	static
+dependencies/imgui/imgui_widgets.cpp:7767:5:ImGuiTabBarSection::ImGuiTabBarSection()	32	static
+dependencies/imgui/imgui_widgets.cpp:7781:1:ImGuiTabBar::ImGuiTabBar()	32	static
+dependencies/imgui/imgui_widgets.cpp:7788:19:int TabItemGetSectionIdx(const ImGuiTabItem*)	16	static
+dependencies/imgui/imgui_widgets.cpp:7793:24:int TabItemComparerBySection(const void*, const void*)	64	static
+dependencies/imgui/imgui_widgets.cpp:7804:24:int TabItemComparerByBeginOrder(const void*, const void*)	16	static
+dependencies/imgui/imgui_widgets.cpp:7811:21:ImGuiTabBar* GetTabBarFromTabBarRef(const ImGuiPtrOrIndex&)	48	static
+dependencies/imgui/imgui_widgets.cpp:7817:24:ImGuiPtrOrIndex GetTabBarRefFromTabBar(ImGuiTabBar*)	80	static
+dependencies/imgui/imgui_widgets.cpp:7825:9:bool ImGui::BeginTabBar(const char*, ImGuiTabBarFlags)	96	static
+dependencies/imgui/imgui_widgets.cpp:7841:9:bool ImGui::BeginTabBarEx(ImGuiTabBar*, const ImRect&, ImGuiTabBarFlags)	128	static
+dependencies/imgui/imgui_widgets.cpp:7901:9:void ImGui::EndTabBar()	48	static
+dependencies/imgui/imgui_widgets.cpp:7942:14:float TabBarCalcScrollableWidth(ImGuiTabBar*, ImGuiTabBarSection*)	32	static
+dependencies/imgui/imgui_widgets.cpp:7949:13:void ImGui::TabBarLayout(ImGuiTabBar*)	352	static
+dependencies/imgui/imgui_widgets.cpp:8192:16:ImU32 ImGui::TabBarCalcTabID(ImGuiTabBar*, const char*, ImGuiWindow*)	64	static
+dependencies/imgui/imgui_widgets.cpp:8209:14:float ImGui::TabBarCalcMaxTabWidth()	16	static
+dependencies/imgui/imgui_widgets.cpp:8215:15:ImGuiTabItem* ImGui::TabBarFindTabByID(ImGuiTabBar*, ImGuiID)	48	static
+dependencies/imgui/imgui_widgets.cpp:8225:15:ImGuiTabItem* ImGui::TabBarFindTabByOrder(ImGuiTabBar*, int)	32	static
+dependencies/imgui/imgui_widgets.cpp:8232:15:ImGuiTabItem* ImGui::TabBarGetCurrentTab(ImGuiTabBar*)	32	static
+dependencies/imgui/imgui_widgets.cpp:8239:13:const char* ImGui::TabBarGetTabName(ImGuiTabBar*, ImGuiTabItem*)	32	static
+dependencies/imgui/imgui_widgets.cpp:8248:6:void ImGui::TabBarRemoveTab(ImGuiTabBar*, ImGuiID)	48	static
+dependencies/imgui/imgui_widgets.cpp:8258:6:void ImGui::TabBarCloseTab(ImGuiTabBar*, ImGuiTabItem*)	32	static
+dependencies/imgui/imgui_widgets.cpp:8282:14:float ImGui::TabBarScrollClamp(ImGuiTabBar*, float)	32	static
+dependencies/imgui/imgui_widgets.cpp:8289:13:void ImGui::TabBarScrollToTab(ImGuiTabBar*, ImGuiID, ImGuiTabBarSection*)	96	static
+dependencies/imgui/imgui_widgets.cpp:8322:6:void ImGui::TabBarQueueFocus(ImGuiTabBar*, ImGuiTabItem*)	16	static
+dependencies/imgui/imgui_widgets.cpp:8327:6:void ImGui::TabBarQueueReorder(ImGuiTabBar*, ImGuiTabItem*, int)	48	static
+dependencies/imgui/imgui_widgets.cpp:8335:6:void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar*, ImGuiTabItem*, ImVec2)	96	static
+dependencies/imgui/imgui_widgets.cpp:8371:6:bool ImGui::TabBarProcessReorder(ImGuiTabBar*)	160	static
+dependencies/imgui/imgui_widgets.cpp:8402:22:ImGuiTabItem* ImGui::TabBarScrollingButtons(ImGuiTabBar*)	160	static
+dependencies/imgui/imgui_widgets.cpp:8463:22:ImGuiTabItem* ImGui::TabBarTabListPopupButton(ImGuiTabBar*)	144	static
+dependencies/imgui/imgui_widgets.cpp:8514:9:bool ImGui::BeginTabItem(const char*, bool*, ImGuiTabItemFlags)	96	static
+dependencies/imgui/imgui_widgets.cpp:8538:9:void ImGui::EndTabItem()	48	static
+dependencies/imgui/imgui_widgets.cpp:8557:9:bool ImGui::TabItemButton(const char*, ImGuiTabItemFlags)	64	static
+dependencies/imgui/imgui_widgets.cpp:8573:9:bool ImGui::TabItemEx(ImGuiTabBar*, const char*, bool*, ImGuiTabItemFlags, ImGuiWindow*)	288	dynamic,bounded
+dependencies/imgui/imgui_widgets.cpp:8798:9:void ImGui::SetTabItemClosed(const char*)	64	static
+dependencies/imgui/imgui_widgets.cpp:8811:8:ImVec2 ImGui::TabItemCalcSize(const char*, bool)	80	static
+dependencies/imgui/imgui_widgets.cpp:8823:8:ImVec2 ImGui::TabItemCalcSize(ImGuiWindow*)	48	static
+dependencies/imgui/imgui_widgets.cpp:8829:6:void ImGui::TabItemBackground(ImDrawList*, const ImRect&, ImGuiTabItemFlags, ImU32)	112	static
+dependencies/imgui/imgui_widgets.cpp:8856:6:void ImGui::TabItemLabelAndCloseButton(ImDrawList*, const ImRect&, ImGuiTabItemFlags, ImVec2, const char*, ImGuiID, ImGuiID, bool, bool*, bool*)	304	static
+dependencies/imgui/imgui.h:1913:12:ImVector<T>::ImVector() [with T = char]	16	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = char]	48	static
+dependencies/imgui/imgui.h:1913:12:ImVector<T>::ImVector() [with T = short unsigned int]	16	static
+dependencies/imgui/imgui.h:1916:12:ImVector<T>::~ImVector() [with T = short unsigned int]	32	static
+dependencies/imgui/imgui.h:1948:25:void ImVector<T>::push_back(const T&) [with T = ImVec2]	32	static
+dependencies/imgui/imgui.h:1928:25:const T& ImVector<T>::operator[](int) const [with T = float]	32	static
+dependencies/imgui/imgui_internal.h:461:38:T ImMin(T, T) [with T = float]	16	static
+dependencies/imgui/imgui_internal.h:462:38:T ImMax(T, T) [with T = float]	16	static
+dependencies/imgui/imgui.h:1927:25:T& ImVector<T>::operator[](int) [with T = short unsigned int]	32	static
+dependencies/imgui/imgui_internal.h:461:38:T ImMin(T, T) [with T = int]	16	static
+dependencies/imgui/imgui.h:1961:25:int ImVector<T>::index_from_ptr(const T*) const [with T = ImGuiTabItem]	48	static
+dependencies/imgui/imgui_internal.h:463:38:T ImClamp(T, T, T) [with T = float]	16	static
+dependencies/imgui/imgui_internal.h:462:38:T ImMax(T, T) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:464:38:T ImLerp(T, T, float) [with T = float]	16	static
+dependencies/imgui/imgui_widgets.cpp:1165:6:bool ImGui::CheckboxFlagsT(const char*, T*, T) [with T = int]	80	static
+dependencies/imgui/imgui_widgets.cpp:1165:6:bool ImGui::CheckboxFlagsT(const char*, T*, T) [with T = unsigned int]	80	static
+dependencies/imgui/imgui_widgets.cpp:1165:6:bool ImGui::CheckboxFlagsT(const char*, T*, T) [with T = long long int]	80	static
+dependencies/imgui/imgui_widgets.cpp:1165:6:bool ImGui::CheckboxFlagsT(const char*, T*, T) [with T = long long unsigned int]	80	static
+dependencies/imgui/imgui.h:1927:25:T& ImVector<T>::operator[](int) [with T = ImDrawCmd]	32	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = signed char]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = signed char]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = unsigned char]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = unsigned char]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = short int]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = short int]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = int]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = int]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:466:38:T ImAddClampOverflow(T, T, T, T) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:467:38:T ImSubClampOverflow(T, T, T, T) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:463:38:T ImClamp(T, T, T) [with T = int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = signed char]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = unsigned char]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = short int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = long long int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = float]	16	static
+dependencies/imgui/imgui_widgets.cpp:2146:12:int DataTypeCompareT(const T*, const T*) [with T = double]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = signed char]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = unsigned char]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = short int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = long long int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = float]	16	static
+dependencies/imgui/imgui_widgets.cpp:2174:13:bool DataTypeClampT(T*, const T*, const T*) [with T = double]	16	static
+dependencies/imgui/imgui_widgets.cpp:2256:6:bool ImGui::DragBehaviorT(ImGuiDataType, T*, float, T, T, const char*, ImGuiSliderFlags) [with T = int; SIGNED_T = int; FLOAT_T = float]	128	static
+dependencies/imgui/imgui_widgets.cpp:2256:6:bool ImGui::DragBehaviorT(ImGuiDataType, T*, float, T, T, const char*, ImGuiSliderFlags) [with T = unsigned int; SIGNED_T = int; FLOAT_T = float]	128	static
+dependencies/imgui/imgui_widgets.cpp:2256:6:bool ImGui::DragBehaviorT(ImGuiDataType, T*, float, T, T, const char*, ImGuiSliderFlags) [with T = long long int; SIGNED_T = long long int; FLOAT_T = double]	144	static
+dependencies/imgui/imgui_widgets.cpp:2256:6:bool ImGui::DragBehaviorT(ImGuiDataType, T*, float, T, T, const char*, ImGuiSliderFlags) [with T = long long unsigned int; SIGNED_T = long long int; FLOAT_T = double]	144	static
+dependencies/imgui/imgui_widgets.cpp:2256:6:bool ImGui::DragBehaviorT(ImGuiDataType, T*, float, T, T, const char*, ImGuiSliderFlags) [with T = float; SIGNED_T = float; FLOAT_T = float]	128	static
+dependencies/imgui/imgui_widgets.cpp:2256:6:bool ImGui::DragBehaviorT(ImGuiDataType, T*, float, T, T, const char*, ImGuiSliderFlags) [with T = double; SIGNED_T = double; FLOAT_T = double]	144	static
+dependencies/imgui/imgui_internal.h:462:38:T ImMax(T, T) [with T = int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2791:6:bool ImGui::SliderBehaviorT(const ImRect&, ImGuiID, ImGuiDataType, T*, T, T, const char*, ImGuiSliderFlags, ImRect*) [with T = int; SIGNED_T = int; FLOAT_T = float]	256	static
+dependencies/imgui/imgui_widgets.cpp:2791:6:bool ImGui::SliderBehaviorT(const ImRect&, ImGuiID, ImGuiDataType, T*, T, T, const char*, ImGuiSliderFlags, ImRect*) [with T = unsigned int; SIGNED_T = int; FLOAT_T = float]	256	static
+dependencies/imgui/imgui_widgets.cpp:2791:6:bool ImGui::SliderBehaviorT(const ImRect&, ImGuiID, ImGuiDataType, T*, T, T, const char*, ImGuiSliderFlags, ImRect*) [with T = long long int; SIGNED_T = long long int; FLOAT_T = double]	256	static
+dependencies/imgui/imgui_widgets.cpp:2791:6:bool ImGui::SliderBehaviorT(const ImRect&, ImGuiID, ImGuiDataType, T*, T, T, const char*, ImGuiSliderFlags, ImRect*) [with T = long long unsigned int; SIGNED_T = long long int; FLOAT_T = double]	256	static
+dependencies/imgui/imgui_widgets.cpp:2791:6:bool ImGui::SliderBehaviorT(const ImRect&, ImGuiID, ImGuiDataType, T*, T, T, const char*, ImGuiSliderFlags, ImRect*) [with T = float; SIGNED_T = float; FLOAT_T = float]	256	static
+dependencies/imgui/imgui_widgets.cpp:2791:6:bool ImGui::SliderBehaviorT(const ImRect&, ImGuiID, ImGuiDataType, T*, T, T, const char*, ImGuiSliderFlags, ImRect*) [with T = double; SIGNED_T = double; FLOAT_T = double]	256	static
+dependencies/imgui/imgui_internal.h:461:38:T ImMin(T, T) [with T = long unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:3352:20:const char* ImAtoi(const char*, TYPE*) [with TYPE = int]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = const void*]	16	static
+dependencies/imgui/imgui.h:1928:25:const T& ImVector<T>::operator[](int) const [with T = short unsigned int]	32	static
+dependencies/imgui/imgui.h:1941:25:void ImVector<T>::resize(int) [with T = short unsigned int]	32	static
+dependencies/imgui/imgui.h:1945:25:void ImVector<T>::reserve_discard(int) [with T = char]	32	static
+dependencies/imgui/imgui.h:1941:25:void ImVector<T>::resize(int) [with T = char]	32	static
+dependencies/imgui/imgui.h:1922:25:bool ImVector<T>::empty() const [with T = ImFontGlyph]	16	static
+dependencies/imgui/imgui.h:1922:25:bool ImVector<T>::empty() const [with T = float]	16	static
+dependencies/imgui/imgui.h:1922:25:bool ImVector<T>::empty() const [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = int]	16	static
+dependencies/imgui/imgui.h:1936:25:T& ImVector<T>::back() [with T = unsigned int]	32	static
+dependencies/imgui/imgui.h:1941:25:void ImVector<T>::resize(int) [with T = ImGuiNavTreeNodeData]	32	static
+dependencies/imgui/imgui.h:1936:25:T& ImVector<T>::back() [with T = ImGuiNavTreeNodeData]	32	static
+dependencies/imgui/imgui.h:1949:25:void ImVector<T>::pop_back() [with T = ImGuiNavTreeNodeData]	32	static
+dependencies/imgui/imgui.h:1930:25:T* ImVector<T>::begin() [with T = short unsigned int]	16	static
+dependencies/imgui/imgui.h:1932:25:T* ImVector<T>::end() [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:462:38:T ImMax(T, T) [with T = short unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:462:38:T ImMax(T, T) [with T = unsigned int]	16	static
+dependencies/imgui/imgui.h:1936:25:T& ImVector<T>::back() [with T = ImGuiGroupData]	32	static
+dependencies/imgui/imgui.h:1927:25:T& ImVector<T>::operator[](int) [with T = ImGuiPopupData]	32	static
+dependencies/imgui/imgui.h:1955:25:bool ImVector<T>::contains(const T&) const [with T = unsigned int]	16	static
+dependencies/imgui/imgui.h:1948:25:void ImVector<T>::push_back(const T&) [with T = unsigned int]	32	static
+dependencies/imgui/imgui.h:1913:12:ImVector<T>::ImVector() [with T = ImGuiTabItem]	16	static
+dependencies/imgui/imgui.h:1916:12:ImVector<T>::~ImVector() [with T = ImGuiTabItem]	32	static
+dependencies/imgui/imgui_internal.h:679:17:T* ImPool<T>::GetByIndex(ImPoolIdx) [with T = ImGuiTabBar]	32	static
+dependencies/imgui/imgui_internal.h:682:17:bool ImPool<T>::Contains(const T*) const [with T = ImGuiTabBar]	16	static
+dependencies/imgui/imgui_internal.h:680:17:ImPoolIdx ImPool<T>::GetIndex(const T*) const [with T = ImGuiTabBar]	32	static
+dependencies/imgui/imgui_internal.h:681:17:T* ImPool<T>::GetOrAddByKey(ImGuiID) [with T = ImGuiTabBar]	48	static
+dependencies/imgui/imgui.h:1948:25:void ImVector<T>::push_back(const T&) [with T = ImGuiPtrOrIndex]	32	static
+dependencies/imgui/imgui.h:1949:25:void ImVector<T>::pop_back() [with T = ImGuiPtrOrIndex]	32	static
+dependencies/imgui/imgui.h:1922:25:bool ImVector<T>::empty() const [with T = ImGuiPtrOrIndex]	16	static
+dependencies/imgui/imgui.h:1936:25:T& ImVector<T>::back() [with T = ImGuiPtrOrIndex]	32	static
+dependencies/imgui/imgui.h:1927:25:T& ImVector<T>::operator[](int) [with T = ImGuiTabItem]	32	static
+dependencies/imgui/imgui.h:1941:25:void ImVector<T>::resize(int) [with T = ImGuiTabItem]	32	static
+dependencies/imgui/imgui.h:1941:25:void ImVector<T>::resize(int) [with T = ImGuiShrinkWidthItem]	32	static
+dependencies/imgui/imgui.h:1927:25:T& ImVector<T>::operator[](int) [with T = ImGuiShrinkWidthItem]	32	static
+dependencies/imgui/imgui.h:1951:25:T* ImVector<T>::erase(const T*) [with T = ImGuiTabItem]	48	static
+dependencies/imgui/imgui.h:1948:25:void ImVector<T>::push_back(const T&) [with T = ImGuiTabItem]	32	static
+dependencies/imgui/imgui.h:1936:25:T& ImVector<T>::back() [with T = ImGuiTabItem]	32	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = ImVec2]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = ImVec2]	16	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = unsigned int]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = unsigned int]	16	static
+dependencies/imgui/imgui_widgets.cpp:2667:7:float ImGui::ScaleRatioFromValueT(ImGuiDataType, T, T, T, bool, float, float) [with T = int; SIGNED_T = int; FLOAT_T = float]	96	static
+dependencies/imgui/imgui_widgets.cpp:2724:6:T ImGui::ScaleValueFromRatioT(ImGuiDataType, float, T, T, bool, float, float) [with T = int; SIGNED_T = int; FLOAT_T = float]	96	static
+dependencies/imgui/imgui_widgets.cpp:2211:6:T ImGui::RoundScalarWithFormatT(const char*, ImGuiDataType, T) [with T = int]	160	static
+dependencies/imgui/imgui_widgets.cpp:2667:7:float ImGui::ScaleRatioFromValueT(ImGuiDataType, T, T, T, bool, float, float) [with T = unsigned int; SIGNED_T = int; FLOAT_T = float]	96	static
+dependencies/imgui/imgui_widgets.cpp:2724:6:T ImGui::ScaleValueFromRatioT(ImGuiDataType, float, T, T, bool, float, float) [with T = unsigned int; SIGNED_T = int; FLOAT_T = float]	80	static
+dependencies/imgui/imgui_widgets.cpp:2211:6:T ImGui::RoundScalarWithFormatT(const char*, ImGuiDataType, T) [with T = unsigned int]	160	static
+dependencies/imgui/imgui_widgets.cpp:2667:7:float ImGui::ScaleRatioFromValueT(ImGuiDataType, T, T, T, bool, float, float) [with T = long long int; SIGNED_T = long long int; FLOAT_T = double]	128	static
+dependencies/imgui/imgui_widgets.cpp:2724:6:T ImGui::ScaleValueFromRatioT(ImGuiDataType, float, T, T, bool, float, float) [with T = long long int; SIGNED_T = long long int; FLOAT_T = double]	128	static
+dependencies/imgui/imgui_widgets.cpp:2211:6:T ImGui::RoundScalarWithFormatT(const char*, ImGuiDataType, T) [with T = long long int]	176	static
+dependencies/imgui/imgui_widgets.cpp:2667:7:float ImGui::ScaleRatioFromValueT(ImGuiDataType, T, T, T, bool, float, float) [with T = long long unsigned int; SIGNED_T = long long int; FLOAT_T = double]	112	static
+dependencies/imgui/imgui_widgets.cpp:2724:6:T ImGui::ScaleValueFromRatioT(ImGuiDataType, float, T, T, bool, float, float) [with T = long long unsigned int; SIGNED_T = long long int; FLOAT_T = double]	112	static
+dependencies/imgui/imgui_widgets.cpp:2211:6:T ImGui::RoundScalarWithFormatT(const char*, ImGuiDataType, T) [with T = long long unsigned int]	176	static
+dependencies/imgui/imgui_widgets.cpp:2667:7:float ImGui::ScaleRatioFromValueT(ImGuiDataType, T, T, T, bool, float, float) [with T = float; SIGNED_T = float; FLOAT_T = float]	96	static
+dependencies/imgui/imgui_widgets.cpp:2724:6:T ImGui::ScaleValueFromRatioT(ImGuiDataType, float, T, T, bool, float, float) [with T = float; SIGNED_T = float; FLOAT_T = float]	96	static
+dependencies/imgui/imgui_widgets.cpp:2211:6:T ImGui::RoundScalarWithFormatT(const char*, ImGuiDataType, T) [with T = float]	160	static
+dependencies/imgui/imgui_widgets.cpp:2667:7:float ImGui::ScaleRatioFromValueT(ImGuiDataType, T, T, T, bool, float, float) [with T = double; SIGNED_T = double; FLOAT_T = double]	128	static
+dependencies/imgui/imgui_widgets.cpp:2724:6:T ImGui::ScaleValueFromRatioT(ImGuiDataType, float, T, T, bool, float, float) [with T = double; SIGNED_T = double; FLOAT_T = double]	128	static
+dependencies/imgui/imgui_widgets.cpp:2211:6:T ImGui::RoundScalarWithFormatT(const char*, ImGuiDataType, T) [with T = double]	176	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = short unsigned int]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = short unsigned int]	16	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = char]	16	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = ImGuiNavTreeNodeData]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = ImGuiNavTreeNodeData]	16	static
+dependencies/imgui/imgui.h:1927:25:T& ImVector<T>::operator[](int) [with T = ImGuiTabBar]	32	static
+dependencies/imgui/imgui_internal.h:684:17:T* ImPool<T>::Add() [with T = ImGuiTabBar]	48	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = ImGuiPtrOrIndex]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = ImGuiPtrOrIndex]	16	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = ImGuiTabItem]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = ImGuiTabItem]	16	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = ImGuiShrinkWidthItem]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = ImGuiShrinkWidthItem]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = float]	16	static
+dependencies/imgui/imgui_internal.h:464:38:T ImLerp(T, T, float) [with T = int]	16	static
+dependencies/imgui/imgui_internal.h:463:38:T ImClamp(T, T, T) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:464:38:T ImLerp(T, T, float) [with T = unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:463:38:T ImClamp(T, T, T) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = double]	16	static
+dependencies/imgui/imgui_internal.h:461:38:T ImMin(T, T) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:464:38:T ImLerp(T, T, float) [with T = long long int]	16	static
+dependencies/imgui/imgui_internal.h:463:38:T ImClamp(T, T, T) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:465:41:void ImSwap(T&, T&) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:464:38:T ImLerp(T, T, float) [with T = long long unsigned int]	16	static
+dependencies/imgui/imgui_internal.h:463:38:T ImClamp(T, T, T) [with T = double]	16	static
+dependencies/imgui/imgui_internal.h:461:38:T ImMin(T, T) [with T = double]	16	static
+dependencies/imgui/imgui_internal.h:464:38:T ImLerp(T, T, float) [with T = double]	16	static
+dependencies/imgui/imgui.h:1941:25:void ImVector<T>::resize(int) [with T = ImGuiTabBar]	32	static
+dependencies/imgui/imgui.h:1944:25:void ImVector<T>::reserve(int) [with T = ImGuiTabBar]	48	static
+dependencies/imgui/imgui.h:1940:25:int ImVector<T>::_grow_capacity(int) const [with T = ImGuiTabBar]	16	static

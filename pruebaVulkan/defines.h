@@ -26,7 +26,7 @@ R_Model* tempModel;
 
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
 const char g_ModelsPath[] = {"resources/Models/%s/glTF/%s.gltf"};
-
+uint32_t minUniformBufferOffsetAlignment = 0;
 bool m_NeedToRecreateSwapchain = false;
 bool m_MouseCaptured = false;
 bool m_IndexedRender = true;

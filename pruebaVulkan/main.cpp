@@ -994,20 +994,20 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
 
 	auto dynamicAlignment = sizeof(glm::mat4);
+	m_StaticModels[1]->m_Pos = glm::vec3(m_LightPos);
+	if (minUniformBufferOffsetAlignment > 0) 
+	{
+		dynamicAlignment = (dynamicAlignment + minUniformBufferOffsetAlignment - 1) & ~(minUniformBufferOffsetAlignment - 1);
+	}
 	uint32_t count = 0;
 	for(auto& model : m_StaticModels)
 	{
 		DynamicBufferObject dynO {};
-		dynO.model = glm::mat4(1.f);
-		dynO.model = glm::translate(glm::mat4(1.0f), model->m_Pos);
-		memcpy(m_DynamicBuffersMapped[m_CurrentLocalFrame], &dynO, sizeof(dynO));
+		dynO.model = glm::mat4(1.0f);
+		dynO.model = glm::translate(dynO.model, model->m_Pos);
 		uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-		// Flush to make changes visible to the host
-		VkMappedMemoryRange mappedMemoryRange {};
-		mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedMemoryRange.memory = m_DynamicBuffersMemory[m_CurrentLocalFrame];
-		mappedMemoryRange.size = sizeof(dynO);
-		vkFlushMappedMemoryRanges(m_LogicDevice, 1, &mappedMemoryRange);
+		// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+		memcpy(m_DynamicBuffersMapped[m_CurrentLocalFrame] + dynamicOffset, &dynO, sizeof(dynO));
 		for(auto& mesh : model->m_Meshes)
 		{
 			// Update Uniform buffers
@@ -1026,7 +1026,13 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 			else
 			{
 					vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
-			}	
+			}
+			// Flush to make changes visible to the host
+			VkMappedMemoryRange mappedMemoryRange {};
+			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			mappedMemoryRange.memory = m_DynamicBuffersMemory[m_CurrentLocalFrame];
+			mappedMemoryRange.size = sizeof(dynO);
+			vkFlushMappedMemoryRanges(m_LogicDevice, 1, &mappedMemoryRange);	
 		}
 		++count;
 	}
@@ -1356,7 +1362,7 @@ void EditorLoop()
 		tempLightPos[0] = m_LightPos.x;
 		tempLightPos[1] = m_LightPos.y;
 		tempLightPos[2] = m_LightPos.z;
-		ImGui::SliderFloat3("Light Position", tempLightPos, -100.f, 100.f);
+		ImGui::SliderFloat3("Light Position", tempLightPos, -10.0f, 10.0f);
 		m_LightPos.x = tempLightPos[0];
 		m_LightPos.y = tempLightPos[1];
 		m_LightPos.z = tempLightPos[2];
@@ -1366,6 +1372,10 @@ void EditorLoop()
 		if(ImGui::Button("Center Model"))
 		{
 			m_StaticModels[0]->m_Pos = glm::vec3(0.0f);
+		}
+		if(ImGui::Button("Center Light"))
+		{
+			m_LightPos = glm::vec3(0.0f);
 		}
 		ImGui::End();
 	}
@@ -1476,6 +1486,7 @@ int main(int _argc, char** _args)
 			char tmp [512];
 			sprintf(tmp, "\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
 			g_ConsoleMSG += tmp;
+			minUniformBufferOffsetAlignment = deviceProp[m_GPUSelected].limits.minUniformBufferOffsetAlignment;
 		}
 	vkGetPhysicalDeviceFeatures(m_PhysicalDevices[it], &deviceFeatures[it]);
 	}
@@ -1559,10 +1570,10 @@ int main(int _argc, char** _args)
 	// sprintf(modelPath, "resources/Models/SciFiHelmet/glTF/");
 	// sprintf(modelName, "SciFiHelmet.gltf");
 	// LoadModel(modelPath, modelName);
-	// sprintf(modelPath, "resources/Models/WaterBottle/glTF/");
-	// sprintf(modelName, "WaterBottle.gltf");
-	// LoadModel(modelPath, modelName );
-	// m_StaticModels[1]->m_Pos = glm::vec3(m_LightPos);
+	sprintf(modelPath, "resources/Models/scene/glTF/");
+	sprintf(modelName, "scene.gltf");
+	LoadModel(modelPath, modelName );
+	m_StaticModels[1]->m_Pos = glm::vec3(m_LightPos);
 	/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 	// EXT: VK_KHR_surface
 	if(glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
