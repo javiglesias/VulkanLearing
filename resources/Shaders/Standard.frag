@@ -25,9 +25,9 @@ vec3 directional_light_calculations(vec3 _viewDir)
 {
 	vec3  light_dir = normalize(lightPosition - fragPosition);
 	float diff = max(dot(lightPosition, normal), 0.0);
-	vec3 reflect_dir = reflect(-light_dir,  normal);
+	vec3 reflect_dir = reflect(light_dir,  normal);
 	float specStrength = max(dot(_viewDir, reflect_dir), 0.0f);
-	float spec = pow(specStrength, 32.0f);//material.shininess);
+	float spec = pow(specStrength, 32.0f);
 
 	vec3 ambient = lightColor *  vec3(texture(inAmbientTexture, texCoord));
 	vec3 diffuse = diff * vec3(texture(inDiffuseTexture, texCoord));

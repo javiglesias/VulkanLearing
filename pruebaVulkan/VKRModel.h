@@ -33,5 +33,6 @@ public:
 public:
 	glm::vec3 m_Pos {1.0f};
 	std::vector<R_Mesh*> m_Meshes;
+	std::unordered_map<uint32_t, R_Material*> m_Materials;
 	char m_Path[64];
 };

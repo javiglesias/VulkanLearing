@@ -85,16 +85,16 @@ void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 		// Textura por Mesh
 		int texIndex = 0;
 		aiString path;
-		if( m_Materials[mesh->mMaterialIndex] == nullptr)
+		if( tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
 		{
 			printf("\tNew Material %d\n", mesh->mMaterialIndex);
-			m_Materials[mesh->mMaterialIndex] = new R_Material();
+			tempModel->m_Materials[mesh->mMaterialIndex] = new R_Material();
 			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-			m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new Texture(std::string(path.data));
+			tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new Texture(std::string(path.data));
 			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
-			m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(std::string(path.data));
+			tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(std::string(path.data));
 			_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
-			m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(std::string(path.data));
+			tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(std::string(path.data));
 		}
 		tempMesh->m_Material = mesh->mMaterialIndex;
 		++m_TotalTextures;
@@ -372,12 +372,12 @@ void Cleanup()
 	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
 	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
 	CleanSwapChain();
-	for(auto& [idx, mat] : m_Materials)
-	{
-		mat->Cleanup(m_LogicDevice);
-	}
 	for(auto& model : m_StaticModels)
 	{
+		for(auto& [idx, mat] : model->m_Materials)
+		{
+			mat->Cleanup(m_LogicDevice);
+		}
 		for(auto& mesh : model->m_Meshes)
 		{
 			mesh->Cleanup(m_LogicDevice);
@@ -1015,7 +1015,7 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
 			VkDeviceSize offsets[] = {0};
 			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
-																&m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
+																&model->m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 			// Draw Loop
@@ -1221,7 +1221,7 @@ void DrawFrame()
 	UniformBufferObject ubo {};
 	ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 						   m_CameraUp);
-	ubo.projection = glm::perspective(glm::radians(70.f), m_CurrentExtent.width / (float) m_CurrentExtent.height, 0.1f, 1000000.f);
+	ubo.projection = glm::perspective(glm::radians(70.f), 1.0f, 0.1f, 1000000.f);
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	ubo.cameraPosition = m_CameraPos;
 	ubo.lightPosition = m_LightPos;
@@ -1359,6 +1359,7 @@ void EditorLoop()
 	ImGui::Begin("Tools");
 	{
 		float tempLightPos[3];
+		ImGui::LabelText("Light Pos", "Light Pos(%.2f, %.2f, %.2f)", m_LightPos.x, m_LightPos.y, m_LightPos.z);
 		tempLightPos[0] = m_LightPos.x;
 		tempLightPos[1] = m_LightPos.y;
 		tempLightPos[2] = m_LightPos.z;
@@ -1641,9 +1642,9 @@ int main(int _argc, char** _args)
 		for(auto& mesh : model->m_Meshes)
 		{
 			// Descriptor Pool
-			m_Materials[mesh->m_Material]->CreateDescriptorPool(m_LogicDevice);
+			model->m_Materials[mesh->m_Material]->CreateDescriptorPool(m_LogicDevice);
 			// ahora creamos los Descriptor Sets en cada mesh
-			m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
+			model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
 		}
 	}
 		/// Vamos a crear los shader module para cargar el bytecode de los shaders
@@ -1676,9 +1677,9 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			CreateAndTransitionImage(model->m_Path, m_Materials[mesh->m_Material]->m_TextureDiffuse);
-			CreateAndTransitionImage(model->m_Path, m_Materials[mesh->m_Material]->m_TextureSpecular);
-			CreateAndTransitionImage(model->m_Path, m_Materials[mesh->m_Material]->m_TextureAmbient);
+			CreateAndTransitionImage(model->m_Path, model->m_Materials[mesh->m_Material]->m_TextureDiffuse);
+			CreateAndTransitionImage(model->m_Path, model->m_Materials[mesh->m_Material]->m_TextureSpecular);
+			CreateAndTransitionImage(model->m_Path, model->m_Materials[mesh->m_Material]->m_TextureAmbient);
 			// Vertex buffer
 			void* data;
 			if(mesh->m_Vertices.size() <= 0)
@@ -1801,7 +1802,7 @@ int main(int _argc, char** _args)
 	{
 		for(auto& mesh : model->m_Meshes)
 		{
-			m_Materials[mesh->m_Material]->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers, m_DynamicBuffers);
+			model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(m_LogicDevice, m_UniformBuffers, m_DynamicBuffers);
 		}
 	}
 

@@ -21,7 +21,6 @@ std::vector<DBG_Vertex3D> Dbg_Cube =
     };
 
 std::vector<R_Model*> m_StaticModels;
-std::unordered_map<uint32_t, R_Material*> m_Materials;
 R_Model* tempModel;
 
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
