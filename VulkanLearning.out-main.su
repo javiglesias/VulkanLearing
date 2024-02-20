@@ -238,8 +238,8 @@ pruebaVulkan/../dependencies/stb/stb_image.h:7738:13:int stbi_info_from_callback
 pruebaVulkan/../dependencies/stb/stb_image.h:7745:13:int stbi_is_16_bit_from_memory(const stbi_uc*, int)	272	static
 pruebaVulkan/../dependencies/stb/stb_image.h:7752:13:int stbi_is_16_bit_from_callbacks(const stbi_io_callbacks*, void*)	272	static
 /usr/include/c++/11/bits/ios_base.h:129:3:constexpr std::_Ios_Openmode std::operator|(std::_Ios_Openmode, std::_Ios_Openmode)	16	static
-pruebaVulkan/Types.h:80:41:static VkVertexInputBindingDescription Vertex3D::getBindingDescription()	64	static
-pruebaVulkan/Types.h:88:58:static std::array<VkVertexInputAttributeDescription, 3> Vertex3D::getAttributeDescriptions()	32	static
+pruebaVulkan/Types.h:86:41:static VkVertexInputBindingDescription Vertex3D::getBindingDescription()	64	static
+pruebaVulkan/Types.h:94:58:static std::array<VkVertexInputAttributeDescription, 3> Vertex3D::getAttributeDescriptions()	32	static
 pruebaVulkan/VKRMaterial.h:14:2:Texture::Texture(std::string)	48	static
 pruebaVulkan/VKRMaterial.h:18:7:void Texture::CleanTextureData(VkDevice)	32	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorPoolSize; long unsigned int _Nm = 5]	32	static
@@ -255,8 +255,8 @@ pruebaVulkan/VKRMaterial.h:213:7:void R_Material::Cleanup(VkDevice)	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = Vertex3D; _Alloc = std::allocator<Vertex3D>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	32	static
-pruebaVulkan/VKRModel.h:17:2:R_Mesh::R_Mesh()	32	static
-pruebaVulkan/VKRModel.h:18:7:void R_Mesh::Cleanup(VkDevice)	32	static
+pruebaVulkan/VKRModel.h:18:2:R_Mesh::R_Mesh()	32	static
+pruebaVulkan/VKRModel.h:19:7:void R_Mesh::Cleanup(VkDevice)	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	32	static
 /usr/include/c++/11/bits/hashtable_policy.h:1210:7:std::__detail::_Hash_code_base<_Key, _Value, _ExtractKey, _Hash, _RangeHash, _Unused, __cache_hash_code>::_Hash_code_base() [with _Key = unsigned int; _Value = std::pair<const unsigned int, R_Material*>; _ExtractKey = std::__detail::_Select1st; _Hash = std::hash<unsigned int>; _RangeHash = std::__detail::_Mod_range_hashing; _Unused = std::__detail::_Default_ranged_hash; bool __cache_hash_code = false]	32	static
@@ -264,7 +264,7 @@ pruebaVulkan/VKRModel.h:18:7:void R_Mesh::Cleanup(VkDevice)	32	static
 /usr/include/c++/11/bits/hashtable_policy.h:1823:7:std::__detail::_Hashtable_alloc<_NodeAlloc>::_Hashtable_alloc() [with _NodeAlloc = std::allocator<std::__detail::_Hash_node<std::pair<const unsigned int, R_Material*>, false> >]	32	static
 /usr/include/c++/11/bits/hashtable.h:528:7:std::_Hashtable<_Key, _Value, _Alloc, _ExtractKey, _Equal, _Hash, _RangeHash, _Unused, _RehashPolicy, _Traits>::_Hashtable() [with _Key = unsigned int; _Value = std::pair<const unsigned int, R_Material*>; _Alloc = std::allocator<std::pair<const unsigned int, R_Material*> >; _ExtractKey = std::__detail::_Select1st; _Equal = std::equal_to<unsigned int>; _Hash = std::hash<unsigned int>; _RangeHash = std::__detail::_Mod_range_hashing; _Unused = std::__detail::_Default_ranged_hash; _RehashPolicy = std::__detail::_Prime_rehash_policy; _Traits = std::__detail::_Hashtable_traits<false, false, true>]	32	static
 /usr/include/c++/11/bits/unordered_map.h:141:7:std::unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map() [with _Key = unsigned int; _Tp = R_Material*; _Hash = std::hash<unsigned int>; _Pred = std::equal_to<unsigned int>; _Alloc = std::allocator<std::pair<const unsigned int, R_Material*> >]	32	static
-pruebaVulkan/VKRModel.h:32:2:R_Model::R_Model()	32	static
+pruebaVulkan/VKRModel.h:33:2:R_Model::R_Model()	32	static
 /usr/include/glm/detail/type_vec3.inl:37:35:constexpr glm::vec<3, T, Q>::vec(T, T, T) [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<R_Model*, std::allocator<R_Model*> >::_Vector_impl::~_Vector_impl()	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
@@ -303,69 +303,70 @@ pruebaVulkan/debugUtils.h:12:20:void VK_ASSERT(bool)	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = VkDescriptorSet_T*; _Alloc = std::allocator<VkDescriptorSet_T*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = VkDescriptorSet_T*; _Alloc = std::allocator<VkDescriptorSet_T*>]	32	static
 pruebaVulkan/VKRMaterial.h:30:8:R_Material::R_Material()	32	static
-pruebaVulkan/main.cpp:42:6:void ProcessModelNode(aiNode*, const aiScene*)	1264	dynamic,bounded
-pruebaVulkan/main.cpp:105:6:void LoadModel(const char*, const char*)	208	static
+pruebaVulkan/main.cpp:43:6:void ProcessModelNode(aiNode*, const aiScene*)	1264	dynamic,bounded
+pruebaVulkan/main.cpp:106:6:void LoadModel(const char*, const char*)	208	static
 /usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<char, std::allocator<char> >::_Vector_impl::~_Vector_impl()	32	static
-pruebaVulkan/main.cpp:122:19:std::vector<char> LoadShader(const string&)	608	static
-pruebaVulkan/main.cpp:133:6:bool checkValidationLayerSupport()	144	static
-pruebaVulkan/main.cpp:155:10:VkResult CreateDebugUtilsMessengerEXT(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT*, const VkAllocationCallbacks*, VkDebugUtilsMessengerEXT_T**)	64	static
-pruebaVulkan/main.cpp:173:6:void DestroyDebugUtilsMessengerEXT(VkInstance, VkDebugUtilsMessengerEXT, const VkAllocationCallbacks*)	64	static
-pruebaVulkan/main.cpp:186:39:VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT*, void*)	48	static
-pruebaVulkan/main.cpp:230:13:void check_vk_result(VkResult)	32	static
-pruebaVulkan/main.cpp:239:14:unsigned int FindMemoryType(unsigned int, VkMemoryPropertyFlags)	48	static
-pruebaVulkan/main.cpp:250:10:VkFormat FindSupportedFormat(const std::vector<VkFormat>&, VkImageTiling, VkFormatFeatureFlags)	96	static
-pruebaVulkan/main.cpp:266:6:void MouseInputCallback(GLFWwindow*, double, double)	80	static
-pruebaVulkan/main.cpp:292:6:void MouseBPressCallback(GLFWwindow*, int, int, int)	16	static
+pruebaVulkan/main.cpp:123:19:std::vector<char> LoadShader(const string&)	608	static
+pruebaVulkan/main.cpp:134:6:bool checkValidationLayerSupport()	144	static
+pruebaVulkan/main.cpp:156:10:VkResult CreateDebugUtilsMessengerEXT(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT*, const VkAllocationCallbacks*, VkDebugUtilsMessengerEXT_T**)	64	static
+pruebaVulkan/main.cpp:174:6:void DestroyDebugUtilsMessengerEXT(VkInstance, VkDebugUtilsMessengerEXT, const VkAllocationCallbacks*)	64	static
+pruebaVulkan/main.cpp:187:39:VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT*, void*)	48	static
+pruebaVulkan/main.cpp:231:13:void check_vk_result(VkResult)	32	static
+pruebaVulkan/main.cpp:240:14:unsigned int FindMemoryType(unsigned int, VkMemoryPropertyFlags)	48	static
+pruebaVulkan/main.cpp:251:10:VkFormat FindSupportedFormat(const std::vector<VkFormat>&, VkImageTiling, VkFormatFeatureFlags)	96	static
+pruebaVulkan/main.cpp:267:6:void MouseInputCallback(GLFWwindow*, double, double)	80	static
+pruebaVulkan/main.cpp:293:6:void MouseBPressCallback(GLFWwindow*, int, int, int)	16	static
 /usr/include/glm/detail/type_vec3.inl:244:50:constexpr glm::vec<3, T, Q>& glm::vec<3, T, Q>::operator+=(const glm::vec<3, U, Q>&) [with U = float; T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/glm/detail/type_vec3.inl:274:50:constexpr glm::vec<3, T, Q>& glm::vec<3, T, Q>::operator-=(const glm::vec<3, U, Q>&) [with U = float; T = float; glm::qualifier Q = glm::packed_highp]	16	static
-pruebaVulkan/main.cpp:302:6:void KeyboardInputCallback(GLFWwindow*, int, int, int, int)	96	static
-pruebaVulkan/main.cpp:335:6:void CleanSwapChain()	80	static
+pruebaVulkan/main.cpp:303:6:void KeyboardInputCallback(GLFWwindow*, int, int, int, int)	96	static
+pruebaVulkan/main.cpp:336:6:void CleanSwapChain()	80	static
 /usr/include/c++/11/utility:223:5:constexpr typename std::tuple_element<_Int, std::pair<_Tp1, _Tp2> >::type& std::get(std::pair<_Tp1, _Tp2>&) [with long unsigned int _Int = 0; _Tp1 = const unsigned int; _Tp2 = R_Material*]	32	static
 /usr/include/c++/11/utility:223:5:constexpr typename std::tuple_element<_Int, std::pair<_Tp1, _Tp2> >::type& std::get(std::pair<_Tp1, _Tp2>&) [with long unsigned int _Int = 1; _Tp1 = const unsigned int; _Tp2 = R_Material*]	32	static
-pruebaVulkan/main.cpp:344:6:void Cleanup()	128	static
-pruebaVulkan/main.cpp:398:6:void InitializeVulkan(VkApplicationInfo*)	16	static
-pruebaVulkan/main.cpp:408:6:void CreateInstance(VkInstanceCreateInfo*, VkApplicationInfo*, const char**, uint32_t)	48	static
-pruebaVulkan/main.cpp:419:6:void CreateLogicalDevice(VkPhysicalDevice_T**, VkPhysicalDeviceFeatures*)	112	static
-pruebaVulkan/main.cpp:440:6:void CreateSwapChain()	32	static
-pruebaVulkan/main.cpp:463:6:void CreateShaderModule(const char*, VkShaderModule_T**)	240	static
+pruebaVulkan/main.cpp:345:6:void Cleanup()	128	static
+pruebaVulkan/main.cpp:399:6:void InitializeVulkan(VkApplicationInfo*)	16	static
+pruebaVulkan/main.cpp:409:6:void CreateInstance(VkInstanceCreateInfo*, VkApplicationInfo*, const char**, uint32_t)	48	static
+pruebaVulkan/main.cpp:420:6:void CreateLogicalDevice(VkPhysicalDevice_T**, VkPhysicalDeviceFeatures*)	112	static
+pruebaVulkan/main.cpp:441:6:void CreateSwapChain()	32	static
+pruebaVulkan/main.cpp:464:6:void CreateShaderModule(const char*, VkShaderModule_T**)	240	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	16	static
-pruebaVulkan/main.cpp:481:6:void CreatePipelineLayout(VkShaderModule_T**, VkShaderModule_T**, VkPipelineShaderStageCreateInfo*, VkPipelineInputAssemblyStateCreateInfo*, VkPipelineDynamicStateCreateInfo*, VkPipelineVertexInputStateCreateInfo*, VkPipelineViewportStateCreateInfo*, VkPipelineRasterizationStateCreateInfo*, VkPipelineMultisampleStateCreateInfo*, VkPipelineDepthStencilStateCreateInfo*, VkPipelineColorBlendStateCreateInfo*, VkPipelineLayout_T**)	288	static
-pruebaVulkan/main.cpp:573:10:VkFormat FindDepthTestFormat()	112	static
+pruebaVulkan/main.cpp:482:6:void CreatePipelineLayout(VkShaderModule_T**, VkShaderModule_T**, VkPipelineShaderStageCreateInfo*, VkPipelineInputAssemblyStateCreateInfo*, VkPipelineDynamicStateCreateInfo*, VkPipelineVertexInputStateCreateInfo*, VkPipelineViewportStateCreateInfo*, VkPipelineRasterizationStateCreateInfo*, VkPipelineMultisampleStateCreateInfo*, VkPipelineDepthStencilStateCreateInfo*, VkPipelineColorBlendStateCreateInfo*, VkPipelineLayout_T**)	288	static
+pruebaVulkan/main.cpp:574:10:VkFormat FindDepthTestFormat()	112	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:581:6:void CreateRenderPass(VkSwapchainCreateInfoKHR*, VkRenderPass_T**)	400	static
-pruebaVulkan/main.cpp:657:17:VkCommandBuffer_T* BeginSingleTimeCommandBuffer()	112	static
-pruebaVulkan/main.cpp:674:6:void EndSingleTimeCommandBuffer(VkCommandBuffer)	112	static
-pruebaVulkan/main.cpp:687:6:void CopyBuffer(VkBuffer, VkBuffer, VkDeviceSize)	96	static
-pruebaVulkan/main.cpp:697:6:bool HasStencilComponent(VkFormat)	16	static
-pruebaVulkan/main.cpp:701:6:void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout)	176	dynamic,bounded
-pruebaVulkan/main.cpp:761:6:void CopyBufferToImage(VkBuffer, VkImage, uint32_t, uint32_t, VkDeviceSize)	128	static
-pruebaVulkan/main.cpp:778:6:void CreateImage(unsigned int, unsigned int, VkFormat, VkImageTiling, VkImageUsageFlagBits, VkMemoryPropertyFlags, VkImage_T**, VkDeviceMemory_T**)	224	static
-pruebaVulkan/main.cpp:807:13:VkImageView_T* CreateImageView(VkImage, VkFormat, VkImageAspectFlags)	144	static
-pruebaVulkan/main.cpp:824:6:void CreateImageViews()	80	static
-pruebaVulkan/main.cpp:836:6:void CreateDepthTestingResources()	48	dynamic,bounded
-pruebaVulkan/main.cpp:851:13:VkImageView_T* CreateTextureImageView(VkImage)	32	static
-pruebaVulkan/main.cpp:856:11:VkSampler_T* CreateTextureSampler()	944	static
-pruebaVulkan/main.cpp:882:6:void CreateVulkanPipeline(VkShaderModule, VkShaderModule, VkPipelineLayout_T**, VkRenderPass_T**, VkPipeline_T**)	848	dynamic,bounded
+pruebaVulkan/main.cpp:582:6:void CreateRenderPass(VkSwapchainCreateInfoKHR*, VkRenderPass_T**)	400	static
+pruebaVulkan/main.cpp:658:17:VkCommandBuffer_T* BeginSingleTimeCommandBuffer()	112	static
+pruebaVulkan/main.cpp:675:6:void EndSingleTimeCommandBuffer(VkCommandBuffer)	112	static
+pruebaVulkan/main.cpp:688:6:void CopyBuffer(VkBuffer, VkBuffer, VkDeviceSize)	96	static
+pruebaVulkan/main.cpp:698:6:bool HasStencilComponent(VkFormat)	16	static
+pruebaVulkan/main.cpp:702:6:void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout)	176	dynamic,bounded
+pruebaVulkan/main.cpp:762:6:void CopyBufferToImage(VkBuffer, VkImage, uint32_t, uint32_t, VkDeviceSize)	128	static
+pruebaVulkan/main.cpp:779:6:void CreateImage(unsigned int, unsigned int, VkFormat, VkImageTiling, VkImageUsageFlagBits, VkMemoryPropertyFlags, VkImage_T**, VkDeviceMemory_T**)	224	static
+pruebaVulkan/main.cpp:808:13:VkImageView_T* CreateImageView(VkImage, VkFormat, VkImageAspectFlags)	144	static
+pruebaVulkan/main.cpp:825:6:void CreateImageViews()	80	static
+pruebaVulkan/main.cpp:837:6:void CreateDepthTestingResources()	48	dynamic,bounded
+pruebaVulkan/main.cpp:852:13:VkImageView_T* CreateTextureImageView(VkImage)	32	static
+pruebaVulkan/main.cpp:857:11:VkSampler_T* CreateTextureSampler()	944	static
+pruebaVulkan/main.cpp:883:6:void CreateVulkanPipeline(VkShaderModule, VkShaderModule, VkPipelineLayout_T**, VkRenderPass_T**, VkPipeline_T**)	848	dynamic,bounded
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkClearValue; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkClearValue; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:967:6:void RecordCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, ImDrawData*)	544	dynamic,bounded
+pruebaVulkan/main.cpp:968:6:void RecordCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, VkPipeline, ImDrawData*)	544	dynamic,bounded
+pruebaVulkan/main.cpp:1052:6:void RecordDebugCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, VkPipeline)	192	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:1050:6:void CreateFramebuffers()	128	static
+pruebaVulkan/main.cpp:1091:6:void CreateFramebuffers()	128	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	16	static
-pruebaVulkan/main.cpp:1075:6:void CreateDescriptorSetLayout()	336	static
-pruebaVulkan/main.cpp:1131:6:void CreateCommandBuffer()	96	static
-pruebaVulkan/main.cpp:1151:6:void CreateSyncObjects(unsigned int)	96	static
-pruebaVulkan/main.cpp:1166:6:void RecreateSwapChain()	32	static
-pruebaVulkan/main.cpp:1207:6:void DrawFrame()	464	static
-pruebaVulkan/main.cpp:1272:6:void FramebufferResizeCallback(GLFWwindow*, int, int)	16	static
-pruebaVulkan/main.cpp:1277:6:void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkSharingMode, VkMemoryPropertyFlags, VkBuffer_T*&, VkDeviceMemory_T*&)	208	static
-pruebaVulkan/main.cpp:1309:6:void CreateAndTransitionImage(char*, Texture*)	624	dynamic,bounded
-pruebaVulkan/main.cpp:1354:6:void EditorLoop()	48	static
-pruebaVulkan/main.cpp:1403:5:int main(int, char**)	1728	dynamic
+pruebaVulkan/main.cpp:1116:6:void CreateDescriptorSetLayout()	336	static
+pruebaVulkan/main.cpp:1172:6:void CreateCommandBuffer()	96	static
+pruebaVulkan/main.cpp:1192:6:void CreateSyncObjects(unsigned int)	96	static
+pruebaVulkan/main.cpp:1207:6:void RecreateSwapChain()	32	static
+pruebaVulkan/main.cpp:1248:6:void DrawFrame()	464	static
+pruebaVulkan/main.cpp:1314:6:void FramebufferResizeCallback(GLFWwindow*, int, int)	16	static
+pruebaVulkan/main.cpp:1319:6:void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkSharingMode, VkMemoryPropertyFlags, VkBuffer_T*&, VkDeviceMemory_T*&)	208	static
+pruebaVulkan/main.cpp:1351:6:void CreateAndTransitionImage(char*, Texture*)	624	dynamic,bounded
+pruebaVulkan/main.cpp:1396:6:void EditorLoop()	48	static
+pruebaVulkan/main.cpp:1445:5:int main(int, char**)	1776	dynamic
 /usr/include/glm/detail/type_vec4.inl:864:48:constexpr glm::vec<4, T, Q> glm::operator*(const glm::vec<4, T, Q>&, const T&) [with T = float; glm::qualifier Q = glm::packed_highp]	80	static
 /usr/include/glm/detail/type_vec2.inl:37:35:constexpr glm::vec<2, T, Q>::vec(T, T) [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/c++/11/bits/char_traits.h:106:7:static constexpr bool __gnu_cxx::char_traits<_CharT>::eq(const char_type&, const char_type&) [with _CharT = char]	16	static
@@ -541,6 +542,7 @@ pruebaVulkan/main.cpp:1403:5:int main(int, char**)	1728	dynamic
 /usr/include/glm/detail/type_mat4x4.inl:289:58:glm::mat<4, 4, T, Q>::col_type& glm::mat<4, 4, T, Q>::operator[](glm::mat<4, 4, T, Q>::length_type) [with T = float; glm::qualifier Q = glm::packed_highp]	32	static
 /usr/include/glm/detail/type_vec4.hpp:90:50:static constexpr glm::vec<4, T, Q>::length_type glm::vec<4, T, Q>::length() [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/glm/detail/type_vec4.inl:477:38:constexpr T& glm::vec<4, T, Q>::operator[](glm::vec<4, T, Q>::length_type) [with T = float; glm::qualifier Q = glm::packed_highp]	32	static
+/usr/include/c++/11/bits/stl_algobase.h:254:5:constexpr const _Tp& std::max(const _Tp&, const _Tp&) [with _Tp = float]	16	static
 /usr/include/c++/11/bits/allocator.h:156:7:std::allocator< <template-parameter-1-1> >::allocator() [with _Tp = VkExtensionProperties]	32	static
 /usr/include/c++/11/bits/allocator.h:174:7:std::allocator< <template-parameter-1-1> >::~allocator() [with _Tp = VkExtensionProperties]	32	static
 /usr/include/c++/11/bits/stl_vector.h:510:7:std::vector<_Tp, _Alloc>::vector(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = VkExtensionProperties; _Alloc = std::allocator<VkExtensionProperties>]	64	static
@@ -594,6 +596,8 @@ pruebaVulkan/main.cpp:1403:5:int main(int, char**)	1728	dynamic
 /usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	16	static
 /usr/include/c++/11/bits/stl_vector.h:553:7:std::vector<_Tp, _Alloc>::vector(const std::vector<_Tp, _Alloc>&) [with _Tp = VkBuffer_T*; _Alloc = std::allocator<VkBuffer_T*>]	80	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = VkBuffer_T*; _Alloc = std::allocator<VkBuffer_T*>]	32	static
+/usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	16	static
+/usr/include/c++/11/bits/stl_vector.h:1043:7:std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::operator[](std::vector<_Tp, _Alloc>::size_type) [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	16	static
 /usr/include/glm/detail/type_vec4.inl:155:35:constexpr glm::vec<4, T, Q>::vec(T) [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/glm/detail/type_vec4.inl:581:50:constexpr glm::vec<4, T, Q>& glm::vec<4, T, Q>::operator*=(U) [with U = float; T = float; glm::qualifier Q = glm::packed_highp]	64	static
 /usr/include/c++/11/array:56:7:static constexpr _Tp& std::__array_traits<_Tp, _Nm>::_S_ref(const _Tp (&)[_Nm], std::size_t) [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	16	static
@@ -1159,7 +1163,6 @@ pruebaVulkan/main.cpp:1403:5:int main(int, char**)	1728	dynamic
 /usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = VkDescriptorSet_T*]	48	static
 /usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDescriptorSet_T**]	16	static
 /usr/include/c++/11/bits/stl_vector.h:923:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::max_size() const [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	32	static
-/usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	16	static
 /usr/include/c++/11/bits/alloc_traits.h:463:7:static _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = R_Mesh*]	32	static
 /usr/include/c++/11/bits/stl_vector.h:453:7:static std::vector<_Tp, _Alloc>::pointer std::vector<_Tp, _Alloc>::_S_do_relocate(std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::_Tp_alloc_type&, std::true_type) [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	48	static
 /usr/include/c++/11/bits/stl_vector.h:923:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::max_size() const [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
@@ -1692,7 +1695,7 @@ pruebaVulkan/main.cpp:1403:5:int main(int, char**)	1728	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:420:2:static _Tp* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(const _Tp*, const _Tp*, _Tp*) [with _Tp = VkFormat; bool _IsMove = false]	64	static
 /usr/include/c++/11/tuple:424:7:static constexpr _Head& std::_Tuple_impl<_Idx, _Head>::_M_head(std::_Tuple_impl<_Idx, _Head>&) [with long unsigned int _Idx = 0; _Head = const unsigned int&]	32	static
 /usr/include/c++/11/tuple:233:7:static constexpr _Head& std::_Head_base<_Idx, _Head, false>::_M_head(std::_Head_base<_Idx, _Head, false>&) [with long unsigned int _Idx = 0; _Head = const unsigned int&]	16	static
-pruebaVulkan/main.cpp:1830:1:void __static_initialization_and_destruction_0(int, int)	512	static
+pruebaVulkan/main.cpp:1896:1:void __static_initialization_and_destruction_0(int, int)	512	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = DBG_Vertex3D; _Alloc = std::allocator<DBG_Vertex3D>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = const char*; _Alloc = std::allocator<const char*>]	32	static
@@ -1710,4 +1713,4 @@ pruebaVulkan/main.cpp:1830:1:void __static_initialization_and_destruction_0(int,
 /usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDynamicState*]	32	static
 /usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = DBG_Vertex3D*]	16	static
 /usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDynamicState*]	16	static
-pruebaVulkan/main.cpp:1830:1:cpp)	16	static
+pruebaVulkan/main.cpp:1896:1:cpp)	16	static

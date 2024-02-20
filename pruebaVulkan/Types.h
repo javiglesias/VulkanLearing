@@ -9,6 +9,12 @@ struct UniformBufferObject
 	alignas(16) glm::vec3 lightPosition;
 	alignas(16) glm::vec3 lightColor;
 };
+
+struct DebugUniformBufferObject
+{
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 projection;
+};
 struct DynamicBufferObject
 {
 	alignas(16) glm::mat4 model;
@@ -44,8 +50,8 @@ struct Vertex2D {
 
 struct DBG_Vertex3D 
 {
-	glm::vec3 m_Pos;
-	glm::vec3 m_Color;
+	glm::vec3 m_Pos {0.0f};
+	glm::vec3 m_Color {1.0f, 1.0f, 0.0f};
 
 	static VkVertexInputBindingDescription getBindingDescription()
 	{

@@ -34,6 +34,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "utils.h"
 #include "Types.h"
 #include "VKRModel.h"
 #include "defines.h"
@@ -964,7 +965,8 @@ void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _
 }
 #endif
 
-void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx, ImDrawData* draw_data = nullptr)
+void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
+						 VkPipeline _pipeline, ImDrawData* draw_data = nullptr)
 {
 	// Record command buffer
 	VkCommandBufferBeginInfo mBeginInfo{};
@@ -978,17 +980,17 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	clearValues[0].color = defaultClearColor;
 	clearValues[1].depthStencil = { 1.0f, 0 };
 	// Render pass
-	VkRenderPassBeginInfo m_RenderPassInfo{};
-	m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	m_RenderPassInfo.renderPass = m_RenderPass;
-	m_RenderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
-	m_RenderPassInfo.renderArea.offset = { 0,0 };
-	m_RenderPassInfo.renderArea.extent = m_CurrentExtent;
-	m_RenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	m_RenderPassInfo.pClearValues = clearValues.data();
-	vkCmdBeginRenderPass(_commandBuffer, &m_RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = m_RenderPass;
+	renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+	renderPassInfo.renderArea.offset = { 0,0 };
+	renderPassInfo.renderArea.extent = m_CurrentExtent;
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
+	vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	// Drawing Commands
-	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
 	// REFRESH RENDER MODE FUNCTIONS
 	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
@@ -1042,6 +1044,45 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	// UI Render
 	if(draw_data)
 		ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
+	vkCmdEndRenderPass(_commandBuffer);
+	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
+		exit(-17);
+}
+
+void RecordDebugCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
+						 VkPipeline _pipeline)
+{
+	// Record command buffer
+	VkCommandBufferBeginInfo mBeginInfo{};
+	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	mBeginInfo.flags = 0;
+	mBeginInfo.pInheritanceInfo = nullptr;
+	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
+		exit(-13);
+	// Clear Color
+	std::array<VkClearValue, 2> clearValues;
+	clearValues[0].color = defaultClearColor;
+	clearValues[1].depthStencil = { 1.0f, 0 };
+	// Render pass
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = m_RenderPass;
+	renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+	renderPassInfo.renderArea.offset = { 0,0 };
+	renderPassInfo.renderArea.extent = m_CurrentExtent;
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
+	vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	// Drawing Commands
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
+	// REFRESH RENDER MODE FUNCTIONS
+	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
+	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
+
+// 	vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
+// 							&model->m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
+// 	vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
+// 	vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
 	vkCmdEndRenderPass(_commandBuffer);
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
@@ -1231,7 +1272,8 @@ void DrawFrame()
 	// Render ImGui
 	ImGui::Render();
 	ImDrawData* draw_data = ImGui::GetDrawData();
-	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
+	RecordDebugCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_DebugPipeline);
+	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_GraphicsPipeline, draw_data);
 	// UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
 
 	VkSubmitInfo submitInfo{};
@@ -1365,7 +1407,7 @@ void EditorLoop()
 		tempLightPos[2] = m_LightPos.z;
 		ImGui::SliderFloat3("Light Position", tempLightPos, -10.0f, 10.0f);
 		m_LightPos.x = tempLightPos[0];
-		m_LightPos.y = tempLightPos[1];
+		m_LightPos.y = std::max(0.0f, tempLightPos[1]);
 		m_LightPos.z = tempLightPos[2];
 		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
 		ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
@@ -1567,7 +1609,6 @@ int main(int _argc, char** _args)
 	{
 		exit(0);
 	}
-	// TODO TEST MODELS
 	// sprintf(modelPath, "resources/Models/SciFiHelmet/glTF/");
 	// sprintf(modelName, "SciFiHelmet.gltf");
 	// LoadModel(modelPath, modelName);
@@ -1647,29 +1688,33 @@ int main(int _argc, char** _args)
 			model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
 		}
 	}
-		/// Vamos a crear los shader module para cargar el bytecode de los shaders
+	/// Vamos a crear los shader module para cargar el bytecode de los shaders
 	VkShaderModule m_VertShaderModule;
 	VkShaderModule m_FragShaderModule;
 	CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
 	CreateShaderModule("resources/Shaders/frag.spv", &m_FragShaderModule);
+	// Creamos las pipelines
 	CreateVulkanPipeline(m_VertShaderModule, m_FragShaderModule, &m_PipelineLayout,
 														&m_RenderPass, &m_GraphicsPipeline);
-														// Destruymos los ShaderModule ahora que ya no se necesitan.
+	// Destruymos los ShaderModule ahora que ya no se necesitan.
 	vkDestroyShaderModule(m_LogicDevice, m_VertShaderModule, nullptr);
 	vkDestroyShaderModule(m_LogicDevice, m_FragShaderModule, nullptr);
+
 	// DEBUG SHADERS
-	// VkShaderModule m_DebugVertShaderModule;
-	// VkShaderModule m_DebugFragShaderModule;
-	// CreateShaderModule("resources/Shaders/dbgVert.spv", &m_DebugVertShaderModule);
-	// CreateShaderModule("resources/Shaders/dbgFrag.spv", &m_DebugFragShaderModule);
-	// CreateVulkanPipeline(m_DebugVertShaderModule, m_DebugFragShaderModule, &m_DebugPipelineLayout, 
-	// 											&m_DebugRenderPass, &m_DebugPipeline );
-	// vkDestroyShaderModule(m_LogicDevice, m_DebugVertShaderModule, nullptr);
-	// vkDestroyShaderModule(m_LogicDevice, m_DebugFragShaderModule, nullptr);
+	VkShaderModule m_DebugVertShaderModule;
+	VkShaderModule m_DebugFragShaderModule;
+	CreateShaderModule("resources/Shaders/dbgVert.spv", &m_DebugVertShaderModule);
+	CreateShaderModule("resources/Shaders/dbgFrag.spv", &m_DebugFragShaderModule);
+	//Creamos la Pipeline para pintar debug objs
+	CreateVulkanPipeline(m_DebugVertShaderModule, m_DebugFragShaderModule, &m_DebugPipelineLayout,
+						 &m_RenderPass, &m_DebugPipeline);
+	// Destruymos los ShaderModule ahora que ya no se necesitan.
+	vkDestroyShaderModule(m_LogicDevice, m_DebugVertShaderModule, nullptr);
+	vkDestroyShaderModule(m_LogicDevice, m_DebugFragShaderModule, nullptr);
 
 	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
-	// Creamos los recursos para el Depth testing
 	CreateCommandBuffer();
+	// Creamos los recursos para el Depth testing
 	CreateDepthTestingResources();
 	CreateFramebuffers();
 	// Crear Textures
@@ -1808,6 +1853,27 @@ int main(int _argc, char** _args)
 
 	CreateSyncObjects(0);
 	CreateSyncObjects(1);
+
+	// Vamos a pre-ordenar los modelos para pintarlos segun el material.
+	// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
+	for(auto& model : m_StaticModels)
+	{
+		for(int i = 0; i < model->m_Meshes.size(); i++)
+		{
+			for(int j = 1; j < model->m_Meshes.size(); j++)
+			{
+				auto& mesh = model->m_Meshes[i];
+				if(model->m_Meshes[j]->m_Material > model->m_Meshes[i]->m_Material)
+				{
+					printf("%d > %d -|- ", model->m_Meshes[j]->m_Material, model->m_Meshes[i]->m_Material);
+					auto tempMesh = model->m_Meshes[j];
+					model->m_Meshes[j] = model->m_Meshes[i];
+					model->m_Meshes[i] = tempMesh;
+					printf("%d > %d\n", model->m_Meshes[j]->m_Material, model->m_Meshes[i]->m_Material);
+				}
+			}
+		}
+	}
 
 	while (!glfwWindowShouldClose(m_Window))
 	{

@@ -13,11 +13,12 @@ layout(location = 5) in vec3 lightColor;
 layout(location = 0) out vec4 outColor;
 
 vec3 directional_light_calculations(vec3 _viewDir);
+vec3 BlinnPhong_calculations(vec3 _viewDir);
 
 void main() 
 {
 	vec3 viewer_direction = normalize(viewerPosition - fragPosition);
-	vec3 result =  directional_light_calculations( viewer_direction);
+	vec3 result =  BlinnPhong_calculations( viewer_direction);
     outColor = vec4(result, 1.0);
 }
 
@@ -30,6 +31,24 @@ vec3 directional_light_calculations(vec3 _viewDir)
 	float spec = pow(specStrength, 32.0f);
 
 	vec3 ambient = lightColor *  vec3(texture(inAmbientTexture, texCoord));
+	vec3 diffuse = diff * vec3(texture(inDiffuseTexture, texCoord));
+	vec3 specular = spec * vec3(texture(inSpecularTexture,
+	texCoord));
+	return ambient + diffuse + specular;
+}
+
+vec3 BlinnPhong_calculations(vec3 _viewDir)
+{
+	vec3  light_dir = lightPosition - fragPosition;
+	float r = length(light_dir);
+	light_dir = normalize(light_dir);
+
+	float diff = max(dot(lightPosition, normal), 0.0);
+	vec3 halfDir = normalize(_viewDir + light_dir);
+	float specStrength = max(dot(halfDir, normal), 0.0f);
+	float spec = pow(specStrength, 32.0f);
+
+	vec3 ambient = lightColor * vec3(texture(inAmbientTexture, texCoord));
 	vec3 diffuse = diff * vec3(texture(inDiffuseTexture, texCoord));
 	vec3 specular = spec * vec3(texture(inSpecularTexture, texCoord));
 	return ambient + diffuse + specular;
