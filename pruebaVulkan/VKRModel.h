@@ -40,7 +40,13 @@ public:
 
 struct R_DbgModel
 {
-	std::vector<DBG_Vertex3D> Dbg_Cube =
+public:
+	R_DbgMaterial m_Material;
+	VkBuffer m_VertexBuffer;
+	VkDeviceMemory m_VertexBufferMemory;
+	glm::vec3 m_Pos {1.0f};
+	glm::mat4 m_ModelMatrix = glm::mat4{1.0};
+	std::vector<DBG_Vertex3D> m_Vertices =
 	{   // x     y     z
 		{{-1.0, -1.0,  1.0}, {1.0f, 1.0f, 0.0f}}, // 1  left    First Strip
 		{{-1.0,  1.0,  1.0}, {1.0f, 1.0f, 0.0f}},// 3
@@ -59,4 +65,11 @@ struct R_DbgModel
 		{{ 1.0, -1.0, -1.0}, {1.0f, 1.0f, 0.0f}},// 4  bottom
 		{{-1.0, -1.0, -1.0},  {1.0f, 1.0f, 0.0f}}// 0
 	};
+public:
+	void Cleanup(VkDevice _LogicDevice)
+	{
+		vkDestroyBuffer(_LogicDevice, m_VertexBuffer, nullptr);
+		vkFreeMemory(_LogicDevice, m_VertexBufferMemory, nullptr);
+		m_Material.Cleanup(_LogicDevice);
+	}
 };

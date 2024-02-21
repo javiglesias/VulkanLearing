@@ -2,6 +2,7 @@
 #include <vulkan/vulkan_core.h>
 
 std::vector<R_Model*> m_StaticModels;
+std::vector<R_DbgModel*> m_DbgModels;
 R_Model* tempModel;
 
 const char g_SponzaPath[] = {"resources/Models/Sponza/glTF/"};
@@ -32,6 +33,7 @@ float m_CurrentFrame = 0.0f;
 float m_FrameCap = 0.016f; // 60fps
 glm::vec3 m_CameraPos = glm::vec3(1.f);
 glm::vec3 m_LightPos = glm::vec3(1.f);
+glm::vec3 m_LightRot = glm::vec3(0.f);
 glm::vec3 m_LightColor = glm::vec3(1.f);
 glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
 glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
@@ -47,8 +49,11 @@ std::vector<VkImage> m_SwapChainImages;
 std::vector<VkImageView> m_SwapChainImagesViews;
 std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 std::vector<VkPhysicalDevice> m_PhysicalDevices;
-auto mBindingDescription = Vertex3D::getBindingDescription();
-auto mAttributeDescriptions = Vertex3D::getAttributeDescriptions();
+auto m_BindingDescription = Vertex3D::getBindingDescription();
+auto m_AttributeDescriptions = Vertex3D::getAttributeDescriptions();
+auto m_DbgBindingDescription = DBG_Vertex3D::getBindingDescription();
+auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
+
 GLFWwindow* m_Window;
 VkResult m_PresentResult;
 VkInstance m_Instance;
@@ -66,6 +71,7 @@ VkSwapchainKHR m_SwapChain;
 VkQueue m_GraphicsQueue;
 VkQueue m_TransferQueue;
 VkDescriptorSetLayout m_DescSetLayout;
+VkDescriptorSetLayout m_DbgDescSetLayout;
 VkDescriptorPool m_DescriptorPool;
 VkDescriptorPool m_UIDescriptorPool;
 VkPipelineLayout m_PipelineLayout;
@@ -84,6 +90,14 @@ std::vector<VkBuffer> m_DynamicBuffers;
 std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
 std::vector<void*> m_Uniform_SBuffersMapped;
 std::vector<void*> m_DynamicBuffersMapped;
+// DEBUG BUFFERS
+std::vector<VkBuffer> m_DbgUniformBuffers;
+std::vector<VkDeviceMemory> m_DbgUniformBuffersMemory;
+std::vector<VkBuffer> m_DbgDynamicBuffers;
+std::vector<VkDeviceMemory> m_DbgDynamicBuffersMemory;
+std::vector<void*> m_DbgUniformBuffersMapped;
+std::vector<void*> m_DbgDynamicBuffersMapped;
+//
 VkDeviceMemory m_StaggingBufferMemory;
 VkPhysicalDeviceMemoryProperties m_Mem_Props;
 VkImage m_DepthImage;

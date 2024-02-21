@@ -10,19 +10,13 @@ struct R_DbgMaterial
 	VkDescriptorPool m_DescriptorPool = nullptr;
 	std::vector<VkDescriptorSetLayout> m_DescLayouts;
 	std::vector<VkDescriptorSet> m_DescriptorSet;
+
 public:
-	enum STATE : uint16_t
+	void Cleanup(VkDevice _LogicDevice)
 	{
-		UNDEFINED,
-		CREATED,
-		INIT,
-		READY,
-		DESTROYED
-	};
-	STATE m_Status = UNDEFINED;
-	char _vertPath[64];
-	char _fragPath[64];
-public:
+		// Delete Material things
+		vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
+	}
 	void CreateDescriptorPool(VkDevice _LogicDevice)
 	{
 		if(m_DescriptorPool == nullptr)
@@ -31,7 +25,6 @@ public:
 			// UBO
 			descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-
 			// Model Matrix
 			descPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
@@ -62,7 +55,6 @@ public:
 				exit(-67);
 		}
 	}
-
 	void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers)
 	{
 		// Escribimos la info de los descriptors
@@ -73,7 +65,7 @@ public:
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(DebugUniformBufferObject); // VK_WHOLE
 
-			std::array<VkWriteDescriptorSet, 5> descriptorsWrite {};
+			std::array<VkWriteDescriptorSet, 2> descriptorsWrite {};
 			descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 			descriptorsWrite[0].dstBinding = 0;
@@ -83,7 +75,6 @@ public:
 			descriptorsWrite[0].pBufferInfo = &bufferInfo;
 			descriptorsWrite[0].pImageInfo = nullptr;
 			descriptorsWrite[0].pTexelBufferView = nullptr;
-
 			// Dynamic
 			VkDescriptorBufferInfo dynBufferInfo {};
 			dynBufferInfo.buffer = _DynamicBuffers[i];
@@ -92,7 +83,7 @@ public:
 
 			descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorsWrite[1].dstSet = m_DescriptorSet[i];
-			descriptorsWrite[1].dstBinding = 4;
+			descriptorsWrite[1].dstBinding = 1;
 			descriptorsWrite[1].dstArrayElement = 0;
 			descriptorsWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			descriptorsWrite[1].descriptorCount = 1;
@@ -101,10 +92,5 @@ public:
 			descriptorsWrite[1].pTexelBufferView = nullptr;
 			vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 		}
-	}
-	void Cleanup(VkDevice _LogicDevice)
-	{
-		// Delete Material things
-		vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
 	}
 };
