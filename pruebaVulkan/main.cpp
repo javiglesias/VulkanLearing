@@ -1050,53 +1050,26 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 		}
 		++count;
 	}
+	vkCmdEndRenderPass(_commandBuffer);
 	// ---- Draw Loop
 	// DEBUG Render
-	// vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipeline);
-	// UI Render
-	if(draw_data)
-		ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
-	vkCmdEndRenderPass(_commandBuffer);
-	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
-		exit(-17);
-}
-
-void RecordDebugCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-						 VkPipeline _pipeline)
-{
-	// Record command buffer
-	VkCommandBufferBeginInfo mBeginInfo{};
-	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	mBeginInfo.flags = 0;
-	mBeginInfo.pInheritanceInfo = nullptr;
-	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
-		exit(-13);
-	// Clear Color
-	std::array<VkClearValue, 2> clearValues;
-	clearValues[0].color = defaultClearColor;
-	clearValues[1].depthStencil = { 1.0f, 0 };
 	// Render pass
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = m_RenderPass;
-	renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
-	renderPassInfo.renderArea.offset = { 0,0 };
-	renderPassInfo.renderArea.extent = m_CurrentExtent;
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
-	vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	VkRenderPassBeginInfo dbgRenderPassInfo{};
+	dbgRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	dbgRenderPassInfo.renderPass = m_DebugRenderPass;
+	dbgRenderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+	dbgRenderPassInfo.renderArea.offset = { 0,0 };
+	dbgRenderPassInfo.renderArea.extent = m_CurrentExtent;
+	dbgRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	dbgRenderPassInfo.pClearValues = clearValues.data();
+	vkCmdBeginRenderPass(_commandBuffer, &dbgRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	// Drawing Commands
-	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipeline);
 	// REFRESH RENDER MODE FUNCTIONS
 	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-	auto dynamicAlignment = sizeof(glm::mat4);
-	if (minUniformBufferOffsetAlignment > 0)
-	{
-		dynamicAlignment = (dynamicAlignment + minUniformBufferOffsetAlignment - 1) & ~(minUniformBufferOffsetAlignment - 1);
-	}
 	m_DbgModels[0]->m_Pos = glm::vec3(m_LightPos);
-	uint32_t count = 0;
+	count = 0;
 	for(auto& model : m_DbgModels)
 	{
 		DynamicBufferObject dynO {};
@@ -1112,10 +1085,34 @@ void RecordDebugCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx
 		vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
 		++count;
 	}
+	// UI Render
+	if(draw_data)
+		ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
 	vkCmdEndRenderPass(_commandBuffer);
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
 }
+#if 0
+void RecordDebugCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
+						 VkPipeline _pipeline)
+{
+	// Record command buffer
+	VkCommandBufferBeginInfo mBeginInfo{};
+	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	mBeginInfo.flags = 0;
+	mBeginInfo.pInheritanceInfo = nullptr;
+	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
+		exit(-13);
+	// Clear Color
+	std::array<VkClearValue, 2> clearValues;
+	clearValues[0].color = defaultClearColor;
+	clearValues[1].depthStencil = { 1.0f, 0 };
+	
+	vkCmdEndRenderPass(_commandBuffer);
+	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
+		exit(-17);
+}
+#endif
 
 void CreateFramebuffers()
 {
@@ -1336,11 +1333,11 @@ void DrawFrame()
 	dubo.projection[1][1] *= -1; // para invertir el eje Y
 	memcpy(m_DbgUniformBuffersMapped[m_CurrentLocalFrame], &dubo, sizeof(dubo));
 
-	RecordDebugCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_DebugPipeline);
 	// Render ImGui
 	ImGui::Render();
 	ImDrawData* draw_data = ImGui::GetDrawData();
 	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_GraphicsPipeline, draw_data);
+	// RecordDebugCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_DebugPipeline);
 	// UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

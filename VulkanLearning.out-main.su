@@ -368,29 +368,28 @@ pruebaVulkan/main.cpp:778:11:VkSampler_T* CreateTextureSampler()	944	static
 pruebaVulkan/main.cpp:804:6:void CreateVulkanPipeline(VkShaderModule, VkShaderModule, VkPipelineLayout_T**, VkRenderPass_T**, VkPipeline_T**, VkDescriptorSetLayout, bool)	960	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkClearValue; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkClearValue; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:981:6:void RecordCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, VkPipeline, ImDrawData*)	544	dynamic,bounded
-pruebaVulkan/main.cpp:1064:6:void RecordDebugCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, VkPipeline)	464	dynamic,bounded
+pruebaVulkan/main.cpp:981:6:void RecordCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, VkPipeline, ImDrawData*)	576	dynamic,bounded
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:1120:6:void CreateFramebuffers()	128	static
+pruebaVulkan/main.cpp:1117:6:void CreateFramebuffers()	128	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	16	static
-pruebaVulkan/main.cpp:1145:6:void CreateDescriptorSetLayout()	336	static
+pruebaVulkan/main.cpp:1142:6:void CreateDescriptorSetLayout()	336	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:1201:6:void CreateDebugDescriptorSetLayout()	176	static
-pruebaVulkan/main.cpp:1231:6:void CreateCommandBuffer()	96	static
-pruebaVulkan/main.cpp:1251:6:void CreateSyncObjects(unsigned int)	96	static
-pruebaVulkan/main.cpp:1266:6:void RecreateSwapChain()	32	static
-pruebaVulkan/main.cpp:1307:6:void DrawFrame()	592	static
-pruebaVulkan/main.cpp:1380:6:void FramebufferResizeCallback(GLFWwindow*, int, int)	16	static
-pruebaVulkan/main.cpp:1385:6:void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkSharingMode, VkMemoryPropertyFlags, VkBuffer_T*&, VkDeviceMemory_T*&)	208	static
-pruebaVulkan/main.cpp:1417:6:void CreateAndTransitionImage(char*, Texture*)	624	dynamic,bounded
-pruebaVulkan/main.cpp:1462:6:void EditorLoop()	48	static
+pruebaVulkan/main.cpp:1198:6:void CreateDebugDescriptorSetLayout()	176	static
+pruebaVulkan/main.cpp:1228:6:void CreateCommandBuffer()	96	static
+pruebaVulkan/main.cpp:1248:6:void CreateSyncObjects(unsigned int)	96	static
+pruebaVulkan/main.cpp:1263:6:void RecreateSwapChain()	32	static
+pruebaVulkan/main.cpp:1304:6:void DrawFrame()	592	static
+pruebaVulkan/main.cpp:1377:6:void FramebufferResizeCallback(GLFWwindow*, int, int)	16	static
+pruebaVulkan/main.cpp:1382:6:void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkSharingMode, VkMemoryPropertyFlags, VkBuffer_T*&, VkDeviceMemory_T*&)	208	static
+pruebaVulkan/main.cpp:1414:6:void CreateAndTransitionImage(char*, Texture*)	624	dynamic,bounded
+pruebaVulkan/main.cpp:1459:6:void EditorLoop()	48	static
 pruebaVulkan/VKRDebugMaterial.h:6:8:R_DbgMaterial::R_DbgMaterial()	32	static
 pruebaVulkan/VKRDebugMaterial.h:6:8:R_DbgMaterial::~R_DbgMaterial()	32	static
 pruebaVulkan/VKRModel.h:41:8:R_DbgModel::R_DbgModel()	80	static
-pruebaVulkan/main.cpp:1512:5:int main(int, char**)	1888	dynamic
+pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/glm/detail/type_vec4.inl:864:48:constexpr glm::vec<4, T, Q> glm::operator*(const glm::vec<4, T, Q>&, const T&) [with T = float; glm::qualifier Q = glm::packed_highp]	80	static
 /usr/include/glm/detail/type_vec2.inl:37:35:constexpr glm::vec<2, T, Q>::vec(T, T) [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/c++/11/bits/char_traits.h:106:7:static constexpr bool __gnu_cxx::char_traits<_CharT>::eq(const char_type&, const char_type&) [with _CharT = char]	16	static
@@ -1781,7 +1780,7 @@ pruebaVulkan/main.cpp:1512:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:420:2:static _Tp* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(const _Tp*, const _Tp*, _Tp*) [with _Tp = VkFormat; bool _IsMove = false]	64	static
 /usr/include/c++/11/tuple:424:7:static constexpr _Head& std::_Tuple_impl<_Idx, _Head>::_M_head(std::_Tuple_impl<_Idx, _Head>&) [with long unsigned int _Idx = 0; _Head = const unsigned int&]	32	static
 /usr/include/c++/11/tuple:233:7:static constexpr _Head& std::_Head_base<_Idx, _Head, false>::_M_head(std::_Head_base<_Idx, _Head, false>&) [with long unsigned int _Idx = 0; _Head = const unsigned int&]	16	static
-pruebaVulkan/main.cpp:2039:1:void __static_initialization_and_destruction_0(int, int)	112	static
+pruebaVulkan/main.cpp:2036:1:void __static_initialization_and_destruction_0(int, int)	112	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = R_DbgModel*; _Alloc = std::allocator<R_DbgModel*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = const char*; _Alloc = std::allocator<const char*>]	32	static
@@ -1796,4 +1795,4 @@ pruebaVulkan/main.cpp:2039:1:void __static_initialization_and_destruction_0(int,
 /usr/include/c++/11/bits/alloc_traits.h:845:5:void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator<_T2>&) [with _ForwardIterator = VkDynamicState*; _Tp = VkDynamicState]	48	static
 /usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDynamicState*]	32	static
 /usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDynamicState*]	16	static
-pruebaVulkan/main.cpp:2039:1:cpp)	16	static
+pruebaVulkan/main.cpp:2036:1:cpp)	16	static
