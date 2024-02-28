@@ -1,6 +1,22 @@
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
 
+#define VK_CHECK(_value) \
+	if(_value != VK_SUCCESS) \
+	{VK_ASSERT(false);}
+
+#define VK_CHECK_RET(_value) \
+	if(_value != VK_SUCCESS) \
+	{VK_ASSERT(false); return _value;}
+
+#define CHECK(_expression) \
+	exit(-96);
+
+inline static void VK_ASSERT(bool _check)
+{
+	if(_check) exit(-69);
+}
+
 std::vector<R_Model*> m_StaticModels;
 std::vector<R_DbgModel*> m_DbgModels;
 R_Model* tempModel;
@@ -18,7 +34,6 @@ unsigned int m_GraphicsQueueFamilyIndex = 0;
 unsigned int m_TransferQueueFamilyIndex = 0;
 unsigned int m_CurrentLocalFrame = 0;
 unsigned int m_SwapchainImagesCount;
-int m_CullMode = 2;
 std::string g_ConsoleMSG;
 stbi_uc* m_DefaultTexture;
 int m_TotalTextures;
@@ -31,12 +46,13 @@ float m_AccumulatedTime = 0.0f;
 float m_DeltaTime = 0.0f;
 float m_CurrentFrame = 0.0f;
 float m_FrameCap = 0.016f; // 60fps
+float m_CameraFOV = 70.f;
 glm::vec3 m_CameraPos = glm::vec3(1.f);
 glm::vec3 m_LightPos = glm::vec3(1.f);
 glm::vec3 m_LightRot = glm::vec3(0.f);
 glm::vec3 m_LightColor = glm::vec3(1.f);
 glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
-glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
+glm::vec3 m_CameraUp = glm::vec3(0.f, -1.f, 0.f);
 const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 std::vector<VkDynamicState> m_DynamicStates = { 
     VK_DYNAMIC_STATE_VIEWPORT, 
@@ -70,17 +86,8 @@ VkSwapchainCreateInfoKHR m_SwapChainCreateInfo{};
 VkSwapchainKHR m_SwapChain;
 VkQueue m_GraphicsQueue;
 VkQueue m_TransferQueue;
-VkDescriptorSetLayout m_DescSetLayout;
-VkDescriptorSetLayout m_DbgDescSetLayout;
 VkDescriptorPool m_DescriptorPool;
 VkDescriptorPool m_UIDescriptorPool;
-VkPipelineLayout m_PipelineLayout;
-VkPipelineLayout m_DebugPipelineLayout;
-VkRenderPass m_RenderPass;
-VkRenderPass m_UIRenderPass;
-VkRenderPass m_DebugRenderPass;
-VkPipeline m_GraphicsPipeline;
-VkPipeline m_DebugPipeline;
 VkCommandPool m_CommandPool;
 VkQueue m_PresentQueue;
 VkBuffer m_StagingBuffer;
@@ -105,6 +112,9 @@ VkDeviceMemory m_DepthImageMemory;
 VkImageView m_DepthImageView;
 VkClearColorValue defaultClearColor = { { 0.6f, 0.65f, 0.4f, 1.0f } };
 int m_PolygonMode = VK_POLYGON_MODE_FILL;
+int m_DbgPolygonMode = VK_POLYGON_MODE_LINE;
+VkCullModeFlagBits m_CullMode = VK_CULL_MODE_BACK_BIT;
+VkCullModeFlagBits m_DbgCullMode = VK_CULL_MODE_FRONT_BIT;
 
 // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
 VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];

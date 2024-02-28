@@ -277,7 +277,8 @@ pruebaVulkan/VKRModel.h:19:7:void R_Mesh::Cleanup(VkDevice)	32	static
 /usr/include/c++/11/bits/unordered_map.h:141:7:std::unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map() [with _Key = unsigned int; _Tp = R_Material*; _Hash = std::hash<unsigned int>; _Pred = std::equal_to<unsigned int>; _Alloc = std::allocator<std::pair<const unsigned int, R_Material*> >]	32	static
 pruebaVulkan/VKRModel.h:33:2:R_Model::R_Model()	32	static
 /usr/include/glm/detail/type_vec3.inl:37:35:constexpr glm::vec<3, T, Q>::vec(T, T, T) [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
-pruebaVulkan/VKRModel.h:69:7:void R_DbgModel::Cleanup(VkDevice)	32	static
+pruebaVulkan/VKRModel.h:56:7:void R_DbgModel::Cleanup(VkDevice)	32	static
+pruebaVulkan/defines.h:15:20:void VK_ASSERT(bool)	32	static
 /usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<R_Model*, std::allocator<R_Model*> >::_Vector_impl::~_Vector_impl()	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
@@ -312,7 +313,30 @@ pruebaVulkan/VKRModel.h:69:7:void R_DbgModel::Cleanup(VkDevice)	32	static
 /usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<void*, std::allocator<void*> >::_Vector_impl::~_Vector_impl()	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = void*; _Alloc = std::allocator<void*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = void*; _Alloc = std::allocator<void*>]	32	static
-pruebaVulkan/debugUtils.h:12:20:void VK_ASSERT(bool)	32	static
+/usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<char, std::allocator<char> >::_Vector_impl::~_Vector_impl()	32	static
+pruebaVulkan/VKRShader.h:1:19:std::vector<char> LoadShader(const string&)	608	static
+pruebaVulkan/VKRenderers.h:29:10:void m_Renderer::CreatePipeline()	192	static
+pruebaVulkan/VKRenderers.h:54:10:void m_Renderer::CreateShaderModule(const char*, VkShaderModule_T**)	256	static
+/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	32	static
+/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	16	static
+pruebaVulkan/VKRenderers.h:79:10:void m_GraphicsRenderer::CreateDescriptorSetLayout()	352	static
+pruebaVulkan/VKRenderers.h:7:8:m_Renderer::m_Renderer()	16	static
+pruebaVulkan/VKRenderers.h:134:5:m_GraphicsRenderer::m_GraphicsRenderer()	32	static
+/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	32	static
+/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	16	static
+pruebaVulkan/VKRenderers.h:136:10:void m_GraphicsRenderer::Initialize()	112	static
+pruebaVulkan/VKRenderers.h:235:5:m_GraphicsRenderer::~m_GraphicsRenderer()	48	static
+/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	32	static
+/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	16	static
+pruebaVulkan/VKRenderers.h:256:10:void m_DebugRenderer::CreateDebugDescriptorSetLayout()	192	static
+pruebaVulkan/VKRenderers.h:285:5:m_DebugRenderer::m_DebugRenderer()	32	static
+/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 2]	32	static
+/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 2]	16	static
+pruebaVulkan/VKRenderers.h:287:10:void m_DebugRenderer::Initialize()	112	static
+pruebaVulkan/VKRenderers.h:386:5:m_DebugRenderer::~m_DebugRenderer()	48	static
+/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	32	static
+/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	16	static
+pruebaVulkan/VKBackend.h:14:6:void CreateRenderPass(VkSwapchainCreateInfoKHR*, VkRenderPass_T**)	400	static
 /usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<VkDescriptorSetLayout_T*, std::allocator<VkDescriptorSetLayout_T*> >::_Vector_impl::~_Vector_impl()	32	static
 /usr/include/c++/11/bits/stl_vector.h:288:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base() [with _Tp = VkDescriptorSetLayout_T*; _Alloc = std::allocator<VkDescriptorSetLayout_T*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:487:7:std::vector<_Tp, _Alloc>::vector() [with _Tp = VkDescriptorSetLayout_T*; _Alloc = std::allocator<VkDescriptorSetLayout_T*>]	32	static
@@ -322,74 +346,57 @@ pruebaVulkan/debugUtils.h:12:20:void VK_ASSERT(bool)	32	static
 pruebaVulkan/VKRMaterial.h:30:8:R_Material::R_Material()	32	static
 pruebaVulkan/main.cpp:43:6:void ProcessModelNode(aiNode*, const aiScene*)	1264	dynamic,bounded
 pruebaVulkan/main.cpp:106:6:void LoadModel(const char*, const char*)	208	static
-/usr/include/c++/11/bits/stl_vector.h:128:14:std::_Vector_base<char, std::allocator<char> >::_Vector_impl::~_Vector_impl()	32	static
-pruebaVulkan/main.cpp:123:19:std::vector<char> LoadShader(const string&)	608	static
-pruebaVulkan/main.cpp:134:6:bool checkValidationLayerSupport()	144	static
-pruebaVulkan/main.cpp:156:10:VkResult CreateDebugUtilsMessengerEXT(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT*, const VkAllocationCallbacks*, VkDebugUtilsMessengerEXT_T**)	64	static
-pruebaVulkan/main.cpp:174:6:void DestroyDebugUtilsMessengerEXT(VkInstance, VkDebugUtilsMessengerEXT, const VkAllocationCallbacks*)	64	static
-pruebaVulkan/main.cpp:187:39:VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT*, void*)	48	static
-pruebaVulkan/main.cpp:231:13:void check_vk_result(VkResult)	32	static
-pruebaVulkan/main.cpp:240:14:unsigned int FindMemoryType(unsigned int, VkMemoryPropertyFlags)	48	static
-pruebaVulkan/main.cpp:251:10:VkFormat FindSupportedFormat(const std::vector<VkFormat>&, VkImageTiling, VkFormatFeatureFlags)	96	static
-pruebaVulkan/main.cpp:267:6:void MouseInputCallback(GLFWwindow*, double, double)	80	static
-pruebaVulkan/main.cpp:293:6:void MouseBPressCallback(GLFWwindow*, int, int, int)	16	static
+pruebaVulkan/main.cpp:123:6:bool checkValidationLayerSupport()	144	static
+pruebaVulkan/main.cpp:145:10:VkResult CreateDebugUtilsMessengerEXT(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT*, const VkAllocationCallbacks*, VkDebugUtilsMessengerEXT_T**)	64	static
+pruebaVulkan/main.cpp:163:6:void DestroyDebugUtilsMessengerEXT(VkInstance, VkDebugUtilsMessengerEXT, const VkAllocationCallbacks*)	64	static
+pruebaVulkan/main.cpp:176:39:VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT*, void*)	48	static
+pruebaVulkan/main.cpp:220:13:void check_vk_result(VkResult)	32	static
+pruebaVulkan/main.cpp:229:14:unsigned int FindMemoryType(unsigned int, VkMemoryPropertyFlags)	48	static
+pruebaVulkan/main.cpp:240:10:VkFormat FindSupportedFormat(const std::vector<VkFormat>&, VkImageTiling, VkFormatFeatureFlags)	96	static
+pruebaVulkan/main.cpp:256:6:void MouseInputCallback(GLFWwindow*, double, double)	80	static
+pruebaVulkan/main.cpp:282:6:void MouseBPressCallback(GLFWwindow*, int, int, int)	16	static
 /usr/include/glm/detail/type_vec3.inl:244:50:constexpr glm::vec<3, T, Q>& glm::vec<3, T, Q>::operator+=(const glm::vec<3, U, Q>&) [with U = float; T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/glm/detail/type_vec3.inl:274:50:constexpr glm::vec<3, T, Q>& glm::vec<3, T, Q>::operator-=(const glm::vec<3, U, Q>&) [with U = float; T = float; glm::qualifier Q = glm::packed_highp]	16	static
-pruebaVulkan/main.cpp:303:6:void KeyboardInputCallback(GLFWwindow*, int, int, int, int)	96	static
-pruebaVulkan/main.cpp:336:6:void CleanSwapChain()	80	static
+pruebaVulkan/main.cpp:292:6:void KeyboardInputCallback(GLFWwindow*, int, int, int, int)	96	static
+pruebaVulkan/main.cpp:325:6:void CleanSwapChain()	80	static
 /usr/include/c++/11/utility:223:5:constexpr typename std::tuple_element<_Int, std::pair<_Tp1, _Tp2> >::type& std::get(std::pair<_Tp1, _Tp2>&) [with long unsigned int _Int = 0; _Tp1 = const unsigned int; _Tp2 = R_Material*]	32	static
 /usr/include/c++/11/utility:223:5:constexpr typename std::tuple_element<_Int, std::pair<_Tp1, _Tp2> >::type& std::get(std::pair<_Tp1, _Tp2>&) [with long unsigned int _Int = 1; _Tp1 = const unsigned int; _Tp2 = R_Material*]	32	static
-pruebaVulkan/main.cpp:345:6:void Cleanup()	144	static
-pruebaVulkan/main.cpp:412:6:void InitializeVulkan(VkApplicationInfo*)	16	static
-pruebaVulkan/main.cpp:422:6:void CreateInstance(VkInstanceCreateInfo*, VkApplicationInfo*, const char**, uint32_t)	48	static
-pruebaVulkan/main.cpp:433:6:void CreateLogicalDevice(VkPhysicalDevice_T**, VkPhysicalDeviceFeatures*)	112	static
-pruebaVulkan/main.cpp:454:6:void CreateSwapChain()	32	static
-pruebaVulkan/main.cpp:477:6:void CreateShaderModule(const char*, VkShaderModule_T**)	240	static
-pruebaVulkan/main.cpp:495:10:VkFormat FindDepthTestFormat()	112	static
-/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	32	static
-/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:503:6:void CreateRenderPass(VkSwapchainCreateInfoKHR*, VkRenderPass_T**)	400	static
-pruebaVulkan/main.cpp:579:17:VkCommandBuffer_T* BeginSingleTimeCommandBuffer()	112	static
-pruebaVulkan/main.cpp:596:6:void EndSingleTimeCommandBuffer(VkCommandBuffer)	112	static
-pruebaVulkan/main.cpp:609:6:void CopyBuffer(VkBuffer, VkBuffer, VkDeviceSize)	96	static
-pruebaVulkan/main.cpp:619:6:bool HasStencilComponent(VkFormat)	16	static
-pruebaVulkan/main.cpp:623:6:void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout)	176	dynamic,bounded
-pruebaVulkan/main.cpp:683:6:void CopyBufferToImage(VkBuffer, VkImage, uint32_t, uint32_t, VkDeviceSize)	128	static
-pruebaVulkan/main.cpp:700:6:void CreateImage(unsigned int, unsigned int, VkFormat, VkImageTiling, VkImageUsageFlagBits, VkMemoryPropertyFlags, VkImage_T**, VkDeviceMemory_T**)	224	static
-pruebaVulkan/main.cpp:729:13:VkImageView_T* CreateImageView(VkImage, VkFormat, VkImageAspectFlags)	144	static
-pruebaVulkan/main.cpp:746:6:void CreateImageViews()	80	static
-pruebaVulkan/main.cpp:758:6:void CreateDepthTestingResources()	48	dynamic,bounded
-pruebaVulkan/main.cpp:773:13:VkImageView_T* CreateTextureImageView(VkImage)	32	static
-pruebaVulkan/main.cpp:778:11:VkSampler_T* CreateTextureSampler()	944	static
-/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	32	static
-/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	16	static
-/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 2]	32	static
-/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:804:6:void CreateVulkanPipeline(VkShaderModule, VkShaderModule, VkPipelineLayout_T**, VkRenderPass_T**, VkPipeline_T**, VkDescriptorSetLayout, bool)	960	static
+pruebaVulkan/main.cpp:334:6:void Cleanup()	144	static
+pruebaVulkan/main.cpp:377:6:void InitializeVulkan(VkApplicationInfo*)	16	static
+pruebaVulkan/main.cpp:387:6:void CreateInstance(VkInstanceCreateInfo*, VkApplicationInfo*, const char**, uint32_t)	48	static
+pruebaVulkan/main.cpp:398:6:void CreateLogicalDevice(VkPhysicalDevice_T**, VkPhysicalDeviceFeatures*)	112	static
+pruebaVulkan/main.cpp:419:6:void CreateSwapChain()	32	static
+pruebaVulkan/main.cpp:442:10:VkFormat FindDepthTestFormat()	112	static
+pruebaVulkan/main.cpp:450:17:VkCommandBuffer_T* BeginSingleTimeCommandBuffer()	112	static
+pruebaVulkan/main.cpp:467:6:void EndSingleTimeCommandBuffer(VkCommandBuffer)	112	static
+pruebaVulkan/main.cpp:480:6:void CopyBuffer(VkBuffer, VkBuffer, VkDeviceSize)	96	static
+pruebaVulkan/main.cpp:490:6:bool HasStencilComponent(VkFormat)	16	static
+pruebaVulkan/main.cpp:494:6:void TransitionImageLayout(VkImage, VkFormat, VkImageLayout, VkImageLayout)	176	dynamic,bounded
+pruebaVulkan/main.cpp:554:6:void CopyBufferToImage(VkBuffer, VkImage, uint32_t, uint32_t, VkDeviceSize)	128	static
+pruebaVulkan/main.cpp:571:6:void CreateImage(unsigned int, unsigned int, VkFormat, VkImageTiling, VkImageUsageFlagBits, VkMemoryPropertyFlags, VkImage_T**, VkDeviceMemory_T**)	224	static
+pruebaVulkan/main.cpp:600:13:VkImageView_T* CreateImageView(VkImage, VkFormat, VkImageAspectFlags)	144	static
+pruebaVulkan/main.cpp:617:6:void CreateImageViews()	80	static
+pruebaVulkan/main.cpp:629:6:void CreateDepthTestingResources()	48	dynamic,bounded
+pruebaVulkan/main.cpp:644:13:VkImageView_T* CreateTextureImageView(VkImage)	32	static
+pruebaVulkan/main.cpp:649:11:VkSampler_T* CreateTextureSampler()	944	static
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkClearValue; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkClearValue; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:981:6:void RecordCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, VkPipeline, ImDrawData*)	576	dynamic,bounded
+pruebaVulkan/main.cpp:675:6:void RecordCommandBuffer(VkCommandBuffer, uint32_t, unsigned int, m_Renderer*, ImDrawData*)	576	dynamic,bounded
 /usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:1117:6:void CreateFramebuffers()	128	static
-/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	32	static
-/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	16	static
-pruebaVulkan/main.cpp:1142:6:void CreateDescriptorSetLayout()	336	static
-/usr/include/c++/11/array:257:7:constexpr std::array<_Tp, _Nm>::value_type* std::array<_Tp, _Nm>::data() [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	32	static
-/usr/include/c++/11/array:60:7:static constexpr _Tp* std::__array_traits<_Tp, _Nm>::_S_ptr(const _Tp (&)[_Nm]) [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	16	static
-pruebaVulkan/main.cpp:1198:6:void CreateDebugDescriptorSetLayout()	176	static
-pruebaVulkan/main.cpp:1228:6:void CreateCommandBuffer()	96	static
-pruebaVulkan/main.cpp:1248:6:void CreateSyncObjects(unsigned int)	96	static
-pruebaVulkan/main.cpp:1263:6:void RecreateSwapChain()	32	static
-pruebaVulkan/main.cpp:1304:6:void DrawFrame()	592	static
-pruebaVulkan/main.cpp:1377:6:void FramebufferResizeCallback(GLFWwindow*, int, int)	16	static
-pruebaVulkan/main.cpp:1382:6:void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkSharingMode, VkMemoryPropertyFlags, VkBuffer_T*&, VkDeviceMemory_T*&)	208	static
-pruebaVulkan/main.cpp:1414:6:void CreateAndTransitionImage(char*, Texture*)	624	dynamic,bounded
-pruebaVulkan/main.cpp:1459:6:void EditorLoop()	48	static
+pruebaVulkan/main.cpp:778:6:void CreateFramebuffers(m_Renderer*)	144	static
+pruebaVulkan/main.cpp:802:6:void CreateCommandBuffer()	96	static
+pruebaVulkan/main.cpp:822:6:void CreateSyncObjects(unsigned int)	96	static
+pruebaVulkan/main.cpp:837:6:void RecreateSwapChain()	32	static
+pruebaVulkan/main.cpp:878:6:void DrawFrame()	592	static
+pruebaVulkan/main.cpp:951:6:void FramebufferResizeCallback(GLFWwindow*, int, int)	16	static
+pruebaVulkan/main.cpp:956:6:void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkSharingMode, VkMemoryPropertyFlags, VkBuffer_T*&, VkDeviceMemory_T*&)	208	static
+pruebaVulkan/main.cpp:988:6:void CreateAndTransitionImage(char*, Texture*)	624	dynamic,bounded
+pruebaVulkan/main.cpp:1033:6:void EditorLoop()	48	static
 pruebaVulkan/VKRDebugMaterial.h:6:8:R_DbgMaterial::R_DbgMaterial()	32	static
 pruebaVulkan/VKRDebugMaterial.h:6:8:R_DbgMaterial::~R_DbgMaterial()	32	static
 pruebaVulkan/VKRModel.h:41:8:R_DbgModel::R_DbgModel()	80	static
-pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
+pruebaVulkan/main.cpp:1086:5:int main(int, char**)	1840	dynamic
 /usr/include/glm/detail/type_vec4.inl:864:48:constexpr glm::vec<4, T, Q> glm::operator*(const glm::vec<4, T, Q>&, const T&) [with T = float; glm::qualifier Q = glm::packed_highp]	80	static
 /usr/include/glm/detail/type_vec2.inl:37:35:constexpr glm::vec<2, T, Q>::vec(T, T) [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/c++/11/bits/char_traits.h:106:7:static constexpr bool __gnu_cxx::char_traits<_CharT>::eq(const char_type&, const char_type&) [with _CharT = char]	16	static
@@ -465,6 +472,22 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:131:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl::_Vector_impl() [with _Tp = void*; _Alloc = std::allocator<void*>]	32	static
 /usr/include/c++/11/bits/allocator.h:174:7:std::allocator< <template-parameter-1-1> >::~allocator() [with _Tp = void*]	32	static
 /usr/include/c++/11/bits/stl_vector.h:333:7:std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = void*; _Alloc = std::allocator<void*>]	32	static
+/usr/include/c++/11/bits/postypes.h:143:7:std::fpos<_StateT>::operator std::streamoff() const [with _StateT = __mbstate_t]	16	static
+/usr/include/c++/11/bits/stl_vector.h:510:7:std::vector<_Tp, _Alloc>::vector(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
+/usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/postypes.h:133:7:std::fpos<_StateT>::fpos(std::streamoff) [with _StateT = __mbstate_t]	16	static
+/usr/include/c++/11/bits/stl_vector.h:1168:7:_Tp* std::vector<_Tp, _Alloc>::data() [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/stl_vector.h:333:7:std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/basic_string.h:533:7:std::__cxx11::basic_string<_CharT, _Traits, _Alloc>::basic_string(const _CharT*, const _Alloc&) [with <template-parameter-2-1> = std::allocator<char>; _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	96	static
+/usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = char; _Alloc = std::allocator<char>]	16	static
+/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	16	static
+/usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = VkDynamicState; _Alloc = std::allocator<VkDynamicState>]	16	static
+/usr/include/c++/11/bits/stl_vector.h:1168:7:_Tp* std::vector<_Tp, _Alloc>::data() [with _Tp = VkDynamicState; _Alloc = std::allocator<VkDynamicState>]	32	static
+/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	16	static
+/usr/include/c++/11/bits/stl_vector.h:1043:7:std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::operator[](std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkDeviceMemory_T*; _Alloc = std::allocator<VkDeviceMemory_T*>]	16	static
+/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	16	static
+/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 2]	16	static
+/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	16	static
 /usr/include/c++/11/bits/stl_vector.h:1203:7:void std::vector<_Tp, _Alloc>::push_back(std::vector<_Tp, _Alloc>::value_type&&) [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:1187:7:void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = Vertex3D; _Alloc = std::allocator<Vertex3D>]	32	static
 /usr/include/c++/11/bits/unordered_map.h:979:7:std::unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::mapped_type& std::unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator[](const key_type&) [with _Key = unsigned int; _Tp = R_Material*; _Hash = std::hash<unsigned int>; _Pred = std::equal_to<unsigned int>; _Alloc = std::allocator<std::pair<const unsigned int, R_Material*> >]	32	static
@@ -476,15 +499,8 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/allocator.h:174:7:std::allocator< <template-parameter-1-1> >::~allocator() [with _Tp = VkDescriptorSet_T*]	32	static
 /usr/include/c++/11/bits/stl_vector.h:333:7:std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = VkDescriptorSet_T*; _Alloc = std::allocator<VkDescriptorSet_T*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = VkDescriptorSet_T*; _Alloc = std::allocator<VkDescriptorSet_T*>]	32	static
-/usr/include/c++/11/bits/basic_string.h:533:7:std::__cxx11::basic_string<_CharT, _Traits, _Alloc>::basic_string(const _CharT*, const _Alloc&) [with <template-parameter-2-1> = std::allocator<char>; _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	96	static
 /usr/include/c++/11/bits/stl_vector.h:1187:7:void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:1187:7:void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
-/usr/include/c++/11/bits/postypes.h:143:7:std::fpos<_StateT>::operator std::streamoff() const [with _StateT = __mbstate_t]	16	static
-/usr/include/c++/11/bits/stl_vector.h:510:7:std::vector<_Tp, _Alloc>::vector(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
-/usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = char; _Alloc = std::allocator<char>]	32	static
-/usr/include/c++/11/bits/postypes.h:133:7:std::fpos<_StateT>::fpos(std::streamoff) [with _StateT = __mbstate_t]	16	static
-/usr/include/c++/11/bits/stl_vector.h:1168:7:_Tp* std::vector<_Tp, _Alloc>::data() [with _Tp = char; _Alloc = std::allocator<char>]	32	static
-/usr/include/c++/11/bits/stl_vector.h:333:7:std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = char; _Alloc = std::allocator<char>]	32	static
 /usr/include/c++/11/bits/allocator.h:156:7:std::allocator< <template-parameter-1-1> >::allocator() [with _Tp = VkLayerProperties]	32	static
 /usr/include/c++/11/bits/allocator.h:174:7:std::allocator< <template-parameter-1-1> >::~allocator() [with _Tp = VkLayerProperties]	32	static
 /usr/include/c++/11/bits/stl_vector.h:510:7:std::vector<_Tp, _Alloc>::vector(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = VkLayerProperties; _Alloc = std::allocator<VkLayerProperties>]	64	static
@@ -520,7 +536,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_iterator.h:1179:5:bool __gnu_cxx::operator!=(const __gnu_cxx::__normal_iterator<_Iterator, _Container>&, const __gnu_cxx::__normal_iterator<_Iterator, _Container>&) [with _Iterator = VkImageView_T**; _Container = std::vector<VkImageView_T*>]	48	static
 /usr/include/c++/11/bits/stl_iterator.h:1052:7:__gnu_cxx::__normal_iterator<_Iterator, _Container>& __gnu_cxx::__normal_iterator<_Iterator, _Container>::operator++() [with _Iterator = VkImageView_T**; _Container = std::vector<VkImageView_T*>]	16	static
 /usr/include/c++/11/bits/stl_iterator.h:1042:7:__gnu_cxx::__normal_iterator<_Iterator, _Container>::reference __gnu_cxx::__normal_iterator<_Iterator, _Container>::operator*() const [with _Iterator = VkImageView_T**; _Container = std::vector<VkImageView_T*>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:1043:7:std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::operator[](std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkDeviceMemory_T*; _Alloc = std::allocator<VkDeviceMemory_T*>]	16	static
 /usr/include/c++/11/bits/stl_vector.h:811:7:std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::begin() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	48	static
 /usr/include/c++/11/bits/stl_vector.h:829:7:std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::end() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	48	static
 /usr/include/c++/11/bits/stl_iterator.h:1179:5:bool __gnu_cxx::operator!=(const __gnu_cxx::__normal_iterator<_Iterator, _Container>&, const __gnu_cxx::__normal_iterator<_Iterator, _Container>&) [with _Iterator = R_Model**; _Container = std::vector<R_Model*>]	48	static
@@ -548,12 +563,10 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:1172:7:const _Tp* std::vector<_Tp, _Alloc>::data() const [with _Tp = const char*; _Alloc = std::allocator<const char*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:1168:7:_Tp* std::vector<_Tp, _Alloc>::data() [with _Tp = VkDeviceQueueCreateInfo; _Alloc = std::allocator<VkDeviceQueueCreateInfo>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = VkDeviceQueueCreateInfo; _Alloc = std::allocator<VkDeviceQueueCreateInfo>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = char; _Alloc = std::allocator<char>]	16	static
 /usr/include/c++/11/bits/allocator.h:156:7:std::allocator< <template-parameter-1-1> >::allocator() [with _Tp = VkFormat]	32	static
 /usr/include/c++/11/bits/allocator.h:174:7:std::allocator< <template-parameter-1-1> >::~allocator() [with _Tp = VkFormat]	32	static
 /usr/include/c++/11/bits/stl_vector.h:625:7:std::vector<_Tp, _Alloc>::vector(std::initializer_list<_Tp>, const allocator_type&) [with _Tp = VkFormat; _Alloc = std::allocator<VkFormat>]	80	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = VkFormat; _Alloc = std::allocator<VkFormat>]	32	static
-/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkAttachmentDescription; long unsigned int _Nm = 2]	16	static
 /usr/include/c++/11/bits/stl_vector.h:937:7:void std::vector<_Tp, _Alloc>::resize(std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkImageView_T*; _Alloc = std::allocator<VkImageView_T*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:811:7:std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::begin() [with _Tp = VkImage_T*; _Alloc = std::allocator<VkImage_T*>]	48	static
 /usr/include/c++/11/bits/stl_vector.h:829:7:std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::end() [with _Tp = VkImage_T*; _Alloc = std::allocator<VkImage_T*>]	48	static
@@ -561,10 +574,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_iterator.h:1052:7:__gnu_cxx::__normal_iterator<_Iterator, _Container>& __gnu_cxx::__normal_iterator<_Iterator, _Container>::operator++() [with _Iterator = VkImage_T**; _Container = std::vector<VkImage_T*>]	16	static
 /usr/include/c++/11/bits/stl_iterator.h:1042:7:__gnu_cxx::__normal_iterator<_Iterator, _Container>::reference __gnu_cxx::__normal_iterator<_Iterator, _Container>::operator*() const [with _Iterator = VkImage_T**; _Container = std::vector<VkImage_T*>]	16	static
 /usr/include/c++/11/bits/stl_vector.h:1043:7:std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::operator[](std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkImageView_T*; _Alloc = std::allocator<VkImageView_T*>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = VkDynamicState; _Alloc = std::allocator<VkDynamicState>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:1168:7:_Tp* std::vector<_Tp, _Alloc>::data() [with _Tp = VkDynamicState; _Alloc = std::allocator<VkDynamicState>]	32	static
-/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 3]	16	static
-/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkVertexInputAttributeDescription; long unsigned int _Nm = 2]	16	static
 /usr/include/c++/11/array:186:7:constexpr std::array<_Tp, _Nm>::value_type& std::array<_Tp, _Nm>::operator[](std::array<_Tp, _Nm>::size_type) [with _Tp = VkClearValue; long unsigned int _Nm = 2]	32	static
 /usr/include/c++/11/bits/stl_vector.h:1043:7:std::vector<_Tp, _Alloc>::reference std::vector<_Tp, _Alloc>::operator[](std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkFramebuffer_T*; _Alloc = std::allocator<VkFramebuffer_T*>]	16	static
 /usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkClearValue; long unsigned int _Nm = 2]	16	static
@@ -576,8 +585,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:918:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::size() const [with _Tp = VkImageView_T*; _Alloc = std::allocator<VkImageView_T*>]	16	static
 /usr/include/c++/11/bits/stl_vector.h:937:7:void std::vector<_Tp, _Alloc>::resize(std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkFramebuffer_T*; _Alloc = std::allocator<VkFramebuffer_T*>]	32	static
 /usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkImageView_T*; long unsigned int _Nm = 2]	16	static
-/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 5]	16	static
-/usr/include/c++/11/array:176:7:constexpr std::array<_Tp, _Nm>::size_type std::array<_Tp, _Nm>::size() const [with _Tp = VkDescriptorSetLayoutBinding; long unsigned int _Nm = 2]	16	static
 /usr/include/c++/11/bits/stl_vector.h:937:7:void std::vector<_Tp, _Alloc>::resize(std::vector<_Tp, _Alloc>::size_type) [with _Tp = VkImage_T*; _Alloc = std::allocator<VkImage_T*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:1168:7:_Tp* std::vector<_Tp, _Alloc>::data() [with _Tp = VkImage_T*; _Alloc = std::allocator<VkImage_T*>]	32	static
 /usr/include/glm/detail/type_vec3.inl:616:48:constexpr glm::vec<3, T, Q> glm::operator+(const glm::vec<3, T, Q>&, const glm::vec<3, T, Q>&) [with T = float; glm::qualifier Q = glm::packed_highp]	80	static
@@ -743,6 +750,16 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:97:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl_data::_Vector_impl_data() [with _Tp = void*; _Alloc = std::allocator<void*>]	16	static
 /usr/include/c++/11/ext/new_allocator.h:89:7:__gnu_cxx::new_allocator<_Tp>::~new_allocator() [with _Tp = void*]	16	static
 /usr/include/c++/11/bits/stl_vector.h:350:7:void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(std::_Vector_base<_Tp, _Alloc>::pointer, std::size_t) [with _Tp = void*; _Alloc = std::allocator<void*>]	48	static
+/usr/include/c++/11/bits/stl_vector.h:1767:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_check_init_len(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
+/usr/include/c++/11/bits/stl_vector.h:303:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base(std::size_t, const allocator_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
+/usr/include/c++/11/bits/stl_vector.h:1603:7:void std::vector<_Tp, _Alloc>::_M_default_initialize(std::vector<_Tp, _Alloc>::size_type) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/stl_vector.h:276:7:std::_Vector_base<_Tp, _Alloc>::_Tp_alloc_type& std::_Vector_base<_Tp, _Alloc>::_M_get_Tp_allocator() [with _Tp = char; _Alloc = std::allocator<char>]	16	static
+/usr/include/c++/11/bits/alloc_traits.h:845:5:void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator<_T2>&) [with _ForwardIterator = char*; _Tp = char]	48	static
+/usr/include/c++/11/bits/stl_vector.h:1844:2:_Up* std::vector<_Tp, _Alloc>::_M_data_ptr(_Up*) const [with _Up = char; _Tp = char; _Alloc = std::allocator<char>]	16	static
+/usr/include/c++/11/bits/stl_vector.h:350:7:void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(std::_Vector_base<_Tp, _Alloc>::pointer, std::size_t) [with _Tp = char; _Alloc = std::allocator<char>]	48	static
+/usr/include/c++/11/bits/stl_iterator_base_funcs.h:138:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::difference_type std::distance(_InputIterator, _InputIterator) [with _InputIterator = const char*]	32	static
+/usr/include/c++/11/bits/basic_string.tcc:206:7:void std::__cxx11::basic_string<_CharT, _Traits, _Alloc>::_M_construct(_InIterator, _InIterator, std::forward_iterator_tag) [with _FwdIterator = const char*; _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	80	static
+/usr/include/c++/11/bits/stl_vector.h:1844:2:_Up* std::vector<_Tp, _Alloc>::_M_data_ptr(_Up*) const [with _Up = VkDynamicState; _Tp = VkDynamicState; _Alloc = std::allocator<VkDynamicState>]	16	static
 /usr/include/c++/11/bits/move.h:104:5:constexpr typename std::remove_reference<_Tp>::type&& std::move(_Tp&&) [with _Tp = short unsigned int&]	16	static
 /usr/include/c++/11/bits/vector.tcc:109:7:) [with _Args = {short unsigned int}; _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	48	static
 /usr/include/c++/11/bits/alloc_traits.h:511:2:) [with _Up = Vertex3D; _Args = {const Vertex3D&}; _Tp = Vertex3D]	48	static
@@ -761,19 +778,10 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:350:7:void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(std::_Vector_base<_Tp, _Alloc>::pointer, std::size_t) [with _Tp = VkDescriptorSet_T*; _Alloc = std::allocator<VkDescriptorSet_T*>]	48	static
 /usr/include/c++/11/bits/stl_vector.h:276:7:std::_Vector_base<_Tp, _Alloc>::_Tp_alloc_type& std::_Vector_base<_Tp, _Alloc>::_M_get_Tp_allocator() [with _Tp = VkDescriptorSet_T*; _Alloc = std::allocator<VkDescriptorSet_T*>]	16	static
 /usr/include/c++/11/bits/alloc_traits.h:845:5:void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator<_T2>&) [with _ForwardIterator = VkDescriptorSet_T**; _Tp = VkDescriptorSet_T*]	48	static
-/usr/include/c++/11/bits/stl_iterator_base_funcs.h:138:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::difference_type std::distance(_InputIterator, _InputIterator) [with _InputIterator = const char*]	32	static
-/usr/include/c++/11/bits/basic_string.tcc:206:7:void std::__cxx11::basic_string<_CharT, _Traits, _Alloc>::_M_construct(_InIterator, _InIterator, std::forward_iterator_tag) [with _FwdIterator = const char*; _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	80	static
 /usr/include/c++/11/bits/alloc_traits.h:511:2:) [with _Up = R_Mesh*; _Args = {R_Mesh* const&}; _Tp = R_Mesh*]	48	static
 /usr/include/c++/11/bits/vector.tcc:426:7:) [with _Args = {R_Mesh* const&}; _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	128	static
 /usr/include/c++/11/bits/alloc_traits.h:511:2:) [with _Up = R_Model*; _Args = {R_Model* const&}; _Tp = R_Model*]	48	static
 /usr/include/c++/11/bits/vector.tcc:426:7:) [with _Args = {R_Model* const&}; _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	128	static
-/usr/include/c++/11/bits/stl_vector.h:1767:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_check_init_len(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
-/usr/include/c++/11/bits/stl_vector.h:303:7:std::_Vector_base<_Tp, _Alloc>::_Vector_base(std::size_t, const allocator_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
-/usr/include/c++/11/bits/stl_vector.h:1603:7:void std::vector<_Tp, _Alloc>::_M_default_initialize(std::vector<_Tp, _Alloc>::size_type) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
-/usr/include/c++/11/bits/stl_vector.h:276:7:std::_Vector_base<_Tp, _Alloc>::_Tp_alloc_type& std::_Vector_base<_Tp, _Alloc>::_M_get_Tp_allocator() [with _Tp = char; _Alloc = std::allocator<char>]	16	static
-/usr/include/c++/11/bits/alloc_traits.h:845:5:void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator<_T2>&) [with _ForwardIterator = char*; _Tp = char]	48	static
-/usr/include/c++/11/bits/stl_vector.h:1844:2:_Up* std::vector<_Tp, _Alloc>::_M_data_ptr(_Up*) const [with _Up = char; _Tp = char; _Alloc = std::allocator<char>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:350:7:void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(std::_Vector_base<_Tp, _Alloc>::pointer, std::size_t) [with _Tp = char; _Alloc = std::allocator<char>]	48	static
 /usr/include/c++/11/ext/new_allocator.h:79:7:__gnu_cxx::new_allocator<_Tp>::new_allocator() [with _Tp = VkLayerProperties]	16	static
 /usr/include/c++/11/ext/new_allocator.h:89:7:__gnu_cxx::new_allocator<_Tp>::~new_allocator() [with _Tp = VkLayerProperties]	16	static
 /usr/include/c++/11/bits/stl_vector.h:1767:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_check_init_len(std::vector<_Tp, _Alloc>::size_type, const allocator_type&) [with _Tp = VkLayerProperties; _Alloc = std::allocator<VkLayerProperties>]	64	static
@@ -823,7 +831,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:1792:7:void std::vector<_Tp, _Alloc>::_M_erase_at_end(std::vector<_Tp, _Alloc>::pointer) [with _Tp = VkImageView_T*; _Alloc = std::allocator<VkImageView_T*>]	48	static
 /usr/include/c++/11/bits/stl_iterator.h:1027:7:__gnu_cxx::__normal_iterator<_Iterator, _Container>::__normal_iterator(const _Iterator&) [with _Iterator = VkImage_T**; _Container = std::vector<VkImage_T*>]	16	static
 /usr/include/c++/11/bits/stl_iterator.h:1105:7:const _Iterator& __gnu_cxx::__normal_iterator<_Iterator, _Container>::base() const [with _Iterator = VkImage_T**; _Container = std::vector<VkImage_T*>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:1844:2:_Up* std::vector<_Tp, _Alloc>::_M_data_ptr(_Up*) const [with _Up = VkDynamicState; _Tp = VkDynamicState; _Alloc = std::allocator<VkDynamicState>]	16	static
 /usr/include/c++/11/array:56:7:static constexpr _Tp& std::__array_traits<_Tp, _Nm>::_S_ref(const _Tp (&)[_Nm], std::size_t) [with _Tp = VkClearValue; long unsigned int _Nm = 2]	16	static
 /usr/include/glm/detail/type_mat4x4.hpp:28:50:static constexpr glm::mat<4, 4, T, Q>::length_type glm::mat<4, 4, T, Q>::length() [with T = float; glm::qualifier Q = glm::packed_highp]	16	static
 /usr/include/glm/detail/type_mat4x4.inl:296:77:constexpr const col_type& glm::mat<4, 4, T, Q>::operator[](glm::mat<4, 4, T, Q>::length_type) const [with T = float; glm::qualifier Q = glm::packed_highp]	32	static
@@ -985,6 +992,15 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/alloc_traits.h:495:7:static void std::allocator_traits<std::allocator<_CharT> >::deallocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::pointer, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = VkDeviceMemory_T*]	48	static
 /usr/include/c++/11/ext/new_allocator.h:79:7:__gnu_cxx::new_allocator<_Tp>::new_allocator() [with _Tp = void*]	16	static
 /usr/include/c++/11/bits/alloc_traits.h:495:7:static void std::allocator_traits<std::allocator<_CharT> >::deallocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::pointer, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = void*]	48	static
+/usr/include/c++/11/bits/stl_vector.h:1776:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_max_size(const _Tp_alloc_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
+/usr/include/c++/11/bits/stl_vector.h:136:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl::_Vector_impl(const _Tp_alloc_type&) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/stl_vector.h:359:7:void std::_Vector_base<_Tp, _Alloc>::_M_create_storage(std::size_t) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/stl_uninitialized.h:702:5:_ForwardIterator std::__uninitialized_default_n_a(_ForwardIterator, _Size, std::allocator<_Tp>&) [with _ForwardIterator = char*; _Size = long unsigned int; _Tp = char]	48	static
+/usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = char*]	32	static
+/usr/include/c++/11/bits/alloc_traits.h:495:7:static void std::allocator_traits<std::allocator<_CharT> >::deallocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::pointer, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = char]	48	static
+/usr/include/c++/11/ext/type_traits.h:152:5:bool __gnu_cxx::__is_null_pointer(_Type*) [with _Type = const char]	16	static
+/usr/include/c++/11/bits/stl_iterator_base_types.h:238:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::iterator_category std::__iterator_category(const _Iter&) [with _Iter = const char*]	16	static
+/usr/include/c++/11/bits/stl_iterator_base_funcs.h:98:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::difference_type std::__distance(_RandomAccessIterator, _RandomAccessIterator, std::random_access_iterator_tag) [with _RandomAccessIterator = const char*]	16	static
 /usr/include/c++/11/bits/move.h:77:5:constexpr _Tp&& std::forward(typename std::remove_reference<_Tp>::type&) [with _Tp = short unsigned int]	16	static
 /usr/include/c++/11/bits/alloc_traits.h:511:2:) [with _Up = short unsigned int; _Args = {short unsigned int}; _Tp = short unsigned int]	48	static
 /usr/include/c++/11/bits/stl_vector.h:829:7:std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::end() [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	48	static
@@ -1013,9 +1029,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/ext/new_allocator.h:79:7:__gnu_cxx::new_allocator<_Tp>::new_allocator() [with _Tp = VkDescriptorSet_T*]	16	static
 /usr/include/c++/11/bits/alloc_traits.h:495:7:static void std::allocator_traits<std::allocator<_CharT> >::deallocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::pointer, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = VkDescriptorSet_T*]	48	static
 /usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDescriptorSet_T**]	32	static
-/usr/include/c++/11/ext/type_traits.h:152:5:bool __gnu_cxx::__is_null_pointer(_Type*) [with _Type = const char]	16	static
-/usr/include/c++/11/bits/stl_iterator_base_types.h:238:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::iterator_category std::__iterator_category(const _Iter&) [with _Iter = const char*]	16	static
-/usr/include/c++/11/bits/stl_iterator_base_funcs.h:98:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::difference_type std::__distance(_RandomAccessIterator, _RandomAccessIterator, std::random_access_iterator_tag) [with _RandomAccessIterator = const char*]	16	static
 /usr/include/c++/11/bits/move.h:77:5:constexpr _Tp&& std::forward(typename std::remove_reference<_Tp>::type&) [with _Tp = R_Mesh* const&]	16	static
 /usr/include/c++/11/ext/new_allocator.h:160:2:) [with _Up = R_Mesh*; _Args = {R_Mesh* const&}; _Tp = R_Mesh*]	64	static
 /usr/include/c++/11/bits/stl_vector.h:1756:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_M_check_len(std::vector<_Tp, _Alloc>::size_type, const char*) const [with _Tp = R_Mesh*; _Alloc = std::allocator<R_Mesh*>]	96	static
@@ -1030,12 +1043,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_vector.h:465:7:static std::vector<_Tp, _Alloc>::pointer std::vector<_Tp, _Alloc>::_S_relocate(std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::_Tp_alloc_type&) [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	48	static
 /usr/include/c++/11/bits/stl_vector.h:276:7:std::_Vector_base<_Tp, _Alloc>::_Tp_alloc_type& std::_Vector_base<_Tp, _Alloc>::_M_get_Tp_allocator() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	16	static
 /usr/include/c++/11/bits/alloc_traits.h:845:5:void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator<_T2>&) [with _ForwardIterator = R_Model**; _Tp = R_Model*]	48	static
-/usr/include/c++/11/bits/stl_vector.h:1776:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_max_size(const _Tp_alloc_type&) [with _Tp = char; _Alloc = std::allocator<char>]	64	static
-/usr/include/c++/11/bits/stl_vector.h:136:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl::_Vector_impl(const _Tp_alloc_type&) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
-/usr/include/c++/11/bits/stl_vector.h:359:7:void std::_Vector_base<_Tp, _Alloc>::_M_create_storage(std::size_t) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
-/usr/include/c++/11/bits/stl_uninitialized.h:702:5:_ForwardIterator std::__uninitialized_default_n_a(_ForwardIterator, _Size, std::allocator<_Tp>&) [with _ForwardIterator = char*; _Size = long unsigned int; _Tp = char]	48	static
-/usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = char*]	32	static
-/usr/include/c++/11/bits/alloc_traits.h:495:7:static void std::allocator_traits<std::allocator<_CharT> >::deallocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::pointer, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = char]	48	static
 /usr/include/c++/11/bits/stl_vector.h:1776:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_max_size(const _Tp_alloc_type&) [with _Tp = VkLayerProperties; _Alloc = std::allocator<VkLayerProperties>]	64	static
 /usr/include/c++/11/bits/allocator.h:159:7:std::allocator< <template-parameter-1-1> >::allocator(const std::allocator< <template-parameter-1-1> >&) [with _Tp = VkLayerProperties]	32	static
 /usr/include/c++/11/bits/stl_vector.h:136:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl::_Vector_impl(const _Tp_alloc_type&) [with _Tp = VkLayerProperties; _Alloc = std::allocator<VkLayerProperties>]	32	static
@@ -1202,6 +1209,12 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = VkBuffer_T*]	48	static
 /usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = VkDeviceMemory_T*]	48	static
 /usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = void*]	48	static
+/usr/include/c++/11/bits/alloc_traits.h:547:7:static std::allocator_traits<std::allocator<_CharT> >::size_type std::allocator_traits<std::allocator<_CharT> >::max_size(const allocator_type&) [with _Tp = char]	32	static
+/usr/include/c++/11/bits/stl_vector.h:97:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl_data::_Vector_impl_data() [with _Tp = char; _Alloc = std::allocator<char>]	16	static
+/usr/include/c++/11/bits/stl_vector.h:343:7:std::_Vector_base<_Tp, _Alloc>::pointer std::_Vector_base<_Tp, _Alloc>::_M_allocate(std::size_t) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
+/usr/include/c++/11/bits/stl_uninitialized.h:630:5:_ForwardIterator std::__uninitialized_default_n(_ForwardIterator, _Size) [with _ForwardIterator = char*; _Size = long unsigned int]	48	static
+/usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = char*]	16	static
+/usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = char]	48	static
 /usr/include/c++/11/ext/new_allocator.h:160:2:) [with _Up = short unsigned int; _Args = {short unsigned int}; _Tp = short unsigned int]	64	static
 /usr/include/c++/11/bits/stl_iterator.h:1027:7:__gnu_cxx::__normal_iterator<_Iterator, _Container>::__normal_iterator(const _Iterator&) [with _Iterator = short unsigned int*; _Container = std::vector<short unsigned int>]	16	static
 /usr/include/c++/11/bits/stl_vector.h:1756:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_M_check_len(std::vector<_Tp, _Alloc>::size_type, const char*) const [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	96	static
@@ -1238,12 +1251,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/alloc_traits.h:463:7:static _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = R_Model*]	32	static
 /usr/include/c++/11/bits/stl_vector.h:453:7:static std::vector<_Tp, _Alloc>::pointer std::vector<_Tp, _Alloc>::_S_do_relocate(std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::_Tp_alloc_type&, std::true_type) [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	48	static
 /usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = R_Model**]	32	static
-/usr/include/c++/11/bits/alloc_traits.h:547:7:static std::allocator_traits<std::allocator<_CharT> >::size_type std::allocator_traits<std::allocator<_CharT> >::max_size(const allocator_type&) [with _Tp = char]	32	static
-/usr/include/c++/11/bits/stl_vector.h:97:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl_data::_Vector_impl_data() [with _Tp = char; _Alloc = std::allocator<char>]	16	static
-/usr/include/c++/11/bits/stl_vector.h:343:7:std::_Vector_base<_Tp, _Alloc>::pointer std::_Vector_base<_Tp, _Alloc>::_M_allocate(std::size_t) [with _Tp = char; _Alloc = std::allocator<char>]	32	static
-/usr/include/c++/11/bits/stl_uninitialized.h:630:5:_ForwardIterator std::__uninitialized_default_n(_ForwardIterator, _Size) [with _ForwardIterator = char*; _Size = long unsigned int]	48	static
-/usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = char*]	16	static
-/usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = char]	48	static
 /usr/include/c++/11/bits/alloc_traits.h:547:7:static std::allocator_traits<std::allocator<_CharT> >::size_type std::allocator_traits<std::allocator<_CharT> >::max_size(const allocator_type&) [with _Tp = VkLayerProperties]	32	static
 /usr/include/c++/11/ext/new_allocator.h:82:7:__gnu_cxx::new_allocator<_Tp>::new_allocator(const __gnu_cxx::new_allocator<_Tp>&) [with _Tp = VkLayerProperties]	16	static
 /usr/include/c++/11/bits/stl_vector.h:97:2:std::_Vector_base<_Tp, _Alloc>::_Vector_impl_data::_Vector_impl_data() [with _Tp = VkLayerProperties; _Alloc = std::allocator<VkLayerProperties>]	16	static
@@ -1401,6 +1408,8 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/ext/new_allocator.h:197:7:constexpr __gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::_M_max_size() const [with _Tp = VkDynamicState]	16	static
 /usr/include/c++/11/ext/new_allocator.h:103:7:_Tp* __gnu_cxx::new_allocator<_Tp>::allocate(__gnu_cxx::new_allocator<_Tp>::size_type, const void*) [with _Tp = VkDynamicState]	48	static
 /usr/include/c++/11/bits/stl_uninitialized.h:108:9:static _ForwardIterator std::__uninitialized_copy<true>::__uninit_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = const VkDynamicState*; _ForwardIterator = VkDynamicState*]	48	static
+/usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = char]	32	static
+/usr/include/c++/11/bits/stl_uninitialized.h:595:9:static _ForwardIterator std::__uninitialized_default_n_1<true>::__uninit_default_n(_ForwardIterator, _Size) [with _ForwardIterator = char*; _Size = long unsigned int]	48	static
 /usr/include/c++/11/bits/stl_vector.h:923:7:std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::max_size() const [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	32	static
 /usr/include/c++/11/bits/alloc_traits.h:463:7:static _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = short unsigned int]	32	static
 /usr/include/c++/11/bits/stl_vector.h:453:7:static std::vector<_Tp, _Alloc>::pointer std::vector<_Tp, _Alloc>::_S_do_relocate(std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::pointer, std::vector<_Tp, _Alloc>::_Tp_alloc_type&, std::true_type) [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	48	static
@@ -1429,8 +1438,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/ext/new_allocator.h:103:7:_Tp* __gnu_cxx::new_allocator<_Tp>::allocate(__gnu_cxx::new_allocator<_Tp>::size_type, const void*) [with _Tp = R_Model*]	48	static
 /usr/include/c++/11/bits/stl_uninitialized.h:1040:5:_ForwardIterator std::__relocate_a(_InputIterator, _InputIterator, _ForwardIterator, _Allocator&) [with _InputIterator = R_Model**; _ForwardIterator = R_Model**; _Allocator = std::allocator<R_Model*>]	64	static
 /usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = R_Model**]	16	static
-/usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = char]	32	static
-/usr/include/c++/11/bits/stl_uninitialized.h:595:9:static _ForwardIterator std::__uninitialized_default_n_1<true>::__uninit_default_n(_ForwardIterator, _Size) [with _ForwardIterator = char*; _Size = long unsigned int]	48	static
 /usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = VkLayerProperties]	32	static
 /usr/include/c++/11/bits/alloc_traits.h:463:7:static _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = VkLayerProperties]	32	static
 /usr/include/c++/11/ext/new_allocator.h:132:7:void __gnu_cxx::new_allocator<_Tp>::deallocate(_Tp*, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = VkLayerProperties]	48	static
@@ -1549,6 +1556,8 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:611:5:_OI std::copy(_II, _II, _OI) [with _II = const char* const*; _OI = const char**]	64	static
 /usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = VkDynamicState]	32	static
 /usr/include/c++/11/bits/stl_algobase.h:611:5:_OI std::copy(_II, _II, _OI) [with _II = const VkDynamicState*; _OI = VkDynamicState*]	64	static
+/usr/include/c++/11/bits/stl_construct.h:109:5:) [with _Tp = char; _Args = {}]	32	static
+/usr/include/c++/11/bits/stl_algobase.h:1144:5:_OI std::fill_n(_OI, _Size, const _Tp&) [with _OI = char*; _Size = long unsigned int; _Tp = char]	48	static
 /usr/include/c++/11/bits/stl_vector.h:1776:7:static std::vector<_Tp, _Alloc>::size_type std::vector<_Tp, _Alloc>::_S_max_size(const _Tp_alloc_type&) [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	64	static
 /usr/include/c++/11/bits/stl_vector.h:280:7:const _Tp_alloc_type& std::_Vector_base<_Tp, _Alloc>::_M_get_Tp_allocator() const [with _Tp = short unsigned int; _Alloc = std::allocator<short unsigned int>]	16	static
 /usr/include/c++/11/ext/new_allocator.h:197:7:constexpr __gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::_M_max_size() const [with _Tp = short unsigned int]	16	static
@@ -1575,8 +1584,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/alloc_traits.h:547:7:static std::allocator_traits<std::allocator<_CharT> >::size_type std::allocator_traits<std::allocator<_CharT> >::max_size(const allocator_type&) [with _Tp = R_Model*]	32	static
 /usr/include/c++/11/bits/stl_algobase.h:313:5:_Iterator std::__niter_base(_Iterator) [with _Iterator = R_Model**]	16	static
 /usr/include/c++/11/bits/stl_uninitialized.h:1006:5:std::__enable_if_t<std::__is_bitwise_relocatable<_Tp>::value, _Tp*> std::__relocate_a_1(_Tp*, _Tp*, _Tp*, std::allocator<_T2>&) [with _Tp = R_Model*; _Up = R_Model*]	64	static
-/usr/include/c++/11/bits/stl_construct.h:109:5:) [with _Tp = char; _Args = {}]	32	static
-/usr/include/c++/11/bits/stl_algobase.h:1144:5:_OI std::fill_n(_OI, _Size, const _Tp&) [with _OI = char*; _Size = long unsigned int; _Tp = char]	48	static
 /usr/include/c++/11/ext/new_allocator.h:197:7:constexpr __gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::_M_max_size() const [with _Tp = VkLayerProperties]	16	static
 /usr/include/c++/11/ext/new_allocator.h:103:7:_Tp* __gnu_cxx::new_allocator<_Tp>::allocate(__gnu_cxx::new_allocator<_Tp>::size_type, const void*) [with _Tp = VkLayerProperties]	48	static
 /usr/include/c++/11/bits/stl_construct.h:109:5:) [with _Tp = VkLayerProperties; _Args = {}]	32	static
@@ -1662,6 +1669,7 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:527:5:_OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = false; _II = const char* const*; _OI = const char**]	64	static
 /usr/include/c++/11/bits/cpp_type_traits.h:560:5:_Iterator std::__miter_base(_Iterator) [with _Iterator = const VkDynamicState*]	16	static
 /usr/include/c++/11/bits/stl_algobase.h:527:5:_OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = false; _II = const VkDynamicState*; _OI = VkDynamicState*]	64	static
+/usr/include/c++/11/bits/stl_algobase.h:1109:5:_OutputIterator std::__fill_n_a(_OutputIterator, _Size, const _Tp&, std::random_access_iterator_tag) [with _OutputIterator = char*; _Size = long unsigned int; _Tp = char]	48	static
 /usr/include/c++/11/bits/alloc_traits.h:547:7:static std::allocator_traits<std::allocator<_CharT> >::size_type std::allocator_traits<std::allocator<_CharT> >::max_size(const allocator_type&) [with _Tp = short unsigned int]	32	static
 /usr/include/c++/11/bits/stl_algobase.h:313:5:_Iterator std::__niter_base(_Iterator) [with _Iterator = short unsigned int*]	16	static
 /usr/include/c++/11/bits/stl_uninitialized.h:1006:5:std::__enable_if_t<std::__is_bitwise_relocatable<_Tp>::value, _Tp*> std::__relocate_a_1(_Tp*, _Tp*, _Tp*, std::allocator<_T2>&) [with _Tp = short unsigned int; _Up = short unsigned int]	64	static
@@ -1675,7 +1683,6 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/hashtable_policy.h:1922:5:std::__detail::_Hashtable_alloc<_NodeAlloc>::__node_base** std::__detail::_Hashtable_alloc<_NodeAlloc>::_M_allocate_buckets(std::size_t) [with _NodeAlloc = std::allocator<std::__detail::_Hash_node<std::pair<const unsigned int, R_Material*>, false> >]	80	static
 /usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = R_Mesh*]	32	static
 /usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = R_Model*]	32	static
-/usr/include/c++/11/bits/stl_algobase.h:1109:5:_OutputIterator std::__fill_n_a(_OutputIterator, _Size, const _Tp&, std::random_access_iterator_tag) [with _OutputIterator = char*; _Size = long unsigned int; _Tp = char]	48	static
 /usr/include/c++/11/bits/stl_iterator_base_types.h:238:5:constexpr typename std::iterator_traits< <template-parameter-1-1> >::iterator_category std::__iterator_category(const _Iter&) [with _Iter = VkLayerProperties*]	16	static
 /usr/include/c++/11/bits/stl_algobase.h:1109:5:_OutputIterator std::__fill_n_a(_OutputIterator, _Size, const _Tp&, std::random_access_iterator_tag) [with _OutputIterator = VkLayerProperties*; _Size = long unsigned int; _Tp = VkLayerProperties]	48	static
 /usr/include/c++/11/bits/cpp_type_traits.h:560:5:_Iterator std::__miter_base(_Iterator) [with _Iterator = const VkFormat*]	16	static
@@ -1723,13 +1730,13 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:313:5:_Iterator std::__niter_base(_Iterator) [with _Iterator = VkDynamicState*]	16	static
 /usr/include/c++/11/bits/stl_algobase.h:521:5:_OI std::__copy_move_a1(_II, _II, _OI) [with bool _IsMove = false; _II = const VkDynamicState*; _OI = VkDynamicState*]	48	static
 /usr/include/c++/11/bits/stl_algobase.h:335:5:_Iterator std::__niter_wrap(const _Iterator&, _Iterator) [with _Iterator = VkDynamicState*]	16	static
+/usr/include/c++/11/bits/stl_algobase.h:968:5:void std::__fill_a(_FIte, _FIte, const _Tp&) [with _FIte = char*; _Tp = char]	48	static
 /usr/include/c++/11/ext/new_allocator.h:154:7:__gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::max_size() const [with _Tp = short unsigned int]	32	static
 /usr/include/c++/11/ext/aligned_buffer.h:118:7:const _Tp* __gnu_cxx::__aligned_buffer<_Tp>::_M_ptr() const [with _Tp = std::pair<const unsigned int, R_Material*>]	32	static
 /usr/include/c++/11/utility:188:2:static constexpr const _Tp1& std::__pair_get<0>::__const_get(const std::pair<_T1, _T2>&) [with _Tp1 = const unsigned int; _Tp2 = R_Material*]	16	static
 /usr/include/c++/11/tuple:1816:7:_Indexes2 = {}; _T1 = const unsigned int; _T2 = R_Material*]	48	static
 /usr/include/c++/11/bits/alloc_traits.h:463:7:static _Tp* std::allocator_traits<std::allocator<_CharT> >::allocate(std::allocator_traits<std::allocator<_CharT> >::allocator_type&, std::allocator_traits<std::allocator<_CharT> >::size_type) [with _Tp = std::__detail::_Hash_node_base*]	32	static
 /usr/include/c++/11/bits/ptr_traits.h:159:5:constexpr _Tp* std::__to_address(_Tp*) [with _Tp = std::__detail::_Hash_node_base*]	16	static
-/usr/include/c++/11/bits/stl_algobase.h:968:5:void std::__fill_a(_FIte, _FIte, const _Tp&) [with _FIte = char*; _Tp = char]	48	static
 /usr/include/c++/11/bits/stl_algobase.h:968:5:void std::__fill_a(_FIte, _FIte, const _Tp&) [with _FIte = VkLayerProperties*; _Tp = VkLayerProperties]	48	static
 /usr/include/c++/11/bits/stl_algobase.h:313:5:_Iterator std::__niter_base(_Iterator) [with _Iterator = const VkFormat*]	16	static
 /usr/include/c++/11/bits/stl_algobase.h:313:5:_Iterator std::__niter_base(_Iterator) [with _Iterator = VkFormat*]	16	static
@@ -1754,12 +1761,12 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:919:5:typename __gnu_cxx::__enable_if<std::__is_scalar<_Tp>::__value, void>::__type std::__fill_a1(_ForwardIterator, _ForwardIterator, const _Tp&) [with _ForwardIterator = VkDescriptorSet_T**; _Tp = VkDescriptorSet_T*]	16	static
 /usr/include/c++/11/bits/stl_algobase.h:486:5:_OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = false; _II = const char* const*; _OI = const char**]	48	static
 /usr/include/c++/11/bits/stl_algobase.h:486:5:_OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = false; _II = const VkDynamicState*; _OI = VkDynamicState*]	48	static
+/usr/include/c++/11/bits/stl_algobase.h:932:5:typename __gnu_cxx::__enable_if<std::__is_byte<_Tp>::__value, void>::__type std::__fill_a1(_Tp*, _Tp*, const _Tp&) [with _Tp = char]	64	static
 /usr/include/c++/11/ext/aligned_buffer.h:108:7:const void* __gnu_cxx::__aligned_buffer<_Tp>::_M_addr() const [with _Tp = std::pair<const unsigned int, R_Material*>]	16	static
 /usr/include/c++/11/tuple:1393:5:>&) [with long unsigned int __i = 0; _Elements = {const unsigned int&}]	32	static
 /usr/include/c++/11/bits/move.h:77:5:constexpr _Tp&& std::forward(typename std::remove_reference<_Tp>::type&) [with _Tp = const unsigned int&]	16	static
 /usr/include/c++/11/ext/new_allocator.h:197:7:constexpr __gnu_cxx::new_allocator<_Tp>::size_type __gnu_cxx::new_allocator<_Tp>::_M_max_size() const [with _Tp = std::__detail::_Hash_node_base*]	16	static
 /usr/include/c++/11/ext/new_allocator.h:103:7:_Tp* __gnu_cxx::new_allocator<_Tp>::allocate(__gnu_cxx::new_allocator<_Tp>::size_type, const void*) [with _Tp = std::__detail::_Hash_node_base*]	48	static
-/usr/include/c++/11/bits/stl_algobase.h:932:5:typename __gnu_cxx::__enable_if<std::__is_byte<_Tp>::__value, void>::__type std::__fill_a1(_Tp*, _Tp*, const _Tp&) [with _Tp = char]	64	static
 /usr/include/c++/11/bits/stl_algobase.h:908:5:typename __gnu_cxx::__enable_if<(! std::__is_scalar<_Tp>::__value), void>::__type std::__fill_a1(_ForwardIterator, _ForwardIterator, const _Tp&) [with _ForwardIterator = VkLayerProperties*; _Tp = VkLayerProperties]	16	static
 /usr/include/c++/11/bits/stl_algobase.h:486:5:_OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = false; _II = const VkFormat*; _OI = VkFormat*]	48	static
 /usr/include/c++/11/bits/stl_algobase.h:919:5:typename __gnu_cxx::__enable_if<std::__is_scalar<_Tp>::__value, void>::__type std::__fill_a1(_ForwardIterator, _ForwardIterator, const _Tp&) [with _ForwardIterator = VkImageView_T**; _Tp = VkImageView_T*]	16	static
@@ -1780,7 +1787,7 @@ pruebaVulkan/main.cpp:1509:5:int main(int, char**)	1888	dynamic
 /usr/include/c++/11/bits/stl_algobase.h:420:2:static _Tp* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(const _Tp*, const _Tp*, _Tp*) [with _Tp = VkFormat; bool _IsMove = false]	64	static
 /usr/include/c++/11/tuple:424:7:static constexpr _Head& std::_Tuple_impl<_Idx, _Head>::_M_head(std::_Tuple_impl<_Idx, _Head>&) [with long unsigned int _Idx = 0; _Head = const unsigned int&]	32	static
 /usr/include/c++/11/tuple:233:7:static constexpr _Head& std::_Head_base<_Idx, _Head, false>::_M_head(std::_Head_base<_Idx, _Head, false>&) [with long unsigned int _Idx = 0; _Head = const unsigned int&]	16	static
-pruebaVulkan/main.cpp:2036:1:void __static_initialization_and_destruction_0(int, int)	112	static
+pruebaVulkan/main.cpp:1590:1:void __static_initialization_and_destruction_0(int, int)	112	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = R_Model*; _Alloc = std::allocator<R_Model*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = R_DbgModel*; _Alloc = std::allocator<R_DbgModel*>]	32	static
 /usr/include/c++/11/bits/stl_vector.h:678:7:std::vector<_Tp, _Alloc>::~vector() [with _Tp = const char*; _Alloc = std::allocator<const char*>]	32	static
@@ -1795,4 +1802,4 @@ pruebaVulkan/main.cpp:2036:1:void __static_initialization_and_destruction_0(int,
 /usr/include/c++/11/bits/alloc_traits.h:845:5:void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator<_T2>&) [with _ForwardIterator = VkDynamicState*; _Tp = VkDynamicState]	48	static
 /usr/include/c++/11/bits/stl_construct.h:182:5:void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDynamicState*]	32	static
 /usr/include/c++/11/bits/stl_construct.h:172:9:static void std::_Destroy_aux<true>::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = VkDynamicState*]	16	static
-pruebaVulkan/main.cpp:2036:1:cpp)	16	static
+pruebaVulkan/main.cpp:1590:1:cpp)	16	static

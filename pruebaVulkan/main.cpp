@@ -38,7 +38,7 @@
 #include "Types.h"
 #include "VKRModel.h"
 #include "defines.h"
-#include "debugUtils.h"
+#include "VKBackend.h"
 
 void ProcessModelNode(aiNode* _node, const aiScene* _scene)
 {
@@ -118,17 +118,6 @@ void LoadModel(const char* _filepath, const char* _modelName)
 	// Insert new static model
 	sprintf(tempModel->m_Path, _filepath, 64);
 	m_StaticModels.push_back(tempModel);
-}
-
-std::vector<char> LoadShader(const std::string& _filename)
-{
-	std::ifstream f(_filename, std::ios::ate | std::ios::binary);
-	size_t fileSize = (size_t)f.tellg();
-	std::vector<char> buffer(fileSize);
-	f.seekg(0);
-	f.read(buffer.data(), fileSize);
-	f.close();
-	return buffer;
 }
 
 bool checkValidationLayerSupport()
@@ -276,7 +265,7 @@ void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 		x_offset *= senseo;
 		y_offset *= senseo;
 		m_CameraYaw += x_offset;
-		m_CameraPitch += y_offset;
+		m_CameraPitch -= y_offset;
 		// CONSTRAINTS
 		if (m_CameraPitch > 89.0f)  m_CameraPitch = 89.0f;
 		if (m_CameraPitch< -89.0f) m_CameraPitch= -89.0f;
@@ -350,22 +339,6 @@ void Cleanup()
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	vkDestroyDescriptorPool(m_LogicDevice, m_UIDescriptorPool, nullptr);
-	for(size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-	{
-		vkDestroyBuffer(m_LogicDevice, m_DynamicBuffers[i], nullptr);
-		vkFreeMemory(m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
-
-		vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
-		vkFreeMemory(m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
-
-		vkDestroyBuffer(m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
-		vkFreeMemory(m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
-
-		vkDestroyBuffer(m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
-		vkFreeMemory(m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
-	}
-	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
-	vkDestroyDescriptorSetLayout(m_LogicDevice, m_DbgDescSetLayout, nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[0], nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_ImageAvailable[1], nullptr);
 	vkDestroySemaphore(m_LogicDevice, m_RenderFinish[0], nullptr);
@@ -373,14 +346,6 @@ void Cleanup()
 	vkDestroyFence(m_LogicDevice, m_InFlight[0], nullptr);
 	vkDestroyFence(m_LogicDevice, m_InFlight[1], nullptr);
 	vkDestroyCommandPool(m_LogicDevice, m_CommandPool, nullptr);
-	vkDestroyPipeline(m_LogicDevice, m_GraphicsPipeline, nullptr);
-	vkDestroyPipeline(m_LogicDevice, m_DebugPipeline, nullptr);
-	vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
-	vkDestroyPipelineLayout(m_LogicDevice, m_DebugPipelineLayout, nullptr);
-	vkDestroyRenderPass(m_LogicDevice, m_RenderPass, nullptr);
-	vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
-	vkDestroyRenderPass(m_LogicDevice, m_DebugRenderPass, nullptr);
-
 	CleanSwapChain();
 	for(auto& model : m_StaticModels)
 	{
@@ -474,106 +439,12 @@ void CreateSwapChain()
 		exit(-3);
 }
 
-void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule)
-{
-	char shaderPath[64];
-	strcpy(shaderPath, _shaderPath);
-	auto shadercode = LoadShader(shaderPath);
-	VkShaderModuleCreateInfo shaderModuleCreateInfo{};
-	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	shaderModuleCreateInfo.codeSize = shadercode.size();
-	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shadercode.data());
-	g_ConsoleMSG += "Compiling Shader ";
-	g_ConsoleMSG += _shaderPath;
-	g_ConsoleMSG += '\n';
-	if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
-		!= VK_SUCCESS)
-		exit(-5);
-	g_ConsoleMSG += "Shader compiled.\n";
-}
-
 VkFormat FindDepthTestFormat()
 {
 	auto candidates = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
 	auto tiling =  VK_IMAGE_TILING_OPTIMAL;
 	auto features = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	return FindSupportedFormat( candidates, tiling, features);
-}
-
-void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo, VkRenderPass* _RenderPass)
-{
-	// RENDER PASES
-	/// Attachment description
-	// Color
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = m_SwapChainCreateInfo->imageFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	// Depth
-	VkAttachmentDescription depthAttachment{};
-	depthAttachment.format = FindDepthTestFormat(); // d32_SFLOAT
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	
-	// SUB-PASSES
-	/// Attachment References
-	// color
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	// depth
-	VkAttachmentReference depthAttachmentRef{};
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	/// Sub-pass
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	/// Subpass dependencies
-	VkSubpassDependency subpassDep{};
-	subpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
-	subpassDep.dstSubpass = 0;
-	subpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	subpassDep.srcAccessMask = 0;
-	subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-	/// Render pass
-	std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &subpassDep;
-	if (vkCreateRenderPass(m_LogicDevice, &renderPassInfo, nullptr,
-		_RenderPass) != VK_SUCCESS)
-		exit(-8);
-
-	// m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	// m_RenderPassInfo.attachmentCount = 1;
-	// m_RenderPassInfo.pAttachments = &m_ColorAttachment;
-	// m_RenderPassInfo.subpassCount = 1;
-	// m_RenderPassInfo.pSubpasses = &m_Subpass;
-	// m_RenderPassInfo.dependencyCount = 1;
-	// m_RenderPassInfo.pDependencies = &m_SubpassDep;
-	// if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
-	// 	&m_UIRenderPass) != VK_SUCCESS)
-	// 	exit(-8);
 }
 
 VkCommandBuffer BeginSingleTimeCommandBuffer()
@@ -801,185 +672,8 @@ VkSampler CreateTextureSampler()
 	return TextureSampler;
 }
 
-void CreateVulkanPipeline(VkShaderModule _VertShaderModule, VkShaderModule _FragShaderModule,  VkPipelineLayout* _PipelineLayout,
-														VkRenderPass* _RenderPass, VkPipeline* _Pipeline, VkDescriptorSetLayout _DescSetLayout, bool _IsDebug = false)
-{
-	// Create Pipeline Layout
-	VkPipelineShaderStageCreateInfo m_ShaderStages[2] = {};
-	VkPipelineInputAssemblyStateCreateInfo m_InputAssembly{};
-	VkPipelineDynamicStateCreateInfo m_DynamicState{};
-	VkPipelineVertexInputStateCreateInfo m_VertexInputInfo{};
-	VkPipelineViewportStateCreateInfo m_ViewportState{
-		VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
-	};
-	VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
-	VkPipelineMultisampleStateCreateInfo m_Multisampling{};
-	VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
-	VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
-	/// Color Blending
-	VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
-	m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	m_ColorBlendAttachment.blendEnable = VK_FALSE;
-	m_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	m_ColorBlending.logicOpEnable = VK_FALSE;
-	m_ColorBlending.attachmentCount = 1;
-	m_ColorBlending.pAttachments = &m_ColorBlendAttachment;
-
-	// CreatePipelineLayout(&_VertShaderModule, &_FragShaderModule, m_ShaderStages,  &m_InputAssembly, &m_DynamicState, &m_VertexInputInfo,
-	// 	&m_ViewportState, &m_Rasterizer, &m_Multisampling, &m_DepthStencil, &m_ColorBlending, _PipelineLayout, &_DescSetLayout);
-
-	/// Creacion de los shader stage de la Pipeline
-	VkPipelineShaderStageCreateInfo m_VertShaderStageInfo{};
-	m_VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	m_VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	m_VertShaderStageInfo.module = _VertShaderModule;
-	m_VertShaderStageInfo.pName = "main";
-	VkPipelineShaderStageCreateInfo m_FragShaderStageInfo{};
-	m_FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	m_FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	m_FragShaderStageInfo.module = _FragShaderModule;
-	m_FragShaderStageInfo.pName = "main";
-
-	m_ShaderStages[0] = m_VertShaderStageInfo;
-	m_ShaderStages[1] = m_FragShaderStageInfo;
-	/// Dynamic State (stados que permiten ser cambiados sin re-crear toda la pipeline)
-	m_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	m_DynamicState.dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
-	m_DynamicState.pDynamicStates = m_DynamicStates.data();
-	/// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-	m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-	if(!_IsDebug)
-	{
-		m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_AttributeDescriptions.size());
-		m_VertexInputInfo.pVertexBindingDescriptions = &m_BindingDescription;
-		m_VertexInputInfo.pVertexAttributeDescriptions = m_AttributeDescriptions.data();
-	}
-	else 
-	{
-		m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_DbgAttributeDescriptions.size());
-		m_VertexInputInfo.pVertexBindingDescriptions = &m_DbgBindingDescription;
-		m_VertexInputInfo.pVertexAttributeDescriptions = m_DbgAttributeDescriptions.data();
-	}
-	/// Definimos la geometria que vamos a pintar
-	m_InputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	m_InputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	m_InputAssembly.primitiveRestartEnable = VK_FALSE;
-	/// Definimos el Viewport de la app
-	m_Viewport.x = 0.f;
-	m_Viewport.y = 0.f;
-	m_Viewport.width = m_CurrentExtent.width;
-	m_Viewport.height = m_CurrentExtent.height;
-	m_Viewport.minDepth = 0.0f;
-	m_Viewport.maxDepth = 1.0f;
-	/// definamos el Scissor Rect de la app
-	m_Scissor.offset = { 0, 0 };
-	m_Scissor.extent = m_CurrentExtent;
-	m_ViewportState.viewportCount = 1;
-	m_ViewportState.scissorCount = 1;
-	m_ViewportState.pViewports = &m_Viewport;
-	m_ViewportState.pScissors = &m_Scissor;
-	/* Si no estuvieramos en modo Dynamico, necesitariamos establecer la
-	 * informacion de creacion del ViewportState y los Vewport punteros.
-	 */
-	 /// El rasterizador convierte los vertices en fragmentos para darles color
-	m_Rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	m_Rasterizer.depthClampEnable = VK_FALSE;
-	m_Rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	m_Rasterizer.polygonMode = (VkPolygonMode)m_PolygonMode;
-	m_Rasterizer.lineWidth = 1.f;
-	m_Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	m_Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	m_Rasterizer.depthBiasEnable = VK_FALSE;
-	/// Multisampling para evitar los bordes de sierra (anti-aliasing).
-	m_Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	m_Multisampling.sampleShadingEnable = VK_FALSE;
-	m_Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	m_Multisampling.minSampleShading = 1.f;
-	m_Multisampling.pSampleMask = nullptr;
-	m_Multisampling.alphaToCoverageEnable = VK_FALSE;
-	m_Multisampling.alphaToOneEnable = VK_FALSE;
-	/// Depth and stencil
-	m_DepthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	m_DepthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-	m_DepthStencil.depthTestEnable = VK_TRUE;	
-	m_DepthStencil.depthWriteEnable = VK_TRUE;
-	m_DepthStencil.depthBoundsTestEnable = VK_FALSE;
-	m_DepthStencil.minDepthBounds = 0.0f;
-	m_DepthStencil.maxDepthBounds = 1.0f;
-	m_DepthStencil.stencilTestEnable = VK_FALSE;
-	m_DepthStencil.front = {};
-	m_DepthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
-	/// Pipeline Layout
-	VkPipelineLayoutCreateInfo m_PipelineLayoutCreateInfo{};
-	m_PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	m_PipelineLayoutCreateInfo.setLayoutCount = 1;
-	m_PipelineLayoutCreateInfo.pSetLayouts = &_DescSetLayout;
-	m_PipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	m_PipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-	if (vkCreatePipelineLayout(m_LogicDevice, &m_PipelineLayoutCreateInfo, nullptr, _PipelineLayout) != VK_SUCCESS)
-		exit(-7);
-
-	CreateRenderPass(&m_SwapChainCreateInfo, _RenderPass);
-
-	/// Create Graphics pipeline
-	VkGraphicsPipelineCreateInfo m_PipelineInfoCreateInfo {};
-	m_PipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	m_PipelineInfoCreateInfo.stageCount = 2;
-	m_PipelineInfoCreateInfo.pStages = m_ShaderStages;
-	m_PipelineInfoCreateInfo.pVertexInputState = &m_VertexInputInfo;
-	m_PipelineInfoCreateInfo.pInputAssemblyState = &m_InputAssembly;
-	m_PipelineInfoCreateInfo.pViewportState = &m_ViewportState;
-	m_PipelineInfoCreateInfo.pRasterizationState = &m_Rasterizer;
-	m_PipelineInfoCreateInfo.pMultisampleState = &m_Multisampling;
-	m_PipelineInfoCreateInfo.pDepthStencilState = &m_DepthStencil;
-	m_PipelineInfoCreateInfo.pColorBlendState = &m_ColorBlending;
-	m_PipelineInfoCreateInfo.pDynamicState = &m_DynamicState;
-	m_PipelineInfoCreateInfo.layout = *_PipelineLayout;
-	m_PipelineInfoCreateInfo.renderPass = *_RenderPass;
-	m_PipelineInfoCreateInfo.subpass = 0;
-	m_PipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-	m_PipelineInfoCreateInfo.basePipelineIndex = -1;
-	*_Pipeline = VkPipeline {};
-
-	if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &m_PipelineInfoCreateInfo, 
-																nullptr, _Pipeline) != VK_SUCCESS)
-		exit(-9);
-/////////////////////////////////////////////////// CREATE PIPELINE ///////////////////////////////////////////////////////////
-}
-
-// TODO esto pa otro momento, lo de tener 2 renderpasses una de UI y otra de mundo.
-#if 0
-void UIRender(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx, ImDrawData* draw_data)
-{
-	// Record command buffer
-	VkCommandBufferBeginInfo mBeginInfo{};
-	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	mBeginInfo.flags = 0;
-	mBeginInfo.pInheritanceInfo = nullptr;
-	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
-		exit(-13);
-
-	// IMGUI renderPass
-	VkRenderPassBeginInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	info.renderPass = m_RenderPass;
-	info.framebuffer = m_SwapChainFramebuffers[_imageIdx];
-	info.renderArea.extent = m_CurrentExtent;
-	vkCmdBeginRenderPass(_commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-	// Record dear imgui primitives into command buffer
-	ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
-	// Submit command buffer
-	vkCmdEndRenderPass(_commandBuffer);
-	// -- IMGUI renderPass
-
-	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
-		exit(-17);
-}
-#endif
-
 void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-						 VkPipeline _pipeline, ImDrawData* draw_data = nullptr)
+						 m_Renderer* _renderer, ImDrawData* draw_data = nullptr)
 {
 	// Record command buffer
 	VkCommandBufferBeginInfo mBeginInfo{};
@@ -1003,7 +697,7 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	renderPassInfo.pClearValues = clearValues.data();
 	vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	// Drawing Commands
-	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_Pipeline);
 	// REFRESH RENDER MODE FUNCTIONS
 	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
@@ -1028,7 +722,7 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 
 			VkBuffer vertesBuffers[] = {mesh->m_VertexBuffer};
 			VkDeviceSize offsets[] = {0};
-			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
+			vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1, 
 																&model->m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
@@ -1050,40 +744,28 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 		}
 		++count;
 	}
-	vkCmdEndRenderPass(_commandBuffer);
 	// ---- Draw Loop
 	// DEBUG Render
-	// Render pass
-	VkRenderPassBeginInfo dbgRenderPassInfo{};
-	dbgRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	dbgRenderPassInfo.renderPass = m_DebugRenderPass;
-	dbgRenderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
-	dbgRenderPassInfo.renderArea.offset = { 0,0 };
-	dbgRenderPassInfo.renderArea.extent = m_CurrentExtent;
-	dbgRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	dbgRenderPassInfo.pClearValues = clearValues.data();
-	vkCmdBeginRenderPass(_commandBuffer, &dbgRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	// Drawing Commands
-	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipeline);
+	vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender.m_Pipeline);
 	// REFRESH RENDER MODE FUNCTIONS
 	vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
 	vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-	m_DbgModels[0]->m_Pos = glm::vec3(m_LightPos);
-	count = 0;
+	int debugCount = 0;
+	m_DbgModels[0]->m_Pos = m_LightPos;
 	for(auto& model : m_DbgModels)
 	{
 		DynamicBufferObject dynO {};
 		dynO.model = glm::mat4(1.0f);
 		dynO.model = glm::translate(dynO.model, model->m_Pos);
-		uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+		uint32_t dynamicOffset = debugCount * static_cast<uint32_t>(dynamicAlignment);
 		VkBuffer vertesBuffers[] = {model->m_VertexBuffer};
 		VkDeviceSize offsets[] = {0};
 		// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-		memcpy(m_DynamicBuffersMapped[m_CurrentLocalFrame] + dynamicOffset, &dynO, sizeof(dynO));
-		vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DebugPipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
+		memcpy(m_DbgDynamicBuffersMapped[m_CurrentLocalFrame] + dynamicOffset, &dynO, sizeof(dynO));
+		vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender.m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
 		vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 		vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
-		++count;
+		++debugCount;
 	}
 	// UI Render
 	if(draw_data)
@@ -1092,29 +774,8 @@ void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, uns
 	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 		exit(-17);
 }
-#if 0
-void RecordDebugCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-						 VkPipeline _pipeline)
-{
-	// Record command buffer
-	VkCommandBufferBeginInfo mBeginInfo{};
-	mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	mBeginInfo.flags = 0;
-	mBeginInfo.pInheritanceInfo = nullptr;
-	if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
-		exit(-13);
-	// Clear Color
-	std::array<VkClearValue, 2> clearValues;
-	clearValues[0].color = defaultClearColor;
-	clearValues[1].depthStencil = { 1.0f, 0 };
-	
-	vkCmdEndRenderPass(_commandBuffer);
-	if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
-		exit(-17);
-}
-#endif
 
-void CreateFramebuffers()
+void CreateFramebuffers(m_Renderer* _renderer)
 {
 	// FRAMEBUFFERS
 	m_SwapChainFramebuffers.resize(m_SwapChainImagesViews.size());
@@ -1136,93 +797,6 @@ void CreateFramebuffers()
 			&m_SwapChainFramebuffers[i]) != VK_SUCCESS)
 			exit(-10);
 	}
-}
-
-// Creamos el layout de los Descriptor set que vamos a utlizar
-void CreateDescriptorSetLayout()
-{
-	// estructura UBO
-	VkDescriptorSetLayoutBinding uboLayoutBinding {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	// Textura Diffuse
-	VkDescriptorSetLayoutBinding textureDiffuseLayoutBinding {};
-	textureDiffuseLayoutBinding.binding = 1;
-	textureDiffuseLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureDiffuseLayoutBinding.descriptorCount = 1;
-	textureDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	textureDiffuseLayoutBinding.pImmutableSamplers = nullptr;
-
-	// Textura specular
-	VkDescriptorSetLayoutBinding textureSpecularLayoutBinding {};
-	textureSpecularLayoutBinding.binding = 2;
-	textureSpecularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureSpecularLayoutBinding.descriptorCount = 1;
-	textureSpecularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	textureSpecularLayoutBinding.pImmutableSamplers = nullptr;
-
-	// Textura Ambient
-	VkDescriptorSetLayoutBinding textureAmbientLayoutBinding {};
-	textureAmbientLayoutBinding.binding = 3;
-	textureAmbientLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureAmbientLayoutBinding.descriptorCount = 1;
-	textureAmbientLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	textureAmbientLayoutBinding.pImmutableSamplers = nullptr;
-
-	// estructura Dynamic Uniforms
-	VkDescriptorSetLayoutBinding dynOLayoutBinding {};
-	dynOLayoutBinding.binding = 4;
-	dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-	dynOLayoutBinding.descriptorCount = 1;
-	dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	dynOLayoutBinding.pImmutableSamplers = nullptr;
-
-	std::array<VkDescriptorSetLayoutBinding, 5> ShaderBindings = {
-		uboLayoutBinding, 
-		textureDiffuseLayoutBinding, 
-		textureSpecularLayoutBinding, 
-		textureAmbientLayoutBinding,
-		dynOLayoutBinding
-		};
-	VkDescriptorSetLayoutCreateInfo layoutInfo {};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
-	layoutInfo.pBindings = ShaderBindings.data();
-		if(vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
-			exit(-99);
-}
-
-void CreateDebugDescriptorSetLayout()
-{
-	// estructura UBO
-	VkDescriptorSetLayoutBinding uboLayoutBinding {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	// estructura Dynamic Uniforms
-	VkDescriptorSetLayoutBinding dynOLayoutBinding {};
-	dynOLayoutBinding.binding = 1;
-	dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-	dynOLayoutBinding.descriptorCount = 1;
-	dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	dynOLayoutBinding.pImmutableSamplers = nullptr;
-
-	std::array<VkDescriptorSetLayoutBinding, 2> ShaderBindings = {
-		uboLayoutBinding,
-		dynOLayoutBinding
-	};
-
-	VkDescriptorSetLayoutCreateInfo layoutInfo {};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
-	layoutInfo.pBindings = ShaderBindings.data();
-	if(vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DbgDescSetLayout) != VK_SUCCESS)
-		exit(-99);
 }
 
 void CreateCommandBuffer()
@@ -1280,7 +854,7 @@ void RecreateSwapChain()
 	CreateImageViews();
 	// CreateTextureImageView();
 	// CreateTextureSampler();
-	CreateFramebuffers();
+	CreateFramebuffers(&m_GraphicsRender);
 	m_NeedToRecreateSwapchain = false;
 }
 /* Un Frame en Vulkan
@@ -1318,7 +892,7 @@ void DrawFrame()
 	UniformBufferObject ubo {};
 	ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 						   m_CameraUp);
-	ubo.projection = glm::perspective(glm::radians(70.f), 1.0f, 0.1f, 1000000.f);
+	ubo.projection = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
 	ubo.projection[1][1] *= -1; // para invertir el eje Y
 	ubo.cameraPosition = m_CameraPos;
 	ubo.lightPosition = m_LightPos;
@@ -1329,14 +903,14 @@ void DrawFrame()
 	DebugUniformBufferObject dubo {};
 	dubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 						   m_CameraUp);
-	dubo.projection = glm::perspective(glm::radians(70.f), 1.0f, 0.1f, 1000000.f);
-	dubo.projection[1][1] *= -1; // para invertir el eje Y
+	dubo.projection = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
+	
 	memcpy(m_DbgUniformBuffersMapped[m_CurrentLocalFrame], &dubo, sizeof(dubo));
 
 	// Render ImGui
 	ImGui::Render();
 	ImDrawData* draw_data = ImGui::GetDrawData();
-	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_GraphicsPipeline, draw_data);
+	RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame,  &m_GraphicsRender, draw_data);
 	// RecordDebugCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_DebugPipeline);
 	// UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
 	VkSubmitInfo submitInfo{};
@@ -1476,6 +1050,9 @@ void EditorLoop()
 		ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
 		ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
 		ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
+		ImGui::LabelText("Cam Pitch", "Cam Pitch(%.2f)",m_CameraPitch);
+		ImGui::LabelText("Cam Yaw", "Cam Yaw(%.2f)", m_CameraYaw);
+		
 		if(ImGui::Button("Center Model"))
 		{
 			m_StaticModels[0]->m_Pos = glm::vec3(0.0f);
@@ -1743,8 +1320,8 @@ int main(int _argc, char** _args)
 	CreateImageViews();
 
 	// primero creamos el layout de los descriptors
-	CreateDescriptorSetLayout();
-	CreateDebugDescriptorSetLayout();
+	m_GraphicsRender.CreateDescriptorSetLayout();
+	m_DbgRender.CreateDebugDescriptorSetLayout();
 	for(auto& model : m_StaticModels)
 	{
 		for(auto& mesh : model->m_Meshes)
@@ -1752,7 +1329,7 @@ int main(int _argc, char** _args)
 			// Descriptor Pool
 			model->m_Materials[mesh->m_Material]->CreateDescriptorPool(m_LogicDevice);
 			// ahora creamos los Descriptor Sets en cada mesh
-			model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(m_LogicDevice, m_DescSetLayout);
+			model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(m_LogicDevice, m_GraphicsRender.m_DescSetLayout);
 		}
 	}
 
@@ -1761,38 +1338,15 @@ int main(int _argc, char** _args)
 		// Descriptor Pool
 		model->m_Material.CreateDescriptorPool(m_LogicDevice);
 		// ahora creamos los Descriptor Sets en cada mesh
-		model->m_Material.CreateMeshDescriptorSet(m_LogicDevice, m_DbgDescSetLayout);
+		model->m_Material.CreateMeshDescriptorSet(m_LogicDevice, m_DbgRender.m_DescSetLayout);
 	}
-
-	/// Vamos a crear los shader module para cargar el bytecode de los shaders
-	VkShaderModule m_VertShaderModule;
-	VkShaderModule m_FragShaderModule;
-	CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
-	CreateShaderModule("resources/Shaders/frag.spv", &m_FragShaderModule);
-	// Creamos las pipelines
-	CreateVulkanPipeline(m_VertShaderModule, m_FragShaderModule, &m_PipelineLayout,
-														&m_RenderPass, &m_GraphicsPipeline, m_DescSetLayout);
-	// Destruymos los ShaderModule ahora que ya no se necesitan.
-	vkDestroyShaderModule(m_LogicDevice, m_VertShaderModule, nullptr);
-	vkDestroyShaderModule(m_LogicDevice, m_FragShaderModule, nullptr);
-
-	// DEBUG SHADERS
-	VkShaderModule m_DebugVertShaderModule;
-	VkShaderModule m_DebugFragShaderModule;
-	CreateShaderModule("resources/Shaders/dbgVert.spv", &m_DebugVertShaderModule);
-	CreateShaderModule("resources/Shaders/dbgFrag.spv", &m_DebugFragShaderModule);
-	//Creamos la Pipeline para pintar debug objs
-	CreateVulkanPipeline(m_DebugVertShaderModule, m_DebugFragShaderModule, &m_DebugPipelineLayout,
-						 &m_DebugRenderPass, &m_DebugPipeline, m_DbgDescSetLayout, true);
-	// Destruymos los ShaderModule ahora que ya no se necesitan.
-	vkDestroyShaderModule(m_LogicDevice, m_DebugVertShaderModule, nullptr);
-	vkDestroyShaderModule(m_LogicDevice, m_DebugFragShaderModule, nullptr);
-
+	m_GraphicsRender.Initialize();
+	m_DbgRender.Initialize();
 	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevices[m_GPUSelected], &m_Mem_Props);
 	CreateCommandBuffer();
 	// Creamos los recursos para el Depth testing
 	CreateDepthTestingResources();
-	CreateFramebuffers();
+	CreateFramebuffers(&m_DbgRender);
 	// Crear Textures
 	for(auto& model : m_StaticModels)
 	{

@@ -1,20 +1,3 @@
-#define VK_CHECK(_value) \
-	if(_value != VK_SUCCESS) \
-	{VK_ASSERT(false);}
-
-#define VK_CHECK_RET(_value) \
-	if(_value != VK_SUCCESS) \
-	{VK_ASSERT(false); return _value;}
-
-#define CHECK(_expression) \
-	exit(-96);
-
-inline static void VK_ASSERT(bool _check)
-{
-	if(_check) exit(-69);
-}
-
-
 #if 0
 	cgltf_options options {};
 	cgltf_parse_file(&options, filename, &modelData);
