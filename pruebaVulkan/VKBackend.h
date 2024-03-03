@@ -1,88 +1,214 @@
+#pragma once
 #include "VKRenderers.h"
+#include "VKRModel.h"
+
+#include "../dependencies/imgui/misc/single_file/imgui_single_file.h"
+#include "../dependencies/imgui/backends/imgui_impl_glfw.h"
+#include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
+
 namespace VKR
 {
     namespace render
     {
 
+        inline const int FRAMES_IN_FLIGHT = 2;
+        inline bool m_NeedToRecreateSwapchain = false;
+        inline bool m_MouseCaptured = false;
+        inline bool m_CloseEngine = false;
+        inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
+        inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
+        inline float m_CameraSpeed = 0.1f;
+        inline std::string g_ConsoleMSG;
+        inline glm::vec3 m_CameraPos = glm::vec3(1.f);
+        inline glm::vec3 m_LightPos = glm::vec3(1.f);
+        inline glm::vec3 m_LightRot = glm::vec3(0.f);
+        inline glm::vec3 m_LightColor = glm::vec3(1.f);
+        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
+        inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
+		inline GraphicsRenderer* m_GraphicsRender;
+        inline DebugRenderer* m_DbgRender;
+
+        inline static void VK_ASSERT(bool _check)
+        {
+            if (_check) exit(-69);
+        }
+
+        struct GPUInfo
+        {
+            uint32_t minUniformBufferOffsetAlignment = 0;
+            VkPhysicalDevice m_Device = VK_NULL_HANDLE;
+
+            VkPhysicalDeviceProperties			   m_Properties{};
+            VkPhysicalDeviceMemoryProperties	   m_MemProps{};
+            VkPhysicalDeviceFeatures			   m_Features{};
+            std::vector< VkExtensionProperties >   m_ExtensionsProps{};
+            std::vector<const char*>               m_DeviceExtensions;
+            std::vector< VkDeviceQueueCreateInfo> m_QueueCreateInfos;
+            VkSurfaceCapabilitiesKHR		  m_SurfaceCaps{};
+            std::vector< VkSurfaceFormatKHR > m_SurfaceFormats{};
+            std::vector< VkPresentModeKHR >	  m_PresentModes{};
+
+            std::vector< VkQueueFamilyProperties > m_QueueFamiliesProps{};
+            const std::vector<const char*> m_ValidationLayers = { "VK_LAYER_KHRONOS_validation" };
+            /*VkPhysicalDeviceProperties2			   properties2{};
+            VkPhysicalDeviceMaintenance3Properties properties3{};*/
+            VkFormat FindSupportedFormat(const std::vector<VkFormat>& _candidates, VkImageTiling _tiling, VkFormatFeatureFlags _features);
+
+            VkFormat FindDepthTestFormat();
+            bool CheckValidationLayerSupport();
+            unsigned int FindMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
+            void CheckValidDevice(VkInstance _Instance);
+        };
+
+        struct VKContext
+        {
+            GPUInfo  m_GpuInfo;
+            VkDevice m_LogicDevice = VK_NULL_HANDLE;
+            
+            VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+            unsigned int m_GraphicsQueueFamilyIndex = 0;
+            unsigned int m_TransferQueueFamilyIndex = 0;
+            VkQueue m_GraphicsQueue;
+            VkQueue m_TransferQueue;
+            VkQueue m_PresentQueue;
+
+            //std::array< VkPipeline, SWAPCHAIN_BUFFERING_LEVEL > boundGraphicsPipelines{};
+            void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo);
+            bool HasStencilComponent(VkFormat format);
+            void CreateLogicalDevice();
+            void CreateDevice(VkInstance _Instance);
+        };
+        VKContext& GetVKContext();
+
+        class VKBackend
+        {
+            //Variables
+        public:
+        private:
+            unsigned int m_CurrentLocalFrame = 0;
+            bool m_IndexedRender = true;
+            int m_TotalTextures;
+            int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
+            float m_CameraFOV = 70.f;
+            GLFWwindow* m_Window;
+            VkResult m_PresentResult;
+            VkInstance m_Instance;
+            VkDebugUtilsMessengerEXT m_DebugMessenger{};
+            std::vector<const char*> m_InstanceExtensions;
+            VkPresentModeKHR m_PresentMode = VK_PRESENT_MODE_FIFO_KHR;
+            VkSurfaceCapabilitiesKHR m_Capabilities;
+            //Swapchains things
+            unsigned int m_SwapchainImagesCount;
+            VkSwapchainCreateInfoKHR m_SwapChainCreateInfo{};
+            std::vector<VkImage> m_SwapChainImages;
+            std::vector<VkImageView> m_SwapChainImagesViews;
+            std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+            VkSwapchainKHR m_SwapChain;
+            // Surface Things
+            VkSurfaceFormatKHR m_SurfaceFormat;
+            VkSurfaceKHR m_Surface;
+            VkExtent2D m_CurrentExtent;
+            VkViewport m_Viewport{};
+            VkRect2D m_Scissor{};
+
+            VkDescriptorPool m_DescriptorPool;
+            VkDescriptorPool m_UIDescriptorPool;
+            VkCommandPool m_CommandPool;
+
+            VkBuffer m_StagingBuffer;
+            std::vector<VkBuffer> m_UniformBuffers;
+            std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+            std::vector<VkBuffer> m_DynamicBuffers;
+            std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
+            std::vector<void*> m_Uniform_SBuffersMapped;
+            std::vector<void*> m_DynamicBuffersMapped;
+            // DEBUG BUFFERS
+            std::vector<VkBuffer> m_DbgUniformBuffers;
+            std::vector<VkDeviceMemory> m_DbgUniformBuffersMemory;
+            std::vector<VkBuffer> m_DbgDynamicBuffers;
+            std::vector<VkDeviceMemory> m_DbgDynamicBuffersMemory;
+            std::vector<void*> m_DbgUniformBuffersMapped;
+            std::vector<void*> m_DbgDynamicBuffersMapped;
+            //
+            VkDeviceMemory m_StaggingBufferMemory;
+            VkPhysicalDeviceMemoryProperties m_Mem_Props;
+            VkImage m_DepthImage;
+            VkDeviceMemory m_DepthImageMemory;
+            VkImageView m_DepthImageView;
+            VkClearColorValue defaultClearColor = { { 0.6f, 0.65f, 0.4f, 1.0f } };
+
+            // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
+            VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];
+            VkSemaphore m_ImageAvailable[FRAMES_IN_FLIGHT];
+            VkSemaphore m_RenderFinish[FRAMES_IN_FLIGHT];
+            VkFence		m_InFlight[FRAMES_IN_FLIGHT];
+            R_Model* tempModel;
+            std::vector<R_Model*> m_StaticModels;
+            std::vector<R_DbgModel*> m_DbgModels;
+
+            // Functions
+        public:
+            VKBackend() {}
+            VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask);
+            void CreateImageViews();
+            void Init();
+        private:
+            void InitializeVulkan(VkApplicationInfo* _appInfo);
+            void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
+                                const char** m_Extensions,
+                                uint32_t m_extensionCount);
+            void CreateSwapChain();
+            void RecreateSwapChain();
+            void CreateFramebuffers(Renderer* _renderer);
+            void CreateCommandBuffer();
+            void CreateSyncObjects(unsigned _frameIdx);
+            void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode,
+                              VkMemoryPropertyFlags _memFlags, VkBuffer& buffer_, VkDeviceMemory& bufferMem_);
+            void CreateAndTransitionImage(char* _modelPath, Texture* _texture);
+            void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h,
+                                   VkDeviceSize _bufferOffset);
+            void CreateImage(unsigned _Width, unsigned _Height, VkFormat _format, VkImageTiling _tiling,
+                             VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties, VkImage* _image,
+                             VkDeviceMemory* _imageMem);
+            void CreateDepthTestingResources();
+            VkImageView CreateTextureImageView(VkImage _tImage);
+            VkSampler CreateTextureSampler();
+            VkCommandBuffer BeginSingleTimeCommandBuffer();
+            void EndSingleTimeCommandBuffer(VkCommandBuffer _commandBuffer);
+            void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size);
+            void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, VkImageLayout _new);
+            void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
+                                     Renderer* _renderer, ImDrawData* draw_data = nullptr);
+            /* Un Frame en Vulkan
+			 *  1. esperar a que el frame anterior acabe
+			 *	2. obtener la imagen de la swap chain
+			 *	3. grabar el command buffer que pinta la escena en la imagen
+			 *	4. Submit del command buffer
+			 *	5. presentar la imagen de la swap chain
+			 */
+			 /* Sincronizacion GPU & CPU
+			     Semaforos: (solo afectan a GPU)
+			         anadir orden entre operaciones de la cola(trabajo que encolamos).
+			         Ejemplos de colas: cola de graficos y cola de presentacion.
+			         Los semaforos sirven para ordenar trabajo dentro de las colas y entre colas
+			         2 tipos de semaforos: binarios y de timeline
+
+			     Vallas: son igual que los semaforos pero estos sirven para ordenar ejecucion
+			         entre la CPU y GPU. Los usamos cuando la CPU debe esperar a que acabe la GPU
+			         para continuar.
+			 */
+            void CleanSwapChain();
+            void ProcessModelNode(aiNode* _node, const aiScene* _scene);
+
+        public:
+            void LoadModel(const char* _filepath, const char* _modelName);
+            bool BackendShouldClose();
+            void PollEvents();
+            void EditorLoop();
+            void DrawFrame();
+            void Cleanup();
+        };
+        VKBackend& GetVKBackend();
     }
 }
 
-VkRenderPass m_RenderPass;
-auto m_GraphicsRender = m_GraphicsRenderer();
-auto m_DbgRender = m_DebugRenderer();
-
-void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo, VkRenderPass* _RenderPass)
-    {
-        // RENDER PASES
-        /// Attachment description
-        // Color
-        VkAttachmentDescription colorAttachment{};
-        colorAttachment.format = m_SwapChainCreateInfo->imageFormat;
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        // Depth
-        VkAttachmentDescription depthAttachment{};
-        // depthAttachment.format = FindDepthTestFormat(); // d32_SFLOAT
-        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        
-        // SUB-PASSES
-        /// Attachment References
-        // color
-        VkAttachmentReference colorAttachmentRef{};
-        colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        // depth
-        VkAttachmentReference depthAttachmentRef{};
-        depthAttachmentRef.attachment = 1;
-        depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        /// Sub-pass
-        VkSubpassDescription subpass{};
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colorAttachmentRef;
-        subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-        /// Subpass dependencies
-        VkSubpassDependency subpassDep{};
-        subpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
-        subpassDep.dstSubpass = 0;
-        subpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        subpassDep.srcAccessMask = 0;
-        subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-        /// Render pass
-        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
-        VkRenderPassCreateInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-        renderPassInfo.pAttachments = attachments.data();
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &subpassDep;
-        if (vkCreateRenderPass(m_LogicDevice, &renderPassInfo, nullptr,
-            _RenderPass) != VK_SUCCESS)
-            exit(-8);
-
-        // m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        // m_RenderPassInfo.attachmentCount = 1;
-        // m_RenderPassInfo.pAttachments = &m_ColorAttachment;
-        // m_RenderPassInfo.subpassCount = 1;
-        // m_RenderPassInfo.pSubpasses = &m_Subpass;
-        // m_RenderPassInfo.dependencyCount = 1;
-        // m_RenderPassInfo.pDependencies = &m_SubpassDep;
-        // if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
-        // 	&m_UIRenderPass) != VK_SUCCESS)
-        // 	exit(-8);
-    }

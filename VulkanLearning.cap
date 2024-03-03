@@ -2,7 +2,7 @@
     "rdocCaptureSettings": 1,
     "settings": {
         "autoStart": false,
-        "commandLine": "",
+        "commandLine": "Sponza/glTF Spona.gltf",
         "environment": [
         ],
         "executable": "C:\\dev\\VulkanLearing\\x64\\Debug\\pruebaVulkan.exe",
@@ -19,9 +19,10 @@
             "delayForDebugger": 0,
             "hookIntoChildren": false,
             "refAllResources": false,
+            "softMemoryLimit": 0,
             "verifyBufferAccess": false
         },
         "queuedFrameCap": 0,
-        "workingDir": ""
+        "workingDir": "C:/dev/VulkanLearing"
     }
 }
