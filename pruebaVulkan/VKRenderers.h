@@ -73,17 +73,9 @@ namespace VKR
 
             ~GraphicsRenderer()
             {
-                /*for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-                {
-                    vkDestroyBuffer(m_LogicDevice, m_DynamicBuffers[i], nullptr);
-                    vkFreeMemory(m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
-
-                    vkDestroyBuffer(m_LogicDevice, m_UniformBuffers[i], nullptr);
-                    vkFreeMemory(m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
-                }
                 vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
                 vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
-                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);*/
+                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
                 // vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
             }
         };
@@ -103,17 +95,9 @@ namespace VKR
 
 	        ~DebugRenderer()
             {
-                /*for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-                {
-                    vkDestroyBuffer(m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
-                    vkFreeMemory(m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
-
-                    vkDestroyBuffer(m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
-                    vkFreeMemory(m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
-                }
                 vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
                 vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
-                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);*/
+                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
             }
         };
 

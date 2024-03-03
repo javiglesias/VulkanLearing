@@ -51,5 +51,5 @@ vec3 BlinnPhong_calculations(vec3 _viewDir)
 	vec3 ambient = lightColor * vec3(texture(inAmbientTexture, texCoord));
 	vec3 diffuse = diff * vec3(texture(inDiffuseTexture, texCoord));
 	vec3 specular = spec * vec3(texture(inSpecularTexture, texCoord));
-	return diffuse;
+	return ambient + diffuse;
 }

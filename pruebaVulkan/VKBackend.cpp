@@ -1599,6 +1599,20 @@ namespace VKR
 			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_RenderPass, nullptr);
 			delete m_GraphicsRender;
 			delete m_DbgRender;
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				vkDestroyBuffer(g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
+			}
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[0], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[1], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_RenderFinish[0], nullptr);
