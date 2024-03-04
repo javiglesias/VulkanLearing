@@ -1357,7 +1357,7 @@ namespace VKR
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)m_DynamicBuffersMapped[m_CurrentLocalFrame] + dynamicOffset, &dynO, sizeof(dynO));
+				memcpy((char*)m_DynamicBuffersMapped[m_FrameToSimulate] + dynamicOffset, &dynO, sizeof(dynO));
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
@@ -1365,7 +1365,7 @@ namespace VKR
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
 					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1,
-						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
+						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[m_FrameToSimulate], 1, &dynamicOffset);
 					vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 					vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 					// Draw Loop
@@ -1380,7 +1380,7 @@ namespace VKR
 					// Flush to make changes visible to the host
 					VkMappedMemoryRange mappedMemoryRange{};
 					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					mappedMemoryRange.memory = m_DynamicBuffersMemory[m_CurrentLocalFrame];
+					mappedMemoryRange.memory = m_DynamicBuffersMemory[m_FrameToSimulate];
 					mappedMemoryRange.size = sizeof(dynO);
 					vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
 				}
@@ -1403,8 +1403,8 @@ namespace VKR
 				VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
 				VkDeviceSize offsets[] = { 0 };
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)m_DbgDynamicBuffersMapped[m_CurrentLocalFrame] + dynamicOffset, &dynO, sizeof(dynO));
-				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[m_CurrentLocalFrame], 1, &dynamicOffset);
+				memcpy((char*)m_DbgDynamicBuffersMapped[m_FrameToSimulate] + dynamicOffset, &dynO, sizeof(dynO));
+				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[m_FrameToSimulate], 1, &dynamicOffset);
 				vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 				vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
 				++debugCount;
@@ -1417,14 +1417,20 @@ namespace VKR
 				exit(-17);
 		}
 
-		void VKBackend::DrawFrame()
+		void VKBackend::DrawFrame(unsigned int _InFlightFrame)
 		{
-			// Esperamos por el frame anterior y reseteamos la Fence
-			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[m_CurrentLocalFrame], VK_TRUE, UINT64_MAX);
-			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[m_CurrentLocalFrame]);
-			vkResetCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], 0);
+			if(m_RenderInitialized)
+			{
+				SubmitAndPresent(m_FrameToPresent, &m_LastImageIdx);
+			}
+
+			// Ahora vamos a simular el siguiente frame
 			uint32_t imageIdx;
-			auto acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[m_CurrentLocalFrame],
+			m_FrameToSimulate = _InFlightFrame;
+			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[m_FrameToSimulate], VK_TRUE, UINT64_MAX);
+			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[m_FrameToSimulate]);
+			vkResetCommandBuffer(m_CommandBuffer[m_FrameToSimulate], 0);
+			auto acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[m_FrameToSimulate],
 				VK_NULL_HANDLE, &imageIdx);
 			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
 				RecreateSwapChain();
@@ -1439,7 +1445,7 @@ namespace VKR
 			ubo.cameraPosition = m_CameraPos;
 			ubo.lightPosition = m_LightPos;
 			ubo.lightColor = m_LightColor;
-			memcpy(m_Uniform_SBuffersMapped[m_CurrentLocalFrame], &ubo, sizeof(ubo));
+			memcpy(m_Uniform_SBuffersMapped[m_FrameToSimulate], &ubo, sizeof(ubo));
 
 			//Debug
 			DebugUniformBufferObject dubo{};
@@ -1447,27 +1453,33 @@ namespace VKR
 				m_CameraUp);
 			dubo.projection = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
 
-			memcpy(m_DbgUniformBuffersMapped[m_CurrentLocalFrame], &dubo, sizeof(dubo));
+			memcpy(m_DbgUniformBuffersMapped[m_FrameToSimulate], &dubo, sizeof(dubo));
 
 			// Render ImGui
 			ImGui::Render();
 			ImDrawData* draw_data = ImGui::GetDrawData();
-			RecordCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_GraphicsRender, draw_data);
-			// RecordDebugCommandBuffer(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, m_DebugPipeline);
-			// UIRender(m_CommandBuffer[m_CurrentLocalFrame], imageIdx, m_CurrentLocalFrame, draw_data);
+			RecordCommandBuffer(m_CommandBuffer[m_FrameToSimulate], imageIdx, m_FrameToSimulate, m_GraphicsRender, draw_data);
+			// RecordDebugCommandBuffer(m_CommandBuffer[m_FrameToSimulate], imageIdx, m_FrameToSimulate, m_DebugPipeline);
+			// UIRender(m_CommandBuffer[m_FrameToSimulate], imageIdx, m_FrameToSimulate, draw_data);
+			m_RenderInitialized = true;
+			m_FrameToPresent = m_FrameToSimulate;
+		}
+
+		void VKBackend::SubmitAndPresent(unsigned int _FrameToPresent, uint32_t* _imageIdx)
+		{
 			VkSubmitInfo submitInfo{};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			VkSemaphore waitSemaphores[] = { m_ImageAvailable[m_CurrentLocalFrame] };
+			VkSemaphore waitSemaphores[] = { m_ImageAvailable[_FrameToPresent] };
 			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 			submitInfo.waitSemaphoreCount = 1;
 			submitInfo.pWaitSemaphores = waitSemaphores;
 			submitInfo.pWaitDstStageMask = waitStages;
 			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &m_CommandBuffer[m_CurrentLocalFrame];
-			VkSemaphore signalSemaphores[] = { m_RenderFinish[m_CurrentLocalFrame] };
+			submitInfo.pCommandBuffers = &m_CommandBuffer[_FrameToPresent];
+			VkSemaphore signalSemaphores[] = { m_RenderFinish[_FrameToPresent] };
 			submitInfo.signalSemaphoreCount = 1;
 			submitInfo.pSignalSemaphores = signalSemaphores;
-			if (vkQueueSubmit(g_context.m_GraphicsQueue, 1, &submitInfo, m_InFlight[m_CurrentLocalFrame]) != VK_SUCCESS)
+			if (vkQueueSubmit(g_context.m_GraphicsQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]) != VK_SUCCESS)
 			{
 				fprintf(stderr, "Error on the Submit");
 				exit(-1);
@@ -1480,7 +1492,7 @@ namespace VKR
 			VkSwapchainKHR swapChains[] = { m_SwapChain };
 			presentInfo.swapchainCount = 1;
 			presentInfo.pSwapchains = swapChains;
-			presentInfo.pImageIndices = &imageIdx;
+			presentInfo.pImageIndices = _imageIdx;
 			presentInfo.pResults = nullptr;
 			m_PresentResult = vkQueuePresentKHR(g_context.m_PresentQueue, &presentInfo);
 			if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)

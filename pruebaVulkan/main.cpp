@@ -39,7 +39,7 @@ int main(int _argc, char** _args)
 		//if (accumulatedTime >= frameCap) // Render frame
 		//{
 		//	accumulatedTime = 0.0f;
-			backend.DrawFrame();
+			backend.DrawFrame(currentLocalFrame);
 			currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
 		 //}
 		//currentFrame = static_cast<float>(glfwGetTime());

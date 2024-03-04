@@ -85,8 +85,11 @@ namespace VKR
             //Variables
         public:
         private:
-            unsigned int m_CurrentLocalFrame = 0;
+            uint32_t m_FrameToSimulate;
+            uint32_t m_LastImageIdx;
+            uint32_t m_FrameToPresent;
             bool m_IndexedRender = true;
+            bool m_RenderInitialized = false;
             int m_TotalTextures;
             int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
             float m_CameraFOV = 70.f;
@@ -205,7 +208,8 @@ namespace VKR
             bool BackendShouldClose();
             void PollEvents();
             void EditorLoop();
-            void DrawFrame();
+            void DrawFrame(unsigned int _InFlightFrame);
+            void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void Cleanup();
         };
         VKBackend& GetVKBackend();
