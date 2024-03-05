@@ -4,14 +4,17 @@ Este es un repo personal en el que voy aprendiendo como hacer un motor de videoj
 de momento.
 Mas adelante me gustaria meter otro backend de Directx12 (No se si meter otro de OGL).
 
+![imagen](https://github.com/javiglesias/VulkanLearing/assets/9042602/15c0e142-f0a9-4765-b079-db5975ab37dc)
+
+
 # Linux Enviro config
-sudo apt install make
-sudo apt install g++
-sudo apt install vulkan-tools
-sudo apt install libvulkan-dev
-sudo apt install vulkan-validationlayers-dev spirv-tools
-sudo apt install libglfw3-dev
-sudo apt install libglm-dev
+- sudo apt install make
+- sudo apt install g++
+- sudo apt install vulkan-tools
+- sudo apt install libvulkan-dev
+- sudo apt install vulkan-validationlayers-dev spirv-tools
+- sudo apt install libglfw3-dev
+- sudo apt install libglm-dev
 
 # TO-DO
 Estos TO-DO los voy poniendo segun se me van ocurriendo, no tienen orden en concreto.
