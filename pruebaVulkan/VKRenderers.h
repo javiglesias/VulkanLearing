@@ -19,6 +19,7 @@ namespace VKR
             /// Data needed
             int m_PolygonMode = VK_POLYGON_MODE_FILL;
             VkCullModeFlagBits m_CullMode = VK_CULL_MODE_BACK_BIT;
+            VkFrontFace m_FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             VkDescriptorSetLayout m_DescSetLayout;
             VkPipelineLayout m_PipelineLayout;
             VkPipeline m_Pipeline;
@@ -66,6 +67,7 @@ namespace VKR
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
+                m_CullMode = VK_CULL_MODE_BACK_BIT;
             }
             void Initialize() override;
             void CreatePipelineLayout();
@@ -85,10 +87,12 @@ namespace VKR
         public: // Functions
 	        void CleanShaderModules();
             void CreateDescriptorSetLayout() override;
-            DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_LINE)
+            DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
+                m_CullMode = VK_CULL_MODE_NONE;
+                m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
             }
             void Initialize() override;
 	        void CreatePipelineLayout();

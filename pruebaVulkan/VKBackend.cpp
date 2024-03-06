@@ -33,8 +33,9 @@ namespace VKR
 				m_CameraYaw   += x_offset;
 				m_CameraPitch += y_offset;
 				// CONSTRAINTS
-				if (m_CameraPitch > 89.0f)  m_CameraPitch = 89.0f;
-				if (m_CameraPitch < -89.0f) m_CameraPitch = -89.0f;
+				if (m_CameraPitch > 55.0f)  m_CameraPitch = 55.0f;
+				if (m_CameraPitch < -55.0f) m_CameraPitch = -55.0f;
+				if (m_CameraYaw > 360.0f)  m_CameraYaw = m_CameraYaw - 360.f;
 				glm::vec3 camera_direction;
 				camera_direction.x = cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch)));
 				camera_direction.y = sin(glm::radians(m_CameraPitch));
@@ -80,6 +81,15 @@ namespace VKR
 			if (_key == GLFW_KEY_R && _action == GLFW_PRESS)
 			{
 				m_CameraPos = glm::vec3(0.f);
+			}
+
+			if (_key == GLFW_KEY_E && _action == GLFW_PRESS) // up
+			{
+				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y + m_CameraSpeed, m_CameraPos.z);
+			}
+			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
+			{
+				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y - m_CameraSpeed, m_CameraPos.z);
 			}
 
 			if (_key == GLFW_KEY_ESCAPE && state)
@@ -1438,10 +1448,12 @@ namespace VKR
 				exit(-69);
 			// Update Uniform buffers
 			UniformBufferObject ubo{};
-			ubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
+			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
 				m_CameraUp);
-			ubo.projection = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
-			ubo.projection[1][1] *= -1; // para invertir el eje Y
+			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
+			projMat[1][1] *= -1; // para invertir el eje Y
+			ubo.view = viewMat;
+			ubo.projection = projMat;
 			ubo.cameraPosition = m_CameraPos;
 			ubo.lightPosition = m_LightPos;
 			ubo.lightColor = m_LightColor;
@@ -1449,10 +1461,8 @@ namespace VKR
 
 			//Debug
 			DebugUniformBufferObject dubo{};
-			dubo.view = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
-				m_CameraUp);
-			dubo.projection = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
-
+			dubo.view = viewMat;
+			dubo.projection = projMat;
 			memcpy(m_DbgUniformBuffersMapped[m_FrameToSimulate], &dubo, sizeof(dubo));
 
 			// Render ImGui

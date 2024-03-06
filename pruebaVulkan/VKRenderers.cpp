@@ -60,7 +60,7 @@ namespace VKR
             m_Rasterizer.polygonMode = (VkPolygonMode)m_PolygonMode;
             m_Rasterizer.lineWidth = 1.f;
             m_Rasterizer.cullMode = m_CullMode;
-            m_Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            m_Rasterizer.frontFace = m_FrontFace;
             m_Rasterizer.depthBiasEnable = VK_FALSE;
             /// Multisampling para evitar los bordes de sierra (anti-aliasing).
             m_Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;

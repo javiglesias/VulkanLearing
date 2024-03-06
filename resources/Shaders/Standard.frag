@@ -18,7 +18,7 @@ vec3 BlinnPhong_calculations(vec3 _viewDir);
 void main() 
 {
 	vec3 viewer_direction = normalize(viewerPosition - fragPosition);
-	vec3 result =  BlinnPhong_calculations( viewer_direction);
+	vec3 result =  directional_light_calculations( viewer_direction);
     outColor = vec4(result, 1.0);
 }
 
