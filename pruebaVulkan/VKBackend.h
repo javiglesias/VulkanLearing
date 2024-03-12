@@ -1,6 +1,7 @@
 #pragma once
 #include "VKRenderers.h"
 #include "VKRModel.h"
+#include "VKRShadowMaterial.h"
 
 #include "../dependencies/imgui/misc/single_file/imgui_single_file.h"
 #include "../dependencies/imgui/backends/imgui_impl_glfw.h"
@@ -26,6 +27,7 @@ namespace VKR
         inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
         inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 		inline GraphicsRenderer* m_GraphicsRender;
+		inline ShadowRenderer* m_ShadowRender;
         inline DebugRenderer* m_DbgRender;
 
         inline static void VK_ASSERT(bool _check)
@@ -66,6 +68,7 @@ namespace VKR
             VkDevice m_LogicDevice = VK_NULL_HANDLE;
             
             VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+            VkRenderPass m_ShadowPass = VK_NULL_HANDLE;
             unsigned int m_GraphicsQueueFamilyIndex = 0;
             unsigned int m_TransferQueueFamilyIndex = 0;
             VkQueue m_GraphicsQueue;
@@ -77,6 +80,7 @@ namespace VKR
             bool HasStencilComponent(VkFormat format);
             void CreateLogicalDevice();
             void CreateDevice(VkInstance _Instance);
+            void CreateShadowRenderPass();
         };
         VKContext& GetVKContext();
 
@@ -85,7 +89,6 @@ namespace VKR
             //Variables
         public:
         private:
-            uint32_t m_FrameToSimulate;
             uint32_t m_LastImageIdx;
             uint32_t m_FrameToPresent;
             bool m_IndexedRender = true;
@@ -106,6 +109,13 @@ namespace VKR
             std::vector<VkImage> m_SwapChainImages;
             std::vector<VkImageView> m_SwapChainImagesViews;
             std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+            // SHADOW
+            VkFramebuffer m_ShadowFramebuffer;
+            VkImage m_ShadowImage;
+            VkDeviceMemory m_ShadowImageMemory;
+            VkImageView m_ShadowImageView;
+            R_ShadowMaterial* m_ShadowMat;
+
             VkSwapchainKHR m_SwapChain;
             // Surface Things
             VkSurfaceFormatKHR m_SurfaceFormat;
@@ -119,6 +129,7 @@ namespace VKR
             VkCommandPool m_CommandPool;
 
             VkBuffer m_StagingBuffer;
+            // RENDER BUFFERS
             std::vector<VkBuffer> m_UniformBuffers;
             std::vector<VkDeviceMemory> m_UniformBuffersMemory;
             std::vector<VkBuffer> m_DynamicBuffers;
@@ -132,12 +143,19 @@ namespace VKR
             std::vector<VkDeviceMemory> m_DbgDynamicBuffersMemory;
             std::vector<void*> m_DbgUniformBuffersMapped;
             std::vector<void*> m_DbgDynamicBuffersMapped;
-            //
+            // SHADOW BUFFERS
+            std::vector<VkBuffer> m_ShadowUniformBuffers;
+            std::vector<VkDeviceMemory> m_ShadowUniformBuffersMemory;
+            std::vector<VkBuffer> m_ShadowDynamicBuffers;
+            std::vector<VkDeviceMemory> m_ShadowDynamicBuffersMemory;
+            std::vector<void*> m_ShadowUniformBuffersMapped;
+            std::vector<void*> m_ShadowDynamicBuffersMapped;
             VkDeviceMemory m_StaggingBufferMemory;
             VkPhysicalDeviceMemoryProperties m_Mem_Props;
             VkImage m_DepthImage;
             VkDeviceMemory m_DepthImageMemory;
             VkImageView m_DepthImageView;
+
             VkClearColorValue defaultClearColor = { { 0.6f, 0.65f, 0.4f, 1.0f } };
 
             // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
@@ -162,6 +180,7 @@ namespace VKR
                                 uint32_t m_extensionCount);
             void CreateSwapChain();
             void RecreateSwapChain();
+            void CreateShadowFramebuffer();
             void CreateFramebuffers(Renderer* _renderer);
             void CreateCommandBuffer();
             void CreateSyncObjects(unsigned _frameIdx);
@@ -173,6 +192,7 @@ namespace VKR
             void CreateImage(unsigned _Width, unsigned _Height, VkFormat _format, VkImageTiling _tiling,
                              VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties, VkImage* _image,
                              VkDeviceMemory* _imageMem);
+            void CreateShadowResources();
             void CreateDepthTestingResources();
             VkImageView CreateTextureImageView(VkImage _tImage);
             VkSampler CreateTextureSampler();

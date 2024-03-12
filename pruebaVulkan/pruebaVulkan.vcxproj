@@ -75,7 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -184,6 +184,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="VKRMaterial.h" />
     <ClInclude Include="VKRModel.h" />
     <ClInclude Include="VKRShader.h" />
+    <ClInclude Include="VKRShadowMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\dependencies\imgui\backends\imgui_impl_glfw.cpp" />

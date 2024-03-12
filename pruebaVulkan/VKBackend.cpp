@@ -361,6 +361,46 @@ namespace VKR
 			vkGetDeviceQueue(m_LogicDevice, m_TransferQueueFamilyIndex, 0, &m_TransferQueue);
 		}
 
+		void VKContext::CreateShadowRenderPass()
+		{
+			// RENDER PASES
+			/// Attachment description
+			// Depth
+			VkAttachmentDescription attachment{};
+			attachment.format = m_GpuInfo.FindDepthTestFormat(); // d32_SFLOAT
+			attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			// SUB-PASSES
+			/// Attachment References 
+			// depth
+			VkAttachmentReference attachmentRef{};
+			attachmentRef.attachment = 0;
+			attachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			/// Sub-pass
+			VkSubpassDescription subpass{};
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.pDepthStencilAttachment = &attachmentRef;
+
+
+			/// Render pass
+			VkRenderPassCreateInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+			renderPassInfo.attachmentCount = 1;
+			renderPassInfo.pAttachments = &attachment;
+			renderPassInfo.subpassCount = 1;
+			renderPassInfo.pSubpasses = &subpass;
+			if (vkCreateRenderPass(m_LogicDevice, &renderPassInfo, nullptr,
+				&m_ShadowPass) != VK_SUCCESS)
+				exit(-8);
+		}
+
 		void VKContext::CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
 		{
 			// RENDER PASES
@@ -604,11 +644,16 @@ namespace VKR
 			m_SwapChainImages.resize(m_SwapchainImagesCount);
 			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 			CreateImageViews();
+
 			m_GraphicsRender = new GraphicsRenderer(g_context.m_LogicDevice);
+			m_ShadowRender = new ShadowRenderer(g_context.m_LogicDevice);
+			m_ShadowMat = new R_ShadowMaterial();
+			m_DbgRender = new DebugRenderer(g_context.m_LogicDevice);
 			// primero creamos el layout de los descriptors
 			m_GraphicsRender->CreateDescriptorSetLayout();
-			m_DbgRender = new DebugRenderer(g_context.m_LogicDevice);
+			m_ShadowRender->CreateDescriptorSetLayout();
 			m_DbgRender->CreateDescriptorSetLayout();
+
 			for (auto& model : m_StaticModels)
 			{
 				for (auto& mesh : model->m_Meshes)
@@ -627,6 +672,10 @@ namespace VKR
 				// ahora creamos los Descriptor Sets en cada mesh
 				model->m_Material.CreateMeshDescriptorSet(g_context.m_LogicDevice, m_DbgRender->m_DescSetLayout);
 			}
+			// Shadow Descriptors
+			m_ShadowMat->CreateDescriptorPool(g_context.m_LogicDevice);
+			m_ShadowMat->CreateDescriptorSet(g_context.m_LogicDevice, m_ShadowRender->m_DescSetLayout);
+
 			// Inicializar Renderer
 			m_GraphicsRender->Initialize();
 			// Setup de la PipelineLayout
@@ -639,6 +688,7 @@ namespace VKR
 			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass);
 			// Limpiar ShaderModules
 			m_GraphicsRender->CleanShaderModules();
+
 			// Lo mismo para el renderer de Debug
 			m_DbgRender->Initialize();
 			m_DbgRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
@@ -646,8 +696,19 @@ namespace VKR
 			m_DbgRender->CreatePipeline(g_context.m_RenderPass);
 			m_DbgRender->CleanShaderModules();
 
+			// Lo Mismo para Shadows
+			m_ShadowRender->Initialize();
+			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			m_ShadowRender->CreatePipelineLayout();
+			g_context.CreateShadowRenderPass();
+			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass);
+			m_ShadowRender->CleanShaderModules();
+
 			vkGetPhysicalDeviceMemoryProperties(g_context.m_GpuInfo.m_Device, &m_Mem_Props);
 			CreateCommandBuffer();
+			// Creamos los recursos para el Shadow map
+			CreateShadowResources();
+			CreateShadowFramebuffer();
 			// Creamos los recursos para el Depth testing
 			CreateDepthTestingResources();
 			CreateFramebuffers(m_DbgRender);
@@ -710,6 +771,7 @@ namespace VKR
 					}
 				}
 			}
+
 			// Uniform buffers
 			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -740,6 +802,7 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
 			}
+
 			// DEBUG UNIFORM BUFFERS
 			for (auto& model : m_DbgModels)
 			{
@@ -800,6 +863,38 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], 0,
 					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
 			}
+
+			// SHADOW UNIFORM BUFFERS
+			m_ShadowUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			m_ShadowUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_ShadowUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			bufferSize = sizeof(ShadowUniformBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_ShadowUniformBuffers[i], m_ShadowUniformBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], 0,
+					bufferSize, 0, &m_ShadowUniformBuffersMapped[i]);
+			}
+			// Dynamic buffers
+			m_ShadowDynamicBuffers.resize(FRAMES_IN_FLIGHT);
+			m_ShadowDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_ShadowDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_ShadowDynamicBuffers[i], m_ShadowDynamicBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], 0,
+					dynBufferSize, 0, &m_ShadowDynamicBuffersMapped[i]);
+			}
+
 			// UI descriptor Pool
 			VkDescriptorPoolSize pool_sizes[] =
 			{
@@ -850,6 +945,9 @@ namespace VKR
 			{
 				model->m_Material.UpdateDescriptorSet(g_context.m_LogicDevice, m_DbgUniformBuffers, m_DbgDynamicBuffers);
 			}
+
+			// Shadow DescriptorSet
+			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 
 			CreateSyncObjects(0);
 			CreateSyncObjects(1);
@@ -939,6 +1037,21 @@ namespace VKR
 			// CreateTextureSampler();
 			CreateFramebuffers(m_GraphicsRender);
 			m_NeedToRecreateSwapchain = false;
+		}
+
+		void VKBackend::CreateShadowFramebuffer()
+		{
+			VkFramebufferCreateInfo mFramebufferInfo{};
+			mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			mFramebufferInfo.renderPass = g_context.m_ShadowPass;
+			mFramebufferInfo.attachmentCount = 1;
+			mFramebufferInfo.pAttachments = &m_ShadowImageView;
+			mFramebufferInfo.width = m_CurrentExtent.width;
+			mFramebufferInfo.height = m_CurrentExtent.height;
+			mFramebufferInfo.layers = 1;
+			if (vkCreateFramebuffer(g_context.m_LogicDevice, &mFramebufferInfo, nullptr,
+				&m_ShadowFramebuffer) != VK_SUCCESS)
+				exit(-10);
 		}
 
 		void VKBackend::CreateFramebuffers(Renderer* _renderer)
@@ -1124,6 +1237,21 @@ namespace VKR
 			tAllocInfo.allocationSize = memRequ.size;
 			tAllocInfo.memoryTypeIndex = g_context.m_GpuInfo.FindMemoryType(memRequ.memoryTypeBits, _memProperties);
 			VK_ASSERT(vkAllocateMemory(g_context.m_LogicDevice, &tAllocInfo, nullptr, _imageMem));
+		}
+
+		void VKBackend::CreateShadowResources()
+		{
+			VkFormat depthFormat = g_context.m_GpuInfo.FindDepthTestFormat();
+			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
+				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&m_ShadowImage, &m_ShadowImageMemory);
+			// Transicionamos la imagen
+			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowImage, m_ShadowImageMemory, 0);
+			TransitionImageLayout(m_ShadowImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			m_ShadowImageView = CreateImageView(m_ShadowImage, depthFormat,
+				VK_IMAGE_ASPECT_DEPTH_BIT);
 		}
 
 		void VKBackend::CreateDepthTestingResources()
@@ -1334,10 +1462,101 @@ namespace VKR
 			mBeginInfo.pInheritanceInfo = nullptr;
 			if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
 				exit(-13);
+
+			// Shadow Pass
+			{
+				// Clear Color
+				VkClearValue clearValue;
+				clearValue.depthStencil = { 1.0f, 0 };
+				// Update Uniform buffers
+				ShadowUniformBufferObject ubo{};
+				glm::mat4 viewMat = glm::lookAt(m_LightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				glm::mat4 projMat = glm::perspective(glm::radians(45.f), 1.0f, 0.1f, 1000000.f);
+				ubo.view = viewMat;
+				ubo.projection = projMat;
+				memcpy(m_ShadowUniformBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
+
+				VkRenderPassBeginInfo renderPassInfo{};
+				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+				renderPassInfo.renderPass = g_context.m_ShadowPass;
+				renderPassInfo.framebuffer = m_ShadowFramebuffer;
+				renderPassInfo.renderArea.offset = { 0,0 };
+				renderPassInfo.renderArea.extent = m_CurrentExtent;
+				renderPassInfo.clearValueCount = 1;
+				renderPassInfo.pClearValues = &clearValue;
+				vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+				vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_Pipeline);
+				vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
+				vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
+
+				auto dynamicAlignment = sizeof(glm::mat4);
+				if (g_context.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
+				{
+					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+				}
+				uint32_t count = 0;
+				
+				for (auto& model : m_StaticModels)
+				{
+					DynamicBufferObject dynO{};
+					dynO.model = glm::mat4(1.0f);
+					uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+					memcpy((char*)m_ShadowDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
+					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout, 
+						0, 1, &m_ShadowMat->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
+					for (auto& mesh : model->m_Meshes)
+					{
+						// Update Uniform buffers
+
+						VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
+						VkDeviceSize offsets[] = { 0 };
+						vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
+						vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+						// Draw Loop
+						if (m_IndexedRender && mesh->m_Indices.size() > 0)
+						{
+							vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
+						}
+						else
+						{
+							vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
+						}
+						// Flush to make changes visible to the host
+						VkMappedMemoryRange mappedMemoryRange{};
+						mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+						mappedMemoryRange.memory = m_ShadowDynamicBuffersMemory[_frameIdx];
+						mappedMemoryRange.size = sizeof(dynO);
+						vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
+					}
+					++count;
+				}
+				vkCmdEndRenderPass(_commandBuffer);
+			}
 			// Clear Color
 			std::array<VkClearValue, 2> clearValues;
 			clearValues[0].color = defaultClearColor;
 			clearValues[1].depthStencil = { 1.0f, 0 };
+			// Update Uniform buffers
+			UniformBufferObject ubo{};
+			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
+				m_CameraUp);
+			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
+			projMat[1][1] *= -1; // para invertir el eje Y
+			ubo.view = viewMat;
+			ubo.projection = projMat;
+			ubo.cameraPosition = m_CameraPos;
+			ubo.lightPosition = m_LightPos;
+			ubo.lightColor = m_LightColor;
+			memcpy(m_Uniform_SBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
+
+			//Debug
+			DebugUniformBufferObject dubo{};
+			dubo.view = viewMat;
+			dubo.projection = projMat;
+			memcpy(m_DbgUniformBuffersMapped[_imageIdx], &dubo, sizeof(dubo));
+
 			// Render pass
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1367,7 +1586,7 @@ namespace VKR
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)m_DynamicBuffersMapped[m_FrameToSimulate] + dynamicOffset, &dynO, sizeof(dynO));
+				memcpy((char*)m_DynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
@@ -1375,7 +1594,7 @@ namespace VKR
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
 					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1,
-						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[m_FrameToSimulate], 1, &dynamicOffset);
+						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
 					vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 					vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 					// Draw Loop
@@ -1390,7 +1609,7 @@ namespace VKR
 					// Flush to make changes visible to the host
 					VkMappedMemoryRange mappedMemoryRange{};
 					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					mappedMemoryRange.memory = m_DynamicBuffersMemory[m_FrameToSimulate];
+					mappedMemoryRange.memory = m_DynamicBuffersMemory[_frameIdx];
 					mappedMemoryRange.size = sizeof(dynO);
 					vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
 				}
@@ -1413,8 +1632,8 @@ namespace VKR
 				VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
 				VkDeviceSize offsets[] = { 0 };
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)m_DbgDynamicBuffersMapped[m_FrameToSimulate] + dynamicOffset, &dynO, sizeof(dynO));
-				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[m_FrameToSimulate], 1, &dynamicOffset);
+				memcpy((char*)m_DbgDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
+				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
 				vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
 				vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
 				++debugCount;
@@ -1429,50 +1648,23 @@ namespace VKR
 
 		void VKBackend::DrawFrame(unsigned int _InFlightFrame)
 		{
-			if(m_RenderInitialized)
-			{
-				SubmitAndPresent(m_FrameToPresent, &m_LastImageIdx);
-			}
-
 			// Ahora vamos a simular el siguiente frame
 			uint32_t imageIdx;
-			m_FrameToSimulate = _InFlightFrame;
-			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[m_FrameToSimulate], VK_TRUE, UINT64_MAX);
-			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[m_FrameToSimulate]);
-			vkResetCommandBuffer(m_CommandBuffer[m_FrameToSimulate], 0);
-			auto acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[m_FrameToSimulate],
+			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame], VK_TRUE, UINT64_MAX);
+			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame]);
+			vkResetCommandBuffer(m_CommandBuffer[_InFlightFrame], 0);
+			auto acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],
 				VK_NULL_HANDLE, &imageIdx);
 			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
 				RecreateSwapChain();
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);
-			// Update Uniform buffers
-			UniformBufferObject ubo{};
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
-				m_CameraUp);
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
-			projMat[1][1] *= -1; // para invertir el eje Y
-			ubo.view = viewMat;
-			ubo.projection = projMat;
-			ubo.cameraPosition = m_CameraPos;
-			ubo.lightPosition = m_LightPos;
-			ubo.lightColor = m_LightColor;
-			memcpy(m_Uniform_SBuffersMapped[m_FrameToSimulate], &ubo, sizeof(ubo));
-
-			//Debug
-			DebugUniformBufferObject dubo{};
-			dubo.view = viewMat;
-			dubo.projection = projMat;
-			memcpy(m_DbgUniformBuffersMapped[m_FrameToSimulate], &dubo, sizeof(dubo));
 
 			// Render ImGui
 			ImGui::Render();
 			ImDrawData* draw_data = ImGui::GetDrawData();
-			RecordCommandBuffer(m_CommandBuffer[m_FrameToSimulate], imageIdx, m_FrameToSimulate, m_GraphicsRender, draw_data);
-			// RecordDebugCommandBuffer(m_CommandBuffer[m_FrameToSimulate], imageIdx, m_FrameToSimulate, m_DebugPipeline);
-			// UIRender(m_CommandBuffer[m_FrameToSimulate], imageIdx, m_FrameToSimulate, draw_data);
-			m_RenderInitialized = true;
-			m_FrameToPresent = m_FrameToSimulate;
+			RecordCommandBuffer(m_CommandBuffer[_InFlightFrame], imageIdx, _InFlightFrame, m_GraphicsRender, draw_data);
+			SubmitAndPresent(_InFlightFrame, &imageIdx);
 		}
 
 		void VKBackend::SubmitAndPresent(unsigned int _FrameToPresent, uint32_t* _imageIdx)
@@ -1619,8 +1811,11 @@ namespace VKR
 			ImGui::DestroyContext();
 			vkDestroyDescriptorPool(g_context.m_LogicDevice, m_UIDescriptorPool, nullptr);
 			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_RenderPass, nullptr);
+			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_ShadowPass, nullptr);
+			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);
 			delete m_GraphicsRender;
 			delete m_DbgRender;
+			delete m_ShadowRender;
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
@@ -1634,6 +1829,12 @@ namespace VKR
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_ShadowUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_ShadowDynamicBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], nullptr);
 			}
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[0], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[1], nullptr);
@@ -1658,9 +1859,16 @@ namespace VKR
 			{
 				model->Cleanup(g_context.m_LogicDevice);
 			}
+			m_ShadowMat->Cleanup(g_context.m_LogicDevice);
+
 			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
 			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);
 			vkFreeMemory(g_context.m_LogicDevice, m_DepthImageMemory, nullptr);
+
+			vkDestroyImageView(g_context.m_LogicDevice, m_ShadowImageView, nullptr);
+			vkDestroyImage(g_context.m_LogicDevice, m_ShadowImage, nullptr);
+			vkFreeMemory(g_context.m_LogicDevice, m_ShadowImageMemory, nullptr);
+
 			vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 			vkDestroyDevice(g_context.m_LogicDevice, nullptr);
 			if (m_DebugMessenger != nullptr)

@@ -13,6 +13,8 @@ namespace VKR
          inline auto m_AttributeDescriptions = Vertex3D::getAttributeDescriptions();
          inline auto m_DbgBindingDescription = DBG_Vertex3D::getBindingDescription();
          inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
+         inline auto m_ShadowBindingDescription = Vertex3D::getBindingDescription();
+         inline auto m_ShadowAttributeDescriptions = Vertex3D::getAttributeDescriptions();
 
         struct Renderer
         {
@@ -47,10 +49,17 @@ namespace VKR
         public:
             virtual void Initialize() {}
             virtual void CreateDescriptorSetLayout() {}
+            virtual void CreatePipelineLayout() {}
+            virtual void CleanShaderModules() {}
 
             Renderer() {}
-            ~Renderer() {}
-            void CreateShaderStages();
+            ~Renderer()
+            {
+                vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
+                vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
+                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
+            }
+            virtual void CreateShaderStages();
             void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
             void CreatePipeline(VkRenderPass _RenderPass);
             void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule);
@@ -62,31 +71,25 @@ namespace VKR
         public: // Functions
 
             // Creamos el layout de los Descriptor set que vamos a utlizar
+            void Initialize() override;
+	        void CreatePipelineLayout() override;
             void CreateDescriptorSetLayout() override;
+	        void CleanShaderModules() override;
             GraphicsRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
                 m_CullMode = VK_CULL_MODE_BACK_BIT;
             }
-            void Initialize() override;
-            void CreatePipelineLayout();
-            void CleanShaderModules();
-
-            ~GraphicsRenderer()
-            {
-                vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
-                vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
-                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
-                // vkDestroyRenderPass(m_LogicDevice, m_UIRenderPass, nullptr);
-            }
         };
 
         struct DebugRenderer : Renderer
         {
         public: // Functions
-	        void CleanShaderModules();
+            void Initialize() override;
+	        void CreatePipelineLayout() override;
             void CreateDescriptorSetLayout() override;
+	        void CleanShaderModules() override;
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
@@ -94,25 +97,24 @@ namespace VKR
                 m_CullMode = VK_CULL_MODE_NONE;
                 m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
             }
+        };
+
+        struct ShadowRenderer : Renderer
+        {
+        public: // Functions
+            // Creamos el layout de los Descriptor set que vamos a utlizar
             void Initialize() override;
-	        void CreatePipelineLayout();
-
-	        ~DebugRenderer()
+            void CreatePipelineLayout() override;
+            void CreateDescriptorSetLayout() override;
+            void CreateShaderStages() override;
+            void CreatePipeline(VkRenderPass _RenderPass);
+            void CleanShaderModules() override;
+            ShadowRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
-                vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
-                vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
-                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
+                m_LogicDevice = _LogicalDevice;
+                m_PolygonMode = _PolygonMode;
+                m_CullMode = VK_CULL_MODE_NONE;
             }
-        };
-
-        struct m_UIRenderer : Renderer
-        {
-            m_UIRenderer() {}
-            ~m_UIRenderer() {}
-        };
-
-        struct m_CustomRenderer : Renderer
-        {
         };
     }
 }
