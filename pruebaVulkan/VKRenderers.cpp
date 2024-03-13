@@ -259,6 +259,14 @@ namespace VKR
             textureAmbientLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             textureAmbientLayoutBinding.pImmutableSamplers = nullptr;
 
+            // Textura Shadow
+            VkDescriptorSetLayoutBinding textureShadowLayoutBinding{};
+            textureShadowLayoutBinding.binding = 5;
+            textureShadowLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureShadowLayoutBinding.descriptorCount = 1;
+            textureShadowLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureShadowLayoutBinding.pImmutableSamplers = nullptr;
+
             // estructura Dynamic Uniforms
             VkDescriptorSetLayoutBinding dynOLayoutBinding{};
             dynOLayoutBinding.binding = 4;
@@ -267,12 +275,13 @@ namespace VKR
             dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
             dynOLayoutBinding.pImmutableSamplers = nullptr;
 
-            std::array<VkDescriptorSetLayoutBinding, 5> ShaderBindings = {
+            std::array<VkDescriptorSetLayoutBinding, 6> ShaderBindings = {
                 uboLayoutBinding,
                 textureDiffuseLayoutBinding,
                 textureSpecularLayoutBinding,
                 textureAmbientLayoutBinding,
-                dynOLayoutBinding
+                dynOLayoutBinding,
+                textureShadowLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

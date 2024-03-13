@@ -374,7 +374,7 @@ namespace VKR
 			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			// SUB-PASSES
 			/// Attachment References 
@@ -937,6 +937,10 @@ namespace VKR
 			{
 				for (auto& mesh : model->m_Meshes)
 				{
+					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = m_ShadowImageView;
+					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = m_ShadowImage;
+					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = m_ShadowImageMemory;
+					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = m_ShadowImgSamp;
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(g_context.m_LogicDevice, m_UniformBuffers, m_DynamicBuffers);
 				}
 			}
@@ -1243,7 +1247,7 @@ namespace VKR
 		{
 			VkFormat depthFormat = g_context.m_GpuInfo.FindDepthTestFormat();
 			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
-				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				&m_ShadowImage, &m_ShadowImageMemory);
 			// Transicionamos la imagen
@@ -1252,6 +1256,7 @@ namespace VKR
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 			m_ShadowImageView = CreateImageView(m_ShadowImage, depthFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT);
+			m_ShadowImgSamp = CreateTextureSampler();
 		}
 
 		void VKBackend::CreateDepthTestingResources()
@@ -1442,11 +1447,16 @@ namespace VKR
 				m_LightColor.x = color[0];
 				m_LightColor.y = color[1];
 				m_LightColor.z = color[2];
+				/*auto m_Dset = ImGui_ImplVulkan_AddTexture(m_ShadowImgSamp, m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+				ImGui::Image(m_Dset, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
 				ImGui::End();
 			}
 			ImGui::Begin("DEBUG PANEL");
 			{
 				ImGui::Text("%s", g_ConsoleMSG.c_str());
+				bool isOpen = true;
+				ImGui::ShowDemoWindow(&isOpen);
 				ImGui::End();
 			}
 			ImGui::EndFrame();
@@ -1593,6 +1603,7 @@ namespace VKR
 
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
+
 					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1,
 						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
 					vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
@@ -1769,6 +1780,7 @@ namespace VKR
 					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(std::string(path.data));
 					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
 					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(std::string(path.data));
+					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new Texture();
 				}
 				tempMesh->m_Material = mesh->mMaterialIndex;
 				//++m_TotalTextures;

@@ -114,6 +114,7 @@ namespace VKR
             VkImage m_ShadowImage;
             VkDeviceMemory m_ShadowImageMemory;
             VkImageView m_ShadowImageView;
+            VkSampler m_ShadowImgSamp;
             R_ShadowMaterial* m_ShadowMat;
 
             VkSwapchainKHR m_SwapChain;

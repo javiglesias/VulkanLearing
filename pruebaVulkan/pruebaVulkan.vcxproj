@@ -190,6 +190,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClCompile Include="..\dependencies\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\dependencies\imgui\backends\imgui_impl_vulkan.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui_widgets.cpp" />

@@ -18,6 +18,7 @@ namespace VKR
 			VkDeviceMemory tImageMem = nullptr;
 			VkImageView tImageView = nullptr;
 			VkSampler m_Sampler = nullptr;
+			Texture() {}
 			Texture(std::string _path)
 			{
 				sPath = _path;
@@ -56,12 +57,13 @@ namespace VKR
 			Texture* m_TextureDiffuse;
 			Texture* m_TextureSpecular;
 			Texture* m_TextureAmbient;
+			Texture* m_TextureShadowMap;
 		public:
 			void CreateDescriptorPool(VkDevice _LogicDevice)
 			{
 				if (m_DescriptorPool == nullptr)
 				{
-					std::array<VkDescriptorPoolSize, 5> descPoolSize{};
+					std::array<VkDescriptorPoolSize, 6> descPoolSize{};
 					// UBO
 					descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
@@ -78,6 +80,10 @@ namespace VKR
 					// Model Matrix
 					descPoolSize[4].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					descPoolSize[4].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+					// Textura Shadow
+					descPoolSize[5].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descPoolSize[5].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 					VkDescriptorPoolCreateInfo descPoolInfo{};
 					descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -116,7 +122,7 @@ namespace VKR
 					bufferInfo.offset = 0;
 					bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
-					std::array<VkWriteDescriptorSet, 5> descriptorsWrite{};
+					std::array<VkWriteDescriptorSet, 6> descriptorsWrite{};
 					descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 					descriptorsWrite[0].dstBinding = 0;
@@ -214,6 +220,32 @@ namespace VKR
 					descriptorsWrite[4].pBufferInfo = &dynBufferInfo;
 					descriptorsWrite[4].pImageInfo = nullptr;
 					descriptorsWrite[4].pTexelBufferView = nullptr;
+
+					//Shadow
+					VkDescriptorImageInfo TextureShadowImage{};
+					TextureShadowImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureShadowImage.imageView = m_TextureShadowMap->tImageView;
+					if (m_TextureShadowMap->m_Sampler != nullptr)
+					{
+						TextureShadowImage.sampler = m_TextureShadowMap->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureShadowMap->sPath;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[5].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[5].dstBinding = 5;
+					descriptorsWrite[5].dstArrayElement = 0;
+					descriptorsWrite[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[5].descriptorCount = 1;
+					descriptorsWrite[5].pBufferInfo = nullptr;
+					descriptorsWrite[5].pImageInfo = &TextureShadowImage;
+					descriptorsWrite[5].pTexelBufferView = nullptr;
+
 					vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 				}
 			}
@@ -227,6 +259,8 @@ namespace VKR
 				m_TextureSpecular = nullptr;
 				m_TextureAmbient->CleanTextureData(_LogicDevice);
 				m_TextureAmbient = nullptr;
+				m_TextureShadowMap->CleanTextureData(_LogicDevice);
+				m_TextureShadowMap = nullptr;
 			}
 		};
 	}
