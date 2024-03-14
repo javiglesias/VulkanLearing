@@ -13,6 +13,8 @@ namespace VKR
     {
 
         inline const int FRAMES_IN_FLIGHT = 2;
+        inline const int m_Width = 1280;
+        inline const int m_Height = 720;
         inline bool m_NeedToRecreateSwapchain = false;
         inline bool m_MouseCaptured = false;
         inline bool m_CloseEngine = false;
@@ -20,11 +22,11 @@ namespace VKR
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.1f;
         inline std::string g_ConsoleMSG;
-        inline glm::vec3 m_CameraPos = glm::vec3(1.f);
-        inline glm::vec3 m_LightPos = glm::vec3(1.f);
+        inline glm::vec3 m_CameraPos = glm::vec3(0.f);
+        inline glm::vec3 m_LightPos = glm::vec3(0.f);
         inline glm::vec3 m_LightRot = glm::vec3(0.f);
-        inline glm::vec3 m_LightColor = glm::vec3(1.f);
-        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, -1.f);
+        inline glm::vec3 m_LightColor = glm::vec3(0.f);
+        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 		inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
@@ -95,7 +97,7 @@ namespace VKR
             bool m_RenderInitialized = false;
             int m_TotalTextures;
             int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
-            float m_CameraFOV = 70.f;
+            float m_CameraFOV = 40.f;
             GLFWwindow* m_Window;
             VkResult m_PresentResult;
             VkInstance m_Instance;

@@ -33,9 +33,8 @@ namespace VKR
 				m_CameraYaw   += x_offset;
 				m_CameraPitch += y_offset;
 				// CONSTRAINTS
-				if (m_CameraPitch > 55.0f)  m_CameraPitch = 55.0f;
-				if (m_CameraPitch < -55.0f) m_CameraPitch = -55.0f;
-				if (m_CameraYaw > 360.0f)  m_CameraYaw = m_CameraYaw - 360.f;
+				if (m_CameraPitch > 89.f)  m_CameraPitch = 89.f;
+				if (m_CameraPitch < -89.f) m_CameraPitch = -89.f;
 				glm::vec3 camera_direction;
 				camera_direction.x = cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch)));
 				camera_direction.y = sin(glm::radians(m_CameraPitch));
@@ -515,8 +514,6 @@ namespace VKR
 			const char** mExtensions;
 			glm::mat4 m_matrix;
 			glm::vec4 m_vec;
-			const int m_Width = 1280;
-			const int m_Height = 720;
 			// 	cgltf_data* m_ModelData;
 			/// VULKAN/glfw THINGS
 			if (!g_context.m_GpuInfo.CheckValidationLayerSupport()) exit(-2);
@@ -1452,11 +1449,24 @@ namespace VKR
 				ImGui::Image(m_Dset, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
 				ImGui::End();
 			}
+			ImGui::Begin("World");
+			{
+				for(auto& model : m_StaticModels)
+				{
+					float position[3] = { model->m_Pos.x , model->m_Pos.y, model->m_Pos.z};
+					ImGui::LabelText("%s ", model->m_Path);
+					ImGui::DragFloat3("Position", position, 0.01f, -100.f, 100.f);
+					model->m_Pos.x = position[0];
+					model->m_Pos.y = position[1];
+					model->m_Pos.z = position[2];
+				}
+				ImGui::End();
+			}
 			ImGui::Begin("DEBUG PANEL");
 			{
 				ImGui::Text("%s", g_ConsoleMSG.c_str());
 				bool isOpen = true;
-				ImGui::ShowDemoWindow(&isOpen);
+				//ImGui::ShowDemoWindow(&isOpen);
 				ImGui::End();
 			}
 			ImGui::EndFrame();
@@ -1544,115 +1554,123 @@ namespace VKR
 				}
 				vkCmdEndRenderPass(_commandBuffer);
 			}
-			// Clear Color
-			std::array<VkClearValue, 2> clearValues;
-			clearValues[0].color = defaultClearColor;
-			clearValues[1].depthStencil = { 1.0f, 0 };
-			// Update Uniform buffers
-			UniformBufferObject ubo{};
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward,
-				m_CameraUp);
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), 1.0f, 0.1f, 1000000.f);
-			projMat[1][1] *= -1; // para invertir el eje Y
-			ubo.view = viewMat;
-			ubo.projection = projMat;
-			ubo.cameraPosition = m_CameraPos;
-			ubo.lightPosition = m_LightPos;
-			ubo.lightColor = m_LightColor;
-			memcpy(m_Uniform_SBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
 
-			//Debug
-			DebugUniformBufferObject dubo{};
-			dubo.view = viewMat;
-			dubo.projection = projMat;
-			memcpy(m_DbgUniformBuffersMapped[_imageIdx], &dubo, sizeof(dubo));
-
-			// Render pass
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = g_context.m_RenderPass;
-			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
-			renderPassInfo.renderArea.offset = { 0,0 };
-			renderPassInfo.renderArea.extent = m_CurrentExtent;
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
-			vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			// Drawing Commands
-			vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_Pipeline);
-			// REFRESH RENDER MODE FUNCTIONS
-			vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
-			vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-
-			auto dynamicAlignment = sizeof(glm::mat4);
-			if (g_context.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
+			// Color Pass
 			{
-				dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			}
-			uint32_t count = 0;
-			for (auto& model : m_StaticModels)
-			{
-				DynamicBufferObject dynO{};
-				dynO.model = glm::mat4(1.0f);
-				dynO.model = glm::translate(dynO.model, model->m_Pos);
-				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)m_DynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
-				for (auto& mesh : model->m_Meshes)
+				std::array<VkClearValue, 2> clearValues;
+				clearValues[0].color = defaultClearColor;
+				clearValues[1].depthStencil = { 1.0f, 0 };
+				// Update Uniform buffers
+				UniformBufferObject ubo{};
+				glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+				glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
+				projMat[1][1] *= -1; // para invertir el eje Y
+
+				ubo.view = viewMat;
+				ubo.projection = projMat;
+				ubo.cameraPosition = m_CameraPos;
+				ubo.lightPosition = m_LightPos;
+				ubo.lightColor = m_LightColor;
+				memcpy(m_Uniform_SBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
+
+				// Render pass
+				VkRenderPassBeginInfo renderPassInfo{};
+				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+				renderPassInfo.renderPass = g_context.m_RenderPass;
+				renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+				renderPassInfo.renderArea.offset = { 0,0 };
+				renderPassInfo.renderArea.extent = m_CurrentExtent;
+				renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+				renderPassInfo.pClearValues = clearValues.data();
+				vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+				// Drawing Commands
+				vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_Pipeline);
+				// REFRESH RENDER MODE FUNCTIONS
+				vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
+				vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
+
+				auto dynamicAlignment = sizeof(glm::mat4);
+				if (g_context.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
 				{
-					// Update Uniform buffers
+					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+				}
+				uint32_t count = 0;
+				for (auto& model : m_StaticModels)
+				{
+					DynamicBufferObject dynO{};
+					dynO.model = glm::mat4(1.0f);
+					dynO.model = glm::translate(dynO.model, model->m_Pos);
+					uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+					memcpy((char*)m_DynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
+					for (auto& mesh : model->m_Meshes)
+					{
+						// Update Uniform buffers
 
-					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
+						VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
+						VkDeviceSize offsets[] = { 0 };
+
+						vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1,
+							&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
+						vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
+						vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+						// Draw Loop
+						if (m_IndexedRender && mesh->m_Indices.size() > 0)
+						{
+							vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
+						}
+						else
+						{
+							vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
+						}
+						// Flush to make changes visible to the host
+						VkMappedMemoryRange mappedMemoryRange{};
+						mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+						mappedMemoryRange.memory = m_DynamicBuffersMemory[_frameIdx];
+						mappedMemoryRange.size = sizeof(dynO);
+						vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
+					}
+					++count;
+				}
+				// DEBUG Render
+				vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
+				//Debug
+				DebugUniformBufferObject dubo{};
+				dubo.view = viewMat;
+				dubo.projection = projMat;
+
+				memcpy(m_DbgUniformBuffersMapped[_imageIdx], &dubo, sizeof(dubo));
+				// REFRESH RENDER MODE FUNCTIONS
+				vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
+				vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
+				int debugCount = 0;
+				m_DbgModels[0]->m_Pos = m_LightPos;
+				for (auto& model : m_DbgModels)
+				{
+					DynamicBufferObject dynO{};
+					dynO.model = glm::mat4(1.0f);
+					dynO.model = glm::translate(dynO.model, model->m_Pos);
+					uint32_t dynamicOffset = debugCount * static_cast<uint32_t>(dynamicAlignment);
+					VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
-
-					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1,
-						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
+					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+					memcpy((char*)m_DbgDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
+					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
 					vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-					vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-					// Draw Loop
-					if (m_IndexedRender && mesh->m_Indices.size() > 0)
-					{
-						vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
-					}
-					else
-					{
-						vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
-					}
+					vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
 					// Flush to make changes visible to the host
 					VkMappedMemoryRange mappedMemoryRange{};
 					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					mappedMemoryRange.memory = m_DynamicBuffersMemory[_frameIdx];
+					mappedMemoryRange.memory = m_DbgDynamicBuffersMemory[_frameIdx];
 					mappedMemoryRange.size = sizeof(dynO);
 					vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
+					++debugCount;
 				}
-				++count;
+				// UI Render
+				if (draw_data)
+					ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
+				vkCmdEndRenderPass(_commandBuffer);
 			}
-			// ---- Draw Loop
-			// DEBUG Render
-			vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
-			// REFRESH RENDER MODE FUNCTIONS
-			vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
-			vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-			int debugCount = 0;
-			m_DbgModels[0]->m_Pos = m_LightPos;
-			for (auto& model : m_DbgModels)
-			{
-				DynamicBufferObject dynO{};
-				dynO.model = glm::mat4(1.0f);
-				dynO.model = glm::translate(dynO.model, model->m_Pos);
-				uint32_t dynamicOffset = debugCount * static_cast<uint32_t>(dynamicAlignment);
-				VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
-				VkDeviceSize offsets[] = { 0 };
-				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)m_DbgDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
-				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
-				vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-				vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
-				++debugCount;
-			}
-			// UI Render
-			if (draw_data)
-				ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
-			vkCmdEndRenderPass(_commandBuffer);
 			if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
 				exit(-17);
 		}

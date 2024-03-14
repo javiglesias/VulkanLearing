@@ -90,7 +90,7 @@ struct DBG_Vertex3D
 struct Vertex3D {
 	glm::vec3 m_Pos;
 	glm::vec2 m_TexCoord;// x, y
-	glm::vec3  m_Normal;
+	glm::vec3 m_Normal;
 
 	static VkVertexInputBindingDescription getBindingDescription()
 	{

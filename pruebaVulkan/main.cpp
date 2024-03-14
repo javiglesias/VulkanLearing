@@ -22,6 +22,10 @@ int main(int _argc, char** _args)
 		sprintf(modelName, "%s", _args[2]);
 		printf("\n\tApplication launched with Params(%s): %s", modelPath, modelName);
 		backend.LoadModel(modelPath, modelName);
+		// FLOOR
+		sprintf(modelPath, "resources/Models/Plane/glTF/");
+		sprintf(modelName, "Plane.gltf");
+		backend.LoadModel(modelPath, modelName);
 	}
 	else
 	{

@@ -9,12 +9,12 @@ namespace VKR
     {
         extern std::string g_ConsoleMSG;
 
-         inline auto m_BindingDescription = Vertex3D::getBindingDescription();
-         inline auto m_AttributeDescriptions = Vertex3D::getAttributeDescriptions();
-         inline auto m_DbgBindingDescription = DBG_Vertex3D::getBindingDescription();
-         inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
-         inline auto m_ShadowBindingDescription = Vertex3D::getBindingDescription();
-         inline auto m_ShadowAttributeDescriptions = Vertex3D::getAttributeDescriptions();
+		inline auto m_BindingDescription = Vertex3D::getBindingDescription();
+		inline auto m_AttributeDescriptions = Vertex3D::getAttributeDescriptions();
+		inline auto m_DbgBindingDescription = DBG_Vertex3D::getBindingDescription();
+		inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
+		inline auto m_ShadowBindingDescription = m_BindingDescription;
+		inline auto m_ShadowAttributeDescriptions = m_AttributeDescriptions;
 
         struct Renderer
         {
@@ -79,7 +79,7 @@ namespace VKR
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
-                m_CullMode = VK_CULL_MODE_BACK_BIT;
+                m_CullMode = VK_CULL_MODE_FRONT_BIT;
             }
         };
 
@@ -94,7 +94,7 @@ namespace VKR
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
-                m_CullMode = VK_CULL_MODE_NONE;
+                m_CullMode = VK_CULL_MODE_FRONT_BIT;
                 m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
             }
         };
