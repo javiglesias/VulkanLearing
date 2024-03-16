@@ -18,6 +18,6 @@ layout(location = 0) out vec3 outColor;
 
 void main()
 {
-    gl_Position = dynO.model * ubo.projection * ubo.view  * vec4(inPosition, 1.0);
+    gl_Position = ubo.projection * ubo.view * dynO.model  * vec4(inPosition, 1.0);
     outColor = inColor;
 }

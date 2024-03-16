@@ -21,7 +21,7 @@ void main()
 {
 	vec3 viewer_direction = normalize(viewerPosition - fragPosition);
 	vec3 result =  directional_light_calculations( viewer_direction);
-	result *= compute_shadow_factor(vec4(lightPosition, 1.0),inShadowTexture);
+	result += compute_shadow_factor(vec4(lightPosition, 1.0),inShadowTexture);
     outColor = vec4(result, 1.0);
 }
 
@@ -68,7 +68,7 @@ float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)
    if (abs(light_space_ndc.x) > 1.0 ||
        abs(light_space_ndc.y) > 1.0 ||
        abs(light_space_ndc.z) > 1.0)
-      return 0.0;
+      return 0.5;
  
    // Translate from NDC to shadow map space (Vulkan's Z is already in [0..1])
    vec2 shadow_map_coord = light_space_ndc.xy * 0.5 + 0.5;
