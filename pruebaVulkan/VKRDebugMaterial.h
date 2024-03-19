@@ -1,6 +1,10 @@
 #pragma once
+#include "Types.h"
+
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
+
+
 namespace VKR
 {
 	namespace render

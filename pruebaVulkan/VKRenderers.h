@@ -48,21 +48,21 @@ namespace VKR
             VkDevice m_LogicDevice;
         public:
             virtual void Initialize() {}
-            virtual void CreateDescriptorSetLayout() {}
-            virtual void CreatePipelineLayout() {}
-            virtual void CleanShaderModules() {}
+            virtual void CreateDescriptorSetLayout();
+            virtual void CreatePipelineLayout();
+            virtual void CleanShaderModules();
+            virtual void CreateShaderStages();
 
+            void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
+            void CreatePipeline(VkRenderPass _RenderPass);
+            void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule);
             Renderer() {}
-            ~Renderer()
+        	~Renderer()
             {
                 vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
                 vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
                 vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
             }
-            virtual void CreateShaderStages();
-            void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
-            void CreatePipeline(VkRenderPass _RenderPass);
-            void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule);
         };
 
 
@@ -72,14 +72,12 @@ namespace VKR
 
             // Creamos el layout de los Descriptor set que vamos a utlizar
             void Initialize() override;
-	        void CreatePipelineLayout() override;
             void CreateDescriptorSetLayout() override;
-	        void CleanShaderModules() override;
             GraphicsRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
-                m_CullMode = VK_CULL_MODE_FRONT_BIT;
+                m_CullMode = VK_CULL_MODE_BACK_BIT;
             }
         };
 
@@ -87,14 +85,10 @@ namespace VKR
         {
         public: // Functions
             void Initialize() override;
-	        void CreatePipelineLayout() override;
-            void CreateDescriptorSetLayout() override;
-	        void CleanShaderModules() override;
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
-                m_PolygonMode = _PolygonMode;
-                m_CullMode = VK_CULL_MODE_FRONT_BIT;
+                m_PolygonMode = VK_POLYGON_MODE_LINE;
                 m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
             }
         };
@@ -104,8 +98,6 @@ namespace VKR
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
             void Initialize() override;
-            void CreatePipelineLayout() override;
-            void CreateDescriptorSetLayout() override;
             void CreateShaderStages() override;
             void CreatePipeline(VkRenderPass _RenderPass);
             void CleanShaderModules() override;
@@ -114,6 +106,21 @@ namespace VKR
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
                 m_CullMode = VK_CULL_MODE_NONE;
+            }
+        };
+
+        struct CubemapRenderer : Renderer
+        {
+        public: // Functions
+
+            // Creamos el layout de los Descriptor set que vamos a utlizar
+            void Initialize() override;
+            void CreateDescriptorSetLayout() override;
+            CubemapRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
+            {
+                m_LogicDevice = _LogicalDevice;
+                m_PolygonMode = _PolygonMode;
+                m_CullMode = VK_CULL_MODE_FRONT_BIT;
             }
         };
     }

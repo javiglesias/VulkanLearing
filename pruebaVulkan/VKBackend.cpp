@@ -6,6 +6,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
+#include "Types.h"
 #include "../dependencies/stb/stb_image.h"
 
 
@@ -463,17 +464,6 @@ namespace VKR
 			if (vkCreateRenderPass(m_LogicDevice, &renderPassInfo, nullptr,
 				&m_RenderPass) != VK_SUCCESS)
 				exit(-8);
-
-			// m_RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			// m_RenderPassInfo.attachmentCount = 1;
-			// m_RenderPassInfo.pAttachments = &m_ColorAttachment;
-			// m_RenderPassInfo.subpassCount = 1;
-			// m_RenderPassInfo.pSubpasses = &m_Subpass;
-			// m_RenderPassInfo.dependencyCount = 1;
-			// m_RenderPassInfo.pDependencies = &m_SubpassDep;
-			// if (vkCreateRenderPass(m_LogicDevice, &m_RenderPassInfo, nullptr,
-			// 	&m_UIRenderPass) != VK_SUCCESS)
-			// 	exit(-8);
 		}
 
 		bool VKContext::HasStencilComponent(VkFormat format)
@@ -510,6 +500,7 @@ namespace VKR
 		}
 		void VKBackend::Init()
 		{
+			m_GPipelineStatus = CREATING;
 			uint32_t mExtensionCount = 0;
 			const char** mExtensions;
 			glm::mat4 m_matrix;
@@ -570,17 +561,6 @@ namespace VKR
 				fprintf(stderr, "ERROR CREATING DEBUG MESSENGER\n");
 			}
 			g_context.CreateDevice(m_Instance);
-#if 0
-			// sprintf(modelPath, "resources/Models/SciFiHelmet/glTF/");
-			// sprintf(modelName, "SciFiHelmet.gltf");
-			// LoadModel(modelPath, modelName);
-			/*sprintf(modelPath, "resources/Models/scene/glTF/");
-			sprintf(modelName, "scene.gltf");
-			LoadModel(modelPath, modelName );*/
-
-#endif
-			m_DbgModels.push_back(new R_DbgModel());
-
 			/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
 			// EXT: VK_KHR_surface
 			if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
@@ -650,25 +630,6 @@ namespace VKR
 			m_GraphicsRender->CreateDescriptorSetLayout();
 			m_ShadowRender->CreateDescriptorSetLayout();
 			m_DbgRender->CreateDescriptorSetLayout();
-
-			for (auto& model : m_StaticModels)
-			{
-				for (auto& mesh : model->m_Meshes)
-				{
-					// Descriptor Pool
-					model->m_Materials[mesh->m_Material]->CreateDescriptorPool(g_context.m_LogicDevice);
-					// ahora creamos los Descriptor Sets en cada mesh
-					model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(g_context.m_LogicDevice, m_GraphicsRender->m_DescSetLayout);
-				}
-			}
-
-			for (auto& model : m_DbgModels)
-			{
-				// Descriptor Pool
-				model->m_Material.CreateDescriptorPool(g_context.m_LogicDevice);
-				// ahora creamos los Descriptor Sets en cada mesh
-				model->m_Material.CreateMeshDescriptorSet(g_context.m_LogicDevice, m_DbgRender->m_DescSetLayout);
-			}
 			// Shadow Descriptors
 			m_ShadowMat->CreateDescriptorPool(g_context.m_LogicDevice);
 			m_ShadowMat->CreateDescriptorSet(g_context.m_LogicDevice, m_ShadowRender->m_DescSetLayout);
@@ -709,70 +670,23 @@ namespace VKR
 			// Creamos los recursos para el Depth testing
 			CreateDepthTestingResources();
 			CreateFramebuffers(m_DbgRender);
-			// Crear Textures
-			for (auto& model : m_StaticModels)
-			{
-				for (auto& mesh : model->m_Meshes)
-				{
-					CreateAndTransitionImage(model->m_Path, model->m_Materials[mesh->m_Material]->m_TextureDiffuse);
-					CreateAndTransitionImage(model->m_Path, model->m_Materials[mesh->m_Material]->m_TextureSpecular);
-					CreateAndTransitionImage(model->m_Path, model->m_Materials[mesh->m_Material]->m_TextureAmbient);
-					// Vertex buffer
-					void* data;
-					if (mesh->m_Vertices.size() <= 0)
-					{
-						fprintf(stderr, "There is no Triangles to inser on the buffer");
-						exit(-57);
-					}
-					VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
-					// Stagin buffer
-					CreateBuffer(bufferSize,
-						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_StagingBuffer, m_StaggingBufferMemory);
-					vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-					memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
-					vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
-					CreateBuffer(bufferSize,
-						VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-						VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-						mesh->m_VertexBuffer, mesh->m_VertexBufferMemory);
-					CopyBuffer(mesh->m_VertexBuffer, m_StagingBuffer, bufferSize);
-					vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
-					vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
-					if (mesh->m_Indices.size() > 0)
-					{
-						// Index buffer
-						bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
-						// Stagin buffer
-						CreateBuffer(bufferSize,
-							VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-							VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-							m_StagingBuffer, m_StaggingBufferMemory);
-						vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-						memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
-						vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
-						CreateBuffer(bufferSize,
-							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-							VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-							VK_SHARING_MODE_CONCURRENT,
-							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-							mesh->m_IndexBuffer, mesh->m_IndexBufferMemory);
-						CopyBuffer(mesh->m_IndexBuffer, m_StagingBuffer, bufferSize);
-						vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
-						vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
-					}
-				}
-			}
-
 			// Uniform buffers
 			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_Uniform_SBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			// Dynamic buffers
+			m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
+			m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			// Uniform buffers
+			m_DbgUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			m_DbgUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_DbgUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			// Dynamic buffers
+			m_DbgDynamicBuffers.resize(FRAMES_IN_FLIGHT);
+			m_DbgDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_DbgDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+
 			VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
@@ -784,56 +698,6 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
 					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
 			}
-			// Dynamic buffers
-			m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
-					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
-			}
-
-			// DEBUG UNIFORM BUFFERS
-			for (auto& model : m_DbgModels)
-			{
-				// Vertex buffer
-				void* data;
-				if (model->m_Vertices.size() <= 0)
-				{
-					fprintf(stderr, "There is no Triangles to inser on the buffer");
-					exit(-57);
-				}
-				VkDeviceSize bufferSize = sizeof(model->m_Vertices[0]) * model->m_Vertices.size();
-				// Stagin buffer
-				CreateBuffer(bufferSize,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_StagingBuffer, m_StaggingBufferMemory);
-				vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-				memcpy(data, model->m_Vertices.data(), (size_t)bufferSize);
-				vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
-				CreateBuffer(bufferSize,
-					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-					model->m_VertexBuffer, model->m_VertexBufferMemory);
-				CopyBuffer(model->m_VertexBuffer, m_StagingBuffer, bufferSize);
-				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
-			}
-			// Uniform buffers
-			m_DbgUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DbgUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DbgUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
 			VkDeviceSize dbgBufferSize = sizeof(DebugUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
@@ -845,11 +709,20 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], 0,
 					dbgBufferSize, 0, &m_DbgUniformBuffersMapped[i]);
 			}
-			// Dynamic buffers
-			m_DbgDynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DbgDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DbgDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			VkDeviceSize dynDbgBufferSize = m_DbgModels.size() * sizeof(DynamicBufferObject);
+
+			VkDeviceSize dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
+					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
+			}
+
+			VkDeviceSize dynDbgBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -880,7 +753,7 @@ namespace VKR
 			m_ShadowDynamicBuffers.resize(FRAMES_IN_FLIGHT);
 			m_ShadowDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_ShadowDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
+			dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -929,48 +802,14 @@ namespace VKR
 			init_info.ImageCount = m_SwapchainImagesCount;
 			init_info.CheckVkResultFn = nullptr;
 			ImGui_ImplVulkan_Init(&init_info, g_context.m_RenderPass);
-			// Update DescriptsSets
-			for (auto& model : m_StaticModels)
-			{
-				for (auto& mesh : model->m_Meshes)
-				{
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = m_ShadowImageView;
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = m_ShadowImage;
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = m_ShadowImageMemory;
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = m_ShadowImgSamp;
-					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(g_context.m_LogicDevice, m_UniformBuffers, m_DynamicBuffers);
-				}
-			}
-			//Debug Update DescriptorSet
-			for (auto& model : m_DbgModels)
-			{
-				model->m_Material.UpdateDescriptorSet(g_context.m_LogicDevice, m_DbgUniformBuffers, m_DbgDynamicBuffers);
-			}
 
 			// Shadow DescriptorSet
 			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 
 			CreateSyncObjects(0);
 			CreateSyncObjects(1);
-
-			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
-			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
-			for (auto& model : m_StaticModels)
-			{
-				for (int i = 0; i < model->m_Meshes.size(); i++)
-				{
-					for (int j = 1; j < model->m_Meshes.size(); j++)
-					{
-						auto& mesh = model->m_Meshes[i];
-						if (model->m_Meshes[j]->m_Material > model->m_Meshes[i]->m_Material)
-						{
-							auto tempMesh = model->m_Meshes[j];
-							model->m_Meshes[j] = model->m_Meshes[i];
-							model->m_Meshes[i] = tempMesh;
-						}
-					}
-				}
-			}
+			m_Scene = new Scene();
+			m_GPipelineStatus = READY;
 		}
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
 		{
@@ -1147,7 +986,7 @@ namespace VKR
 			vkBindBufferMemory(g_context.m_LogicDevice, buffer_, bufferMem_, 0);
 		}
 
-		void VKBackend::CreateAndTransitionImage(char* _modelPath, Texture* _texture)
+		void VKBackend::CreateAndTransitionImage(Texture* _texture)
 		{
 			// Como utilizamos lightview, las texturas solo se crean una vez.
 			if (_texture->tImageView == nullptr && _texture->m_Sampler == nullptr
@@ -1156,12 +995,10 @@ namespace VKR
 				int tWidth, tHeight, tChannels;
 				stbi_uc* pixels;
 				VkDeviceSize tSize;
-				char textPath[512];
-				sprintf(textPath, "%s%s", _modelPath, _texture->sPath.c_str());
-				pixels = stbi_load(textPath, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+				pixels = stbi_load(_texture->sPath.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 				if (!pixels)
 				{
-					printf("\rMissing Texture %s\n", textPath);
+					printf("\rMissing Texture %s\n", _texture->sPath.c_str());
 					stbi_uc* m_DefaultTexture;
 					m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
 					pixels = m_DefaultTexture;
@@ -1419,15 +1256,13 @@ namespace VKR
 				m_LightPos.z = tempLightPos[2];
 				// Camera
 				ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
+				ImGui::SliderFloat("FOV", &m_CameraFOV, 40.f, 100.f);
 				ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
+				ImGui::Checkbox("Debug Draw", &m_DebugRendering);
 				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
 				ImGui::LabelText("Cam Pitch", "Cam Pitch(%.2f)", m_CameraPitch);
 				ImGui::LabelText("Cam Yaw", "Cam Yaw(%.2f)", m_CameraYaw);
 
-				if (ImGui::Button("Center Model"))
-				{
-					m_StaticModels[0]->m_Pos = glm::vec3(0.0f);
-				}
 				if (ImGui::Button("Center Light"))
 				{
 					m_LightPos = glm::vec3(0.0f);
@@ -1444,13 +1279,23 @@ namespace VKR
 				m_LightColor.x = color[0];
 				m_LightColor.y = color[1];
 				m_LightColor.z = color[2];
-				/*auto m_Dset = ImGui_ImplVulkan_AddTexture(m_ShadowImgSamp, m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				float forward[3];
+				forward[0] = m_LightForward.x;
+				forward[1] = m_LightForward.y;
+				forward[2] = m_LightForward.z;
+				ImGui::SliderFloat3("Cam orientation", forward, 0.0f, 1.0f);
+				m_LightForward.x = forward[0];
+				m_LightForward.y = forward[1];
+				m_LightForward.z = forward[2];
+				if(m_ShadowVisualizer == nullptr)
+					m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(m_ShadowImgSamp, m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-				ImGui::Image(m_Dset, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
+				ImGui::Image(m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
 				ImGui::End();
 			}
 			ImGui::Begin("World");
 			{
+#if 0
 				for(auto& model : m_StaticModels)
 				{
 					float position[3] = { model->m_Pos.x , model->m_Pos.y, model->m_Pos.z};
@@ -1460,6 +1305,7 @@ namespace VKR
 					model->m_Pos.y = position[1];
 					model->m_Pos.z = position[2];
 				}
+#endif
 				ImGui::End();
 			}
 			ImGui::Begin("DEBUG PANEL");
@@ -1472,8 +1318,28 @@ namespace VKR
 			ImGui::EndFrame();
 		}
 
+		void VKBackend::Loop()
+		{
+			float newFrame = 0.0f;
+			float accumulatedTime = 0.0f;
+			float deltaTime = 0.0f;
+			float currentFrame = 0.0f;
+			float frameCap = 0.016f; // 60fps
+			int currentLocalFrame = 0;
+			while (!BackendShouldClose())
+			{
+				deltaTime = newFrame - currentFrame;
+				accumulatedTime += deltaTime;
+				PollEvents();
+				EditorLoop();
+				m_Scene->Loop(); // Gestionamos si se ha cargado un nuevo modelo a la escena y actualizamos la info de render.
+				DrawFrame(currentLocalFrame);
+				currentLocalFrame = (currentLocalFrame + 1) % FRAMES_IN_FLIGHT;
+			}
+		}
+
 		void VKBackend::RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-			Renderer* _renderer, ImDrawData* draw_data)
+		                                    Renderer* _renderer, ImDrawData* draw_data)
 		{
 			// Record command buffer
 			VkCommandBufferBeginInfo mBeginInfo{};
@@ -1482,7 +1348,10 @@ namespace VKR
 			mBeginInfo.pInheritanceInfo = nullptr;
 			if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
 				exit(-13);
-
+			// Matriz de proyeccion
+			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
+			projMat[1][1] *= -1; // para invertir el eje Y
+			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_CameraUp);
 			// Shadow Pass
 			{
 				// Clear Color
@@ -1490,9 +1359,7 @@ namespace VKR
 				clearValue.depthStencil = { 1.0f, 0 };
 				// Update Uniform buffers
 				ShadowUniformBufferObject ubo{};
-				glm::mat4 viewMat = glm::lookAt(m_LightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				glm::mat4 projMat = glm::perspective(glm::radians(45.f), 1.0f, 0.1f, 1000000.f);
-				ubo.view = viewMat;
+				ubo.view = lightViewMat;
 				ubo.projection = projMat;
 				memcpy(m_ShadowUniformBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
 
@@ -1515,43 +1382,7 @@ namespace VKR
 				{
 					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 				}
-				uint32_t count = 0;
-				
-				for (auto& model : m_StaticModels)
-				{
-					DynamicBufferObject dynO{};
-					dynO.model = glm::mat4(1.0f);
-					uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-					memcpy((char*)m_ShadowDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
-					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout, 
-						0, 1, &m_ShadowMat->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
-					for (auto& mesh : model->m_Meshes)
-					{
-						// Update Uniform buffers
-
-						VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
-						VkDeviceSize offsets[] = { 0 };
-						vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-						vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-						// Draw Loop
-						if (m_IndexedRender && mesh->m_Indices.size() > 0)
-						{
-							vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
-						}
-						else
-						{
-							vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
-						}
-						// Flush to make changes visible to the host
-						VkMappedMemoryRange mappedMemoryRange{};
-						mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-						mappedMemoryRange.memory = m_ShadowDynamicBuffersMemory[_frameIdx];
-						mappedMemoryRange.size = sizeof(dynO);
-						vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
-					}
-					++count;
-				}
+				// m_Scene->DrawScene();
 				vkCmdEndRenderPass(_commandBuffer);
 			}
 
@@ -1563,11 +1394,10 @@ namespace VKR
 				// Update Uniform buffers
 				UniformBufferObject ubo{};
 				glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
-				glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
-				projMat[1][1] *= -1; // para invertir el eje Y
 
 				ubo.view = viewMat;
 				ubo.projection = projMat;
+				ubo.lightView = lightViewMat;
 				ubo.cameraPosition = m_CameraPos;
 				ubo.lightPosition = m_LightPos;
 				ubo.lightColor = m_LightColor;
@@ -1594,78 +1424,7 @@ namespace VKR
 				{
 					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 				}
-				uint32_t count = 0;
-				for (auto& model : m_StaticModels)
-				{
-					DynamicBufferObject dynO{};
-					dynO.model = glm::mat4(1.0f);
-					dynO.model = glm::translate(dynO.model, model->m_Pos);
-					uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-					memcpy((char*)m_DynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
-					for (auto& mesh : model->m_Meshes)
-					{
-						// Update Uniform buffers
-
-						VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
-						VkDeviceSize offsets[] = { 0 };
-
-						vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_PipelineLayout, 0, 1,
-							&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
-						vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-						vkCmdBindIndexBuffer(_commandBuffer, mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-						// Draw Loop
-						if (m_IndexedRender && mesh->m_Indices.size() > 0)
-						{
-							vkCmdDrawIndexed(_commandBuffer, static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
-						}
-						else
-						{
-							vkCmdDraw(_commandBuffer, mesh->m_Vertices.size(), 1, 0, 0);
-						}
-						// Flush to make changes visible to the host
-						VkMappedMemoryRange mappedMemoryRange{};
-						mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-						mappedMemoryRange.memory = m_DynamicBuffersMemory[_frameIdx];
-						mappedMemoryRange.size = sizeof(dynO);
-						vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
-					}
-					++count;
-				}
-				// DEBUG Render
-				vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
-				//Debug
-				DebugUniformBufferObject dubo{};
-				dubo.view = viewMat;
-				dubo.projection = projMat;
-
-				memcpy(m_DbgUniformBuffersMapped[_imageIdx], &dubo, sizeof(dubo));
-				// REFRESH RENDER MODE FUNCTIONS
-				vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
-				vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-				int debugCount = 0;
-				m_DbgModels[0]->m_Pos = m_LightPos;
-				for (auto& model : m_DbgModels)
-				{
-					DynamicBufferObject dynO{};
-					dynO.model = glm::mat4(1.0f);
-					dynO.model = glm::translate(dynO.model, model->m_Pos);
-					uint32_t dynamicOffset = debugCount * static_cast<uint32_t>(dynamicAlignment);
-					VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
-					VkDeviceSize offsets[] = { 0 };
-					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-					memcpy((char*)m_DbgDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
-					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
-					vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertesBuffers, offsets);
-					vkCmdDraw(_commandBuffer, model->m_Vertices.size(), 1, 0, 0);
-					// Flush to make changes visible to the host
-					VkMappedMemoryRange mappedMemoryRange{};
-					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					mappedMemoryRange.memory = m_DbgDynamicBuffersMemory[_frameIdx];
-					mappedMemoryRange.size = sizeof(dynO);
-					vkFlushMappedMemoryRanges(g_context.m_LogicDevice, 1, &mappedMemoryRange);
-					++debugCount;
-				}
+				// m_Scene->DrawScene();
 				// UI Render
 				if (draw_data)
 					ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
@@ -1678,6 +1437,7 @@ namespace VKR
 		void VKBackend::DrawFrame(unsigned int _InFlightFrame)
 		{
 			// Ahora vamos a simular el siguiente frame
+
 			uint32_t imageIdx;
 			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame], VK_TRUE, UINT64_MAX);
 			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame]);
@@ -1742,86 +1502,6 @@ namespace VKR
 			vkDestroySwapchainKHR(g_context.m_LogicDevice, m_SwapChain, nullptr);
 		}
 
-		void VKBackend::ProcessModelNode(aiNode* _node, const aiScene* _scene)
-		{
-			// CHILDREN
-			for (unsigned int i = 0; i < _node->mNumChildren; i++)
-			{
-				ProcessModelNode(_node->mChildren[i], _scene);
-			}
-			int lastTexIndex = 0;
-			uint32_t tempMaterial = -1;
-			for (int m = 0; m < _node->mNumMeshes; m++)
-			{
-				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
-				R_Mesh* tempMesh = new R_Mesh();
-				//Process Mesh
-				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
-				{
-					const aiFace& face = mesh->mFaces[f];
-					for (unsigned int j = 0; j < face.mNumIndices; j++)
-					{
-						// m_Indices.push_back(face.mIndices[0]);
-						// m_Indices.push_back(face.mIndices[1]);
-						// m_Indices.push_back(face.mIndices[2]);
-						tempMesh->m_Indices.push_back(face.mIndices[0]);
-						tempMesh->m_Indices.push_back(face.mIndices[1]);
-						tempMesh->m_Indices.push_back(face.mIndices[2]);
-					}
-				}
-				for (unsigned int v = 0; v < mesh->mNumVertices; v++)
-				{
-					Vertex3D tempVertex;
-					tempVertex.m_Pos = { mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z };
-					if (mesh->mTextureCoords[0])
-					{
-						tempVertex.m_TexCoord = { mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y };
-					}
-					else
-					{
-						tempVertex.m_TexCoord = { 0.f, 0.f };
-					}
-					tempVertex.m_Normal = { mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z };
-					// New New Mexico
-					tempMesh->m_Vertices.push_back(tempVertex);
-				}
-				// Textura por Mesh
-				int texIndex = 0;
-				aiString path;
-				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
-				{
-					// printf("\tNew Material %d\n", mesh->mMaterialIndex);
-					tempModel->m_Materials[mesh->mMaterialIndex] = new R_Material();
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new Texture(std::string(path.data));
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(std::string(path.data));
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(std::string(path.data));
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new Texture();
-				}
-				tempMesh->m_Material = mesh->mMaterialIndex;
-				//++m_TotalTextures;
-				tempModel->m_Meshes.push_back(tempMesh);
-			}
-		}
-
-		void VKBackend::LoadModel(const char* _filepath, const char* _modelName)
-		{
-			char filename[128];
-			sprintf(filename, "%s%s", _filepath, _modelName);
-			printf("\nLoading %s\n", _modelName);
-			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
-			if (!scene->HasMeshes())
-				exit(-225);
-			tempModel = new R_Model();
-			//Process Node
-			auto node = scene->mRootNode;
-			ProcessModelNode(node, scene);
-			// Insert new static model
-			sprintf(tempModel->m_Path, _filepath, 64);
-			m_StaticModels.push_back(tempModel);
-		}
 		bool VKBackend::BackendShouldClose()
 		{
 			return m_CloseEngine || glfwWindowShouldClose(m_Window);
@@ -1866,6 +1546,14 @@ namespace VKR
 				vkDestroyBuffer(g_context.m_LogicDevice, m_ShadowDynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], nullptr);
 			}
+			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
+			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);
+			vkFreeMemory(g_context.m_LogicDevice, m_DepthImageMemory, nullptr);
+
+			vkDestroyImageView(g_context.m_LogicDevice, m_ShadowImageView, nullptr);
+			vkDestroyImage(g_context.m_LogicDevice, m_ShadowImage, nullptr);
+			vkFreeMemory(g_context.m_LogicDevice, m_ShadowImageMemory, nullptr);
+
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[0], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[1], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_RenderFinish[0], nullptr);
@@ -1874,30 +1562,8 @@ namespace VKR
 			vkDestroyFence(g_context.m_LogicDevice, m_InFlight[1], nullptr);
 			vkDestroyCommandPool(g_context.m_LogicDevice, m_CommandPool, nullptr);
 			CleanSwapChain();
-			for (auto& model : m_StaticModels)
-			{
-				for (auto& [idx, mat] : model->m_Materials)
-				{
-					mat->Cleanup(g_context.m_LogicDevice);
-				}
-				for (auto& mesh : model->m_Meshes)
-				{
-					mesh->Cleanup(g_context.m_LogicDevice);
-				}
-			}
-			for (auto& model : m_DbgModels)
-			{
-				model->Cleanup(g_context.m_LogicDevice);
-			}
+			// m_Scene->Cleanup();
 			m_ShadowMat->Cleanup(g_context.m_LogicDevice);
-
-			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
-			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);
-			vkFreeMemory(g_context.m_LogicDevice, m_DepthImageMemory, nullptr);
-
-			vkDestroyImageView(g_context.m_LogicDevice, m_ShadowImageView, nullptr);
-			vkDestroyImage(g_context.m_LogicDevice, m_ShadowImage, nullptr);
-			vkFreeMemory(g_context.m_LogicDevice, m_ShadowImageMemory, nullptr);
 
 			vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 			vkDestroyDevice(g_context.m_LogicDevice, nullptr);

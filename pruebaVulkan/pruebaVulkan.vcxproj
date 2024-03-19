@@ -183,6 +183,8 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="VKRenderers.h" />
     <ClInclude Include="VKRMaterial.h" />
     <ClInclude Include="VKRModel.h" />
+    <ClInclude Include="VKRRenderPass.h" />
+    <ClInclude Include="VKRScene.h" />
     <ClInclude Include="VKRShader.h" />
     <ClInclude Include="VKRShadowMaterial.h" />
   </ItemGroup>
@@ -203,6 +205,8 @@ $(SolutionDir)BuildShaders.bat</Command>
     </ClCompile>
     <ClCompile Include="VKBackend.cpp" />
     <ClCompile Include="VKRenderers.cpp" />
+    <ClCompile Include="VKRRenderPass.cpp" />
+    <ClCompile Include="VKRScene.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

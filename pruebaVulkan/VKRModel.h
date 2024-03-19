@@ -1,12 +1,14 @@
 #pragma once
 #include "VKRMaterial.h"
 #include "VKRDebugMaterial.h"
+#include "Types.h"
 
 #include <unordered_map>
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
+
 
 namespace VKR
 {
@@ -43,7 +45,8 @@ namespace VKR
 		public:
 			R_Model() {}
 		public:
-			glm::vec3 m_Pos{ 0.0f, 1.0f, 0.0f };
+			glm::vec3 m_Pos { 0.0f, 1.0f, 0.0f };
+			glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
 			std::vector<R_Mesh*> m_Meshes;
 			std::unordered_map<uint32_t, R_Material*> m_Materials;
 			char m_Path[64];
