@@ -109,15 +109,14 @@ namespace VKR
 		}
 		void Scene::Loop()
 		{
-			if (m_State == DIRTY)
-				ManageModels();
+			/*if (m_State == DIRTY)
+				*/
 		}
 
 		void Scene::DrawScene()
 		{
-#if 0
+#if 0 // Sombras
 			uint32_t count = 0;
-
 			for (auto& model : m_StaticModels)
 			{
 				DynamicBufferObject dynO{};
@@ -155,7 +154,8 @@ namespace VKR
 				}
 				++count;
 			}
-
+#endif
+#if 0
 			uint32_t count = 0;
 			for (auto& model : m_StaticModels)
 			{
@@ -195,6 +195,8 @@ namespace VKR
 				}
 				++count;
 			}
+#endif
+#if 0
 			if (m_DebugRendering)
 			{
 
@@ -236,7 +238,7 @@ namespace VKR
 #endif
 		}
 
-		void Scene::ManageModels()
+		void Scene::ManageModels(VkDevice _LogicDevice)
 		{
 			/// Flujo actual para renderizar un Modelo(gltf) :
 			/// 1 - cargar modelo y materiales(LoadModel)

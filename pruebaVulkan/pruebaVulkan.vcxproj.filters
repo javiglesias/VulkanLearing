@@ -60,6 +60,9 @@
     <ClInclude Include="VKRScene.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="Editor.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -99,6 +102,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="VKRScene.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

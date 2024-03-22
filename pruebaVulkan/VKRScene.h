@@ -32,7 +32,7 @@ namespace VKR
             std::vector<R_DbgModel*> m_DbgModels;
         private: // FUNCIONES
             void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture = nullptr);
-            void ManageModels();
+            void ManageModels(VkDevice _LogicDevice);
         };
     }
 }

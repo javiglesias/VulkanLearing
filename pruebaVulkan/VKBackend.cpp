@@ -2,11 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
-#define GLFW_INCLUDE_NONE
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
-#include "Types.h"
 #include "../dependencies/stb/stb_image.h"
 
 
@@ -541,9 +537,7 @@ namespace VKR
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
 			// INICIALIZAMOS IMGUI
-			// IMGUI_CHECKVERSION();
-			ImGui::CreateContext();
-			ImGui_ImplGlfw_InitForVulkan(m_Window, true);
+			
 			/// Create the Debug Messenger
 			VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 			debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -764,7 +758,7 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &m_ShadowDynamicBuffersMapped[i]);
 			}
-
+#if 0
 			// UI descriptor Pool
 			VkDescriptorPoolSize pool_sizes[] =
 			{
@@ -802,13 +796,12 @@ namespace VKR
 			init_info.ImageCount = m_SwapchainImagesCount;
 			init_info.CheckVkResultFn = nullptr;
 			ImGui_ImplVulkan_Init(&init_info, g_context.m_RenderPass);
-
+#endif
 			// Shadow DescriptorSet
 			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 
 			CreateSyncObjects(0);
 			CreateSyncObjects(1);
-			m_Scene = new Scene();
 			m_GPipelineStatus = READY;
 		}
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
@@ -1238,108 +1231,8 @@ namespace VKR
 			EndSingleTimeCommandBuffer(commandBuffer);
 		}
 
-		void VKBackend::EditorLoop()
-		{
-			ImGui_ImplVulkan_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
-			ImGui::Begin("Tools");
-			{
-				float tempLightPos[3];
-				ImGui::LabelText("Light Pos", "Light Pos(%.2f, %.2f, %.2f)", m_LightPos.x, m_LightPos.y, m_LightPos.z);
-				tempLightPos[0] = m_LightPos.x;
-				tempLightPos[1] = m_LightPos.y;
-				tempLightPos[2] = m_LightPos.z;
-				ImGui::SliderFloat3("Light Position", tempLightPos, -10.0f, 10.0f);
-				m_LightPos.x = tempLightPos[0];
-				m_LightPos.y = std::max(0.0f, tempLightPos[1]);
-				m_LightPos.z = tempLightPos[2];
-				// Camera
-				ImGui::SliderFloat("cam Speed", &m_CameraSpeed, 0.1f, 100.f);
-				ImGui::SliderFloat("FOV", &m_CameraFOV, 40.f, 100.f);
-				ImGui::Checkbox("Indexed Draw", &m_IndexedRender);
-				ImGui::Checkbox("Debug Draw", &m_DebugRendering);
-				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
-				ImGui::LabelText("Cam Pitch", "Cam Pitch(%.2f)", m_CameraPitch);
-				ImGui::LabelText("Cam Yaw", "Cam Yaw(%.2f)", m_CameraYaw);
-
-				if (ImGui::Button("Center Light"))
-				{
-					m_LightPos = glm::vec3(0.0f);
-				}
-				ImGui::End();
-			}
-			ImGui::Begin("Lighting");
-			{
-				float color[3];
-				color[0] = m_LightColor.x;
-				color[1] = m_LightColor.y;
-				color[2] = m_LightColor.z;
-				ImGui::ColorEdit3("Color", color);
-				m_LightColor.x = color[0];
-				m_LightColor.y = color[1];
-				m_LightColor.z = color[2];
-				float forward[3];
-				forward[0] = m_LightForward.x;
-				forward[1] = m_LightForward.y;
-				forward[2] = m_LightForward.z;
-				ImGui::SliderFloat3("Cam orientation", forward, 0.0f, 1.0f);
-				m_LightForward.x = forward[0];
-				m_LightForward.y = forward[1];
-				m_LightForward.z = forward[2];
-				if(m_ShadowVisualizer == nullptr)
-					m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(m_ShadowImgSamp, m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-				ImGui::Image(m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
-				ImGui::End();
-			}
-			ImGui::Begin("World");
-			{
-#if 0
-				for(auto& model : m_StaticModels)
-				{
-					float position[3] = { model->m_Pos.x , model->m_Pos.y, model->m_Pos.z};
-					ImGui::LabelText("%s ", model->m_Path);
-					ImGui::DragFloat3("Position", position, 0.01f, -100.f, 100.f);
-					model->m_Pos.x = position[0];
-					model->m_Pos.y = position[1];
-					model->m_Pos.z = position[2];
-				}
-#endif
-				ImGui::End();
-			}
-			ImGui::Begin("DEBUG PANEL");
-			{
-				ImGui::Text("%s", g_ConsoleMSG.c_str());
-				bool isOpen = true;
-				//ImGui::ShowDemoWindow(&isOpen);
-				ImGui::End();
-			}
-			ImGui::EndFrame();
-		}
-
-		void VKBackend::Loop()
-		{
-			float newFrame = 0.0f;
-			float accumulatedTime = 0.0f;
-			float deltaTime = 0.0f;
-			float currentFrame = 0.0f;
-			float frameCap = 0.016f; // 60fps
-			int currentLocalFrame = 0;
-			while (!BackendShouldClose())
-			{
-				deltaTime = newFrame - currentFrame;
-				accumulatedTime += deltaTime;
-				PollEvents();
-				EditorLoop();
-				m_Scene->Loop(); // Gestionamos si se ha cargado un nuevo modelo a la escena y actualizamos la info de render.
-				DrawFrame(currentLocalFrame);
-				currentLocalFrame = (currentLocalFrame + 1) % FRAMES_IN_FLIGHT;
-			}
-		}
-
 		void VKBackend::RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-		                                    Renderer* _renderer, ImDrawData* draw_data)
+		                                    Renderer* _renderer)
 		{
 			// Record command buffer
 			VkCommandBufferBeginInfo mBeginInfo{};
@@ -1424,10 +1317,6 @@ namespace VKR
 				{
 					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 				}
-				// m_Scene->DrawScene();
-				// UI Render
-				if (draw_data)
-					ImGui_ImplVulkan_RenderDrawData(draw_data, _commandBuffer);
 				vkCmdEndRenderPass(_commandBuffer);
 			}
 			if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
@@ -1449,10 +1338,7 @@ namespace VKR
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);
 
-			// Render ImGui
-			ImGui::Render();
-			ImDrawData* draw_data = ImGui::GetDrawData();
-			RecordCommandBuffer(m_CommandBuffer[_InFlightFrame], imageIdx, _InFlightFrame, m_GraphicsRender, draw_data);
+			RecordCommandBuffer(m_CommandBuffer[_InFlightFrame], imageIdx, _InFlightFrame, m_GraphicsRender);
 			SubmitAndPresent(_InFlightFrame, &imageIdx);
 		}
 
@@ -1516,9 +1402,6 @@ namespace VKR
 		{
 			printf("Cleanup\n");
 			vkDeviceWaitIdle(g_context.m_LogicDevice);
-			ImGui_ImplVulkan_Shutdown();
-			ImGui_ImplGlfw_Shutdown();
-			ImGui::DestroyContext();
 			vkDestroyDescriptorPool(g_context.m_LogicDevice, m_UIDescriptorPool, nullptr);
 			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_RenderPass, nullptr);
 			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_ShadowPass, nullptr);

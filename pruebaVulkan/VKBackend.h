@@ -1,11 +1,13 @@
 #pragma once
-#include "VKRenderers.h"
-#include "VKRScene.h"
-#include "VKRShadowMaterial.h"
 
-#include "../dependencies/imgui/misc/single_file/imgui_single_file.h"
-#include "../dependencies/imgui/backends/imgui_impl_glfw.h"
-#include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#include "VKRenderers.h"
+#include "VKRShadowMaterial.h"
+#include "VKRModel.h"
+
+
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 namespace VKR
 {
@@ -181,13 +183,14 @@ namespace VKR
             VkSemaphore m_RenderFinish[FRAMES_IN_FLIGHT];
             VkFence		m_InFlight[FRAMES_IN_FLIGHT];
 
-            Scene* m_Scene;
-
             // Functions
         public:
             VKBackend() {}
             void Init();
             void Loop();
+            bool BackendShouldClose();
+            void PollEvents();
+            void DrawFrame(unsigned int _InFlightFrame);
             void Cleanup();
         private:
             VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask);
@@ -219,7 +222,7 @@ namespace VKR
             void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size);
             void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, VkImageLayout _new);
             void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-                                     Renderer* _renderer, ImDrawData* draw_data = nullptr);
+                                     Renderer* _renderer);
             /* Un Frame en Vulkan
 			 *  1. esperar a que el frame anterior acabe
 			 *	2. obtener la imagen de la swap chain
@@ -239,10 +242,6 @@ namespace VKR
 			         para continuar.
 			 */
             void CleanSwapChain();
-            bool BackendShouldClose();
-            void PollEvents();
-            void EditorLoop();
-            void DrawFrame(unsigned int _InFlightFrame);
             void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
         };
         VKBackend& GetVKBackend();
