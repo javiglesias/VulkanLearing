@@ -758,45 +758,6 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &m_ShadowDynamicBuffersMapped[i]);
 			}
-#if 0
-			// UI descriptor Pool
-			VkDescriptorPoolSize pool_sizes[] =
-			{
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-			};
-			VkDescriptorPoolCreateInfo pool_info = {};
-			pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
-			pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-			pool_info.pPoolSizes = pool_sizes;
-			VK_ASSERT(vkCreateDescriptorPool(g_context.m_LogicDevice, &pool_info, nullptr, &m_UIDescriptorPool));
-
-			// IMGUI
-			ImGui_ImplVulkan_InitInfo init_info = {};
-			init_info.Instance = m_Instance;
-			init_info.PhysicalDevice = g_context.m_GpuInfo.m_Device;
-			init_info.Device = g_context.m_LogicDevice;
-			init_info.QueueFamily = g_context.m_GraphicsQueueFamilyIndex;
-			init_info.Queue = g_context.m_GraphicsQueue;
-			init_info.PipelineCache = VK_NULL_HANDLE;
-			init_info.DescriptorPool = m_UIDescriptorPool;
-			init_info.Allocator = nullptr;
-			init_info.MinImageCount = m_Capabilities.minImageCount;
-			init_info.ImageCount = m_SwapchainImagesCount;
-			init_info.CheckVkResultFn = nullptr;
-			ImGui_ImplVulkan_Init(&init_info, g_context.m_RenderPass);
-#endif
 			// Shadow DescriptorSet
 			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 
@@ -1244,6 +1205,7 @@ namespace VKR
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
 			projMat[1][1] *= -1; // para invertir el eje Y
+			glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
 			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_CameraUp);
 			// Shadow Pass
 			{
@@ -1253,7 +1215,7 @@ namespace VKR
 				// Update Uniform buffers
 				ShadowUniformBufferObject ubo{};
 				ubo.view = lightViewMat;
-				ubo.projection = projMat;
+				ubo.projection = shadowProjMat;
 				memcpy(m_ShadowUniformBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
 
 				VkRenderPassBeginInfo renderPassInfo{};
@@ -1280,50 +1242,39 @@ namespace VKR
 			}
 
 			// Color Pass
-			{
-				std::array<VkClearValue, 2> clearValues;
-				clearValues[0].color = defaultClearColor;
-				clearValues[1].depthStencil = { 1.0f, 0 };
-				// Update Uniform buffers
-				UniformBufferObject ubo{};
-				glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			std::array<VkClearValue, 2> clearValues;
+			clearValues[0].color = defaultClearColor;
+			clearValues[1].depthStencil = { 1.0f, 0 };
+			// Update Uniform buffers
+			UniformBufferObject ubo{};
+			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
 
-				ubo.view = viewMat;
-				ubo.projection = projMat;
-				ubo.lightView = lightViewMat;
-				ubo.cameraPosition = m_CameraPos;
-				ubo.lightPosition = m_LightPos;
-				ubo.lightColor = m_LightColor;
-				memcpy(m_Uniform_SBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
+			ubo.view = viewMat;
+			ubo.projection = projMat;
+			ubo.lightView = lightViewMat;
+			ubo.cameraPosition = m_CameraPos;
+			ubo.lightPosition = m_LightPos;
+			ubo.lightColor = m_LightColor;
+			memcpy(m_Uniform_SBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
 
-				// Render pass
-				VkRenderPassBeginInfo renderPassInfo{};
-				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = g_context.m_RenderPass;
-				renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
-				renderPassInfo.renderArea.offset = { 0,0 };
-				renderPassInfo.renderArea.extent = m_CurrentExtent;
-				renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-				renderPassInfo.pClearValues = clearValues.data();
-				vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-				// Drawing Commands
-				vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_Pipeline);
-				// REFRESH RENDER MODE FUNCTIONS
-				vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
-				vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-
-				auto dynamicAlignment = sizeof(glm::mat4);
-				if (g_context.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
-				{
-					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-				}
-				vkCmdEndRenderPass(_commandBuffer);
-			}
-			if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
-				exit(-17);
+			// Render pass
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = g_context.m_RenderPass;
+			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+			renderPassInfo.renderArea.offset = { 0,0 };
+			renderPassInfo.renderArea.extent = m_CurrentExtent;
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
+			vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			// Drawing Commands
+			vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_Pipeline);
+			// REFRESH RENDER MODE FUNCTIONS
+			vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
+			vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
 		}
 
-		void VKBackend::DrawFrame(unsigned int _InFlightFrame)
+		uint32_t VKBackend::DrawFrame(unsigned int _InFlightFrame)
 		{
 			// Ahora vamos a simular el siguiente frame
 
@@ -1339,11 +1290,15 @@ namespace VKR
 				exit(-69);
 
 			RecordCommandBuffer(m_CommandBuffer[_InFlightFrame], imageIdx, _InFlightFrame, m_GraphicsRender);
-			SubmitAndPresent(_InFlightFrame, &imageIdx);
+			return imageIdx;
 		}
 
 		void VKBackend::SubmitAndPresent(unsigned int _FrameToPresent, uint32_t* _imageIdx)
 		{
+			vkCmdEndRenderPass(m_CommandBuffer[_FrameToPresent]);
+			if (vkEndCommandBuffer(m_CommandBuffer[_FrameToPresent]) != VK_SUCCESS)
+				exit(-17);
+
 			VkSubmitInfo submitInfo{};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			VkSemaphore waitSemaphores[] = { m_ImageAvailable[_FrameToPresent] };
@@ -1402,7 +1357,6 @@ namespace VKR
 		{
 			printf("Cleanup\n");
 			vkDeviceWaitIdle(g_context.m_LogicDevice);
-			vkDestroyDescriptorPool(g_context.m_LogicDevice, m_UIDescriptorPool, nullptr);
 			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_RenderPass, nullptr);
 			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_ShadowPass, nullptr);
 			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);

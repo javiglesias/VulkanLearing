@@ -27,9 +27,14 @@ namespace VKR
         inline bool m_NeedToRecreateSwapchain = false;
         inline bool m_MouseCaptured = false;
         inline bool m_CloseEngine = false;
+        inline bool m_IndexedRender = true;
+        inline bool m_DebugRendering = false;
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.1f;
+        inline float m_CameraFOV = 60.f;
+        inline GLFWwindow* m_Window;
+        inline float m_ShadowCameraFOV = 40.f;
         inline std::string g_ConsoleMSG;
         inline glm::vec3 m_CameraPos = glm::vec3(0.f);
         inline glm::vec3 m_LightPos = glm::vec3(0.f);
@@ -100,9 +105,6 @@ namespace VKR
         {
             //Variables
         public:
-        private:
-            bool m_IndexedRender = true;
-            bool m_DebugRendering = false;
             bool m_CubemapRendering = false;
             bool m_RenderInitialized = false;
             uint32_t m_LastImageIdx;
@@ -111,8 +113,6 @@ namespace VKR
             uint32_t m_CurrentDebugModelsToDraw = 1;
             int m_TotalTextures;
             int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
-            float m_CameraFOV = 40.f;
-            GLFWwindow* m_Window;
             VkResult m_PresentResult;
             VkInstance m_Instance;
             VkDebugUtilsMessengerEXT m_DebugMessenger{};
@@ -142,7 +142,6 @@ namespace VKR
             VkRect2D m_Scissor{};
 
             VkDescriptorPool m_DescriptorPool;
-            VkDescriptorPool m_UIDescriptorPool;
             VkCommandPool m_CommandPool;
 
             VkDescriptorSet m_ShadowVisualizer;
@@ -190,9 +189,8 @@ namespace VKR
             void Loop();
             bool BackendShouldClose();
             void PollEvents();
-            void DrawFrame(unsigned int _InFlightFrame);
+            uint32_t DrawFrame(unsigned int _InFlightFrame);
             void Cleanup();
-        private:
             VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask);
             void CreateImageViews();
             void InitializeVulkan(VkApplicationInfo* _appInfo);

@@ -6,10 +6,13 @@
 
 namespace VKR
 {
+	class VKBackend;
 	class Editor
 	{
+	private:
+		VkDescriptorPool m_UIDescriptorPool;
 	public:
-		Editor(GLFWwindow* _Window);
+		Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
 		~Editor();
 		void Loop();
 		void Draw(VkCommandBuffer _commandBuffer);

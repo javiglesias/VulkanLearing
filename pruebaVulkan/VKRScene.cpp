@@ -1,4 +1,5 @@
 #include "VKRScene.h"
+#include "VKBackend.h"
 
 #include "Types.h"
 
@@ -115,6 +116,13 @@ namespace VKR
 
 		void Scene::DrawScene()
 		{
+			auto renderContext = GetVKContext();
+			auto dynamicAlignment = sizeof(glm::mat4);
+			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
+			{
+				dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+					& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			}
 #if 0 // Sombras
 			uint32_t count = 0;
 			for (auto& model : m_StaticModels)
