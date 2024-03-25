@@ -83,6 +83,12 @@ namespace VKR
 			{
 				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y + m_CameraSpeed, m_CameraPos.z);
 			}
+
+			if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
+			{
+				m_CreateTestModel = true;
+			}
+
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
 			{
 				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y - m_CameraSpeed, m_CameraPos.z);
@@ -1195,83 +1201,24 @@ namespace VKR
 		void VKBackend::RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
 		                                    Renderer* _renderer)
 		{
-			// Record command buffer
-			VkCommandBufferBeginInfo mBeginInfo{};
-			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			mBeginInfo.flags = 0;
-			mBeginInfo.pInheritanceInfo = nullptr;
-			if (vkBeginCommandBuffer(_commandBuffer, &mBeginInfo) != VK_SUCCESS)
-				exit(-13);
-			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
-			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
-			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_CameraUp);
-			// Shadow Pass
-			{
-				// Clear Color
-				VkClearValue clearValue;
-				clearValue.depthStencil = { 1.0f, 0 };
-				// Update Uniform buffers
-				ShadowUniformBufferObject ubo{};
-				ubo.view = lightViewMat;
-				ubo.projection = shadowProjMat;
-				memcpy(m_ShadowUniformBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
+		}
 
-				VkRenderPassBeginInfo renderPassInfo{};
-				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = g_context.m_ShadowPass;
-				renderPassInfo.framebuffer = m_ShadowFramebuffer;
-				renderPassInfo.renderArea.offset = { 0,0 };
-				renderPassInfo.renderArea.extent = m_CurrentExtent;
-				renderPassInfo.clearValueCount = 1;
-				renderPassInfo.pClearValues = &clearValue;
-				vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-				vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_Pipeline);
-				vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
-				vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
-
-				auto dynamicAlignment = sizeof(glm::mat4);
-				if (g_context.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
-				{
-					dynamicAlignment = (dynamicAlignment + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-				}
-				// m_Scene->DrawScene();
-				vkCmdEndRenderPass(_commandBuffer);
-			}
-
-			// Color Pass
+		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
+		{
 			std::array<VkClearValue, 2> clearValues;
 			clearValues[0].color = defaultClearColor;
 			clearValues[1].depthStencil = { 1.0f, 0 };
-			// Update Uniform buffers
-			UniformBufferObject ubo{};
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
-
-			ubo.view = viewMat;
-			ubo.projection = projMat;
-			ubo.lightView = lightViewMat;
-			ubo.cameraPosition = m_CameraPos;
-			ubo.lightPosition = m_LightPos;
-			ubo.lightColor = m_LightColor;
-			memcpy(m_Uniform_SBuffersMapped[_imageIdx], &ubo, sizeof(ubo));
-
 			// Render pass
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = g_context.m_RenderPass;
-			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_imageIdx];
+			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_InFlightFrame];
 			renderPassInfo.renderArea.offset = { 0,0 };
 			renderPassInfo.renderArea.extent = m_CurrentExtent;
 			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 			renderPassInfo.pClearValues = clearValues.data();
-			vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			// Drawing Commands
-			vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->m_Pipeline);
-			// REFRESH RENDER MODE FUNCTIONS
-			vkCmdSetViewport(_commandBuffer, 0, 1, &m_Viewport);
-			vkCmdSetScissor(_commandBuffer, 0, 1, &m_Scissor);
+			vkCmdBeginRenderPass(m_CommandBuffer[_InFlightFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
 		}
 
 		uint32_t VKBackend::DrawFrame(unsigned int _InFlightFrame)
@@ -1288,8 +1235,13 @@ namespace VKR
 				RecreateSwapChain();
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);
-
-			RecordCommandBuffer(m_CommandBuffer[_InFlightFrame], imageIdx, _InFlightFrame, m_GraphicsRender);
+			// Record command buffer
+			VkCommandBufferBeginInfo mBeginInfo{};
+			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			mBeginInfo.flags = 0;
+			mBeginInfo.pInheritanceInfo = nullptr;
+			if (vkBeginCommandBuffer(m_CommandBuffer[_InFlightFrame], &mBeginInfo) != VK_SUCCESS)
+				exit(-13);
 			return imageIdx;
 		}
 

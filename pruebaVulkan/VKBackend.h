@@ -29,6 +29,7 @@ namespace VKR
         inline bool m_CloseEngine = false;
         inline bool m_IndexedRender = true;
         inline bool m_DebugRendering = false;
+        inline bool m_CreateTestModel = false;
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.1f;
@@ -39,7 +40,7 @@ namespace VKR
         inline glm::vec3 m_CameraPos = glm::vec3(0.f);
         inline glm::vec3 m_LightPos = glm::vec3(0.f);
         inline glm::vec3 m_LightRot = glm::vec3(0.f);
-        inline glm::vec3 m_LightColor = glm::vec3(0.f);
+        inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
         inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_LightForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
@@ -189,6 +190,7 @@ namespace VKR
             void Loop();
             bool BackendShouldClose();
             void PollEvents();
+            void BeginRenderPass(unsigned int _InFlightFrame);
             uint32_t DrawFrame(unsigned int _InFlightFrame);
             void Cleanup();
             VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask);

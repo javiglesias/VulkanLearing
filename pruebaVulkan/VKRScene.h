@@ -1,5 +1,5 @@
 #pragma once
-#include "VKRModel.h"
+#include "VKBackend.h"
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -22,7 +22,8 @@ namespace VKR
         public: // FUNCIONES
             Scene();
             void Loop();
-            void DrawScene();
+            void DrawScene(VKBackend* _backend, int _CurrentFrame);
+            void ShadowPass(VKBackend* _backend, int _CurrentFrame);
             void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void Cleanup(VkDevice _LogicDevice);
