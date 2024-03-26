@@ -193,6 +193,7 @@ namespace VKR
             void BeginRenderPass(unsigned int _InFlightFrame);
             uint32_t DrawFrame(unsigned int _InFlightFrame);
             void Cleanup();
+            void Shutdown();
             VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask);
             void CreateImageViews();
             void InitializeVulkan(VkApplicationInfo* _appInfo);

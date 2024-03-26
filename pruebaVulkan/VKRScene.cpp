@@ -478,6 +478,8 @@ namespace VKR
 
 		void Scene::Cleanup(VkDevice _LogicDevice)
 		{
+			printf("Scene Cleanup\n");
+			vkDeviceWaitIdle(_LogicDevice);
 			for (auto& model : m_StaticModels)
 			{
 				for (auto& [idx, mat] : model->m_Materials)

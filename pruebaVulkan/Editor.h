@@ -13,6 +13,8 @@ namespace VKR
 		VkDescriptorPool m_UIDescriptorPool;
 	public:
 		Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
+		void Cleanup();
+		void Shutdown();
 		~Editor();
 		void Loop();
 		void Draw(VkCommandBuffer _commandBuffer);

@@ -1339,6 +1339,7 @@ namespace VKR
 			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);
 			vkFreeMemory(g_context.m_LogicDevice, m_DepthImageMemory, nullptr);
 
+			vkDestroySampler(g_context.m_LogicDevice, m_ShadowImgSamp, nullptr);
 			vkDestroyImageView(g_context.m_LogicDevice, m_ShadowImageView, nullptr);
 			vkDestroyImage(g_context.m_LogicDevice, m_ShadowImage, nullptr);
 			vkFreeMemory(g_context.m_LogicDevice, m_ShadowImageMemory, nullptr);
@@ -1353,7 +1354,11 @@ namespace VKR
 			CleanSwapChain();
 			// m_Scene->Cleanup();
 			m_ShadowMat->Cleanup(g_context.m_LogicDevice);
+		}
 
+		void VKBackend::Shutdown()
+		{
+			printf("Shutdown\n");
 			vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 			vkDestroyDevice(g_context.m_LogicDevice, nullptr);
 			if (m_DebugMessenger != nullptr)

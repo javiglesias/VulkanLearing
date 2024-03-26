@@ -35,9 +35,11 @@ int main(int _argc, char** _args)
 		backend.SubmitAndPresent(currentLocalFrame, &imageIdx);
 		currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
 	}
-	delete editor;
 	mainScene->Cleanup(renderContext.m_LogicDevice);
+	editor->Cleanup();
 	backend.Cleanup();
+	editor->Shutdown();
+	backend.Shutdown();
 	return 0;
 }
 

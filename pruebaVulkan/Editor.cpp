@@ -50,14 +50,23 @@ namespace VKR
 		init_info.CheckVkResultFn = nullptr;
 		ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass);
 	}
-
-	Editor::~Editor()
+	void Editor::Cleanup()
 	{
+		printf("Editor Cleanup\n");
 		auto renderContext = VKR::render::GetVKContext();
-		vkDestroyDescriptorPool(renderContext.m_LogicDevice, m_UIDescriptorPool, nullptr);
+		vkDeviceWaitIdle(renderContext.m_LogicDevice);
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+		vkDestroyDescriptorPool(renderContext.m_LogicDevice, m_UIDescriptorPool, nullptr);
+	}
+
+	void Editor::Shutdown()
+	{
+		printf("Editor shutdown\n");
+	}
+	Editor::~Editor()
+	{
 	}
 
 
