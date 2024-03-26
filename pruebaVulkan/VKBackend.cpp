@@ -365,107 +365,29 @@ namespace VKR
 
 		void VKContext::CreateShadowRenderPass()
 		{
-			// RENDER PASES
-			/// Attachment description
-			// Depth
-			VkAttachmentDescription attachment{};
-			attachment.format = m_GpuInfo.FindDepthTestFormat(); // d32_SFLOAT
-			attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			m_ShadowPass = new RenderPass();
+			m_ShadowPass->CreateDepthAttachment(m_GpuInfo.FindDepthTestFormat(),
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			m_ShadowPass->CreateDepthOnlySubPass();
+			m_ShadowPass->CreateRenderPass(m_LogicDevice);
+		}
 
-			// SUB-PASSES
-			/// Attachment References 
-			// depth
-			VkAttachmentReference attachmentRef{};
-			attachmentRef.attachment = 0;
-			attachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-			/// Sub-pass
-			VkSubpassDescription subpass{};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.pDepthStencilAttachment = &attachmentRef;
-
-
-			/// Render pass
-			VkRenderPassCreateInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassInfo.attachmentCount = 1;
-			renderPassInfo.pAttachments = &attachment;
-			renderPassInfo.subpassCount = 1;
-			renderPassInfo.pSubpasses = &subpass;
-			if (vkCreateRenderPass(m_LogicDevice, &renderPassInfo, nullptr,
-				&m_ShadowPass) != VK_SUCCESS)
-				exit(-8);
+		void VKContext::Cleanup()
+		{
+			vkDeviceWaitIdle(m_LogicDevice);
+			m_ShadowPass->Cleanup(m_LogicDevice);
+			m_RenderPass->Cleanup(m_LogicDevice);
 		}
 
 		void VKContext::CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
 		{
-			// RENDER PASES
-			/// Attachment description
-			// Color
-			VkAttachmentDescription colorAttachment{};
-			colorAttachment.format = m_SwapChainCreateInfo->imageFormat;
-			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			// Depth
-			VkAttachmentDescription depthAttachment{};
-			depthAttachment.format = m_GpuInfo.FindDepthTestFormat(); // d32_SFLOAT
-			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-			// SUB-PASSES
-			/// Attachment References
-			// color
-			VkAttachmentReference colorAttachmentRef{};
-			colorAttachmentRef.attachment = 0;
-			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			// depth
-			VkAttachmentReference depthAttachmentRef{};
-			depthAttachmentRef.attachment = 1;
-			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-			/// Sub-pass
-			VkSubpassDescription subpass{};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &colorAttachmentRef;
-			subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-			/// Subpass dependencies
-			VkSubpassDependency subpassDep{};
-			subpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
-			subpassDep.dstSubpass = 0;
-			subpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-			subpassDep.srcAccessMask = 0;
-			subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-			subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-			/// Render pass
-			std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-			VkRenderPassCreateInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-			renderPassInfo.pAttachments = attachments.data();
-			renderPassInfo.subpassCount = 1;
-			renderPassInfo.pSubpasses = &subpass;
-			renderPassInfo.dependencyCount = 1;
-			renderPassInfo.pDependencies = &subpassDep;
-			if (vkCreateRenderPass(m_LogicDevice, &renderPassInfo, nullptr,
-				&m_RenderPass) != VK_SUCCESS)
-				exit(-8);
+			m_RenderPass = new RenderPass();
+			m_RenderPass->CreateColorAttachment(m_SwapChainCreateInfo->imageFormat);
+			m_RenderPass->CreateDepthAttachment(m_GpuInfo.FindDepthTestFormat(),
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			m_RenderPass->CreateSubPass();
+			m_RenderPass->CreateRenderPass(m_LogicDevice);
 		}
 
 		bool VKContext::HasStencilComponent(VkFormat format)
@@ -643,7 +565,7 @@ namespace VKR
 			// Crear Renderpass
 			g_context.CreateRenderPass(&m_SwapChainCreateInfo);
 			// Crear Pipeline
-			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass);
+			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			// Limpiar ShaderModules
 			m_GraphicsRender->CleanShaderModules();
 
@@ -651,7 +573,7 @@ namespace VKR
 			m_DbgRender->Initialize();
 			m_DbgRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_DbgRender->CreatePipelineLayout();
-			m_DbgRender->CreatePipeline(g_context.m_RenderPass);
+			m_DbgRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_DbgRender->CleanShaderModules();
 
 			// Lo Mismo para Shadows
@@ -659,7 +581,7 @@ namespace VKR
 			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_ShadowRender->CreatePipelineLayout();
 			g_context.CreateShadowRenderPass();
-			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass);
+			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
 			m_ShadowRender->CleanShaderModules();
 
 			vkGetPhysicalDeviceMemoryProperties(g_context.m_GpuInfo.m_Device, &m_Mem_Props);
@@ -843,7 +765,7 @@ namespace VKR
 		{
 			VkFramebufferCreateInfo mFramebufferInfo{};
 			mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			mFramebufferInfo.renderPass = g_context.m_ShadowPass;
+			mFramebufferInfo.renderPass = g_context.m_ShadowPass->m_Pass;
 			mFramebufferInfo.attachmentCount = 1;
 			mFramebufferInfo.pAttachments = &m_ShadowImageView;
 			mFramebufferInfo.width = m_CurrentExtent.width;
@@ -866,7 +788,7 @@ namespace VKR
 				};
 				VkFramebufferCreateInfo mFramebufferInfo{};
 				mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				mFramebufferInfo.renderPass = g_context.m_RenderPass;
+				mFramebufferInfo.renderPass = g_context.m_RenderPass->m_Pass;
 				mFramebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 				mFramebufferInfo.pAttachments = attachments.data();
 				mFramebufferInfo.width = m_CurrentExtent.width;
@@ -1211,7 +1133,7 @@ namespace VKR
 			// Render pass
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = g_context.m_RenderPass;
+			renderPassInfo.renderPass = g_context.m_RenderPass->m_Pass;
 			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_InFlightFrame];
 			renderPassInfo.renderArea.offset = { 0,0 };
 			renderPassInfo.renderArea.extent = m_CurrentExtent;
@@ -1308,9 +1230,8 @@ namespace VKR
 		void VKBackend::Cleanup()
 		{
 			printf("Cleanup\n");
-			vkDeviceWaitIdle(g_context.m_LogicDevice);
-			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_RenderPass, nullptr);
-			vkDestroyRenderPass(g_context.m_LogicDevice, g_context.m_ShadowPass, nullptr);
+			g_context.Cleanup();
+			
 			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);
 			delete m_GraphicsRender;
 			delete m_DbgRender;

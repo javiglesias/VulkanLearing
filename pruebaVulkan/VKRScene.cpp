@@ -126,7 +126,7 @@ namespace VKR
 
 				VkRenderPassBeginInfo renderPassInfo{};
 				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = renderContext.m_ShadowPass;
+				renderPassInfo.renderPass = renderContext.m_ShadowPass->m_Pass;
 				renderPassInfo.framebuffer = _backend->m_ShadowFramebuffer;
 				renderPassInfo.renderArea.offset = { 0,0 };
 				renderPassInfo.renderArea.extent = _backend->m_CurrentExtent;

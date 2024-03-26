@@ -343,6 +343,14 @@ namespace VKR
 
         void CubemapRenderer::CreateDescriptorSetLayout()
         {
+            // estructura UBO
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+
             // Textura Diffuse
             VkDescriptorSetLayoutBinding cubemapDiffuseLayoutBinding{};
             cubemapDiffuseLayoutBinding.binding = 0;
@@ -351,26 +359,9 @@ namespace VKR
             cubemapDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             cubemapDiffuseLayoutBinding.pImmutableSamplers = nullptr;
 
-            // Textura specular
-            VkDescriptorSetLayoutBinding cubemapSpecularLayoutBinding{};
-            cubemapSpecularLayoutBinding.binding = 1;
-            cubemapSpecularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            cubemapSpecularLayoutBinding.descriptorCount = 1;
-            cubemapSpecularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-            cubemapSpecularLayoutBinding.pImmutableSamplers = nullptr;
-
-            // Textura Ambient
-            VkDescriptorSetLayoutBinding cubemapAmbientLayoutBinding{};
-            cubemapAmbientLayoutBinding.binding = 2;
-            cubemapAmbientLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            cubemapAmbientLayoutBinding.descriptorCount = 1;
-            cubemapAmbientLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-            cubemapAmbientLayoutBinding.pImmutableSamplers = nullptr;
-
             std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {
-                cubemapDiffuseLayoutBinding,
-                cubemapSpecularLayoutBinding,
-                cubemapAmbientLayoutBinding
+                uboLayoutBinding,
+            	cubemapDiffuseLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

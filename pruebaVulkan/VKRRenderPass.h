@@ -8,13 +8,16 @@ namespace VKR
     {
         class RenderPass
         {
-            RenderPass();
+        public:
+            RenderPass(VkRenderPass _Pass = VK_NULL_HANDLE);
             void CreateDepthAttachment(VkFormat _format, VkImageLayout _finalLayout);
             void CreateColorAttachment(VkFormat _format);
             void CreateSubPass();
+            void CreateDepthOnlySubPass();
             void CreateRenderPass(VkDevice _LogicDevice);
+            void Cleanup(VkDevice _LogicDevice);
         public:
-            VkRenderPass m_RenderPass;
+            VkRenderPass m_Pass;
         private:
             VkSubpassDescription m_Subpass;
             std::vector<VkAttachmentDescription> m_ColorAttachments;

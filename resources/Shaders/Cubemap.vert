@@ -1,13 +1,21 @@
 #version 450
 
-layout (set=0, location = 0) in vec3 inPosition;
-layout (set=0, location = 1) in vec2 aTexCoord;
+layout (location = 0) in vec3 inPos;
 
-layout(location = 0) out vec2 texCoord;
+layout (binding = 0) uniform UBO 
+{
+	mat4 projection;
+	mat4 model;
+} ubo;
 
+layout (location = 0) out vec3 outUVW;
 
 void main() 
 {
-	gl_Position = vec4(inPosition, 1.0);
-	texCoord = aTexCoord;
+	outUVW = inPos;
+	// Convert cubemap coordinates into Vulkan coordinate space
+	outUVW.xy *= -1.0;
+	// Remove translation from view matrix
+	mat4 viewMat = mat4(mat3(ubo.model));
+	gl_Position = ubo.projection * viewMat * vec4(inPos.xyz, 1.0);
 }

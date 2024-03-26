@@ -4,9 +4,9 @@ namespace VKR
 {
     namespace render
     {
-        RenderPass::RenderPass() : m_Subpass{}
-        {
-        }
+        RenderPass::RenderPass(VkRenderPass _Pass) : m_Pass(_Pass), m_Subpass{}
+        {}
+
 		void RenderPass::CreateColorAttachment(VkFormat _format)
 		{
 			VkAttachmentDescription attachment{};
@@ -54,6 +54,18 @@ namespace VKR
 			m_Subpass.pDepthStencilAttachment = &depthAttachmentRef;
 		}
 
+		void RenderPass::CreateDepthOnlySubPass()
+		{
+			/// Attachment References
+			VkAttachmentReference depthAttachmentRef{};
+			depthAttachmentRef.attachment = 0;
+			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			/// Sub-pass
+			m_Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			m_Subpass.pDepthStencilAttachment = &depthAttachmentRef;
+		}
+
 		void RenderPass::CreateRenderPass(VkDevice _LogicDevice)
 		{
 			/// Subpass dependencies
@@ -78,9 +90,13 @@ namespace VKR
 			renderPassInfo.dependencyCount = 1;
 			renderPassInfo.pDependencies = &subpassDep;
 			if (vkCreateRenderPass(_LogicDevice, &renderPassInfo, nullptr,
-				&m_RenderPass) != VK_SUCCESS)
+				&m_Pass) != VK_SUCCESS)
 				exit(-8);
 		}
-		
+
+		void RenderPass::Cleanup(VkDevice _LogicDevice)
+		{
+			vkDestroyRenderPass(_LogicDevice, m_Pass, nullptr);
+		}
     }
 }

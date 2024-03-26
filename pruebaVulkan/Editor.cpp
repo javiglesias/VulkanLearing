@@ -48,7 +48,7 @@ namespace VKR
 		init_info.MinImageCount = _MinImageCount;
 		init_info.ImageCount = _ImageCount;
 		init_info.CheckVkResultFn = nullptr;
-		ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass);
+		ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);
 	}
 	void Editor::Cleanup()
 	{

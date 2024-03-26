@@ -3,6 +3,7 @@
 #include "VKRenderers.h"
 #include "VKRShadowMaterial.h"
 #include "VKRModel.h"
+#include "VKRRenderPass.h"
 
 
 #define GLFW_INCLUDE_NONE
@@ -85,8 +86,8 @@ namespace VKR
             GPUInfo  m_GpuInfo;
             VkDevice m_LogicDevice = VK_NULL_HANDLE;
             
-            VkRenderPass m_RenderPass = VK_NULL_HANDLE;
-            VkRenderPass m_ShadowPass = VK_NULL_HANDLE;
+            RenderPass* m_RenderPass;
+            RenderPass* m_ShadowPass;
             unsigned int m_GraphicsQueueFamilyIndex = 0;
             unsigned int m_TransferQueueFamilyIndex = 0;
             VkQueue m_GraphicsQueue;
@@ -99,6 +100,7 @@ namespace VKR
             void CreateLogicalDevice();
             void CreateDevice(VkInstance _Instance);
             void CreateShadowRenderPass();
+            void Cleanup();
         };
         VKContext& GetVKContext();
 
