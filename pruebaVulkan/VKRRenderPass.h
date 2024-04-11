@@ -20,6 +20,8 @@ namespace VKR
             VkRenderPass m_Pass;
         private:
             VkSubpassDescription m_Subpass;
+            VkAttachmentReference colorAttachmentRef{};
+            VkAttachmentReference depthAttachmentRef{};
             std::vector<VkAttachmentDescription> m_ColorAttachments;
             std::vector<VkAttachmentDescription> m_DepthAttachments;
             

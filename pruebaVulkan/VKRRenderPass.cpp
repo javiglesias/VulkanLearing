@@ -39,11 +39,9 @@ namespace VKR
 			// SUB-PASSES
 			/// Attachment References
 			// color
-			VkAttachmentReference colorAttachmentRef{};
 			colorAttachmentRef.attachment = 0;
 			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			// depth
-			VkAttachmentReference depthAttachmentRef{};
 			depthAttachmentRef.attachment = 1;
 			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 

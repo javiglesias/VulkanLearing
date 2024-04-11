@@ -111,7 +111,7 @@ namespace VKR
 		void Scene::ShadowPass(VKBackend* _backend, int _CurrentFrame)
 		{
 			glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
-			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_CameraUp);
+			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_LightUp);
 			auto renderContext = GetVKContext();
 			/// Shadow Pass
 			{
@@ -149,8 +149,6 @@ namespace VKR
 				{
 					DynamicBufferObject dynO{};
 					dynO.model = glm::mat4(1.0f);
-					dynO.model = glm::translate(dynO.model, model->m_Pos);
-					dynO.model = glm::scale(dynO.model, model->m_Scale);
 					uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 					memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
@@ -188,12 +186,12 @@ namespace VKR
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
+			auto renderContext = GetVKContext();
 			if(m_State == DIRTY)
 			{
 				/// Flujo actual para renderizar un Modelo(gltf)
 				/// 0 - cargar modelo y materiales(LoadModel)
 #if 1
-				auto renderContext = GetVKContext();
 				/// 1 - Actualizar los DynamicDescriptorBuffers
 				VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -306,8 +304,62 @@ namespace VKR
 				m_State = READY;
 #endif
 			}
+#if 1 // DEBUG MODELS
+			if(m_DbgModels.size() > 0)
+			{
+				/// N - Actualizar los DynamicDescriptorBuffers
+				VkDeviceSize dynDbgBufferSize = m_DbgModels.size() * sizeof(DynamicBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					_backend->CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						_backend->m_DbgDynamicBuffers[i], _backend->m_DbgDynamicBuffersMemory[i]);
+					vkMapMemory(renderContext.m_LogicDevice, _backend->m_DbgDynamicBuffersMemory[i], 0,
+						dynDbgBufferSize, 0, &_backend->m_DbgDynamicBuffersMapped[i]);
+				}
+			}
+
+			for (auto& model : m_DbgModels)
+			{
+				/// 2 - Crear descriptor pool de materiales(CreateDescPool)
+				model->m_Material.CreateDescriptorPool(renderContext.m_LogicDevice);
+
+				/// 3 - Crear Descriptor set de material(createMeshDescSet)
+				model->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_DbgRender->m_DescSetLayout);
+
+				/// 5 - Crear buffers de vertices
+				void* data;
+				if (model->m_Vertices.size() <= 0)
+				{
+					fprintf(stderr, "There is no Triangles to inser on the buffer");
+					exit(-57);
+				}
+				VkDeviceSize bufferSize = sizeof(model->m_Vertices[0]) * model->m_Vertices.size();
+				// Stagin buffer
+				_backend->CreateBuffer(bufferSize,
+					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
+				vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+				memcpy(data, model->m_Vertices.data(), (size_t)bufferSize);
+				vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+				_backend->CreateBuffer(bufferSize,
+					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					model->m_VertexBuffer, model->m_VertexBufferMemory);
+				_backend->CopyBuffer(model->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize);
+				vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+				vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
+
+				model->m_Material.UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_DbgUniformBuffers, _backend->m_DbgDynamicBuffers);
+			}
+#endif
 			ShadowPass(_backend, _CurrentFrame);
-			auto renderContext = GetVKContext();
 			auto dynamicAlignment = sizeof(glm::mat4);
 			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
 			{
@@ -317,13 +369,12 @@ namespace VKR
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, 0.2f, 1000000.f);
 			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_CameraUp);
+			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_LightUp);
+			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
 			/// Render Pass
 			{
 				// Update Uniform buffers
 				UniformBufferObject ubo{};
-				glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
-
 				ubo.view = viewMat;
 				ubo.projection = projMat;
 				ubo.lightView = lightViewMat;
@@ -383,16 +434,16 @@ namespace VKR
 			{
 
 				// DEBUG Render
-				vkCmdBindPipeline(_backend->m_CommandBuffer[_frameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
+				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
 				//Debug
 				DebugUniformBufferObject dubo{};
 				dubo.view = viewMat;
 				dubo.projection = projMat;
 
-				memcpy(m_DbgUniformBuffersMapped[_imageIdx], &dubo, sizeof(dubo));
+				memcpy(_backend->m_DbgUniformBuffersMapped[_CurrentFrame], &dubo, sizeof(dubo));
 				// REFRESH RENDER MODE FUNCTIONS
-				vkCmdSetViewport(_backend->m_CommandBuffer[_frameIdx], 0, 1, &m_Viewport);
-				vkCmdSetScissor(_backend->m_CommandBuffer[_frameIdx], 0, 1, &m_Scissor);
+				vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+				vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 				int debugCount = 0;
 				m_DbgModels[0]->m_Pos = m_LightPos;
 				for (auto& model : m_DbgModels)
@@ -404,14 +455,14 @@ namespace VKR
 					VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
 					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-					memcpy((char*)m_DbgDynamicBuffersMapped[_frameIdx] + dynamicOffset, &dynO, sizeof(dynO));
-					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_frameIdx], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[_frameIdx], 1, &dynamicOffset);
-					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_frameIdx], 0, 1, vertesBuffers, offsets);
-					vkCmdDraw(_backend->m_CommandBuffer[_frameIdx], model->m_Vertices.size(), 1, 0, 0);
+					memcpy((char*)_backend->m_DbgDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, &model->m_Material.m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
+					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
+					vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], model->m_Vertices.size(), 1, 0, 0);
 					// Flush to make changes visible to the host
 					VkMappedMemoryRange mappedMemoryRange{};
 					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					mappedMemoryRange.memory = m_DbgDynamicBuffersMemory[_frameIdx];
+					mappedMemoryRange.memory = _backend->m_DbgDynamicBuffersMemory[_CurrentFrame];
 					mappedMemoryRange.size = sizeof(dynO);
 					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 					++debugCount;
@@ -419,63 +470,6 @@ namespace VKR
 			}
 #endif
 		}
-
-#if 0 // DEBUG MODELS
-			for (auto& model : m_DbgModels)
-			{
-				/// 2 - Crear descriptor pool de materiales(CreateDescPool)
-				model->m_Material.CreateDescriptorPool(renderContext.m_LogicDevice);
-
-				/// 3 - Crear Descriptor set de material(createMeshDescSet)
-				model->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_DbgRender->m_DescSetLayout);
-
-				/// 5 - Crear buffers de vertices
-				void* data;
-				if (model->m_Vertices.size() <= 0)
-				{
-					fprintf(stderr, "There is no Triangles to inser on the buffer");
-					exit(-57);
-				}
-				VkDeviceSize bufferSize = sizeof(model->m_Vertices[0]) * model->m_Vertices.size();
-				// Stagin buffer
-				_backend->CreateBuffer(bufferSize,
-					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
-				vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-				memcpy(data, model->m_Vertices.data(), (size_t)bufferSize);
-				vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-				_backend->CreateBuffer(bufferSize,
-					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-					model->m_VertexBuffer, model->m_VertexBufferMemory);
-				_backend->CopyBuffer(model->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize);
-				vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-				vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
-
-				model->m_Material.UpdateDescriptorSet(renderContext.m_LogicDevice, m_DbgUniformBuffers, m_DbgDynamicBuffers);
-			}
-
-			/// N - Actualizar los DynamicDescriptorBuffers
-			VkDeviceSize dynDbgBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				_backend->CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_DbgDynamicBuffers[i], m_DbgDynamicBuffersMemory[i]);
-				vkMapMemory(renderContext.m_LogicDevice, m_DbgDynamicBuffersMemory[i], 0,
-					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
-			}
-		void Scene::ManageModels()
-		{
-		}
-#endif
-
 		void Scene::Cleanup(VkDevice _LogicDevice)
 		{
 			printf("Scene Cleanup\n");

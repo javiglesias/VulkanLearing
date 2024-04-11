@@ -112,7 +112,6 @@ namespace VKR
         struct CubemapRenderer : Renderer
         {
         public: // Functions
-
             // Creamos el layout de los Descriptor set que vamos a utlizar
             void Initialize() override;
             void CreateDescriptorSetLayout() override;

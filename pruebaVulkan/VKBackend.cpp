@@ -394,6 +394,7 @@ namespace VKR
 		{
 			return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 		}
+
     	// Backend
 		VkImageView VKBackend::CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT)
 		{
@@ -411,6 +412,7 @@ namespace VKR
 			VK_ASSERT(vkCreateImageView(g_context.m_LogicDevice, &viewInfo, nullptr, &tImageView));
 			return tImageView;
 		}
+
 		void VKBackend::CreateImageViews()
 		{
 			/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
@@ -422,6 +424,7 @@ namespace VKR
 				++currentSwapchaingImageView;
 			}
 		}
+
 		void VKBackend::Init()
 		{
 			m_GPipelineStatus = CREATING;
@@ -693,6 +696,7 @@ namespace VKR
 			CreateSyncObjects(1);
 			m_GPipelineStatus = READY;
 		}
+
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
 		{
 			_appInfo->sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -1118,11 +1122,6 @@ namespace VKR
 			}
 			vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &iBarrier);
 			EndSingleTimeCommandBuffer(commandBuffer);
-		}
-
-		void VKBackend::RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
-		                                    Renderer* _renderer)
-		{
 		}
 
 		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)

@@ -38,12 +38,13 @@ namespace VKR
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 40.f;
         inline std::string g_ConsoleMSG;
-        inline glm::vec3 m_CameraPos = glm::vec3(0.f);
-        inline glm::vec3 m_LightPos = glm::vec3(0.f);
+        inline glm::vec3 m_LightPos = glm::vec3(0.f, 1.f, 0.f);
         inline glm::vec3 m_LightRot = glm::vec3(0.f);
-        inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
-        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_LightForward = glm::vec3(0.f, 0.f, 1.f);
+        inline glm::vec3 m_LightUp = glm::vec3(0.f, 1.f, 0.f);
+        inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
+        inline glm::vec3 m_CameraPos = glm::vec3(0.f);
+        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
 		inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
@@ -177,7 +178,7 @@ namespace VKR
             VkDeviceMemory m_DepthImageMemory;
             VkImageView m_DepthImageView;
 
-            VkClearColorValue defaultClearColor = { { 0.6f, 0.65f, 0.4f, 1.0f } };
+            VkClearColorValue defaultClearColor = { { 1.f, 0.f, 0.f, 1.0f } };
 
             // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
             VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];

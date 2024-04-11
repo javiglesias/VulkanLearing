@@ -14,17 +14,16 @@ layout(location = 6) in vec4 lightSpacePos;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 directional_light_calculations();
-vec3 BlinnPhong_calculations(vec3 _viewDir);
+vec3 light_calculations();
 float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map);
 
 void main() 
 {
-	vec3 result =  directional_light_calculations();
+	vec3 result = light_calculations();
     outColor = vec4(result, 1.0);
 }
 
-vec3 directional_light_calculations()
+vec3 light_calculations()
 {
 	vec3 color = texture(inAmbientTexture, texCoord).rgb;
 	vec3 _normal = normalize(normal);
@@ -43,23 +42,7 @@ vec3 directional_light_calculations()
 	// Caulculate shadows
 	float shadow = compute_shadow_factor(lightSpacePos,inShadowTexture);
 	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
-}
-
-vec3 BlinnPhong_calculations(vec3 _viewDir)
-{
-	vec3  light_dir = lightPosition - fragPosition;
-	float r = length(light_dir);
-	light_dir = normalize(light_dir);
-
-	float diff = max(dot(lightPosition, normal), 0.0);
-	vec3 halfDir = normalize(_viewDir + light_dir);
-	float specStrength = max(dot(halfDir, normal), 0.0f);
-	float spec = pow(specStrength, 32.0f);
-
-	vec3 ambient = lightColor * vec3(texture(inAmbientTexture, texCoord));
-	vec3 diffuse = diff * vec3(texture(inDiffuseTexture, texCoord));
-	vec3 specular = spec * vec3(texture(inSpecularTexture, texCoord));
-	return ambient + diffuse;
+	// return (ambient * (diffuse + specular)) * color;
 }
 
 float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)
