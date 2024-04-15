@@ -172,6 +172,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DebugModels.h" />
     <ClInclude Include="debugUtils.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="Editor.h" />
@@ -207,6 +208,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     </ClCompile>
     <ClCompile Include="VKBackend.cpp" />
     <ClCompile Include="VKRenderers.cpp" />
+    <ClCompile Include="VKRModel.cpp" />
     <ClCompile Include="VKRRenderPass.cpp" />
     <ClCompile Include="VKRScene.cpp" />
   </ItemGroup>

@@ -35,10 +35,16 @@ namespace VKR
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.1f;
         inline float m_CameraFOV = 60.f;
+        inline float g_LightRight = 1.0;
+        inline float g_LightUp = -1.f;
+        inline float zFar= 100000.f;
+        inline float zNear = 1.f;
+        inline float g_ShadowAR = 1.f;
         inline GLFWwindow* m_Window;
-        inline float m_ShadowCameraFOV = 40.f;
+        inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
-        inline glm::vec3 m_LightPos = glm::vec3(0.f, 1.f, 0.f);
+        inline glm::vec3 m_LightPos = glm::vec3(0.f, 1000.f, 0.f);
+        inline glm::vec3 m_LightCenter = glm::vec3(1.f);
         inline glm::vec3 m_LightRot = glm::vec3(0.f);
         inline glm::vec3 m_LightForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_LightUp = glm::vec3(0.f, 1.f, 0.f);

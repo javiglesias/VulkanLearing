@@ -68,7 +68,7 @@ namespace VKR
 					VkDescriptorBufferInfo bufferInfo{};
 					bufferInfo.buffer = _UniformBuffers[i];
 					bufferInfo.offset = 0;
-					bufferInfo.range = sizeof(DebugUniformBufferObject); // VK_WHOLE
+					bufferInfo.range = sizeof(ShadowUniformBufferObject); // VK_WHOLE
 
 					std::array<VkWriteDescriptorSet, 2> descriptorsWrite{};
 					descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

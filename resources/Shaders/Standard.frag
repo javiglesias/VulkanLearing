@@ -16,10 +16,12 @@ layout(location = 0) out vec4 outColor;
 
 vec3 light_calculations();
 float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map);
+float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap);
 
 void main() 
 {
 	vec3 result = light_calculations();
+	float shadow = compute_shadow_factor(lightSpacePos, inShadowTexture);
     outColor = vec4(result, 1.0);
 }
 
@@ -55,4 +57,24 @@ float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)
 	float bias = max(0.0 * (1.0 - dot(normal, light_dir)), 0.005);
 	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 	return shadow;
+}
+
+const float bias = 0.005;
+float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 
+{
+
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    // Remap to [0.0, 1.0]
+    projCoords = projCoords * 0.5 + 0.5;
+
+    // Return no shadow when outside of clipping planes
+    if (projCoords.z > 1.0) { return 0.0; }
+
+    float closestDepth = texture(uShadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
 }

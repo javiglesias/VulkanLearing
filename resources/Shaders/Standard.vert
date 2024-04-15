@@ -36,5 +36,5 @@ void main() {
     lightPosition = ubo.lightPosition;
     viewerPosition = ubo.viewerPosition;
     lightColor = ubo.lightColor;
-	lightSpacePos = ubo.projection * ubo.lightView * dynO.model * vec4(inPosition, 1.0);
+	lightSpacePos = ubo.projection * ubo.lightView * vec4(inPosition, 1.0);
 }

@@ -6,17 +6,21 @@
 
 namespace VKR
 {
-	class VKBackend;
-	class Editor
+	namespace render
 	{
-	private:
-		VkDescriptorPool m_UIDescriptorPool;
-	public:
-		Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
-		void Cleanup();
-		void Shutdown();
-		~Editor();
-		void Loop();
-		void Draw(VkCommandBuffer _commandBuffer);
-	};	
+		class VKBackend;
+		class Scene;
+		class Editor
+		{
+		private:
+			VkDescriptorPool m_UIDescriptorPool;
+		public:
+			Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
+			void Cleanup();
+			void Shutdown();
+			~Editor();
+			void Loop(Scene* _mainScene, VKBackend* _backend);
+			void Draw(VkCommandBuffer _commandBuffer);
+		};	
+	}
 }

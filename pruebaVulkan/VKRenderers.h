@@ -88,8 +88,9 @@ namespace VKR
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
-                m_PolygonMode = VK_POLYGON_MODE_LINE;
+                m_PolygonMode = VK_POLYGON_MODE_FILL;
                 m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
+                m_CullMode = VK_CULL_MODE_NONE;
             }
         };
 

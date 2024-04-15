@@ -4,6 +4,7 @@ layout(set=0, binding=0) uniform UniformBufferObject
 {
     mat4 view;
     mat4 projection;
+	mat4 MVP;
 } ubo;
 
 layout(set=0, binding=1) uniform DynamicBufferObject
@@ -17,5 +18,5 @@ layout (location = 2) in vec3 aNormal;
 
 
 void main() {
-    gl_Position = ubo.projection * ubo.view * dynO.model  * vec4(inPosition, 1.0);
+    gl_Position = ubo.MVP * vec4(inPosition, 1.0);
 }
