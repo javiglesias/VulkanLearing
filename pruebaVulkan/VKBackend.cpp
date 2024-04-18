@@ -547,11 +547,13 @@ namespace VKR
 			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 			CreateImageViews();
 
+			m_CubemapRender = new CubemapRenderer(g_context.m_LogicDevice);
 			m_GraphicsRender = new GraphicsRenderer(g_context.m_LogicDevice);
 			m_ShadowRender = new ShadowRenderer(g_context.m_LogicDevice);
 			m_ShadowMat = new R_ShadowMaterial();
 			m_DbgRender = new DebugRenderer(g_context.m_LogicDevice);
 			// primero creamos el layout de los descriptors
+			m_CubemapRender->CreateDescriptorSetLayout();
 			m_GraphicsRender->CreateDescriptorSetLayout();
 			m_ShadowRender->CreateDescriptorSetLayout();
 			m_DbgRender->CreateDescriptorSetLayout();
@@ -587,6 +589,14 @@ namespace VKR
 			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
 			m_ShadowRender->CleanShaderModules();
 
+			// Pa'l cubemap
+			// Lo mismo para el renderer de Debug
+			m_CubemapRender->Initialize();
+			m_CubemapRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			m_CubemapRender->CreatePipelineLayout();
+			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_CubemapRender->CleanShaderModules();
+
 			vkGetPhysicalDeviceMemoryProperties(g_context.m_GpuInfo.m_Device, &m_Mem_Props);
 			CreateCommandBuffer();
 			// Creamos los recursos para el Shadow map
@@ -611,6 +621,15 @@ namespace VKR
 			m_DbgDynamicBuffers.resize(FRAMES_IN_FLIGHT);
 			m_DbgDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_DbgDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			//
+			// Uniform buffers
+			m_CubemapUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			m_CubemapUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_CubemapUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			// Dynamic buffers
+			m_CubemapDynamicBuffers.resize(FRAMES_IN_FLIGHT);
+			m_CubemapDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_CubemapDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
 
 			VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -633,6 +652,17 @@ namespace VKR
 					m_DbgUniformBuffers[i], m_DbgUniformBuffersMemory[i]);
 				vkMapMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], 0,
 					dbgBufferSize, 0, &m_DbgUniformBuffersMapped[i]);
+			}
+			VkDeviceSize cubemapBufferSize = sizeof(DebugUniformBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(cubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_CubemapUniformBuffers[i], m_CubemapUniformBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], 0,
+					cubemapBufferSize, 0, &m_CubemapUniformBuffersMapped[i]);
 			}
 
 			VkDeviceSize dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
@@ -657,6 +687,18 @@ namespace VKR
 					m_DbgDynamicBuffers[i], m_DbgDynamicBuffersMemory[i]);
 				vkMapMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], 0,
 					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
+			}
+
+			VkDeviceSize dynCubemapBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(dynCubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_CubemapDynamicBuffers[i], m_CubemapDynamicBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], 0,
+					dynCubemapBufferSize, 0, &m_CubemapDynamicBuffersMapped[i]);
 			}
 
 			// SHADOW UNIFORM BUFFERS
@@ -1142,6 +1184,13 @@ namespace VKR
 
 		}
 
+		void VKBackend::EndRenderPass(unsigned int _InFlightFrame)
+		{
+			vkCmdEndRenderPass(m_CommandBuffer[_InFlightFrame]);
+			if (vkEndCommandBuffer(m_CommandBuffer[_InFlightFrame]) != VK_SUCCESS)
+				exit(-17);
+		}
+
 		uint32_t VKBackend::DrawFrame(unsigned int _InFlightFrame)
 		{
 			// Ahora vamos a simular el siguiente frame
@@ -1168,10 +1217,6 @@ namespace VKR
 
 		void VKBackend::SubmitAndPresent(unsigned int _FrameToPresent, uint32_t* _imageIdx)
 		{
-			vkCmdEndRenderPass(m_CommandBuffer[_FrameToPresent]);
-			if (vkEndCommandBuffer(m_CommandBuffer[_FrameToPresent]) != VK_SUCCESS)
-				exit(-17);
-
 			VkSubmitInfo submitInfo{};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			VkSemaphore waitSemaphores[] = { m_ImageAvailable[_FrameToPresent] };

@@ -10,19 +10,18 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 lightPosition;
 layout(location = 4) in vec3 viewerPosition;
 layout(location = 5) in vec3 lightColor;
-layout(location = 6) in vec4 lightSpacePos;
+layout(location = 6) in vec4 shadowCoord;
 
 layout(location = 0) out vec4 outColor;
 
 vec3 light_calculations();
 float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map);
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap);
+float textureProj(vec4 shadowCoord, vec2 off);
 
 void main() 
 {
-	vec3 result = light_calculations();
-	float shadow = compute_shadow_factor(lightSpacePos, inShadowTexture);
-    outColor = vec4(result, 1.0);
+	outColor = vec4(light_calculations(),  1.0);
 }
 
 vec3 light_calculations()
@@ -42,8 +41,8 @@ vec3 light_calculations()
 	float spec = pow(max(dot(_normal, halfwayDir), 0.0), 64.0);
 	vec3 specular = spec * lightColor;
 	// Caulculate shadows
-	float shadow = compute_shadow_factor(lightSpacePos,inShadowTexture);
-	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+	float shadow = compute_shadow_factor(shadowCoord,inShadowTexture);
+	return ((1.0 - shadow) * (diffuse + specular)) * color;
 	// return (ambient * (diffuse + specular)) * color;
 }
 
@@ -77,4 +76,19 @@ float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap)
     float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     return shadow;
+}
+
+float textureProj(vec4 shadowCoord, vec2 off)
+{
+	#define ambient 0.1
+	float shadow = 1.0;
+	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
+	{
+		float dist = texture( inShadowTexture, shadowCoord.st + off ).r;
+		if ( shadowCoord.w > 0.0 && dist < shadowCoord.z ) 
+		{
+			shadow = ambient;
+		}
+	}
+	return shadow;
 }

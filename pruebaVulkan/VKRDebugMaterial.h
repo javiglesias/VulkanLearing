@@ -1,5 +1,6 @@
 #pragma once
 #include "Types.h"
+#include "VKRMaterial.h"
 
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
@@ -19,6 +20,7 @@ namespace VKR
 			VkDescriptorPool m_DescriptorPool = nullptr;
 			std::vector<VkDescriptorSetLayout> m_DescLayouts;
 			std::vector<VkDescriptorSet> m_DescriptorSet;
+			Texture* m_TextureCubemap;
 
 		public:
 			void Cleanup(VkDevice _LogicDevice)
@@ -30,13 +32,16 @@ namespace VKR
 			{
 				if (m_DescriptorPool == nullptr)
 				{
-					std::array<VkDescriptorPoolSize, 2> descPoolSize{};
+					std::array<VkDescriptorPoolSize, 3> descPoolSize{};
 					// UBO
 					descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-					// Model Matrix
-					descPoolSize[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					// texture
+					descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+					// Model Matrix
+					descPoolSize[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					descPoolSize[2].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 					VkDescriptorPoolCreateInfo descPoolInfo{};
 					descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -74,7 +79,7 @@ namespace VKR
 					bufferInfo.offset = 0;
 					bufferInfo.range = sizeof(DebugUniformBufferObject); // VK_WHOLE
 
-					std::array<VkWriteDescriptorSet, 2> descriptorsWrite{};
+					std::array<VkWriteDescriptorSet, 3> descriptorsWrite{};
 					descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 					descriptorsWrite[0].dstBinding = 0;
@@ -84,21 +89,45 @@ namespace VKR
 					descriptorsWrite[0].pBufferInfo = &bufferInfo;
 					descriptorsWrite[0].pImageInfo = nullptr;
 					descriptorsWrite[0].pTexelBufferView = nullptr;
+					// Textura
+					VkDescriptorImageInfo TextureDiffuseImage{};
+					TextureDiffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureDiffuseImage.imageView = m_TextureCubemap->tImageView;
+					if (m_TextureCubemap->m_Sampler != nullptr)
+					{
+						TextureDiffuseImage.sampler = m_TextureCubemap->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureCubemap->sPath;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[1].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[1].dstBinding = 1;
+					descriptorsWrite[1].dstArrayElement = 0;
+					descriptorsWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[1].descriptorCount = 1;
+					descriptorsWrite[1].pBufferInfo = nullptr;
+					descriptorsWrite[1].pImageInfo = &TextureDiffuseImage;
+					descriptorsWrite[1].pTexelBufferView = nullptr;
 					// Dynamic
 					VkDescriptorBufferInfo dynBufferInfo{};
 					dynBufferInfo.buffer = _DynamicBuffers[i];
 					dynBufferInfo.offset = 0;
 					dynBufferInfo.range = sizeof(DynamicBufferObject); // VK_WHOLE
 
-					descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[1].dstSet = m_DescriptorSet[i];
-					descriptorsWrite[1].dstBinding = 1;
-					descriptorsWrite[1].dstArrayElement = 0;
-					descriptorsWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-					descriptorsWrite[1].descriptorCount = 1;
-					descriptorsWrite[1].pBufferInfo = &dynBufferInfo;
-					descriptorsWrite[1].pImageInfo = nullptr;
-					descriptorsWrite[1].pTexelBufferView = nullptr;
+					descriptorsWrite[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[2].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[2].dstBinding = 2;
+					descriptorsWrite[2].dstArrayElement = 0;
+					descriptorsWrite[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					descriptorsWrite[2].descriptorCount = 1;
+					descriptorsWrite[2].pBufferInfo = &dynBufferInfo;
+					descriptorsWrite[2].pImageInfo = nullptr;
+					descriptorsWrite[2].pTexelBufferView = nullptr;
 					vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 				}
 			}

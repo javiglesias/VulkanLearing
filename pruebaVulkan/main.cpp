@@ -27,6 +27,7 @@ int main(int _argc, char** _args)
 		auto imageIdx = backend.DrawFrame(currentLocalFrame);
 		mainScene.DrawScene(&backend, currentLocalFrame);
 		editor->Draw(backend.m_CommandBuffer[currentLocalFrame]);
+		backend.EndRenderPass(currentLocalFrame);
 		backend.SubmitAndPresent(currentLocalFrame, &imageIdx);
 		currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
 	}

@@ -13,6 +13,7 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
 	alignas(16) glm::mat4 lightView;
+	alignas(16) glm::mat4 lightProj;
 	alignas(16) glm::vec3 cameraPosition;
 	alignas(16) glm::vec3 lightPosition;
 	alignas(16) glm::vec3 lightColor;

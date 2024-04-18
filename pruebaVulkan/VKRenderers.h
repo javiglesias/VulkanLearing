@@ -15,6 +15,8 @@ namespace VKR
 		inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
 		inline auto m_ShadowBindingDescription = m_BindingDescription;
 		inline auto m_ShadowAttributeDescriptions = m_AttributeDescriptions;
+        inline auto m_CubemapBindingDescription = m_DbgBindingDescription    ;
+        inline auto m_CubemapAttributeDescriptions= m_DbgAttributeDescriptions ;
 
         struct Renderer
         {
@@ -85,6 +87,8 @@ namespace VKR
         {
         public: // Functions
             void Initialize() override;
+            void CreateDescriptorSetLayout();
+
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;

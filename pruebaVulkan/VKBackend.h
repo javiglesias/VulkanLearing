@@ -34,20 +34,22 @@ namespace VKR
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.1f;
-        inline float m_CameraFOV = 60.f;
-        inline float g_LightRight = 1.0;
-        inline float g_LightUp = -1.f;
+        inline float m_CameraFOV = 70.f;
+        inline float g_LightRight = 300.0;
+        inline float g_LightUp = -300.f;
+        inline float g_LightDepth = -300.f;
         inline float zFar= 100000.f;
-        inline float zNear = 1.f;
+        inline float zNear = 10.f;
+        inline float g_debugScale = 100.f;
         inline float g_ShadowAR = 1.f;
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
         inline glm::vec3 m_LightPos = glm::vec3(0.f, 1000.f, 0.f);
-        inline glm::vec3 m_LightCenter = glm::vec3(1.f);
+        inline glm::vec3 m_LightCenter = glm::vec3(0.f);
         inline glm::vec3 m_LightRot = glm::vec3(0.f);
         inline glm::vec3 m_LightForward = glm::vec3(0.f, 0.f, 1.f);
-        inline glm::vec3 m_LightUp = glm::vec3(0.f, 1.f, 0.f);
+        inline glm::vec3 m_LightUp = glm::vec3(0.f, -1.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
         inline glm::vec3 m_CameraPos = glm::vec3(0.f);
         inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
@@ -55,6 +57,7 @@ namespace VKR
 		inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
         inline DebugRenderer* m_DbgRender;
+        inline CubemapRenderer* m_CubemapRender;
 
         inline static void VK_ASSERT(bool _check)
         {
@@ -178,6 +181,15 @@ namespace VKR
             std::vector<VkDeviceMemory> m_ShadowDynamicBuffersMemory;
             std::vector<void*> m_ShadowUniformBuffersMapped;
             std::vector<void*> m_ShadowDynamicBuffersMapped;
+            // CUBEMAP
+            // DEBUG BUFFERS
+            std::vector<VkBuffer> m_CubemapUniformBuffers;
+            std::vector<VkDeviceMemory> m_CubemapUniformBuffersMemory;
+            std::vector<VkBuffer> m_CubemapDynamicBuffers;
+            std::vector<VkDeviceMemory> m_CubemapDynamicBuffersMemory;
+            std::vector<void*> m_CubemapUniformBuffersMapped;
+            std::vector<void*> m_CubemapDynamicBuffersMapped;
+
             VkDeviceMemory m_StaggingBufferMemory;
             VkPhysicalDeviceMemoryProperties m_Mem_Props;
             VkImage m_DepthImage;
@@ -200,6 +212,7 @@ namespace VKR
             bool BackendShouldClose();
             void PollEvents();
             void BeginRenderPass(unsigned int _InFlightFrame);
+            void EndRenderPass(unsigned _InFlightFrame);
             uint32_t DrawFrame(unsigned int _InFlightFrame);
             void Cleanup();
             void Shutdown();

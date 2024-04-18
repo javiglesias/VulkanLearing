@@ -83,28 +83,12 @@ namespace VKR
 				// Camera
 				ImGui::SliderFloat("cam Speed", &render::m_CameraSpeed, 0.1f, 100.f);
 				ImGui::SliderFloat("FOV", &render::m_CameraFOV, 40.f, 100.f);
-				ImGui::Checkbox("Indexed Draw", &render::m_IndexedRender);
-				ImGui::Checkbox("Debug Draw", &render::m_DebugRendering);
 				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", render::m_CameraPos.x, render::m_CameraPos.y, render::m_CameraPos.z);
-				ImGui::LabelText("Cam Pitch", "Cam Pitch(%.2f)", render::m_CameraPitch);
-				ImGui::LabelText("Cam Yaw", "Cam Yaw(%.2f)", render::m_CameraYaw);
 				ImGui::End();
 			}
 			ImGui::Begin("Lighting");
 			{
-				if (ImGui::Button("Center Light"))
-				{
-					render::m_LightPos = glm::vec3(0.0f);
-				}
-				float tempLightPos[3];
 				ImGui::LabelText("Light Pos", "Light Pos(%.2f, %.2f, %.2f)", render::m_LightPos.x, render::m_LightPos.y, render::m_LightPos.z);
-				tempLightPos[0] = render::m_LightPos.x;
-				tempLightPos[1] = render::m_LightPos.y;
-				tempLightPos[2] = render::m_LightPos.z;
-				ImGui::InputFloat3("Light Position", tempLightPos);
-				render::m_LightPos.x = tempLightPos[0];
-				render::m_LightPos.y = std::max(0.0f, tempLightPos[1]);
-				render::m_LightPos.z = tempLightPos[2];
 
 				float color[3];
 				color[0] = render::m_LightColor.x;
@@ -114,13 +98,26 @@ namespace VKR
 				render::m_LightColor.x = color[0];
 				render::m_LightColor.y = color[1];
 				render::m_LightColor.z = color[2];
-				ImGui::InputFloat("Light Right ortho", &render::g_LightRight);
-				ImGui::InputFloat("Light Up ortho", &render::g_LightUp);
 				ImGui::InputFloat("zFar", &render::zFar);
 				ImGui::InputFloat("zNear", &render::zNear);
+				ImGui::InputFloat("Debug Scale", &render::g_debugScale);
 				ImGui::InputFloat("Shadow Fov", &render::m_ShadowCameraFOV);
 				ImGui::InputFloat("Shadow aspect ratio", &render::g_ShadowAR);
 
+				ImGui::LabelText("ProjMat", "Proj Matrix");
+				ImGui::InputFloat("Light Right ortho", &render::g_LightRight);
+				ImGui::InputFloat("Light Up ortho", &render::g_LightUp);
+				ImGui::InputFloat("Light Depth ortho", &render::g_LightDepth);
+
+				ImGui::LabelText("ViewMat", "View Matrix");
+				float tempLightPos[3];
+				tempLightPos[0] = render::m_LightPos.x;
+				tempLightPos[1] = render::m_LightPos.y;
+				tempLightPos[2] = render::m_LightPos.z;
+				ImGui::InputFloat3("Light Position", tempLightPos);
+				render::m_LightPos.x = tempLightPos[0];
+				render::m_LightPos.y = std::max(0.0f, tempLightPos[1]);
+				render::m_LightPos.z = tempLightPos[2];
 				float up[3];
 				up[0] = render::m_LightUp.x;
 				up[1] = render::m_LightUp.y;
@@ -129,20 +126,15 @@ namespace VKR
 				render::m_LightUp.x = up[0];
 				render::m_LightUp.y = up[1];
 				render::m_LightUp.z = up[2];
-
 				float center[3];
 				center[0] = render::m_LightCenter.x;
 				center[1] = render::m_LightCenter.y;
 				center[2] = render::m_LightCenter.z;
-				ImGui::InputFloat3("Light center", center);
+				ImGui::InputFloat3("Light Center", center);
 				render::m_LightCenter.x = center[0];
 				render::m_LightCenter.y = center[1];
 				render::m_LightCenter.z = center[2];
 
-				/*if (_backend->m_ShadowVisualizer == nullptr)
-					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
 				if (ImGui::Button("Create light sphere"))
 				{
 					_mainScene->CreateDebugModel(SPHERE);
@@ -153,6 +145,10 @@ namespace VKR
 					_mainScene->CreateDebugModel(QUAD);
 					_mainScene->PrepareDebugScene(_backend);
 				}
+				if (_backend->m_ShadowVisualizer == nullptr)
+					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
 				ImGui::End();
 			}
 			ImGui::Begin("World");

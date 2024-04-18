@@ -188,6 +188,43 @@ namespace VKR
             m_VertexInputInfo.pVertexAttributeDescriptions = m_DbgAttributeDescriptions.data();
         }
 
+        void DebugRenderer::CreateDescriptorSetLayout()
+        {
+            // estructura UBO
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+            // Textura Diffuse
+            VkDescriptorSetLayoutBinding textureDiffuseLayoutBinding{};
+            textureDiffuseLayoutBinding.binding = 1;
+            textureDiffuseLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureDiffuseLayoutBinding.descriptorCount = 1;
+            textureDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureDiffuseLayoutBinding.pImmutableSamplers = nullptr;
+            // estructura Dynamic Uniforms
+            VkDescriptorSetLayoutBinding dynOLayoutBinding{};
+            dynOLayoutBinding.binding = 2;
+            dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            dynOLayoutBinding.descriptorCount = 1;
+            dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            dynOLayoutBinding.pImmutableSamplers = nullptr;
+
+            std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {
+                uboLayoutBinding,
+                textureDiffuseLayoutBinding,
+                dynOLayoutBinding
+            };
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
+            layoutInfo.pBindings = ShaderBindings.data();
+            if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
+                exit(-99);
+        }
+
         // GRAPHIC PIPELINE
 
         void GraphicsRenderer::Initialize()
@@ -336,9 +373,9 @@ namespace VKR
             /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
             m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
             m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-            m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_AttributeDescriptions.size());
-            m_VertexInputInfo.pVertexBindingDescriptions = &m_BindingDescription;
-            m_VertexInputInfo.pVertexAttributeDescriptions = m_AttributeDescriptions.data();
+            m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_CubemapAttributeDescriptions.size());
+            m_VertexInputInfo.pVertexBindingDescriptions = &m_CubemapBindingDescription;
+            m_VertexInputInfo.pVertexAttributeDescriptions = m_CubemapAttributeDescriptions.data();
         }
 
         void CubemapRenderer::CreateDescriptorSetLayout()
@@ -353,15 +390,24 @@ namespace VKR
 
             // Textura Diffuse
             VkDescriptorSetLayoutBinding cubemapDiffuseLayoutBinding{};
-            cubemapDiffuseLayoutBinding.binding = 0;
+            cubemapDiffuseLayoutBinding.binding = 1;
             cubemapDiffuseLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             cubemapDiffuseLayoutBinding.descriptorCount = 1;
             cubemapDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             cubemapDiffuseLayoutBinding.pImmutableSamplers = nullptr;
 
+            // estructura Dynamic Uniforms
+            VkDescriptorSetLayoutBinding dynOLayoutBinding{};
+            dynOLayoutBinding.binding = 2;
+            dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            dynOLayoutBinding.descriptorCount = 1;
+            dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            dynOLayoutBinding.pImmutableSamplers = nullptr;
+
             std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {
                 uboLayoutBinding,
-            	cubemapDiffuseLayoutBinding
+            	cubemapDiffuseLayoutBinding,
+                dynOLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

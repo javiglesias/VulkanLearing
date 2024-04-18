@@ -15,6 +15,7 @@ namespace VKR
             Scene();
             void Loop();
             void DrawScene(VKBackend* _backend, int _CurrentFrame);
+            void PrepareCubemapScene(VKBackend* _backend);
             void PrepareScene(VKBackend* _backend);
             void PrepareDebugScene(VKBackend* _backend);
             void ShadowPass(VKBackend* _backend, int _CurrentFrame);

@@ -5,6 +5,7 @@ layout(set=0, binding=0) uniform UniformBufferObject
     mat4 view;
     mat4 projection;
     mat4 lightView;
+    mat4 lightProj;
     vec3 viewerPosition;
     vec3 lightPosition;
     vec3 lightColor;
@@ -25,7 +26,7 @@ layout(location = 2) out vec3 normal;
 layout(location = 3) out vec3 lightPosition;
 layout(location = 4) out vec3 viewerPosition;
 layout(location = 5) out vec3 lightColor;
-layout(location = 6) out vec4 lightSpacePos;
+layout(location = 6) out vec4 shadowCoord;
 
 
 void main() {
@@ -36,5 +37,5 @@ void main() {
     lightPosition = ubo.lightPosition;
     viewerPosition = ubo.viewerPosition;
     lightColor = ubo.lightColor;
-	lightSpacePos = ubo.projection * ubo.lightView * vec4(inPosition, 1.0);
+	shadowCoord = ubo.lightProj * ubo.lightView * mat4(1.0) * vec4(inPosition, 1.0);
 }
