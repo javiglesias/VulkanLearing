@@ -16,23 +16,29 @@ Mas adelante me gustaria meter otro backend de Directx12 (No se si meter otro de
 - sudo apt install libglfw3-dev
 - sudo apt install libglm-dev
 
-# TO-DO
-Estos TO-DO los voy poniendo segun se me van ocurriendo, no tienen orden en concreto.
+# TO-DOs
 
-- Render de primitivas simples para DEBUG en otra pipeline
-- blinn-phong
+- [x] Render de primitivas simples para DEBUG en otra pipeline
+- [x] blinn-phong
+- Multiple Lights
 - Hot-Reload de Shaders en tiempo de ejecucion.
 - Uber Shaders
 - Render 2D (quads, etc)
+- Cubemap (HDR)
+- Dithering
+- Render Fuentes
 - Compilacion de Shaders en runtime (ahora mismo se hacen en post-compilacion con glslc.exe)
 - ordenar modelos segun material a la hora de pintar
 - ordenar modelos segun posicion respecto a la camara
 - Point lights
 - mega-texturas
 - forward+deferred
-- Transparencias
+- Transparencias(alpha blending)
+- TXAA/FXAA
 - SSAO
+- SSR
 - PBR
+- Terrain
 - Raytracing
 
 # 3rd Party libraries

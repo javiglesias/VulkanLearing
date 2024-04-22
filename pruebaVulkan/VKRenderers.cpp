@@ -230,8 +230,7 @@ namespace VKR
         void GraphicsRenderer::Initialize()
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
-            CreateShaderModule("resources/Shaders/frag.spv", &m_FragShaderModule);
+            CreateShaderModules();
             CreateShaderStages();
             /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
             m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -239,6 +238,12 @@ namespace VKR
             m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_AttributeDescriptions.size());
             m_VertexInputInfo.pVertexBindingDescriptions = &m_BindingDescription;
             m_VertexInputInfo.pVertexAttributeDescriptions = m_AttributeDescriptions.data();
+        }
+
+        void GraphicsRenderer::CreateShaderModules()
+        {
+            CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
+            CreateShaderModule("resources/Shaders/frag.spv", &m_FragShaderModule);
         }
 
         void GraphicsRenderer::CreateDescriptorSetLayout()

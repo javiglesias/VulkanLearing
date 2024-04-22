@@ -35,6 +35,8 @@ struct ShadowUniformBufferObject
 struct DynamicBufferObject
 {
 	alignas(16) glm::mat4 model;
+	alignas(16) glm::vec4 lightOpts; // 0: bias
+	alignas(16) glm::vec4 align[3]; // 0: bias
 };
 
 struct Vertex2D {

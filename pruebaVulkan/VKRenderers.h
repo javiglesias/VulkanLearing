@@ -74,6 +74,7 @@ namespace VKR
 
             // Creamos el layout de los Descriptor set que vamos a utlizar
             void Initialize() override;
+            void CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             GraphicsRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {

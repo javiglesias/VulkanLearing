@@ -1,3 +1,4 @@
+#pragma once
 #include "VKRModel.h"
 #include "DebugModels.h"
 
@@ -30,6 +31,9 @@ namespace VKR
 			case QUAD:
 				AddQuadDebug();
 				break;
+			case TERRAIN:
+				AddTerrainDebug();
+				break;
 			default:
 				break;
 			}
@@ -55,6 +59,14 @@ namespace VKR
 		void R_DbgModel::AddQuadDebug()
 		{
 			m_Vertices = m_QuadVertices;
+		}
+		void R_DbgModel::AddTerrainDebug()
+		{
+			m_Vertices = m_QuadVertices;
+			m_Rotation = glm::vec3(0, 1, 1);
+		}
+		R_Model::R_Model()
+		{
 		}
 	}
 }

@@ -30,7 +30,7 @@
     <ClInclude Include="Types.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="utils.h">
+    <ClInclude Include="VKRUtils.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="VKBackend.h">
@@ -64,6 +64,12 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="DebugModels.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="VKRTexture.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="VKRCubemapMaterial.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
@@ -111,6 +117,21 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="VKRModel.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="VKRCubemap.h">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="VKRCubemapMaterial.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="VKRMaterial.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="VKRCubemap.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="VKRTexture.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

@@ -11,6 +11,7 @@ layout(location = 3) in vec3 lightPosition;
 layout(location = 4) in vec3 viewerPosition;
 layout(location = 5) in vec3 lightColor;
 layout(location = 6) in vec4 shadowCoord;
+layout(location = 7) in float shadowBias;
 
 layout(location = 0) out vec4 outColor;
 
@@ -19,30 +20,33 @@ float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map);
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap);
 float textureProj(vec4 shadowCoord, vec2 off);
 
+vec3 rgb_to_grayscale_luminosity(vec3 color) {
+    float value = color.r * 0.21 + color.g * 0.71 + color.b * 0.07;
+    return vec3(value);
+}
+
 void main() 
 {
-	outColor = vec4(light_calculations(),  1.0);
+	outColor = vec4(light_calculations(), 1.0);
 }
 
 vec3 light_calculations()
 {
+	float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
 	vec3 color = texture(inAmbientTexture, texCoord).rgb;
-	vec3 _normal = normalize(normal);
-	// Ambient light
-	vec3 ambient = 0.15 * lightColor;
-	// diffuse light
-	vec3 light_dir = normalize(lightPosition - fragPosition);
-	float diff = max(dot(light_dir, _normal), 0.0f);
+	vec3 norm = normalize(normal);
+	vec3 lightDir = normalize(lightPosition - fragPosition);
+	float diff = max(dot(norm, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
-	// Specular light
-	vec3 viewer_direction = normalize(viewerPosition - fragPosition);
-	vec3 reflect_dir = reflect(light_dir, _normal);
-	vec3 halfwayDir = normalize(light_dir + viewer_direction);
-	float spec = pow(max(dot(_normal, halfwayDir), 0.0), 64.0);
-	vec3 specular = spec * lightColor;
+	float specularStrength = 0.5;
+	vec3 viewDir = normalize(viewerPosition - fragPosition);
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
 	float shadow = compute_shadow_factor(shadowCoord,inShadowTexture);
-	return ((1.0 - shadow) * (diffuse + specular)) * color;
+	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 	// return (ambient * (diffuse + specular)) * color;
 }
 
@@ -50,11 +54,12 @@ float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)
 {
 	vec3 light_space_ndc = light_space_pos.xyz / light_space_pos.w; 
 	light_space_ndc = light_space_ndc * 0.5 + 0.5;
-	float closestDepth = texture(shadow_map, light_space_ndc.xy).r;
+	float closestDepth = texture(shadow_map, light_space_ndc.xy).x;
 	float currentDepth = light_space_ndc.z;
+	
 	vec3 light_dir = normalize(lightPosition - fragPosition);
-	float bias = max(0.0 * (1.0 - dot(normal, light_dir)), 0.005);
-	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+	float bias = shadowBias;
+	float shadow = currentDepth > closestDepth + bias ? 0.0 : 1.0;
 	return shadow;
 }
 

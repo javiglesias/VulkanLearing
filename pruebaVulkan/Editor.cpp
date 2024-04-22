@@ -103,6 +103,7 @@ namespace VKR
 				ImGui::InputFloat("Debug Scale", &render::g_debugScale);
 				ImGui::InputFloat("Shadow Fov", &render::m_ShadowCameraFOV);
 				ImGui::InputFloat("Shadow aspect ratio", &render::g_ShadowAR);
+				ImGui::SliderFloat("Shadow bias", &render::g_ShadowBias, 0.0025f, 1.f, "%.5f");
 
 				ImGui::LabelText("ProjMat", "Proj Matrix");
 				ImGui::InputFloat("Light Right ortho", &render::g_LightRight);
@@ -153,11 +154,34 @@ namespace VKR
 			}
 			ImGui::Begin("World");
 			{
+				ImGui::DragFloat("Rotation", &render::g_Rotation, 1.f, 0.f, 360.f);
+				float rotation[3];
+				rotation[0] = render::m_Rotation.x;
+				rotation[1] = render::m_Rotation.y;
+				rotation[2] = render::m_Rotation.z;
+				ImGui::InputFloat3("Rotation", rotation);
+				render::m_Rotation.x = rotation[0];
+				render::m_Rotation.y = rotation[1];
+				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
 					_mainScene->LoadModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(1.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
+				}
+				if (ImGui::Button("Reload shaders"))
+				{
+					_mainScene->ReloadShaders(_backend);
+				}
+				if (ImGui::Button("Create Terrain debug"))
+				{
+					_mainScene->CreateDebugModel(TERRAIN);
+					_mainScene->PrepareDebugScene(_backend);
+				}
+				if (ImGui::Button("Create Cubemap"))
+				{
+					_mainScene->CreateCubemap();
+					_mainScene->PrepareCubemapScene(_backend);
 				}
 #if 0
 				for (auto& model : m_StaticModels)

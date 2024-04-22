@@ -36,7 +36,7 @@ namespace VKR
 		void Scene::CreateDebugModel(PRIMITIVE _type)
 		{
 			auto tempModel = new R_DbgModel(_type);
-			tempModel->m_Material.m_TextureCubemap = new Texture();
+			tempModel->m_Material.m_Texture = new Texture();
 			m_DbgModels.push_back(tempModel);
 		}
 
@@ -89,7 +89,6 @@ namespace VKR
 				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr &&
 					_customTexture == nullptr && _scene->HasMaterials())
 				{
-					// printf("\tNew Material %d\n", mesh->mMaterialIndex);
 					tempModel->m_Materials[mesh->mMaterialIndex] = new R_Material();
 					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
 					auto textureDiffuse = std::string(_filepath);
@@ -123,7 +122,7 @@ namespace VKR
 		{
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 shadowProjMat = glm::ortho<float>(-g_LightRight, g_LightRight, -g_LightUp, g_LightUp, -g_LightDepth, g_LightDepth);
-			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightCenter, m_LightUp);
+			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos+m_LightCenter, m_LightUp);
 			glm::mat4 lightModelMat = glm::mat4(1.f);
 			auto renderContext = GetVKContext();
 			/// Shadow Pass
@@ -198,6 +197,12 @@ namespace VKR
 			}
 		}
 
+		void Scene::ReloadShaders(VKBackend* _backend)
+		{
+			
+			m_GraphicsRender->CreateShaderModules();
+		}
+
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
 			auto renderContext = GetVKContext();
@@ -234,9 +239,10 @@ namespace VKR
 			for (auto& model : m_StaticModels)
 			{
 				DynamicBufferObject dynO{};
-				dynO.model = glm::mat4(1.0f);
+				dynO.model = model->m_ModelMatrix;
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
 				dynO.model = glm::scale(dynO.model, model->m_Scale);
+				dynO.lightOpts.x = g_ShadowBias;
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
@@ -281,9 +287,10 @@ namespace VKR
 			for (auto& model : m_DbgModels)
 			{
 				DynamicBufferObject dynO{};
-				dynO.model = glm::mat4(1.0f);
+				dynO.model = model->m_ModelMatrix;
 				dynO.model = glm::translate(dynO.model, m_LightPos);
 				dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_debugScale);
+				dynO.model = glm::rotate<float>(dynO.model, g_Rotation, m_Rotation);
 
 				uint32_t dynamicOffset = debugCount * static_cast<uint32_t>(dynamicAlignment);
 				VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
@@ -307,6 +314,49 @@ namespace VKR
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
 		{
+			auto renderContext = GetVKContext();
+			/// N - Actualizar los DynamicDescriptorBuffers
+			//VkDeviceSize dynDbgBufferSize = sizeof(DynamicBufferObject);
+			//for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			//{
+			//	CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			//		VK_SHARING_MODE_CONCURRENT,
+			//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			//		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			//		_backend->m_DbgDynamicBuffers[i], _backend->m_CubemapDynamicBuffersMemory[i]);
+			//	vkMapMemory(renderContext.m_LogicDevice, _backend->m_CubemapDynamicBuffersMemory[i], 0,
+			//		dynDbgBufferSize, 0, &_backend->m_CubemapDynamicBuffersMapped[i]);
+			//}
+			///// 2 - Crear descriptor pool de materiales(CreateDescPool)`
+			//m_Cubemap->m_Material.CreateDescriptorPool(renderContext.m_LogicDevice);
+
+			///// 3 - Crear Descriptor set de material(createMeshDescSet)
+			//m_Cubemap->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_DescSetLayout);
+			///// 4 - Crear y transicionar texturas(CreateAndTransImage)
+			//_backend->CreateAndTransitionImage(m_Cubemap->m_Material.m_Texture);
+			///// 5 - Crear buffers de vertices
+			//void* data;
+			//VkDeviceSize bufferSize = sizeof(m_Cubemap->m_Vertices[0]) * m_Cubemap->m_Vertices.size();
+			//// Stagin buffer
+			//CreateBuffer(bufferSize,
+			//	VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			//	VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			//	_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
+			//vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+			//memcpy(data, m_Cubemap->m_Vertices.data(), (size_t)bufferSize);
+			//vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+			//CreateBuffer(bufferSize,
+			//	VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+			//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			//	VK_SHARING_MODE_CONCURRENT,
+			//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			//	m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
+			//_backend->CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize);
+			//vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+			//vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
+
+			//m_Cubemap->m_Material.UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
 
 		}
 
@@ -317,7 +367,7 @@ namespace VKR
 			VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				_backend->CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -336,9 +386,10 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_GraphicsRender->m_DescSetLayout);
 
 					/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-					_backend->CreateAndTransitionImage(model->m_Materials[mesh->m_Material]->m_TextureDiffuse);
-					_backend->CreateAndTransitionImage(model->m_Materials[mesh->m_Material]->m_TextureSpecular);
-					_backend->CreateAndTransitionImage(model->m_Materials[mesh->m_Material]->m_TextureAmbient);
+					model->m_Materials[mesh->m_Material]->m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
+					model->m_Materials[mesh->m_Material]->m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
+					model->m_Materials[mesh->m_Material]->m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
+					model->m_Materials[mesh->m_Material]->m_TextureAmbient->CreateAndTransitionImage(_backend->m_CommandPool);
 
 					/// 5 - Crear buffers de vertices
 					void* data;
@@ -349,7 +400,7 @@ namespace VKR
 					}
 					VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
 					// Stagin buffer
-					_backend->CreateBuffer(bufferSize,
+					CreateBuffer(bufferSize,
 						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -357,13 +408,13 @@ namespace VKR
 					vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 					memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
 					vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-					_backend->CreateBuffer(bufferSize,
+					CreateBuffer(bufferSize,
 						VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 						mesh->m_VertexBuffer, mesh->m_VertexBufferMemory);
-					_backend->CopyBuffer(mesh->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize);
+					CopyBuffer(mesh->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
 					vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 					vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
@@ -373,7 +424,7 @@ namespace VKR
 						// Index buffer
 						bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
 						// Stagin buffer
-						_backend->CreateBuffer(bufferSize,
+						CreateBuffer(bufferSize,
 							VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 							VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -381,13 +432,13 @@ namespace VKR
 						vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 						memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
 						vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-						_backend->CreateBuffer(bufferSize,
+						CreateBuffer(bufferSize,
 							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 							VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 							VK_SHARING_MODE_CONCURRENT,
 							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 							mesh->m_IndexBuffer, mesh->m_IndexBufferMemory);
-						_backend->CopyBuffer(mesh->m_IndexBuffer, _backend->m_StagingBuffer, bufferSize);
+						CopyBuffer(mesh->m_IndexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
 						vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 						vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 					}
@@ -405,7 +456,7 @@ namespace VKR
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
 			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
-			for (auto& model : m_StaticModels)
+			/*for (auto& model : m_StaticModels)
 			{
 				for (int i = 0; i < model->m_Meshes.size(); i++)
 				{
@@ -420,7 +471,7 @@ namespace VKR
 						}
 					}
 				}
-			}
+			}*/
 		}
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{
@@ -433,7 +484,7 @@ namespace VKR
 				VkDeviceSize dynDbgBufferSize = m_DbgModels.size() * sizeof(DynamicBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
-					_backend->CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -450,12 +501,12 @@ namespace VKR
 				/// 3 - Crear Descriptor set de material(createMeshDescSet)
 				dbgModel->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_DbgRender->m_DescSetLayout);
 				/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-				_backend->CreateAndTransitionImage(dbgModel->m_Material.m_TextureCubemap);
+				dbgModel->m_Material.m_Texture->CreateAndTransitionImage(_backend->m_CommandPool);
 				/// 5 - Crear buffers de vertices
 				void* data;
 				VkDeviceSize bufferSize = sizeof(dbgModel->m_Vertices[0]) * dbgModel->m_Vertices.size();
 				// Stagin buffer
-				_backend->CreateBuffer(bufferSize,
+				CreateBuffer(bufferSize,
 					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -463,19 +514,24 @@ namespace VKR
 				vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 				memcpy(data, dbgModel->m_Vertices.data(), (size_t)bufferSize);
 				vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-				_backend->CreateBuffer(bufferSize,
+				CreateBuffer(bufferSize,
 					VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 					dbgModel->m_VertexBuffer, dbgModel->m_VertexBufferMemory);
-				_backend->CopyBuffer(dbgModel->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize);
+				CopyBuffer(dbgModel->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
 				vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 				vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
 				dbgModel->m_Material.UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_DbgUniformBuffers, _backend->m_DbgDynamicBuffers);
 
 			}
+		}
+
+
+		void Scene::CreateCubemap()
+		{
 		}
 
 		void Scene::Cleanup(VkDevice _LogicDevice)

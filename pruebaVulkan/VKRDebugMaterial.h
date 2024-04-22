@@ -1,6 +1,6 @@
 #pragma once
 #include "Types.h"
-#include "VKRMaterial.h"
+#include "VKRTexture.h"
 
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
@@ -10,9 +10,6 @@ namespace VKR
 {
 	namespace render
 	{
-		extern std::string g_ConsoleMSG;
-		extern const int FRAMES_IN_FLIGHT;
-
 		struct R_DbgMaterial
 		{
 			VkShaderModule m_VertShaderModule;
@@ -20,7 +17,7 @@ namespace VKR
 			VkDescriptorPool m_DescriptorPool = nullptr;
 			std::vector<VkDescriptorSetLayout> m_DescLayouts;
 			std::vector<VkDescriptorSet> m_DescriptorSet;
-			Texture* m_TextureCubemap;
+			Texture* m_Texture;
 
 		public:
 			void Cleanup(VkDevice _LogicDevice)
@@ -92,17 +89,17 @@ namespace VKR
 					// Textura
 					VkDescriptorImageInfo TextureDiffuseImage{};
 					TextureDiffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					TextureDiffuseImage.imageView = m_TextureCubemap->tImageView;
-					if (m_TextureCubemap->m_Sampler != nullptr)
+					TextureDiffuseImage.imageView = m_Texture->tImageView;
+					if (m_Texture->m_Sampler != nullptr)
 					{
-						TextureDiffuseImage.sampler = m_TextureCubemap->m_Sampler;
+						TextureDiffuseImage.sampler = m_Texture->m_Sampler;
 					}
 					else
 					{
 						printf("Invalid Sampler for frame %ld\n", i);
 						continue;
 					}
-					g_ConsoleMSG += m_TextureCubemap->sPath;
+					g_ConsoleMSG += m_Texture->sPath;
 					g_ConsoleMSG += '\n';
 					descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[1].dstSet = m_DescriptorSet[i];
