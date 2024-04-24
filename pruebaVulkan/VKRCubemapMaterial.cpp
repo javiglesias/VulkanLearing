@@ -1,5 +1,5 @@
 #include "VKRCubemapMaterial.h"
-#include "Types.h"
+#include "VKRTexture.h"
 #include <array>
 
 namespace VKR
@@ -9,23 +9,39 @@ namespace VKR
 		R_CubemapMaterial::R_CubemapMaterial(std::string _path)
 		{
 			// cubemaps_skybox
-			auto tempName = _path + "_0";
-			/*unsigned char* data = stbi_load(tempName.c_str(), &width, &height, &nrChannels, 0);
-			if (data)
-			{
-			}*/
+			m_Path = std::string(_path.c_str());
+			m_Texture = new Texture(m_Path);
+		}
+		void R_CubemapMaterial::PrepareMaterialToDraw(VKBackend* _backend)
+		{
+			auto renderContext = GetVKContext();
+			/// 2 - Crear descriptor pool de materiales(CreateDescPool)
+			CreateDescriptorPool(renderContext.m_LogicDevice);
+
+			/// 3 - Crear Descriptor set de material(createMeshDescSet)
+			CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_DescSetLayout);
+
+			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
+			m_Texture->LoadTexture(true);
+			m_Texture->CreateAndTransitionImage(_backend->m_CommandPool, 
+				VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, 6,
+				VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 		}
 		void R_CubemapMaterial::CreateDescriptorPool(VkDevice _LogicDevice)
 		{
 			if (m_DescriptorPool == nullptr)
 			{
-				std::array<VkDescriptorPoolSize, 2> descPoolSize{};
+				std::array<VkDescriptorPoolSize, 3> descPoolSize{};
 				// UBO
 				descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 				// Textura
 				descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				// Model Matrix
+				descPoolSize[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descPoolSize[2].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 				VkDescriptorPoolCreateInfo descPoolInfo{};
 				descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -61,9 +77,9 @@ namespace VKR
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = _UniformBuffers[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
+				bufferInfo.range = sizeof(CubemapUniformBufferObject); // VK_WHOLE
 
-				std::array<VkWriteDescriptorSet, 2> descriptorsWrite{};
+				std::array<VkWriteDescriptorSet, 3> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[0].dstBinding = 0;
@@ -87,7 +103,7 @@ namespace VKR
 					printf("Invalid Sampler for frame %ld\n", i);
 					continue;
 				}
-				g_ConsoleMSG += m_Texture->sPath;
+				g_ConsoleMSG += m_Texture->m_Path;
 				g_ConsoleMSG += '\n';
 				descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[1].dstSet = m_DescriptorSet[i];
@@ -98,6 +114,23 @@ namespace VKR
 				descriptorsWrite[1].pBufferInfo = nullptr;
 				descriptorsWrite[1].pImageInfo = &TextureDiffuseImage;
 				descriptorsWrite[1].pTexelBufferView = nullptr;
+
+				// Dynamic
+				VkDescriptorBufferInfo dynBufferInfo{};
+				dynBufferInfo.buffer = _DynamicBuffers[i];
+				dynBufferInfo.offset = 0;
+				dynBufferInfo.range = sizeof(DynamicBufferObject); // VK_WHOLE
+
+				descriptorsWrite[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite[2].dstSet = m_DescriptorSet[i];
+				descriptorsWrite[2].dstBinding = 2;
+				descriptorsWrite[2].dstArrayElement = 0;
+				descriptorsWrite[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorsWrite[2].descriptorCount = 1;
+				descriptorsWrite[2].pBufferInfo = &dynBufferInfo;
+				descriptorsWrite[2].pImageInfo = nullptr;
+				descriptorsWrite[2].pTexelBufferView = nullptr;
+
 				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}
 		}

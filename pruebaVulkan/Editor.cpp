@@ -178,11 +178,6 @@ namespace VKR
 					_mainScene->CreateDebugModel(TERRAIN);
 					_mainScene->PrepareDebugScene(_backend);
 				}
-				if (ImGui::Button("Create Cubemap"))
-				{
-					_mainScene->CreateCubemap();
-					_mainScene->PrepareCubemapScene(_backend);
-				}
 #if 0
 				for (auto& model : m_StaticModels)
 				{

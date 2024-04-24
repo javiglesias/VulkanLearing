@@ -1,6 +1,5 @@
 #pragma once
 #include "VKRCubemapMaterial.h"
-#include "Types.h"
 
 namespace VKR
 {
@@ -19,6 +18,7 @@ namespace VKR
 			std::vector<DBG_Vertex3D> m_Vertices;
 		public: // functions
 			R_Cubemap(std::string _texturePath);
+			void Cleanup(VkDevice _LogicDevice);
 		};
 	}
 }

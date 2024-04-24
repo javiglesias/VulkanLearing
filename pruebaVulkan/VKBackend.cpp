@@ -187,7 +187,7 @@ namespace VKR
 			int currentSwapchaingImageView = 0;
 			for (auto& image : m_SwapChainImages)
 			{
-				m_SwapChainImagesViews[currentSwapchaingImageView] = CreateImageView(image, m_SurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
+				m_SwapChainImagesViews[currentSwapchaingImageView] = CreateImageView(image, m_SurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 				++currentSwapchaingImageView;
 			}
 		}
@@ -420,7 +420,7 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], 0,
 					dbgBufferSize, 0, &m_DbgUniformBuffersMapped[i]);
 			}
-			VkDeviceSize cubemapBufferSize = sizeof(DebugUniformBufferObject);
+			VkDeviceSize cubemapBufferSize = sizeof(CubemapUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(cubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -456,7 +456,7 @@ namespace VKR
 					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
 			}
 
-			VkDeviceSize dynCubemapBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
+			constexpr VkDeviceSize dynCubemapBufferSize = sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynCubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -654,13 +654,13 @@ namespace VKR
 			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
 				VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_ShadowImage, &m_ShadowImageMemory);
+				&m_ShadowImage, &m_ShadowImageMemory, 1, 0);
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowImage, m_ShadowImageMemory, 0);
 			TransitionImageLayout(m_ShadowImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool);
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
 			m_ShadowImageView = CreateImageView(m_ShadowImage, depthFormat,
-				VK_IMAGE_ASPECT_DEPTH_BIT);
+				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			m_ShadowImgSamp = CreateTextureSampler();
 		}
 
@@ -670,13 +670,13 @@ namespace VKR
 			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
 				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_DepthImage, &m_DepthImageMemory);
+				&m_DepthImage, &m_DepthImageMemory, 1, 0);
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_DepthImage, m_DepthImageMemory, 0);
 			TransitionImageLayout(m_DepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool);
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
 			m_DepthImageView = CreateImageView(m_DepthImage, depthFormat,
-				VK_IMAGE_ASPECT_DEPTH_BIT);
+				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 		}
 
 		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
@@ -793,6 +793,8 @@ namespace VKR
 			delete m_GraphicsRender;
 			delete m_DbgRender;
 			delete m_ShadowRender;
+			delete m_CubemapRender;
+
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
@@ -800,6 +802,12 @@ namespace VKR
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapDynamicBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], nullptr);
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);

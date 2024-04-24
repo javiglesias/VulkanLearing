@@ -3,9 +3,6 @@
 #include "VKRUtils.h"
 #include "VKRenderers.h"
 #include "VKRShadowMaterial.h"
-#include "VKRModel.h"
-#include "VKRCubemap.h"
-#include "VKRRenderPass.h"
 
 
 #define GLFW_INCLUDE_NONE
@@ -129,17 +126,17 @@ namespace VKR
             std::vector<VkDeviceMemory> m_ShadowDynamicBuffersMemory;
             std::vector<void*> m_ShadowUniformBuffersMapped;
             std::vector<void*> m_ShadowDynamicBuffersMapped;
-            // CUBEMAP
-            // DEBUG BUFFERS
+            // CUBEMAP BUFFERS
             std::vector<VkBuffer> m_CubemapUniformBuffers;
-            std::vector<VkDeviceMemory> m_CubemapUniformBuffersMemory;
             std::vector<VkBuffer> m_CubemapDynamicBuffers;
+            std::vector<VkDeviceMemory> m_CubemapUniformBuffersMemory;
             std::vector<VkDeviceMemory> m_CubemapDynamicBuffersMemory;
             std::vector<void*> m_CubemapUniformBuffersMapped;
             std::vector<void*> m_CubemapDynamicBuffersMapped;
 
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;
+
             VkPhysicalDeviceMemoryProperties m_Mem_Props;
             VkImage m_DepthImage;
             VkDeviceMemory m_DepthImageMemory;
@@ -157,15 +154,17 @@ namespace VKR
         public:
             VKBackend() {}
             void Init();
+            void InitializeVulkan(VkApplicationInfo* _appInfo);
             void Loop();
             bool BackendShouldClose();
             void PollEvents();
             void BeginRenderPass(unsigned int _InFlightFrame);
-            void EndRenderPass(unsigned _InFlightFrame);
             uint32_t DrawFrame(unsigned int _InFlightFrame);
-            void Cleanup();
+            void EndRenderPass(unsigned _InFlightFrame);
+            void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void Shutdown();
-            void InitializeVulkan(VkApplicationInfo* _appInfo);
+            void Cleanup();
+        private:
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
                                 const char** m_Extensions,
                                 uint32_t m_extensionCount);
@@ -199,7 +198,6 @@ namespace VKR
 			         para continuar.
 			 */
             void CleanSwapChain();
-            void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
         };
         VKBackend& GetVKBackend();
     }

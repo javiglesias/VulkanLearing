@@ -11,8 +11,6 @@ namespace VKR
 		{
 			return g_MainScene;
 		}
-		Scene::Scene()
-		{}
 
 		void Scene::LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
@@ -309,6 +307,9 @@ namespace VKR
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 				++debugCount;
 			}
+			// Cubemap draw
+			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
+			DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 			//_backend->EndRenderPass(_CurrentFrame);
 		}
 
@@ -316,50 +317,67 @@ namespace VKR
 		{
 			auto renderContext = GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
-			//VkDeviceSize dynDbgBufferSize = sizeof(DynamicBufferObject);
-			//for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			//{
-			//	CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			//		VK_SHARING_MODE_CONCURRENT,
-			//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-			//		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			//		_backend->m_DbgDynamicBuffers[i], _backend->m_CubemapDynamicBuffersMemory[i]);
-			//	vkMapMemory(renderContext.m_LogicDevice, _backend->m_CubemapDynamicBuffersMemory[i], 0,
-			//		dynDbgBufferSize, 0, &_backend->m_CubemapDynamicBuffersMapped[i]);
-			//}
-			///// 2 - Crear descriptor pool de materiales(CreateDescPool)`
-			//m_Cubemap->m_Material.CreateDescriptorPool(renderContext.m_LogicDevice);
+			m_Cubemap->m_Material->PrepareMaterialToDraw(_backend);
+			/// 5 - Crear buffers de vertices
+			void* data;
+			VkDeviceSize bufferSize = sizeof(m_Cubemap->m_Vertices[0]) * m_Cubemap->m_Vertices.size();
+			// Stagin buffer
+			CreateBuffer(bufferSize,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
+			vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+			memcpy(data, m_Cubemap->m_Vertices.data(), (size_t)bufferSize);
+			vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+			CreateBuffer(bufferSize,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				VK_SHARING_MODE_CONCURRENT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
+			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
-			///// 3 - Crear Descriptor set de material(createMeshDescSet)
-			//m_Cubemap->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_DescSetLayout);
-			///// 4 - Crear y transicionar texturas(CreateAndTransImage)
-			//_backend->CreateAndTransitionImage(m_Cubemap->m_Material.m_Texture);
-			///// 5 - Crear buffers de vertices
-			//void* data;
-			//VkDeviceSize bufferSize = sizeof(m_Cubemap->m_Vertices[0]) * m_Cubemap->m_Vertices.size();
-			//// Stagin buffer
-			//CreateBuffer(bufferSize,
-			//	VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-			//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-			//	VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			//	_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
-			//vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-			//memcpy(data, m_Cubemap->m_Vertices.data(), (size_t)bufferSize);
-			//vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-			//CreateBuffer(bufferSize,
-			//	VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-			//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			//	VK_SHARING_MODE_CONCURRENT,
-			//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			//	m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
-			//_backend->CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize);
-			//vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-			//vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
-
-			//m_Cubemap->m_Material.UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
+			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
 
 		}
+		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
+		{
+			auto renderContext = GetVKContext();
+			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
+			// Matriz de proyeccion
+			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, zNear, zFar);
+			projMat[1][1] *= -1; // para invertir el eje Y
+			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			CubemapUniformBufferObject cubo {};
+			cubo.projection = projMat;
+			cubo.view = viewMat;
+			memcpy(_backend->m_CubemapUniformBuffersMapped[_CurrentFrame], &cubo, sizeof(cubo));
+			constexpr int sizeDynO = sizeof(DynamicBufferObject);
+			DynamicBufferObject dynO{};
+			dynO.model = glm::mat4(1.f);
+			dynO.lightOpts.x = g_ShadowBias;
+			uint32_t dynamicOffset = 0 * static_cast<uint32_t>(_dynamicAlignment);
+			// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+			memcpy((char*)_backend->m_CubemapDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+			// Update Uniform buffers
 
+			VkBuffer vertesBuffers[] = { m_Cubemap->m_VertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+
+			vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_PipelineLayout, 0, 1,
+				&m_Cubemap->m_Material->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
+			vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
+			vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], m_Cubemap->m_Vertices.size(), 1, 0, 0);
+			// Flush to make changes visible to the host
+			VkMappedMemoryRange mappedMemoryRange{};
+			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			mappedMemoryRange.memory = _backend->m_CubemapDynamicBuffersMemory[_CurrentFrame];
+			mappedMemoryRange.size = sizeof(dynO);
+			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+		}
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
@@ -379,17 +397,8 @@ namespace VKR
 			{
 				for (auto& mesh : model->m_Meshes)
 				{
-					/// 2 - Crear descriptor pool de materiales(CreateDescPool)
-					model->m_Materials[mesh->m_Material]->CreateDescriptorPool(renderContext.m_LogicDevice);
 
-					/// 3 - Crear Descriptor set de material(createMeshDescSet)
-					model->m_Materials[mesh->m_Material]->CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_GraphicsRender->m_DescSetLayout);
-
-					/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-					model->m_Materials[mesh->m_Material]->m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
-					model->m_Materials[mesh->m_Material]->m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
-					model->m_Materials[mesh->m_Material]->m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
-					model->m_Materials[mesh->m_Material]->m_TextureAmbient->CreateAndTransitionImage(_backend->m_CommandPool);
+					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
 
 					/// 5 - Crear buffers de vertices
 					void* data;
@@ -473,6 +482,10 @@ namespace VKR
 				}
 			}*/
 		}
+		void Scene::Init()
+		{
+			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_0.png");
+		}
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
@@ -495,6 +508,7 @@ namespace VKR
 			}
 			for (auto& dbgModel : m_DbgModels)
 			{
+				dbgModel->m_Material.m_Texture->LoadTexture();
 				/// 2 - Crear descriptor pool de materiales(CreateDescPool)`
 				dbgModel->m_Material.CreateDescriptorPool(renderContext.m_LogicDevice);
 
@@ -529,11 +543,6 @@ namespace VKR
 			}
 		}
 
-
-		void Scene::CreateCubemap()
-		{
-		}
-
 		void Scene::Cleanup(VkDevice _LogicDevice)
 		{
 			printf("Scene Cleanup\n");
@@ -553,6 +562,7 @@ namespace VKR
 			{
 				model->Cleanup(_LogicDevice);
 			}
+			m_Cubemap->Cleanup(_LogicDevice);
 		}
 	}
 }

@@ -99,7 +99,7 @@ namespace VKR
 						printf("Invalid Sampler for frame %ld\n", i);
 						continue;
 					}
-					g_ConsoleMSG += m_Texture->sPath;
+					g_ConsoleMSG += m_Texture->m_Path;
 					g_ConsoleMSG += '\n';
 					descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[1].dstSet = m_DescriptorSet[i];

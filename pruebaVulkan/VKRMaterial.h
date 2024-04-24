@@ -1,7 +1,6 @@
 #pragma once
 #include "VKRTexture.h"
 
-#include <string>
 #include <vector>
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
@@ -12,7 +11,7 @@ namespace VKR
 	{
 		extern std::string g_ConsoleMSG;
 		extern const int FRAMES_IN_FLIGHT;
-
+		class VKBackend;
 		struct R_Material
 		{
 			VkShaderModule m_VertShaderModule;
@@ -37,9 +36,9 @@ namespace VKR
 			Texture* m_TextureAmbient;
 			Texture* m_TextureShadowMap;
 		public:
+			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptorPool(VkDevice _LogicDevice);
 			void CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout);
-
 			void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers);
 			void Cleanup(VkDevice _LogicDevice);
 		};

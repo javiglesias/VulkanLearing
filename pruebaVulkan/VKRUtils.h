@@ -1,6 +1,6 @@
 #pragma once
 #include "VKRRenderPass.h"
-#include <vector>
+
 namespace VKR
 {
 	namespace render
@@ -300,8 +300,7 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = mem_Requ.size;
-	auto rederContext = VKR::render::GetVKContext();
-	allocInfo.memoryTypeIndex = rederContext.m_GpuInfo.FindMemoryType(mem_Requ.memoryTypeBits, _memFlags);
+	allocInfo.memoryTypeIndex = renderContext.m_GpuInfo.FindMemoryType(mem_Requ.memoryTypeBits, _memFlags);
 	if (vkAllocateMemory(renderContext.m_LogicDevice, &allocInfo, nullptr, &bufferMem_) != VK_SUCCESS)
 		exit(-8);
 
@@ -311,7 +310,7 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 inline
 void CreateImage(unsigned int _Width, unsigned int _Height, VkFormat _format, VkImageTiling _tiling,
 	VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties,
-	VkImage* _image, VkDeviceMemory* _imageMem)
+	VkImage* _image, VkDeviceMemory* _imageMem, uint32_t _arrayLayers, VkImageCreateFlags _flags)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageCreateInfo tImageInfo{};
@@ -321,14 +320,14 @@ void CreateImage(unsigned int _Width, unsigned int _Height, VkFormat _format, Vk
 	tImageInfo.extent.height = static_cast<uint32_t>(_Height);
 	tImageInfo.extent.depth = 1;
 	tImageInfo.mipLevels = 1;
-	tImageInfo.arrayLayers = 1;
+	tImageInfo.arrayLayers = _arrayLayers;
 	tImageInfo.format = _format;
 	tImageInfo.tiling = _tiling;
 	tImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	tImageInfo.usage = _usage;
 	tImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	tImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	tImageInfo.flags = 0;
+	tImageInfo.flags = _flags;
 	VK_ASSERT(vkCreateImage(renderContext.m_LogicDevice, &tImageInfo, nullptr, _image));
 	VkMemoryRequirements memRequ;
 	vkGetImageMemoryRequirements(renderContext.m_LogicDevice, *_image, &memRequ);
@@ -387,7 +386,7 @@ void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size, VkCommandPool 
 }
 
 inline
-void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, VkImageLayout _new, VkCommandPool _CommandPool)
+void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, VkImageLayout _new, VkCommandPool _CommandPool, uint32_t _layerCount)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
@@ -412,7 +411,7 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 	iBarrier.subresourceRange.baseMipLevel = 0;
 	iBarrier.subresourceRange.levelCount = 1;
 	iBarrier.subresourceRange.baseArrayLayer = 0;
-	iBarrier.subresourceRange.layerCount = 1;
+	iBarrier.subresourceRange.layerCount = _layerCount;
 	VkPipelineStageFlags sourceStage;
 	VkPipelineStageFlags destinationStage;
 
@@ -449,7 +448,8 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 }
 
 inline 
-void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h, VkDeviceSize _bufferOffset, VkCommandPool _CommandPool)
+void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h, 
+	VkDeviceSize _bufferOffset, VkCommandPool _CommandPool, uint32_t _layer = 0)
 {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
 	VkBufferImageCopy region{};
@@ -458,7 +458,7 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 	region.bufferImageHeight = 0;
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	region.imageSubresource.mipLevel = 0;
-	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.baseArrayLayer = _layer;
 	region.imageSubresource.layerCount = 1;
 	region.imageOffset = { 0, 0, 0 };
 	region.imageExtent = { _w, _h, 1 };
@@ -467,20 +467,20 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 }
 
 inline 
-VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT)
+VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, VkImageViewType _viewType, uint32_t _arrayLayers)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageView tImageView;
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = _tImage;
-	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.viewType = _viewType;
 	viewInfo.format = _format;
 	viewInfo.subresourceRange.aspectMask = _aspectMask;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
-	viewInfo.subresourceRange.layerCount = 1;
+	viewInfo.subresourceRange.layerCount = _arrayLayers;
 	VK_ASSERT(vkCreateImageView(renderContext.m_LogicDevice, &viewInfo, nullptr, &tImageView));
 	return tImageView;
 }
@@ -488,7 +488,7 @@ VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlag
 inline 
 VkImageView CreateTextureImageView(VkImage _tImage)
 {
-	return CreateImageView(_tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+	return CreateImageView(_tImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 }
 
 inline 

@@ -14,9 +14,11 @@ int main(int _argc, char** _args)
 	float frameCap = 0.016f; // 60fps
 	int currentLocalFrame = 0;
 	backend.Init();
+	mainScene.Init();
 	editor = new VKR::render::Editor(VKR::render::m_Window, backend.m_Instance, backend.m_Capabilities.minImageCount,
 		backend.m_SwapchainImagesCount);
 	auto renderContext = VKR::render::GetVKContext();
+	mainScene.PrepareCubemapScene(&backend);
 	while (!backend.BackendShouldClose())
 	{
 		deltaTime = newFrame - currentFrame;

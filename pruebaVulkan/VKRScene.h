@@ -1,6 +1,7 @@
 #pragma once
 #include "VKBackend.h"
 #include "VKRCubemap.h"
+#include "VKRModel.h"
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -13,7 +14,8 @@ namespace VKR
         class Scene
         {
         public: // FUNCIONES
-            Scene();
+            Scene() {}
+            void Init();
             void Loop();
             void ReloadShaders(VKBackend* _backend);
             void DrawScene(VKBackend* _backend, int _CurrentFrame);
@@ -24,7 +26,6 @@ namespace VKR
             void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void CreateDebugModel(PRIMITIVE _type);
-            void CreateCubemap();
             void Cleanup(VkDevice _LogicDevice);
         private:
             R_Model* tempModel;
@@ -33,6 +34,7 @@ namespace VKR
             std::vector<R_DbgModel*> m_DbgModels; // lights
         private: // FUNCIONES
             void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture = nullptr);
+            void DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment);
         };
         Scene& GetVKMainScene();
     }

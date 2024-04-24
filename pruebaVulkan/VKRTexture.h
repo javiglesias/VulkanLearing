@@ -13,21 +13,22 @@ namespace VKR
 		{
 		private: // Variables
 			int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
+			int tWidth, tHeight, tChannels;
 			VkBuffer m_StagingBuffer;
 			VkDeviceMemory m_StaggingBufferMemory;
+			VkDeviceSize m_Size;
 		public:
-			std::string sPath;
+			std::string m_Path;
 			VkImage tImage = nullptr;
 			VkDeviceMemory tImageMem = nullptr;
 			VkImageView tImageView = nullptr;
 			VkSampler m_Sampler = nullptr;
 		public:
-			Texture() {}
-			Texture(std::string _path)
-			{
-				sPath = _path;
-			}
-			void CreateAndTransitionImage(VkCommandPool _CommandPool);
+			Texture(std::string _path=std::string());
+			void LoadTexture(bool isCubemap = false);
+			void CreateAndTransitionImage(VkCommandPool _CommandPool, VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB,
+				VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D,
+				uint32_t _arrayLayers=1, VkImageCreateFlags _flags=0);
 			void CleanTextureData(VkDevice _LogicDevice);
 		};
 	}

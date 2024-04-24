@@ -1,6 +1,7 @@
 #include "Types.h"
 #include <vector>
 
+inline 
 std::vector<DBG_Vertex3D> m_CubeVertices =
 {// left face (white)
 {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
@@ -39,6 +40,7 @@ std::vector<DBG_Vertex3D> m_CubeVertices =
 {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}}
 };
 
+inline
 std::vector<DBG_Vertex3D> m_QuadVertices =
 {
 	{{0.f, 1.f, 1.f}, {.9f, .9f, .9f}},//1
@@ -50,6 +52,7 @@ std::vector<DBG_Vertex3D> m_QuadVertices =
 	{{0.f, -1.f, 1.f}, {.9f, .9f, .9f}}, //4
 };
 
+inline
 std::vector<DBG_Vertex3D> m_SphereVertices = {
 	{{ 0.000000,  0.831470, -0.555570}, {.8f, .8f, .1f}},
 	{{ 0.000000,  0.555570, -0.831470}, {.8f, .8f, .1f}},

@@ -1,9 +1,6 @@
 #pragma once
-#pragma once
-#include "VKRTexture.h"
-
+#include "VKBackend.h"
 #include <string>
-#include <vector>
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
 
@@ -11,8 +8,11 @@ namespace VKR
 {
 	namespace render
 	{
+		class Texture;
 		struct R_CubemapMaterial
 		{
+		private:
+			std::string m_Path;
 		public: // Variables
 			VkShaderModule m_VertShaderModule;
 			VkShaderModule m_FragShaderModule;
@@ -34,6 +34,7 @@ namespace VKR
 
 		public: // Functions
 			R_CubemapMaterial(std::string _path);
+			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptorPool(VkDevice _LogicDevice);
 			void CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout);
 
