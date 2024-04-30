@@ -1,8 +1,8 @@
 #pragma once
 
 #include "VKRUtils.h"
-#include "VKRenderers.h"
-#include "VKRShadowMaterial.h"
+#include "../core/VKRenderers.h"
+#include "../core/VKRShadowMaterial.h"
 
 
 #define GLFW_INCLUDE_NONE
@@ -37,9 +37,10 @@ namespace VKR
         inline float g_LightRight = 300.0;
         inline float g_LightUp = -300.f;
         inline float g_LightDepth = -300.f;
-        inline float zFar= 100000.f;
+        inline float zFar= 1000000.f;
         inline float zNear = 10.f;
         inline float g_debugScale = 100.f;
+        inline float g_cubemapDistance = 100000.f;
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
         inline float g_Rotation = 0.f;

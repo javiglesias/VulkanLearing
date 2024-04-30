@@ -358,6 +358,7 @@ namespace VKR
 			constexpr int sizeDynO = sizeof(DynamicBufferObject);
 			DynamicBufferObject dynO{};
 			dynO.model = glm::mat4(1.f);
+			dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_cubemapDistance);
 			dynO.lightOpts.x = g_ShadowBias;
 			uint32_t dynamicOffset = 0 * static_cast<uint32_t>(_dynamicAlignment);
 			// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
@@ -484,7 +485,7 @@ namespace VKR
 		}
 		void Scene::Init()
 		{
-			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_0.png");
+			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/office.png");
 		}
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{

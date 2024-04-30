@@ -1,5 +1,4 @@
 #include "VKBackend.h"
-
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
 
@@ -194,6 +193,8 @@ namespace VKR
 
 		void VKBackend::Init()
 		{
+			glslang::InitializeProcess();
+			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
 			m_GPipelineStatus = CREATING;
 			uint32_t mExtensionCount = 0;
 			const char** mExtensions;
@@ -788,7 +789,7 @@ namespace VKR
 		{
 			printf("Cleanup\n");
 			g_context.Cleanup();
-			
+			glslang::FinalizeProcess();
 			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);
 			delete m_GraphicsRender;
 			delete m_DbgRender;

@@ -1,6 +1,6 @@
-﻿#include "VKBackend.h"
-#include "Editor.h"
-#include "VKRScene.h"
+﻿#include "video/VKBackend.h"
+#include "core/Editor.h"
+#include "core/VKRScene.h"
 
 int main(int _argc, char** _args)
 {
@@ -13,6 +13,7 @@ int main(int _argc, char** _args)
 	float currentFrame = 0.0f;
 	float frameCap = 0.016f; // 60fps
 	int currentLocalFrame = 0;
+	
 	backend.Init();
 	mainScene.Init();
 	editor = new VKR::render::Editor(VKR::render::m_Window, backend.m_Instance, backend.m_Capabilities.minImageCount,

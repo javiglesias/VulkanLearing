@@ -2,7 +2,7 @@
     "rdocCaptureSettings": 1,
     "settings": {
         "autoStart": false,
-        "commandLine": "Sponza/glTF Spona.gltf",
+        "commandLine": "",
         "environment": [
         ],
         "executable": "C:\\dev\\VulkanLearing\\x64\\Debug\\pruebaVulkan.exe",

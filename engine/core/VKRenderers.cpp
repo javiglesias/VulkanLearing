@@ -177,8 +177,8 @@ namespace VKR
         void DebugRenderer::Initialize()
         {
             // DEBUG SHADERS
-            CreateShaderModule("resources/Shaders/dbgVert.spv", &m_VertShaderModule);
-            CreateShaderModule("resources/Shaders/dbgFrag.spv", &m_FragShaderModule);
+            CreateShaderModule("engine/shaders/dbgVert.spv", &m_VertShaderModule);
+            CreateShaderModule("engine/shaders/dbgFrag.spv", &m_FragShaderModule);
             CreateShaderStages();
             /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
             m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -242,8 +242,8 @@ namespace VKR
 
         void GraphicsRenderer::CreateShaderModules()
         {
-            CreateShaderModule("resources/Shaders/vert.spv", &m_VertShaderModule);
-            CreateShaderModule("resources/Shaders/frag.spv", &m_FragShaderModule);
+            CreateShaderModule("engine/shaders/vert.spv", &m_VertShaderModule);
+            CreateShaderModule("engine/shaders/frag.spv", &m_FragShaderModule);
         }
 
         void GraphicsRenderer::CreateDescriptorSetLayout()
@@ -314,7 +314,7 @@ namespace VKR
         void ShadowRenderer::Initialize()
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            CreateShaderModule("resources/Shaders/shadow.vert.spv", &m_VertShaderModule);
+            CreateShaderModule("engine/shaders/shadow.vert.spv", &m_VertShaderModule);
             CreateShaderStages();
             /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
             m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -372,8 +372,8 @@ namespace VKR
         void CubemapRenderer::Initialize()
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            CreateShaderModule("resources/Shaders/cubemap.vert.spv", &m_VertShaderModule);
-            CreateShaderModule("resources/Shaders/cubemap.frag.spv", &m_FragShaderModule);
+            CreateShaderModule("engine/shaders/cubemap.vert.spv", &m_VertShaderModule);
+            CreateShaderModule("engine/shaders/cubemap.frag.spv", &m_FragShaderModule);
             CreateShaderStages();
             /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
             m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

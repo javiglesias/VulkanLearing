@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../dependencies/imgui/misc/single_file/imgui_single_file.h"
-#include "../dependencies/imgui/backends/imgui_impl_glfw.h"
-#include "../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
+#include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
+#include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 
 namespace VKR
 {

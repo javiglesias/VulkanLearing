@@ -22,7 +22,7 @@ namespace VKR
 			CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_DescSetLayout);
 
 			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-			m_Texture->LoadTexture(true);
+			m_Texture->LoadCubemapTexture();
 			m_Texture->CreateAndTransitionImage(_backend->m_CommandPool, 
 				VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, 6,
 				VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);

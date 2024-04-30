@@ -1,5 +1,5 @@
 #pragma once
-#include "VKRRenderPass.h"
+#include "../core/VKRRenderPass.h"
 
 namespace VKR
 {
