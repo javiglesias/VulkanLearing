@@ -57,13 +57,12 @@ namespace VKR
 
             void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
             void CreatePipeline(VkRenderPass _RenderPass);
-            void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule);
+            void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule, int _stage);
+            void Cleanup();
             Renderer() {}
         	~Renderer()
             {
-                vkDestroyDescriptorSetLayout(m_LogicDevice, m_DescSetLayout, nullptr);
-                vkDestroyPipeline(m_LogicDevice, m_Pipeline, nullptr);
-                vkDestroyPipelineLayout(m_LogicDevice, m_PipelineLayout, nullptr);
+                Cleanup();
             }
         };
 
@@ -120,6 +119,7 @@ namespace VKR
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
             void Initialize() override;
+            void CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             CubemapRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {

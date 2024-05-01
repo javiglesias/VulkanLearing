@@ -1,6 +1,7 @@
 #include "Editor.h"
 #include "VKRScene.h"
-
+#include "jobs.h"
+#include "savedata.h"
 #include <string>
 
 namespace VKR

@@ -197,8 +197,12 @@ namespace VKR
 
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
-			
-			m_GraphicsRender->CreateShaderModules();
+			m_CubemapRender->Cleanup();
+			m_CubemapRender->Initialize();
+			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
+			m_CubemapRender->CreatePipelineLayout();
+			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_CubemapRender->CleanShaderModules();
 		}
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
