@@ -19,6 +19,7 @@ int main(int _argc, char** _args)
 	editor = new VKR::render::Editor(VKR::render::m_Window, backend.m_Instance, backend.m_Capabilities.minImageCount,
 		backend.m_SwapchainImagesCount);
 	auto renderContext = VKR::render::GetVKContext();
+	mainScene.LoadCubemapModel("resources/models/Box/glTF/", "Box.gltf", glm::vec3(0.f, 1.f, 0.f));
 	mainScene.PrepareCubemapScene(&backend);
 	while (!backend.BackendShouldClose())
 	{

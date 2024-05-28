@@ -518,3 +518,33 @@ VkSampler CreateTextureSampler()
 	VK_ASSERT(vkCreateSampler(renderContext.m_LogicDevice, &samplerInfo, nullptr, &TextureSampler));
 	return TextureSampler;
 }
+
+inline
+VkSampler CreateShadowTextureSampler()
+{
+	auto renderContext = VKR::render::GetVKContext();
+	VkPhysicalDeviceProperties deviceProp;
+	VkSamplerCreateInfo samplerInfo{};
+	VkSampler TextureSampler;
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+
+	vkGetPhysicalDeviceProperties(renderContext.m_GpuInfo.m_Device, &deviceProp);
+	samplerInfo.maxAnisotropy = deviceProp.limits.maxSamplerAnisotropy;
+
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	//samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.f;
+	samplerInfo.minLod = 0.f;
+	samplerInfo.maxLod = 1.f;
+	VK_ASSERT(vkCreateSampler(renderContext.m_LogicDevice, &samplerInfo, nullptr, &TextureSampler));
+	return TextureSampler;
+}

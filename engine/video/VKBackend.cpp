@@ -662,7 +662,7 @@ namespace VKR
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
 			m_ShadowImageView = CreateImageView(m_ShadowImage, depthFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
-			m_ShadowImgSamp = CreateTextureSampler();
+			m_ShadowImgSamp = CreateShadowTextureSampler();
 		}
 
 		void VKBackend::CreateDepthTestingResources()

@@ -12,6 +12,7 @@ layout(location = 4) in vec3 viewerPosition;
 layout(location = 5) in vec3 lightColor;
 layout(location = 6) in vec4 shadowCoord;
 layout(location = 7) in float shadowBias;
+layout(location = 8) in float projectShadow;
 
 layout(location = 0) out vec4 outColor;
 
@@ -45,9 +46,13 @@ vec3 light_calculations()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
-	float shadow = compute_shadow_factor(shadowCoord,inShadowTexture);
-	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
-	// return (ambient * (diffuse + specular)) * color;
+	if(projectShadow > 0)
+	{
+		float shadow = ShadowCalculation(shadowCoord,inShadowTexture);
+		return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;	
+	} 
+	else
+		return (ambient * (diffuse + specular)) * color;
 }
 
 float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)

@@ -96,7 +96,8 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					_mainScene->LoadModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(1.f));
+					_mainScene->LoadStaticModel("resources/models/Plane/glTF/", "Plane.gltf", glm::vec3(0.f, 1.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/scene/glTF/", "scene.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
 				}
@@ -123,12 +124,12 @@ namespace VKR
 				render::m_LightColor.x = color[0];
 				render::m_LightColor.y = color[1];
 				render::m_LightColor.z = color[2];
-				ImGui::InputFloat("zFar", &render::zFar);
-				ImGui::InputFloat("zNear", &render::zNear);
-				ImGui::InputFloat("Debug Scale", &render::g_debugScale);
-				ImGui::InputFloat("Cubemap distance", &render::g_cubemapDistance);
-				ImGui::InputFloat("Shadow Fov", &render::m_ShadowCameraFOV);
-				ImGui::InputFloat("Shadow aspect ratio", &render::g_ShadowAR);
+				ImGui::DragFloat("zFar", &render::zFar);
+				ImGui::DragFloat("zNear", &render::zNear);
+				ImGui::DragFloat("Debug Scale", &render::g_debugScale);
+				ImGui::DragFloat("Cubemap distance", &render::g_cubemapDistance);
+				ImGui::DragFloat("Shadow Fov", &render::m_ShadowCameraFOV);
+				ImGui::DragFloat("Shadow aspect ratio", &render::g_ShadowAR);
 				ImGui::SliderFloat("Shadow bias", &render::g_ShadowBias, 0.0025f, 1.f, "%.5f");
 
 				ImGui::LabelText("ProjMat", "Proj Matrix");
@@ -141,7 +142,7 @@ namespace VKR
 				tempLightPos[0] = render::m_LightPos.x;
 				tempLightPos[1] = render::m_LightPos.y;
 				tempLightPos[2] = render::m_LightPos.z;
-				ImGui::InputFloat3("Light Position", tempLightPos);
+				ImGui::DragFloat3("Light Position", tempLightPos);
 				render::m_LightPos.x = tempLightPos[0];
 				render::m_LightPos.y = std::max(0.0f, tempLightPos[1]);
 				render::m_LightPos.z = tempLightPos[2];
@@ -149,7 +150,7 @@ namespace VKR
 				up[0] = render::m_LightUp.x;
 				up[1] = render::m_LightUp.y;
 				up[2] = render::m_LightUp.z;
-				ImGui::InputFloat3("Light Up", up);
+				ImGui::DragFloat3("Light Up", up);
 				render::m_LightUp.x = up[0];
 				render::m_LightUp.y = up[1];
 				render::m_LightUp.z = up[2];
@@ -157,7 +158,7 @@ namespace VKR
 				center[0] = render::m_LightCenter.x;
 				center[1] = render::m_LightCenter.y;
 				center[2] = render::m_LightCenter.z;
-				ImGui::InputFloat3("Light Center", center);
+				ImGui::DragFloat3("Light Center", center);
 				render::m_LightCenter.x = center[0];
 				render::m_LightCenter.y = center[1];
 				render::m_LightCenter.z = center[2];
@@ -180,20 +181,38 @@ namespace VKR
 			}
 			ImGui::Begin("World");
 			{
-				
-#if 0
-				for (auto& model : m_StaticModels)
+	
+				for (auto& model : _mainScene->m_StaticModels)
 				{
-					float position[3] = { model->m_Pos.x , model->m_Pos.y, model->m_Pos.z };
-					ImGui::LabelText("%s ", model->m_Path);
-					ImGui::DragFloat3("Position", position, 0.01f, -100.f, 100.f);
-					model->m_Pos.x = position[0];
-					model->m_Pos.y = position[1];
-					model->m_Pos.z = position[2];
+					ImGui::Selectable(model->m_Path, &model->m_Editable);
+					if (model->m_Editable)
+					{
+						ImGui::LabelText("", "%s", model->m_Path);
+						float center[3];
+						center[0] = model->m_Pos.x;
+						center[1] = model->m_Pos.y;
+						center[2] = model->m_Pos.z;
+						ImGui::DragFloat3("Pos", center, 0.1f);
+						model->m_Pos.x = center[0];
+						model->m_Pos.y = center[1];
+						model->m_Pos.z = center[2];
+						ImGui::DragFloat("P.Shadow", &model->m_ProjectShadow);
+
+						float rotation[3];
+						rotation[0] = model->m_RotAngle.x;
+						rotation[1] = model->m_RotAngle.y;
+						rotation[2] = model->m_RotAngle.z;
+						ImGui::InputFloat3("Rot Angle", rotation);
+						model->m_RotAngle.x = rotation[0];
+						model->m_RotAngle.y = rotation[1];
+						model->m_RotAngle.z = rotation[2];
+						ImGui::DragFloat("R.GRAD", &model->m_RotGRAD);
+
+					}
 				}
-#endif
 				ImGui::End();
 			}
+
 			ImGui::Begin("DEBUG PANEL");
 			{
 				ImGui::Text("%s", g_ConsoleMSG.c_str());

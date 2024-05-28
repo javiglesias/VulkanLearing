@@ -5,7 +5,7 @@
         "commandLine": "",
         "environment": [
         ],
-        "executable": "C:\\dev\\VulkanLearing\\x64\\Debug\\pruebaVulkan.exe",
+        "executable": "C:\\dev\\VulkanLearing\\x64\\Debug\\VKRenderer.exe",
         "inject": false,
         "numQueuedFrames": 0,
         "options": {

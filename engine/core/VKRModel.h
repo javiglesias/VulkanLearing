@@ -43,10 +43,14 @@ namespace VKR
 		public:
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 			glm::vec3 m_Pos { 0.0f, 1.0f, 0.0f };
+			glm::vec3 m_RotAngle { 0.0f, 1.0f, 0.0f };
 			glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
 			std::vector<R_Mesh*> m_Meshes;
 			std::unordered_map<uint32_t, R_Material*> m_Materials;
 			char m_Path[64];
+			bool m_Editable = false;
+			float m_RotGRAD = 0.f;
+			float m_ProjectShadow = 0.f;
 		};
 
 		struct R_DbgModel

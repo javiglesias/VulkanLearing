@@ -5,10 +5,12 @@ namespace VKR
 {
 	namespace render
 	{
+		class R_Model;
 		class R_Cubemap
 		{
 		public: // variables
 			char m_Path[64];
+			R_Model* m_gltf;
 			R_CubemapMaterial* m_Material;
 			VkBuffer m_VertexBuffer;
 			VkDeviceMemory m_VertexBufferMemory;

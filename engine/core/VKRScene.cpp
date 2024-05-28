@@ -12,7 +12,7 @@ namespace VKR
 			return g_MainScene;
 		}
 
-		void Scene::LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		R_Model* Scene::LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
 			char filename[128];
 			sprintf(filename, "%s%s", _filepath, _modelName);
@@ -28,7 +28,16 @@ namespace VKR
 			sprintf(tempModel->m_Path, _filepath, 64);
 			tempModel->m_Pos = _position;
 			tempModel->m_Scale = _scale;
-			m_StaticModels.push_back(tempModel);
+			return tempModel;
+		}
+		void Scene::LoadStaticModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		{
+			m_StaticModels.push_back(LoadModel(_filepath, _modelName, _position, _scale, _customTexture));
+		}
+
+		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		{
+			m_Cubemap->m_gltf = LoadModel(_filepath, _modelName, _position, _scale, _customTexture);
 		}
 
 		void Scene::CreateDebugModel(PRIMITIVE _type)
@@ -197,12 +206,17 @@ namespace VKR
 
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
-			m_CubemapRender->Cleanup();
 			m_CubemapRender->Initialize();
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();
+
+			m_GraphicsRender->Initialize();
+			m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
+			m_GraphicsRender->CreatePipelineLayout();
+			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_GraphicsRender->CleanShaderModules();
 		}
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
@@ -244,7 +258,9 @@ namespace VKR
 				dynO.model = model->m_ModelMatrix;
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
 				dynO.model = glm::scale(dynO.model, model->m_Scale);
+				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
 				dynO.lightOpts.x = g_ShadowBias;
+				dynO.lightOpts.y = model->m_ProjectShadow; // project shadow
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
@@ -363,7 +379,6 @@ namespace VKR
 			DynamicBufferObject dynO{};
 			dynO.model = glm::mat4(1.f);
 			dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_cubemapDistance);
-			dynO.lightOpts.x = g_ShadowBias;
 			uint32_t dynamicOffset = 0 * static_cast<uint32_t>(_dynamicAlignment);
 			// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 			memcpy((char*)_backend->m_CubemapDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
@@ -375,7 +390,10 @@ namespace VKR
 			vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_PipelineLayout, 0, 1,
 				&m_Cubemap->m_Material->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
 			vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
-			vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], m_Cubemap->m_Vertices.size(), 1, 0, 0);
+			for (auto& mesh : m_Cubemap->m_gltf->m_Meshes)
+			{
+				vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_Vertices.size(), 1, 0, 0);
+			}
 			// Flush to make changes visible to the host
 			VkMappedMemoryRange mappedMemoryRange{};
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -470,7 +488,7 @@ namespace VKR
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
 			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
-			/*for (auto& model : m_StaticModels)
+			for (auto& model : m_StaticModels)
 			{
 				for (int i = 0; i < model->m_Meshes.size(); i++)
 				{
@@ -485,7 +503,7 @@ namespace VKR
 						}
 					}
 				}
-			}*/
+			}
 		}
 		void Scene::Init()
 		{
