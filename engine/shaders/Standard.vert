@@ -14,7 +14,7 @@ layout(set=0, binding=0) uniform UniformBufferObject
 layout(set=0, binding=4) uniform DynamicBufferObject
 {
     mat4 model;
-    vec4 lightOpt; // 0: Bias 1: projectShadow
+    vec4 lightOpt; // 0: Bias 1: projectShadow, 2: MipLevel
 } dynO;
 
 layout(location = 0) in vec3 inPosition;
@@ -30,6 +30,7 @@ layout(location = 5) out vec3 lightColor;
 layout(location = 6) out vec4 shadowCoord;
 layout(location = 7) out float shadowBias;
 layout(location = 8) out float projectShadow;
+layout(location = 9) out float mipLevel;
 
 
 void main() {
@@ -43,4 +44,5 @@ void main() {
 	shadowCoord = ubo.lightProj * ubo.lightView * dynO.model * vec4(inPosition, 1.0);
 	shadowBias = dynO.lightOpt.x;
 	projectShadow = dynO.lightOpt.y;
+	mipLevel = dynO.lightOpt.z;
 }

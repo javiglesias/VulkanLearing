@@ -64,7 +64,7 @@ namespace VKR
 			m_Subpass.pDepthStencilAttachment = &depthAttachmentRef;
 		}
 
-		void RenderPass::CreateRenderPass(VkDevice _LogicDevice)
+		void RenderPass::CreatePass(VkDevice _LogicDevice)
 		{
 			/// Subpass dependencies
 			VkSubpassDependency subpassDep{};

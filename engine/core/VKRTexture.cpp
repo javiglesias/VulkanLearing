@@ -1,6 +1,7 @@
 #include "VKRTexture.h"
 #include "../video/VKRUtils.h"
 #include <string>
+#include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../dependencies/stb/stb_image.h"
@@ -30,6 +31,7 @@ namespace VKR
 				tWidth = m_DefualtWidth;
 				tHeight = m_DefualtHeight;
 			}
+			m_Mipmaps = (uint8_t)std::log2(tWidth > tHeight ? tWidth : tHeight);
 			m_Size = tWidth * tHeight * 4;
 			if (isCubemap)
 				m_Size *= 6;
@@ -61,9 +63,10 @@ namespace VKR
 				tWidth = m_DefualtWidth;
 				tHeight = m_DefualtHeight;
 			}
-			m_Size = (tWidth * tHeight * 4);
+			tHeight=tWidth;
+			m_Size = (tWidth* tHeight * 4);
 			// Buffer transfer of pixels
-			CreateBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			CreateBuffer(6*m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 			void* data;
@@ -83,18 +86,23 @@ namespace VKR
 			{
 				auto texSize = tWidth * tHeight * 4;
 				CreateImage(tWidth, tHeight, _format,
-					VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, _arrayLayers, _flags);
+					VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, _arrayLayers, _flags, m_Mipmaps);
 				vkBindImageMemory(g_context.m_LogicDevice, tImage, tImageMem, 0);
 				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					_CommandPool, _arrayLayers);
-				CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), 0, _CommandPool, 0);
+					_CommandPool, _arrayLayers, m_Mipmaps);
+				for (size_t i = 0; i < _arrayLayers; i++)
+				{
+					auto offset = texSize * i;
+					CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), offset, _CommandPool, i);
+				}
 				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-					_CommandPool, _arrayLayers);
-				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers);
-				m_Sampler = CreateTextureSampler();
+					_CommandPool, _arrayLayers, m_Mipmaps);
+				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, m_Mipmaps);
+				m_Sampler = CreateTextureSampler(m_Mipmaps);
 				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
+				GenerateMipmap(tImage, _CommandPool, m_Mipmaps, tWidth, tHeight);
 			}
 		}
 

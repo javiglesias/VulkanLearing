@@ -13,6 +13,7 @@ layout(location = 5) in vec3 lightColor;
 layout(location = 6) in vec4 shadowCoord;
 layout(location = 7) in float shadowBias;
 layout(location = 8) in float projectShadow;
+layout(location = 9) in float mipLevel;
 
 layout(location = 0) out vec4 outColor;
 
@@ -35,7 +36,8 @@ vec3 light_calculations()
 {
 	float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
-	vec3 color = texture(inAmbientTexture, texCoord).rgb;
+	float mipmapLevel = textureQueryLod(inAmbientTexture, texCoord).x;
+	vec3 color = textureLod(inAmbientTexture, texCoord, mipLevel).rgb;
 	vec3 norm = normalize(normal);
 	vec3 lightDir = normalize(lightPosition - fragPosition);
 	float diff = max(dot(norm, lightDir), 0.0);
@@ -46,12 +48,12 @@ vec3 light_calculations()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
-	if(projectShadow > 0)
-	{
-		float shadow = ShadowCalculation(shadowCoord,inShadowTexture);
-		return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;	
-	} 
-	else
+	// if(projectShadow > 0)
+	// {
+		// float shadow = ShadowCalculation(shadowCoord,inShadowTexture);
+		// return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;	
+	// } 
+	// else
 		return (ambient * (diffuse + specular)) * color;
 }
 

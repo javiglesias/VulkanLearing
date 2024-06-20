@@ -98,6 +98,7 @@ namespace VKR
 				{
 					_mainScene->LoadStaticModel("resources/models/Plane/glTF/", "Plane.gltf", glm::vec3(0.f, 1.f, 0.f));
 					_mainScene->LoadStaticModel("resources/models/scene/glTF/", "scene.gltf", glm::vec3(0.f, 2.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
 				}
@@ -131,6 +132,7 @@ namespace VKR
 				ImGui::DragFloat("Shadow Fov", &render::m_ShadowCameraFOV);
 				ImGui::DragFloat("Shadow aspect ratio", &render::g_ShadowAR);
 				ImGui::SliderFloat("Shadow bias", &render::g_ShadowBias, 0.0025f, 1.f, "%.5f");
+				ImGui::SliderFloat("Mip level", &render::g_MipLevel, 0.f, 12.f, "%1.f");
 
 				ImGui::LabelText("ProjMat", "Proj Matrix");
 				ImGui::InputFloat("Light Right ortho", &render::g_LightRight);

@@ -43,6 +43,7 @@ namespace VKR
         inline float g_cubemapDistance = 100000.f;
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
+        inline float g_MipLevel = 0.f;
         inline float g_Rotation = 0.f;
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;

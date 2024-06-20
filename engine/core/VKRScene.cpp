@@ -204,6 +204,11 @@ namespace VKR
 			}
 		}
 
+		void Scene::GeometryPass(VKBackend* _backend, int _CurrentFrame)
+		{
+
+		}
+
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
 			m_CubemapRender->Initialize();
@@ -223,6 +228,7 @@ namespace VKR
 		{
 			auto renderContext = GetVKContext();
 
+			GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
 			auto dynamicAlignment = sizeof(glm::mat4);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
@@ -261,6 +267,7 @@ namespace VKR
 				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
 				dynO.lightOpts.x = g_ShadowBias;
 				dynO.lightOpts.y = model->m_ProjectShadow; // project shadow
+				dynO.lightOpts.z = g_MipLevel;
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
@@ -329,7 +336,7 @@ namespace VKR
 			}
 			// Cubemap draw
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
-			DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			//DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 			//_backend->EndRenderPass(_CurrentFrame);
 		}
 

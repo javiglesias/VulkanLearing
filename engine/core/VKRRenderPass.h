@@ -15,7 +15,7 @@ namespace VKR
             void CreateColorAttachment(VkFormat _format);
             void CreateSubPass();
             void CreateDepthOnlySubPass();
-            void CreateRenderPass(VkDevice _LogicDevice);
+            void CreatePass(VkDevice _LogicDevice);
             void Cleanup(VkDevice _LogicDevice);
         public:
             VkRenderPass m_Pass;

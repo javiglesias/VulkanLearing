@@ -14,6 +14,7 @@ namespace VKR
 		private: // Variables
 			int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
 			int tWidth, tHeight, tChannels;
+			uint8_t m_Mipmaps = 1;
 			VkBuffer m_StagingBuffer;
 			VkDeviceMemory m_StaggingBufferMemory;
 			VkDeviceSize m_Size;

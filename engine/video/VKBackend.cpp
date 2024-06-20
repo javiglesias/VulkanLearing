@@ -133,7 +133,6 @@ namespace VKR
 				return function(instance, debugMessenger, pAllocator);
 			}
 		}
-
 		/// Callback para la capa de validacion de Debug
 		static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 			VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -151,9 +150,8 @@ namespace VKR
 				// Uso no optimo de la API de Vulkan.
 				break;
 			case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+				ChangeColorConsole(CONSOLE_COLOR::NORMAL);
 				fprintf(stderr, "\tMessage PERFORMANCE: %s\n", pCallbackData->pMessage);
-				g_ConsoleMSG += "\tMessage PERFORMANCE:";
-				g_ConsoleMSG += pCallbackData->pMessage;
 				break;
 			default:
 				break;
@@ -171,7 +169,9 @@ namespace VKR
 				break;
 				// Mensaje sobre un comportamiento invalido y que puede provocar CRASH
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+				ChangeColorConsole(CONSOLE_COLOR::RED);
 				fprintf(stderr, "\n\tVLayer message: %s\n", pCallbackData->pMessage);
+				ChangeColorConsole(CONSOLE_COLOR::NORMAL);
 				break;
 			default:
 				break;
@@ -337,6 +337,7 @@ namespace VKR
 			m_GraphicsRender->CreatePipelineLayout();
 			// Crear Renderpass
 			g_context.CreateRenderPass(&m_SwapChainCreateInfo);
+			g_context.CreateGeometryPass(&m_SwapChainCreateInfo);
 			// Crear Pipeline
 			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			// Limpiar ShaderModules
@@ -655,7 +656,7 @@ namespace VKR
 			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
 				VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_ShadowImage, &m_ShadowImageMemory, 1, 0);
+				&m_ShadowImage, &m_ShadowImageMemory, 1, 0, 1);
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowImage, m_ShadowImageMemory, 0);
 			TransitionImageLayout(m_ShadowImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
@@ -671,7 +672,7 @@ namespace VKR
 			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
 				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_DepthImage, &m_DepthImageMemory, 1, 0);
+				&m_DepthImage, &m_DepthImageMemory, 1, 0, 1);
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_DepthImage, m_DepthImageMemory, 0);
 			TransitionImageLayout(m_DepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,

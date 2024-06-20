@@ -1,5 +1,7 @@
 #pragma once
 #include "../core/VKRRenderPass.h"
+#include <Windows.h>
+#include <cmath>
 
 namespace VKR
 {
@@ -39,6 +41,7 @@ namespace VKR
 
 			VKR::render::RenderPass* m_RenderPass;
 			VKR::render::RenderPass* m_ShadowPass;
+			VKR::render::RenderPass* m_GeometryPass;
 			unsigned int m_GraphicsQueueFamilyIndex = 0;
 			unsigned int m_TransferQueueFamilyIndex = 0;
 			VkQueue m_GraphicsQueue;
@@ -47,6 +50,7 @@ namespace VKR
 
 			//std::array< VkPipeline, SWAPCHAIN_BUFFERING_LEVEL > boundGraphicsPipelines{};
 			void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo);
+			void CreateGeometryPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo);
 			bool HasStencilComponent(VkFormat format);
 			void CreateLogicalDevice();
 			void CreateDevice(VkInstance _Instance);
@@ -244,7 +248,7 @@ namespace VKR
 			m_ShadowPass->CreateDepthAttachment(m_GpuInfo.FindDepthTestFormat(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			m_ShadowPass->CreateDepthOnlySubPass();
-			m_ShadowPass->CreateRenderPass(m_LogicDevice);
+			m_ShadowPass->CreatePass(m_LogicDevice);
 		}
 
 		inline void VKContext::Cleanup()
@@ -262,7 +266,18 @@ namespace VKR
 			m_RenderPass->CreateDepthAttachment(m_GpuInfo.FindDepthTestFormat(),
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 			m_RenderPass->CreateSubPass();
-			m_RenderPass->CreateRenderPass(m_LogicDevice);
+			m_RenderPass->CreatePass(m_LogicDevice);
+		}
+
+		inline void VKContext::CreateGeometryPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
+		{
+
+			m_GeometryPass = new VKR::render::RenderPass();
+			m_GeometryPass->CreateColorAttachment(m_SwapChainCreateInfo->imageFormat);
+			m_GeometryPass->CreateDepthAttachment(m_GpuInfo.FindDepthTestFormat(),
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			m_GeometryPass->CreateSubPass();
+			m_GeometryPass->CreatePass(m_LogicDevice);
 		}
 
 		inline bool VKContext::HasStencilComponent(VkFormat format)
@@ -310,7 +325,7 @@ void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _
 inline
 void CreateImage(unsigned int _Width, unsigned int _Height, VkFormat _format, VkImageTiling _tiling,
 	VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties,
-	VkImage* _image, VkDeviceMemory* _imageMem, uint32_t _arrayLayers, VkImageCreateFlags _flags)
+	VkImage* _image, VkDeviceMemory* _imageMem, uint32_t _arrayLayers, VkImageCreateFlags _flags, uint8_t _mipmapLvls)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageCreateInfo tImageInfo{};
@@ -319,7 +334,8 @@ void CreateImage(unsigned int _Width, unsigned int _Height, VkFormat _format, Vk
 	tImageInfo.extent.width = static_cast<uint32_t>(_Width);
 	tImageInfo.extent.height = static_cast<uint32_t>(_Height);
 	tImageInfo.extent.depth = 1;
-	tImageInfo.mipLevels = 1;
+	auto mipmaps = std::floor(std::log2((((_Width) > (_Height)) ? (_Width) : (_Height)))) + 1;
+	tImageInfo.mipLevels = mipmaps < _mipmapLvls ? _mipmapLvls : _mipmapLvls;
 	tImageInfo.arrayLayers = _arrayLayers;
 	tImageInfo.format = _format;
 	tImageInfo.tiling = _tiling;
@@ -384,9 +400,74 @@ void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size, VkCommandPool 
 	vkCmdCopyBuffer(commandBuffer, _src, dst_, 1, &copyRegion);
 	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
 }
+inline
+void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool, 
+					uint8_t _mipLevels, int _width, int _height)
+{
+	auto renderContext = VKR::render::GetVKContext();
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
+	VkImageMemoryBarrier iBarrier{};
+	iBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	iBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	iBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	iBarrier.image = _image;
+	iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	iBarrier.subresourceRange.layerCount = 1;
+	iBarrier.subresourceRange.levelCount = 1;
+	for (uint8_t i = 1; i < _mipLevels; i++)
+	{
+		iBarrier.subresourceRange.baseMipLevel = i - 1;
+		iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+							 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0,nullptr, 0, nullptr,
+							 1, &iBarrier);
+		VkImageBlit blit{};
+		blit.srcOffsets[0] = {0, 0, 0};
+		blit.srcOffsets[1] = {_width, _height, 1};
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = i - 1;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource. layerCount = 1;
+
+		blit.dstOffsets[0] = {0, 0, 0};
+		blit.dstOffsets[1] = {_width > 1 ? _width / 2 : 1, 
+			_height > 1 ? _height / 2 : 1, 1};
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = i;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource. layerCount = 1;
+		vkCmdBlitImage(commandBuffer, _image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					   _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
+					   VK_FILTER_LINEAR);
+		// transicionamos la imagen
+		iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+							 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
+							 1, &iBarrier);
+		if (_width > 1) _width /= 2;
+		if (_height > 1) _height /= 2;
+	}
+	// record commands blitimage
+	iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+							VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
+							1, &iBarrier);
+	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
+}
 
 inline
-void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, VkImageLayout _new, VkCommandPool _CommandPool, uint32_t _layerCount)
+void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, 
+						   VkImageLayout _new, VkCommandPool _CommandPool, 
+						   uint32_t _layerCount, uint8_t _levelCount = 1)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
@@ -409,7 +490,7 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 	else
 		iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	iBarrier.subresourceRange.baseMipLevel = 0;
-	iBarrier.subresourceRange.levelCount = 1;
+	iBarrier.subresourceRange.levelCount = _levelCount;
 	iBarrier.subresourceRange.baseArrayLayer = 0;
 	iBarrier.subresourceRange.layerCount = _layerCount;
 	VkPipelineStageFlags sourceStage;
@@ -467,7 +548,7 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 }
 
 inline 
-VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, VkImageViewType _viewType, uint32_t _arrayLayers)
+VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, VkImageViewType _viewType, uint32_t _arrayLayers, float _mipLevels = 1)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageView tImageView;
@@ -478,7 +559,7 @@ VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlag
 	viewInfo.format = _format;
 	viewInfo.subresourceRange.aspectMask = _aspectMask;
 	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.levelCount = _mipLevels;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = _arrayLayers;
 	VK_ASSERT(vkCreateImageView(renderContext.m_LogicDevice, &viewInfo, nullptr, &tImageView));
@@ -492,7 +573,7 @@ VkImageView CreateTextureImageView(VkImage _tImage)
 }
 
 inline 
-VkSampler CreateTextureSampler()
+VkSampler CreateTextureSampler(float _Mipmaps)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkPhysicalDeviceProperties deviceProp;
@@ -512,9 +593,8 @@ VkSampler CreateTextureSampler()
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.mipLodBias = 0.f;
-	samplerInfo.minLod = 0.f;
-	samplerInfo.maxLod = 0.f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = _Mipmaps;
 	VK_ASSERT(vkCreateSampler(renderContext.m_LogicDevice, &samplerInfo, nullptr, &TextureSampler));
 	return TextureSampler;
 }
@@ -547,4 +627,22 @@ VkSampler CreateShadowTextureSampler()
 	samplerInfo.maxLod = 1.f;
 	VK_ASSERT(vkCreateSampler(renderContext.m_LogicDevice, &samplerInfo, nullptr, &TextureSampler));
 	return TextureSampler;
+}
+
+enum CONSOLE_COLOR
+{
+	BLUE = 9,
+	GREEN = 10,
+	RED = 12,
+	PURPLE = 13,
+	YELLOW = 14,
+	NORMAL = 15
+};
+inline HANDLE  hConsole;
+inline
+void ChangeColorConsole(CONSOLE_COLOR _color)
+{
+	if (!hConsole)
+		hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, _color);
 }
