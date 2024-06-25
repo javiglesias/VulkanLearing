@@ -216,12 +216,16 @@ namespace VKR
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();
-
-			m_GraphicsRender->Initialize();
-			m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
-			m_GraphicsRender->CreatePipelineLayout();
-			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
-			m_GraphicsRender->CleanShaderModules();
+			
+			if(m_GraphicsRender->CheckCompileSPV("engine/shaders/Standard.vert", 0) &&
+				m_GraphicsRender->CheckCompileSPV("engine/shaders/Standard.frag", 4))
+			{
+				m_GraphicsRender->Initialize();
+				m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
+				m_GraphicsRender->CreatePipelineLayout();
+				m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+				m_GraphicsRender->CleanShaderModules();
+			}
 		}
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
@@ -334,10 +338,8 @@ namespace VKR
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 				++debugCount;
 			}
-			// Cubemap draw
-			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
-			//DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 			//_backend->EndRenderPass(_CurrentFrame);
+			//DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 		}
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
@@ -372,6 +374,8 @@ namespace VKR
 		}
 		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
 		{
+			// Cubemap draw
+			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
 			auto renderContext = GetVKContext();
 			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
 			// Matriz de proyeccion

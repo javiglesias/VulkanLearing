@@ -49,7 +49,7 @@ namespace VKR
             };
             VkDevice m_LogicDevice;
         public:
-            virtual void Initialize() {}
+            virtual bool Initialize() {return true;}
             virtual void CreateDescriptorSetLayout();
             virtual void CreatePipelineLayout();
             virtual void CleanShaderModules();
@@ -57,7 +57,7 @@ namespace VKR
 
             void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
             void CreatePipeline(VkRenderPass _RenderPass);
-            void CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule, int _stage);
+            bool CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule, int _stage);
             void Cleanup();
             Renderer() {}
         	~Renderer()
@@ -72,8 +72,8 @@ namespace VKR
         public: // Functions
 
             // Creamos el layout de los Descriptor set que vamos a utlizar
-            void Initialize() override;
-            void CreateShaderModules();
+            bool Initialize() override;
+            bool CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             GraphicsRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
@@ -81,12 +81,13 @@ namespace VKR
                 m_PolygonMode = _PolygonMode;
                 m_CullMode = VK_CULL_MODE_BACK_BIT;
             }
+            bool CheckCompileSPV(const char* _shaderPath, int _stage);
         };
 
         struct DebugRenderer : Renderer
         {
         public: // Functions
-            void Initialize() override;
+            bool Initialize() override;
             void CreateDescriptorSetLayout();
 
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
@@ -102,7 +103,7 @@ namespace VKR
         {
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
-            void Initialize() override;
+            bool Initialize() override;
             void CreateShaderStages() override;
             void CreatePipeline(VkRenderPass _RenderPass);
             void CleanShaderModules() override;
@@ -118,8 +119,8 @@ namespace VKR
         {
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
-            void Initialize() override;
-            void CreateShaderModules();
+            bool Initialize() override;
+            bool CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             CubemapRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {

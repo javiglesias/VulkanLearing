@@ -48,13 +48,13 @@ vec3 light_calculations()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
-	// if(projectShadow > 0)
+	// if(projectshadow > 0)
 	// {
-		// float shadow = ShadowCalculation(shadowCoord,inShadowTexture);
-		// return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;	
+	float shadow = ShadowCalculation(shadowCoord, inShadowTexture);
+	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;	
 	// } 
 	// else
-		return (ambient * (diffuse + specular)) * color;
+		// return (ambient * (diffuse + specular)) * color;
 }
 
 float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)
