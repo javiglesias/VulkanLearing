@@ -48,6 +48,8 @@ namespace VKR
                 VK_DYNAMIC_STATE_SCISSOR
             };
             VkDevice m_LogicDevice;
+            Shader* m_VertShader = nullptr;
+            Shader* m_FragShader = nullptr;
         public:
             virtual bool Initialize() {return true;}
             virtual void CreateDescriptorSetLayout();
@@ -57,7 +59,7 @@ namespace VKR
 
             void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
             void CreatePipeline(VkRenderPass _RenderPass);
-            bool CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule, int _stage);
+            bool CreateShaderModule(Shader* _shader, VkShaderModule* _shaderModule);
             void Cleanup();
             Renderer() {}
         	~Renderer()

@@ -217,8 +217,8 @@ namespace VKR
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();
 			
-			if(m_GraphicsRender->CheckCompileSPV("engine/shaders/Standard.vert", 0) &&
-				m_GraphicsRender->CheckCompileSPV("engine/shaders/Standard.frag", 4))
+			if(m_GraphicsRender->m_VertShader->GLSLCompile(true) &&
+				m_GraphicsRender->m_FragShader->GLSLCompile(true))
 			{
 				m_GraphicsRender->Initialize();
 				m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);

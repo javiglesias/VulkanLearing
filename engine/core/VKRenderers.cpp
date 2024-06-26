@@ -150,11 +150,9 @@ namespace VKR
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
         }
-        bool Renderer::CreateShaderModule(const char* _shaderPath, VkShaderModule* _shaderModule, int _stage) // 0: vert, 4:frag
+        bool Renderer::CreateShaderModule(Shader* _shader, VkShaderModule* _shaderModule) // 0: vert, 4:frag
         {
-            char shaderPath[64];
-            strcpy(shaderPath, _shaderPath);
-            auto spvCompiled = CompileToSPVShader(_shaderPath, _stage);
+            auto spvCompiled = _shader->LoadShader();
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
@@ -181,8 +179,10 @@ namespace VKR
         {
             // DEBUG SHADERS
             //"engine/shaders/Standard.vert"
-            if(CreateShaderModule("engine/shaders/Debug.vert", &m_VertShaderModule, 0) &&
-                CreateShaderModule("engine/shaders/Debug.frag", &m_FragShaderModule, 4))
+            m_VertShader = new Shader("engine/shaders/Debug.vert", 0);
+            m_FragShader = new Shader("engine/shaders/Debug.frag", 4);
+            if(CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
+                CreateShaderModule(m_FragShader, &m_FragShaderModule))
             {
                 CreateShaderStages();
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
@@ -254,8 +254,12 @@ namespace VKR
 
         bool GraphicsRenderer::CreateShaderModules()
         {
-            return CreateShaderModule("engine/shaders/Standard.vert", &m_VertShaderModule, 0) && 
-                CreateShaderModule("engine/shaders/Standard.frag", &m_FragShaderModule, 4);
+            if(!m_VertShader)
+                m_VertShader = new Shader("engine/shaders/Standard.vert", 0);
+            if(!m_FragShader)
+                m_FragShader = new Shader("engine/shaders/Standard.frag", 4);
+            return CreateShaderModule(m_VertShader, &m_VertShaderModule) && 
+                CreateShaderModule(m_FragShader, &m_FragShaderModule);
         }
 
         void GraphicsRenderer::CreateDescriptorSetLayout()
@@ -323,15 +327,11 @@ namespace VKR
                 exit(-99);
         }
 
-        bool GraphicsRenderer::CheckCompileSPV(const char* _shaderPath, int _stage)
-        {
-            return CheckSPVCompile(_shaderPath, _stage);
-        }
-
         bool ShadowRenderer::Initialize()
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            if(CreateShaderModule("engine/shaders/Shadow.vert", &m_VertShaderModule, 0))
+            m_VertShader = new Shader("engine/shaders/Shadow.vert", 0);
+            if(CreateShaderModule(m_VertShader, &m_VertShaderModule))
             {
                 CreateShaderStages();
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
@@ -393,8 +393,10 @@ namespace VKR
         bool CubemapRenderer::Initialize()
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            if(CreateShaderModule("engine/shaders/Cubemap.vert", &m_VertShaderModule, 0) &&
-            CreateShaderModule("engine/shaders/Cubemap.frag", &m_FragShaderModule, 4))
+            m_VertShader = new Shader("engine/shaders/Cubemap.vert", 0);
+            m_FragShader = new Shader("engine/shaders/Cubemap.frag", 4);
+            if(CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
+            CreateShaderModule(m_FragShader, &m_FragShaderModule))
             {
                 CreateShaderStages();
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
@@ -406,12 +408,6 @@ namespace VKR
                 return true;
             }
             return false;
-        }
-
-        bool CubemapRenderer::CreateShaderModules()
-        {
-            return CreateShaderModule("engine/shaders/Cubemap.vert", &m_VertShaderModule, 0) &&
-                    CreateShaderModule("engine/shaders/Cubemap.frag", &m_FragShaderModule, 4);
         }
 
         void CubemapRenderer::CreateDescriptorSetLayout()

@@ -179,6 +179,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClCompile Include="core\VKRModel.cpp" />
     <ClCompile Include="core\VKRRenderPass.cpp" />
     <ClCompile Include="core\VKRScene.cpp" />
+    <ClCompile Include="core\VKRShader.cpp" />
     <ClCompile Include="core\VKRTexture.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="video\VKBackend.cpp" />
