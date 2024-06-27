@@ -129,6 +129,7 @@ namespace VKR
 		{
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 shadowProjMat = glm::ortho<float>(-g_LightRight, g_LightRight, -g_LightUp, g_LightUp, -g_LightDepth, g_LightDepth);
+			shadowProjMat[1][1] *= -1;
 			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos+m_LightCenter, m_LightUp);
 			glm::mat4 lightModelMat = glm::mat4(1.f);
 			auto renderContext = GetVKContext();
@@ -158,7 +159,7 @@ namespace VKR
 				vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
 				vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 
-				auto dynamicAlignment = sizeof(glm::mat4);
+				auto dynamicAlignment = sizeof(DynamicBufferObject);
 				if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
 				{
 					dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
@@ -211,11 +212,11 @@ namespace VKR
 
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
-			m_CubemapRender->Initialize();
+			/*m_CubemapRender->Initialize();
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
-			m_CubemapRender->CleanShaderModules();
+			m_CubemapRender->CleanShaderModules();*/
 			
 			if(m_GraphicsRender->m_VertShader->GLSLCompile(true) &&
 				m_GraphicsRender->m_FragShader->GLSLCompile(true))
@@ -234,7 +235,7 @@ namespace VKR
 
 			GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
-			auto dynamicAlignment = sizeof(glm::mat4);
+			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			// Matriz de proyeccion
@@ -415,8 +416,10 @@ namespace VKR
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
+			_backend->m_CurrentModelsToDraw = m_StaticModels.size();
 			/// 1 - Actualizar los DynamicDescriptorBuffers
-			VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
+			_backend->GenerateBuffers();
+			/*VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -426,7 +429,7 @@ namespace VKR
 					_backend->m_DynamicBuffers[i], _backend->m_DynamicBuffersMemory[i]);
 				vkMapMemory(renderContext.m_LogicDevice, _backend->m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
-			}
+			}*/
 			for (auto& model : m_StaticModels)
 			{
 				for (auto& mesh : model->m_Meshes)
@@ -523,7 +526,9 @@ namespace VKR
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
-			if (m_DbgModels.size() > 0)
+            _backend->m_CurrentDebugModelsToDraw = m_DbgModels.size();
+			_backend->GenerateDBGBuffers();
+			/*if (m_DbgModels.size() > 0)
 			{
 				m_DbgModels[0]->m_Pos = m_LightPos;
 
@@ -539,7 +544,7 @@ namespace VKR
 					vkMapMemory(renderContext.m_LogicDevice, _backend->m_DbgDynamicBuffersMemory[i], 0,
 						dynDbgBufferSize, 0, &_backend->m_DbgDynamicBuffersMapped[i]);
 				}
-			}
+			}*/
 			for (auto& dbgModel : m_DbgModels)
 			{
 				dbgModel->m_Material.m_Texture->LoadTexture();

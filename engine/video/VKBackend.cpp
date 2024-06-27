@@ -400,17 +400,15 @@ namespace VKR
 			m_CubemapDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_CubemapDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
 
-			VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
-					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
-			}
+			GenerateBuffers();
+			GenerateDBGBuffers();
+			CreateSyncObjects(0);
+			CreateSyncObjects(1);
+			m_GPipelineStatus = READY;
+		}
+
+		void VKBackend::GenerateDBGBuffers()
+		{
 			VkDeviceSize dbgBufferSize = sizeof(DebugUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
@@ -421,6 +419,32 @@ namespace VKR
 					m_DbgUniformBuffers[i], m_DbgUniformBuffersMemory[i]);
 				vkMapMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], 0,
 					dbgBufferSize, 0, &m_DbgUniformBuffersMapped[i]);
+			}
+			VkDeviceSize dynDbgBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_DbgDynamicBuffers[i], m_DbgDynamicBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], 0,
+					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
+			}
+		}
+
+		void VKBackend::GenerateBuffers()
+		{
+			VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_UniformBuffers[i], m_UniformBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
+					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
 			}
 			VkDeviceSize cubemapBufferSize = sizeof(CubemapUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -444,18 +468,6 @@ namespace VKR
 					m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
 				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
-			}
-
-			VkDeviceSize dynDbgBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_DbgDynamicBuffers[i], m_DbgDynamicBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], 0,
-					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
 			}
 
 			constexpr VkDeviceSize dynCubemapBufferSize = sizeof(DynamicBufferObject);
@@ -503,9 +515,6 @@ namespace VKR
 			// Shadow DescriptorSet
 			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 
-			CreateSyncObjects(0);
-			CreateSyncObjects(1);
-			m_GPipelineStatus = READY;
 		}
 
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)

@@ -156,6 +156,8 @@ namespace VKR
         public:
             VKBackend() {}
             void Init();
+            void GenerateDBGBuffers();
+            void GenerateBuffers();
             void InitializeVulkan(VkApplicationInfo* _appInfo);
             void Loop();
             bool BackendShouldClose();
