@@ -14,13 +14,13 @@ layout(location = 6) in vec4 shadowCoord;
 layout(location = 7) in float shadowBias;
 layout(location = 8) in float projectShadow;
 layout(location = 9) in float mipLevel;
+layout(location = 10) in vec4 pointLightConstants;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 light_calculations();
-float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map);
+vec3  DirectionalLight();
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap);
-float textureProj(vec4 shadowCoord, vec2 off);
+float PointLight();
 
 vec3 rgb_to_grayscale_luminosity(vec3 color) {
     float value = color.r * 0.21 + color.g * 0.71 + color.b * 0.07;
@@ -29,10 +29,29 @@ vec3 rgb_to_grayscale_luminosity(vec3 color) {
 
 void main() 
 {
-	outColor = vec4(light_calculations(), 1.0);
+	vec3 color = textureLod(inAmbientTexture, texCoord, mipLevel).rgb;
+	vec3 result = DirectionalLight() + (color * PointLight());
+	outColor = vec4(result, 1.0);
 }
 
-vec3 light_calculations()
+float PointLight()
+{
+	// d = distancia del fragmento
+	// kc = constante
+	// kl = constante linear
+	// kq = constante cuadratica
+	// atenuacion = 1/ (kc+ kl*d + kq*(d*d));
+	vec3 dir = lightPosition - fragPosition;
+	float d = sqrt(dot(dir, dir));
+	float att = 1.0
+				/ (pointLightConstants[0]
+					+ pointLightConstants[1] * d 
+					+ pointLightConstants[2] * (d*d)
+				);
+	return att;
+}
+
+vec3 DirectionalLight()
 {
 	float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
@@ -48,28 +67,9 @@ vec3 light_calculations()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
-	// if(projectshadow > 0)
-	// {
 	float shadow = ShadowCalculation(shadowCoord, inShadowTexture);
-	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;	
-	// } 
-	// else
-		// return (ambient * (diffuse + specular)) * color;
+	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 }
-
-float compute_shadow_factor(vec4 light_space_pos, sampler2D shadow_map)
-{
-	vec3 light_space_ndc = light_space_pos.xyz / light_space_pos.w; 
-	light_space_ndc = light_space_ndc * 0.5 + 0.5;
-	float closestDepth = texture(shadow_map, light_space_ndc.xy).x;
-	float currentDepth = light_space_ndc.z;
-	
-	vec3 light_dir = normalize(lightPosition - fragPosition);
-	float bias = shadowBias;
-	float shadow = currentDepth > closestDepth + bias ? 0.0 : 1.0;
-	return shadow;
-}
-
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 
 {
@@ -88,19 +88,4 @@ float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap)
     float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     return shadow;
-}
-
-float textureProj(vec4 shadowCoord, vec2 off)
-{
-	#define ambient 0.1
-	float shadow = 1.0;
-	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
-	{
-		float dist = texture( inShadowTexture, shadowCoord.st + off ).r;
-		if ( shadowCoord.w > 0.0 && dist < shadowCoord.z ) 
-		{
-			shadow = ambient;
-		}
-	}
-	return shadow;
 }

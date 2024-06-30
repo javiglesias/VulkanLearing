@@ -15,6 +15,7 @@ layout(set=0, binding=4) uniform DynamicBufferObject
 {
     mat4 model;
     vec4 lightOpt; // 0: Bias 1: projectShadow, 2: MipLevel
+    vec4 pointLightOpts; // Kc, Kl, Kq
 } dynO;
 
 layout(location = 0) in vec3 inPosition;
@@ -22,15 +23,16 @@ layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aNormal;
 
 layout(location = 0) out vec3 fragPosition;
-layout(location = 1) out vec2 texCoord;
-layout(location = 2) out vec3 normal;
-layout(location = 3) out vec3 lightPosition;
-layout(location = 4) out vec3 viewerPosition;
-layout(location = 5) out vec3 lightColor;
-layout(location = 6) out vec4 shadowCoord;
-layout(location = 7) out float shadowBias;
-layout(location = 8) out float projectShadow;
-layout(location = 9) out float mipLevel;
+layout(location = 1)  out vec2 texCoord;
+layout(location = 2)  out vec3 normal;
+layout(location = 3)  out vec3 lightPosition;
+layout(location = 4)  out vec3 viewerPosition;
+layout(location = 5)  out vec3 lightColor;
+layout(location = 6)  out vec4 shadowCoord;
+layout(location = 7)  out float shadowBias;
+layout(location = 8)  out float projectShadow;
+layout(location = 9)  out float mipLevel;
+layout(location = 10) out vec4 pointLightConstants;
 
 
 void main() {
@@ -45,4 +47,5 @@ void main() {
 	shadowBias = dynO.lightOpt.x;
 	projectShadow = dynO.lightOpt.y;
 	mipLevel = dynO.lightOpt.z;
+	pointLightConstants = vec4(1.0);
 }

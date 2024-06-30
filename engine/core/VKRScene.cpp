@@ -217,10 +217,13 @@ namespace VKR
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();*/
-			
+			auto renderContext = GetVKContext();
 			if(m_GraphicsRender->m_VertShader->GLSLCompile(true) &&
 				m_GraphicsRender->m_FragShader->GLSLCompile(true))
 			{
+				vkDeviceWaitIdle(renderContext.m_LogicDevice);
+				vkDestroyPipeline(renderContext.m_LogicDevice, m_GraphicsRender->m_Pipeline, nullptr);
+				vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_GraphicsRender->m_PipelineLayout, nullptr);
 				m_GraphicsRender->Initialize();
 				m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 				m_GraphicsRender->CreatePipelineLayout();
@@ -273,6 +276,7 @@ namespace VKR
 				dynO.lightOpts.x = g_ShadowBias;
 				dynO.lightOpts.y = model->m_ProjectShadow; // project shadow
 				dynO.lightOpts.z = g_MipLevel;
+				dynO.pointLightOpts = glm::vec4(m_PointLightPos, 1.0);
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));

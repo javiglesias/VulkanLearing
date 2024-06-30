@@ -42,7 +42,8 @@ struct DynamicBufferObject
 {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::vec4 lightOpts; // 0: bias, 1: shadow ,2: miplevel
-	alignas(16) glm::vec4 align[3];
+	alignas(16) glm::vec4 pointLightOpts; // Kc, Kl, Kq
+	alignas(16) glm::vec4 align[2];
 };
 
 struct Vertex2D {

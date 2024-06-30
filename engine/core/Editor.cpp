@@ -96,9 +96,8 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					_mainScene->LoadStaticModel("resources/models/Plane/glTF/", "Plane.gltf", glm::vec3(0.f, 1.f, 0.f));
-					_mainScene->LoadStaticModel("resources/models/scene/glTF/", "scene.gltf", glm::vec3(0.f, 2.f, 0.f));
-					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 2.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
 				}
@@ -175,10 +174,27 @@ namespace VKR
 					_mainScene->CreateDebugModel(QUAD);
 					_mainScene->PrepareDebugScene(_backend);
 				}
-				if (_backend->m_ShadowVisualizer == nullptr)
+
+				// PointLight
+				ImGui::NewLine();
+				ImGui::LabelText("","Point Light");
+				float PointLightPos[3];
+				PointLightPos[0] = render::m_PointLightPos.x;
+				PointLightPos[1] = render::m_PointLightPos.y;
+				PointLightPos[2] = render::m_PointLightPos.z;
+				ImGui::DragFloat3("Point Light pos", PointLightPos);
+				render::m_PointLightPos.x = PointLightPos[0];
+				render::m_PointLightPos.y = PointLightPos[1];
+				render::m_PointLightPos.z = PointLightPos[2];
+				ImGui::DragFloat("Kc", &render::m_PointOpts[0], 0.1f, 0.f, 100.f);
+				ImGui::DragFloat("Kl", &render::m_PointOpts[1], 0.1f, 0.f, 100.f);
+				ImGui::DragFloat("Kq", &render::m_PointOpts[2], 0.1f, 0.f, 100.f);
+
+
+				/*if (_backend->m_ShadowVisualizer == nullptr)
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
+				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
 				ImGui::End();
 			}
 			ImGui::Begin("World");
@@ -209,8 +225,11 @@ namespace VKR
 						model->m_RotAngle.y = rotation[1];
 						model->m_RotAngle.z = rotation[2];
 						ImGui::DragFloat("R.GRAD", &model->m_RotGRAD);
-
 					}
+				}
+				if (ImGui::Button("Delete"))
+				{
+					_mainScene->m_StaticModels.pop_back();
 				}
 				ImGui::End();
 			}

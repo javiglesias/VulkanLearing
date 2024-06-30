@@ -256,6 +256,7 @@ namespace VKR
 			vkDeviceWaitIdle(m_LogicDevice);
 			m_ShadowPass->Cleanup(m_LogicDevice);
 			m_RenderPass->Cleanup(m_LogicDevice);
+			m_GeometryPass->Cleanup(m_LogicDevice);
 		}
 
 		inline void VKContext::CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo)
@@ -454,13 +455,13 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 		if (_height > 1) _height /= 2;
 	}
 	// record commands blitimage
-	iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	/*iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
 							VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
-							1, &iBarrier);
+							1, &iBarrier);*/
 	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
 }
 

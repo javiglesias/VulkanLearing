@@ -563,14 +563,15 @@ namespace VKR
 
 		void VKBackend::RecreateSwapChain()
 		{
-			printf("\n\tRe-create Swapchain\n");
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 			int width = 0, height = 0;
 			glfwGetFramebufferSize(m_Window, &width, &height);
-			while (width == 0 || height == 0) {
+			while (width == 0 || height == 0) 
+			{
 				glfwGetFramebufferSize(m_Window, &width, &height);
 				glfwWaitEvents();
 			}
+			printf("\n\tRe-create Swapchain\n");
 			vkDeviceWaitIdle(g_context.m_LogicDevice);
 			// Esperamos a que termine de pintarse y recreamos la swapchain con los nuevos parametros
 			CleanSwapChain();
@@ -764,6 +765,7 @@ namespace VKR
 			presentInfo.waitSemaphoreCount = 1;
 			presentInfo.pWaitSemaphores = signalSemaphores;
 			VkSwapchainKHR swapChains[] = { m_SwapChain };
+			if(m_SwapChain) // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> VK_IMAGE_LAYOUT_UNDEFINED
 			presentInfo.swapchainCount = 1;
 			presentInfo.pSwapchains = swapChains;
 			presentInfo.pImageIndices = _imageIdx;
@@ -772,8 +774,8 @@ namespace VKR
 			if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
 				&& m_NeedToRecreateSwapchain)
 				RecreateSwapChain();
-			else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
-				exit(-69);
+			/*else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
+				exit(-69);*/
 		}
 
 		void VKBackend::CleanSwapChain()
