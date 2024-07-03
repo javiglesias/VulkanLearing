@@ -241,6 +241,9 @@ namespace VKR
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			auto lightDynAlign = sizeof(LightBufferObject);
+			lightDynAlign = (lightDynAlign + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
@@ -252,11 +255,7 @@ namespace VKR
 			UniformBufferObject ubo{};
 			ubo.view = viewMat;
 			ubo.projection = projMat;
-			ubo.lightView = lightViewMat;
-			ubo.lightProj = lightProjMat;
 			ubo.cameraPosition = m_CameraPos;
-			ubo.lightPosition = m_LightPos;
-			ubo.lightColor = m_LightColor;
 			memcpy(_backend->m_Uniform_SBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
 			_backend->BeginRenderPass(_CurrentFrame);
 			// Drawing Commands
@@ -273,22 +272,48 @@ namespace VKR
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
 				dynO.model = glm::scale(dynO.model, model->m_Scale);
 				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
-				dynO.lightOpts.x = g_ShadowBias;
-				dynO.lightOpts.y = model->m_ProjectShadow; // project shadow
-				dynO.lightOpts.z = g_MipLevel;
-				dynO.pointLightOpts = glm::vec4(m_PointLightPos, 1.0);
+				dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
+				dynO.modelOpts.y = g_MipLevel;
+
+				LightBufferObject libOs[4];
+				libOs[0] = {};
+				if(g_Lights.size() > 0)
+				{
+					libOs[0].addOpts	= glm::vec4(m_PointLightPos, 1.0);
+					libOs[0].Opts.x		= g_ShadowBias;
+					libOs[0].Opts.y		= g_ShadowBias;
+					libOs[0].View		= lightViewMat;
+					libOs[0].Proj		= lightProjMat;
+					libOs[0].Position	= glm::vec4(g_Lights[0]->m_Pos, 1.0);
+					libOs[0].Color		= glm::vec4(g_Lights[0]->m_Color, 1.0);
+				}
+				libOs[1] = {};
+				libOs[2] = {};
+				libOs[3] = {};
+				
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+				uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);
+				uint32_t lightDynamicOffset1 = (count + 1) * static_cast<uint32_t>(lightDynAlign);
+				uint32_t lightDynamicOffset2 = (count + 2) * static_cast<uint32_t>(lightDynAlign);
+				uint32_t lightDynamicOffset3 = (count + 3) * static_cast<uint32_t>(lightDynAlign);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+				memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame]  + lightDynamicOffset0, &libOs, sizeof(libOs));
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
 
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
-
+					std::vector<uint32_t> dynOffsets = {
+						dynamicOffset,
+						lightDynamicOffset0,
+						lightDynamicOffset1,
+						lightDynamicOffset2,
+						lightDynamicOffset3,
+					};
 					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_PipelineLayout, 0, 1,
-						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
+						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_CurrentFrame], 5, dynOffsets.data());
 					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
 					vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 					// Draw Loop
@@ -306,6 +331,12 @@ namespace VKR
 					mappedMemoryRange.memory = _backend->m_DynamicBuffersMemory[_CurrentFrame];
 					mappedMemoryRange.size = sizeof(dynO);
 					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+
+					VkMappedMemoryRange lightsMappedMemoryRange{};
+					lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+					lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
+					lightsMappedMemoryRange.size = sizeof(libOs);
+					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 				}
 				++count;
 			}
@@ -499,7 +530,7 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-						_backend->m_UniformBuffers, _backend->m_DynamicBuffers);
+						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
 				}
 			}
 
@@ -558,7 +589,7 @@ namespace VKR
 				/// 3 - Crear Descriptor set de material(createMeshDescSet)
 				dbgModel->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_DbgRender->m_DescSetLayout);
 				/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-				dbgModel->m_Material.m_Texture->CreateAndTransitionImage(_backend->m_CommandPool);
+				dbgModel->m_Material.m_Texture->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
 				/// 5 - Crear buffers de vertices
 				void* data;
 				VkDeviceSize bufferSize = sizeof(dbgModel->m_Vertices[0]) * dbgModel->m_Vertices.size();

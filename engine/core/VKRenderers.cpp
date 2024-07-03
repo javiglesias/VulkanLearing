@@ -311,13 +311,22 @@ namespace VKR
             dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
             dynOLayoutBinding.pImmutableSamplers = nullptr;
 
-            std::array<VkDescriptorSetLayoutBinding, 6> ShaderBindings = {
+            // estructura Light Uniforms
+            VkDescriptorSetLayoutBinding linOLayoutBinding{};
+            linOLayoutBinding.binding = 6;
+            linOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            linOLayoutBinding.descriptorCount = 4;
+            linOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            linOLayoutBinding.pImmutableSamplers = nullptr;
+
+            std::array<VkDescriptorSetLayoutBinding, 7> ShaderBindings = {
                 uboLayoutBinding,
                 textureDiffuseLayoutBinding,
                 textureSpecularLayoutBinding,
                 textureAmbientLayoutBinding,
+                textureShadowLayoutBinding,
                 dynOLayoutBinding,
-                textureShadowLayoutBinding
+                linOLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

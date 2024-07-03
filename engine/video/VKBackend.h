@@ -3,6 +3,8 @@
 #include "VKRUtils.h"
 #include "../core/VKRenderers.h"
 #include "../core/VKRShadowMaterial.h"
+#include "../core/VKRModel.h"
+#include "../core/VKRLight.h"
 
 
 #define GLFW_INCLUDE_NONE
@@ -49,7 +51,7 @@ namespace VKR
         inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
         inline glm::vec3 m_PointLightPos = glm::vec3(0.f, 3.f, 0.f);
-        inline glm::vec3 m_PointOpts = glm::vec3(0.f, 3.f, 0.f);
+        inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
         inline glm::vec3 m_LightPos = glm::vec3(0.f, 3.f, 0.f);
         inline glm::vec3 m_LightCenter = glm::vec3(0.f, 0.f, -1.f);
         inline glm::vec3 m_LightRot = glm::vec3(0.f);
@@ -64,6 +66,9 @@ namespace VKR
 		inline ShadowRenderer* m_ShadowRender;
         inline DebugRenderer* m_DbgRender;
         inline CubemapRenderer* m_CubemapRender;
+        inline std::vector<R_DbgModel*> m_DbgModels; // lights
+        inline std::vector<R_Model*> m_StaticModels;
+        inline std::vector<Light*> g_Lights;
 
         class VKBackend
         {
@@ -116,6 +121,11 @@ namespace VKR
             std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
             std::vector<void*> m_Uniform_SBuffersMapped;
             std::vector<void*> m_DynamicBuffersMapped;
+
+            std::vector<VkBuffer> m_LightsBuffers;
+            std::vector<VkDeviceMemory> m_LightsBuffersMemory;
+            std::vector<void*> m_LightsBuffersMapped;
+            
             // DEBUG BUFFERS
             std::vector<VkBuffer> m_DbgUniformBuffers;
             std::vector<VkDeviceMemory> m_DbgUniformBuffersMemory;

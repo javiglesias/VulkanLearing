@@ -382,6 +382,10 @@ namespace VKR
 			m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
 			m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			// Light buffers
+			m_LightsBuffers.resize(FRAMES_IN_FLIGHT);
+			m_LightsBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_LightsBuffersMapped.resize(FRAMES_IN_FLIGHT);
 			// Uniform buffers
 			m_DbgUniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_DbgUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -457,8 +461,13 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], 0,
 					cubemapBufferSize, 0, &m_CubemapUniformBuffersMapped[i]);
 			}
-
+			auto DynAlign = sizeof(DynamicBufferObject);
+			DynAlign = (DynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			VkDeviceSize checkBufferSize = m_CurrentModelsToDraw * DynAlign;
 			VkDeviceSize dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
+			if(dynBufferSize != checkBufferSize )
+				__debugbreak();
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -468,6 +477,24 @@ namespace VKR
 					m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
 				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
+			}
+
+			auto lightDynAlign = sizeof(LightBufferObject);
+			lightDynAlign = (lightDynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			checkBufferSize = m_CurrentModelsToDraw * (4 * lightDynAlign);
+			VkDeviceSize lightsBufferSize = m_CurrentModelsToDraw * (4 * sizeof(LightBufferObject));
+			if(lightsBufferSize != checkBufferSize )
+				__debugbreak();
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(lightsBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_LightsBuffers[i], m_LightsBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_LightsBuffersMemory[i], 0,
+					lightsBufferSize, 0, &m_LightsBuffersMapped[i]);
 			}
 
 			constexpr VkDeviceSize dynCubemapBufferSize = sizeof(DynamicBufferObject);
@@ -754,7 +781,8 @@ namespace VKR
 			VkSemaphore signalSemaphores[] = { m_RenderFinish[_FrameToPresent] };
 			submitInfo.signalSemaphoreCount = 1;
 			submitInfo.pSignalSemaphores = signalSemaphores;
-			if (vkQueueSubmit(g_context.m_GraphicsQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]) != VK_SUCCESS)
+			auto submit = vkQueueSubmit(g_context.m_GraphicsQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]);
+			if ( submit != VK_SUCCESS)
 			{
 				fprintf(stderr, "Error on the Submit");
 				exit(-1);
@@ -812,6 +840,9 @@ namespace VKR
 			{
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_LightsBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_LightsBuffersMemory[i], nullptr);
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);

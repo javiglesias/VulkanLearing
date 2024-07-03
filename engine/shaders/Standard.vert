@@ -4,19 +4,24 @@ layout(set=0, binding=0) uniform UniformBufferObject
 {
     mat4 view;
     mat4 projection;
-    mat4 lightView;
-    mat4 lightProj;
     vec3 viewerPosition;
-    vec3 lightPosition;
-    vec3 lightColor;
 } ubo;
 
 layout(set=0, binding=4) uniform DynamicBufferObject
 {
     mat4 model;
-    vec4 lightOpt; // 0: Bias 1: projectShadow, 2: MipLevel
-    vec4 pointLightOpts; // Kc, Kl, Kq
+    vec4 modelOpts; // 0: MipLevel
 } dynO;
+
+layout(set=0, binding=6) uniform LightBufferObject
+{
+	mat4 lightView;
+	mat4 lightProj;
+	vec4 lightPosition;
+	vec4 lightColor;
+	vec4 lightOpts; // 0: lightType, 1: shadow 
+	vec4 additionalLightOpts; // Kc, Kl, Kq
+} libO[4];
 
 layout(location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 aTexCoord;
@@ -40,12 +45,12 @@ void main() {
     texCoord = aTexCoord;
 	fragPosition = inPosition;
 	normal = mat3(transpose(inverse(dynO.model))) * aNormal;
-    lightPosition = ubo.lightPosition;
+    lightPosition = libO[0].lightPosition.xyz;
     viewerPosition = ubo.viewerPosition;
-    lightColor = ubo.lightColor;
-	shadowCoord = ubo.lightProj * ubo.lightView * dynO.model * vec4(inPosition, 1.0);
-	shadowBias = dynO.lightOpt.x;
-	projectShadow = dynO.lightOpt.y;
-	mipLevel = dynO.lightOpt.z;
-	pointLightConstants = vec4(1.0);
+    lightColor = libO[0].lightColor.xyz;
+	shadowCoord = libO[0].lightProj * libO[0].lightView * dynO.model * vec4(inPosition, 1.0);
+	shadowBias = libO[0].lightOpts.y;
+	projectShadow = libO[0].lightOpts.x;
+	mipLevel = dynO.modelOpts.x;
+	pointLightConstants = libO[0].additionalLightOpts;
 }

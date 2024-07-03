@@ -12,11 +12,7 @@ struct UniformBufferObject
 {
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
-	alignas(16) glm::mat4 lightView;
-	alignas(16) glm::mat4 lightProj;
 	alignas(16) glm::vec3 cameraPosition;
-	alignas(16) glm::vec3 lightPosition;
-	alignas(16) glm::vec3 lightColor;
 };
 
 struct DebugUniformBufferObject
@@ -41,9 +37,18 @@ struct CubemapUniformBufferObject
 struct DynamicBufferObject
 {
 	alignas(16) glm::mat4 model;
-	alignas(16) glm::vec4 lightOpts; // 0: bias, 1: shadow ,2: miplevel
-	alignas(16) glm::vec4 pointLightOpts; // Kc, Kl, Kq
-	alignas(16) glm::vec4 align[2];
+	alignas(16) glm::vec4 modelOpts; // 0: miplevel
+	alignas(16) glm::vec4 aligned[3];
+};
+struct LightBufferObject
+{
+	alignas(16) glm::mat4 View; // 64
+	alignas(16) glm::mat4 Proj;
+	alignas(16) glm::vec4 Position;
+	alignas(16) glm::vec4 Color;
+	alignas(16) glm::vec4 Opts; // 0: lightType,1: shadow 
+	alignas(16) glm::vec4 addOpts; // Kc, Kl, Kq
+	alignas(16) glm::vec4 aligned[4]; //16
 };
 
 struct Vertex2D {

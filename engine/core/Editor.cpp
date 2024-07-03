@@ -96,7 +96,7 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					//_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
 					_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
@@ -105,102 +105,24 @@ namespace VKR
 				{
 					_mainScene->ReloadShaders(_backend);
 				}
-				if (ImGui::Button("Create Terrain debug"))
-				{
-					_mainScene->CreateDebugModel(TERRAIN);
-					_mainScene->PrepareDebugScene(_backend);
-				}
-				ImGui::End();
-			}
-			ImGui::Begin("Lighting");
-			{
-				ImGui::LabelText("Light Pos", "Light Pos(%.2f, %.2f, %.2f)", render::m_LightPos.x, render::m_LightPos.y, render::m_LightPos.z);
 
-				float color[3];
-				color[0] = render::m_LightColor.x;
-				color[1] = render::m_LightColor.y;
-				color[2] = render::m_LightColor.z;
-				ImGui::ColorEdit3("Color", color);
-				render::m_LightColor.x = color[0];
-				render::m_LightColor.y = color[1];
-				render::m_LightColor.z = color[2];
 				ImGui::DragFloat("zFar", &render::zFar);
 				ImGui::DragFloat("zNear", &render::zNear);
-				ImGui::DragFloat("Debug Scale", &render::g_debugScale);
 				ImGui::DragFloat("Cubemap distance", &render::g_cubemapDistance);
-				ImGui::DragFloat("Shadow Fov", &render::m_ShadowCameraFOV);
-				ImGui::DragFloat("Shadow aspect ratio", &render::g_ShadowAR);
-				ImGui::SliderFloat("Shadow bias", &render::g_ShadowBias, 0.0025f, 1.f, "%.5f");
 				ImGui::SliderFloat("Mip level", &render::g_MipLevel, 0.f, 12.f, "%1.f");
-
-				ImGui::LabelText("ProjMat", "Proj Matrix");
-				ImGui::InputFloat("Light Right ortho", &render::g_LightRight);
-				ImGui::InputFloat("Light Up ortho", &render::g_LightUp);
-				ImGui::InputFloat("Light Depth ortho", &render::g_LightDepth);
-
-				ImGui::LabelText("ViewMat", "View Matrix");
-				float tempLightPos[3];
-				tempLightPos[0] = render::m_LightPos.x;
-				tempLightPos[1] = render::m_LightPos.y;
-				tempLightPos[2] = render::m_LightPos.z;
-				ImGui::DragFloat3("Light Position", tempLightPos);
-				render::m_LightPos.x = tempLightPos[0];
-				render::m_LightPos.y = std::max(0.0f, tempLightPos[1]);
-				render::m_LightPos.z = tempLightPos[2];
-				float up[3];
-				up[0] = render::m_LightUp.x;
-				up[1] = render::m_LightUp.y;
-				up[2] = render::m_LightUp.z;
-				ImGui::DragFloat3("Light Up", up);
-				render::m_LightUp.x = up[0];
-				render::m_LightUp.y = up[1];
-				render::m_LightUp.z = up[2];
-				float center[3];
-				center[0] = render::m_LightCenter.x;
-				center[1] = render::m_LightCenter.y;
-				center[2] = render::m_LightCenter.z;
-				ImGui::DragFloat3("Light Center", center);
-				render::m_LightCenter.x = center[0];
-				render::m_LightCenter.y = center[1];
-				render::m_LightCenter.z = center[2];
-
-				if (ImGui::Button("Create light sphere"))
-				{
-					_mainScene->CreateDebugModel(SPHERE);
-					_mainScene->PrepareDebugScene(_backend);
-				}
-				if (ImGui::Button("Create light quad"))
-				{
-					_mainScene->CreateDebugModel(QUAD);
-					_mainScene->PrepareDebugScene(_backend);
-				}
-
-				// PointLight
-				ImGui::NewLine();
-				ImGui::LabelText("","Point Light");
-				float PointLightPos[3];
-				PointLightPos[0] = render::m_PointLightPos.x;
-				PointLightPos[1] = render::m_PointLightPos.y;
-				PointLightPos[2] = render::m_PointLightPos.z;
-				ImGui::DragFloat3("Point Light pos", PointLightPos);
-				render::m_PointLightPos.x = PointLightPos[0];
-				render::m_PointLightPos.y = PointLightPos[1];
-				render::m_PointLightPos.z = PointLightPos[2];
-				ImGui::DragFloat("Kc", &render::m_PointOpts[0], 0.1f, 0.f, 100.f);
-				ImGui::DragFloat("Kl", &render::m_PointOpts[1], 0.1f, 0.f, 100.f);
-				ImGui::DragFloat("Kq", &render::m_PointOpts[2], 0.1f, 0.f, 100.f);
-
-
-				/*if (_backend->m_ShadowVisualizer == nullptr)
+				ImGui::End();
+			}
+			ImGui::Begin("Debug");
+			{
+				if (_backend->m_ShadowVisualizer == nullptr)
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
+				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
 				ImGui::End();
 			}
 			ImGui::Begin("World");
 			{
-	
-				for (auto& model : _mainScene->m_StaticModels)
+				for (auto& model : m_StaticModels)
 				{
 					ImGui::Selectable(model->m_Path, &model->m_Editable);
 					if (model->m_Editable)
@@ -229,7 +151,29 @@ namespace VKR
 				}
 				if (ImGui::Button("Delete"))
 				{
-					_mainScene->m_StaticModels.pop_back();
+					m_StaticModels.pop_back();
+				}
+				ImGui::End();
+			}
+			ImGui::Begin("Lights");
+			{
+				if (ImGui::Button("Create Point Light"))
+				{
+					g_Lights.push_back(new Light());
+					_mainScene->PrepareDebugScene(_backend);
+				}
+
+				if (ImGui::Button("Create Spot Light"))
+				{
+
+				}
+				for (auto& light : g_Lights)
+				{
+					ImGui::LabelText("", "light");
+				}
+				if (ImGui::Button("Delete"))
+				{
+					g_Lights.pop_back();
 				}
 				ImGui::End();
 			}

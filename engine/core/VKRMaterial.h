@@ -39,7 +39,8 @@ namespace VKR
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptorPool(VkDevice _LogicDevice);
 			void CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout);
-			void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers);
+			void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, 
+									 std::vector<VkBuffer> _DynamicBuffers, std::vector<VkBuffer> _LightsBuffers);
 			void Cleanup(VkDevice _LogicDevice);
 		};
 	}

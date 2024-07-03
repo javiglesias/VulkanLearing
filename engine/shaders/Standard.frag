@@ -1,4 +1,6 @@
 #version 460
+
+
 layout(set=0, binding=1) uniform sampler2D inDiffuseTexture;
 layout(set=0, binding=2) uniform sampler2D inSpecularTexture;
 layout(set=0, binding=3) uniform sampler2D inAmbientTexture;
@@ -30,7 +32,7 @@ vec3 rgb_to_grayscale_luminosity(vec3 color) {
 void main() 
 {
 	vec3 color = textureLod(inAmbientTexture, texCoord, mipLevel).rgb;
-	vec3 result = DirectionalLight() + (color * PointLight());
+	vec3 result = DirectionalLight();
 	outColor = vec4(result, 1.0);
 }
 
@@ -42,7 +44,7 @@ float PointLight()
 	// kq = constante cuadratica
 	// atenuacion = 1/ (kc+ kl*d + kq*(d*d));
 	vec3 dir = lightPosition - fragPosition;
-	float d = sqrt(dot(dir, dir));
+	float d = length(dir);
 	float att = 1.0
 				/ (pointLightConstants[0]
 					+ pointLightConstants[1] * d 
@@ -53,6 +55,7 @@ float PointLight()
 
 vec3 DirectionalLight()
 {
+	float att = PointLight();
 	float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
 	float mipmapLevel = textureQueryLod(inAmbientTexture, texCoord).x;
@@ -68,6 +71,9 @@ vec3 DirectionalLight()
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
 	float shadow = ShadowCalculation(shadowCoord, inShadowTexture);
+	ambient  *= att;
+	diffuse  *= att;
+	specular *= att;
 	return (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 }
 const float bias = 0.005;

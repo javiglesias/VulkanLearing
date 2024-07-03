@@ -27,7 +27,7 @@ namespace VKR
 		{
 			if (m_DescriptorPool == nullptr)
 			{
-				std::array<VkDescriptorPoolSize, 6> descPoolSize{};
+				std::array<VkDescriptorPoolSize, 7> descPoolSize{};
 				// UBO
 				descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
@@ -49,6 +49,9 @@ namespace VKR
 				descPoolSize[5].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				descPoolSize[5].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
+				descPoolSize[6].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descPoolSize[6].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
 				VkDescriptorPoolCreateInfo descPoolInfo{};
 				descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 				descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
@@ -59,7 +62,7 @@ namespace VKR
 			}
 		}
 
-		void VKR::render::R_Material::CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout)
+		void R_Material::CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout)
 		{
 			if (m_DescriptorSet.size() <= 0)
 			{
@@ -77,7 +80,8 @@ namespace VKR
 			}
 		}
 
-		void VKR::render::R_Material::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers)
+		void R_Material::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers,
+															std::vector<VkBuffer> _LightsBuffers)
 		{
 			// Escribimos la info de los descriptors
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -87,7 +91,7 @@ namespace VKR
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
-				std::array<VkWriteDescriptorSet, 6> descriptorsWrite{};
+				std::array<VkWriteDescriptorSet, 10> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[0].dstBinding = 0;
@@ -210,6 +214,54 @@ namespace VKR
 				descriptorsWrite[5].pBufferInfo = nullptr;
 				descriptorsWrite[5].pImageInfo = &TextureShadowImage;
 				descriptorsWrite[5].pTexelBufferView = nullptr;
+
+				// Dynamic
+				VkDescriptorBufferInfo lightBufferInfo{};
+				lightBufferInfo.buffer = _LightsBuffers[i];
+				lightBufferInfo.offset = 0;
+				lightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
+
+				descriptorsWrite[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite[6].dstSet = m_DescriptorSet[i];
+				descriptorsWrite[6].dstBinding = 6;
+				descriptorsWrite[6].dstArrayElement = 0;
+				descriptorsWrite[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorsWrite[6].descriptorCount = 1;
+				descriptorsWrite[6].pBufferInfo = &lightBufferInfo;
+				descriptorsWrite[6].pImageInfo = nullptr;
+				descriptorsWrite[6].pTexelBufferView = nullptr;
+
+				descriptorsWrite[7].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite[7].dstSet = m_DescriptorSet[i];
+				descriptorsWrite[7].dstBinding = 6;
+				descriptorsWrite[7].dstArrayElement = 1;
+				descriptorsWrite[7].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorsWrite[7].descriptorCount = 1;
+				descriptorsWrite[7].pBufferInfo = &lightBufferInfo;
+				descriptorsWrite[7].pImageInfo = nullptr;
+				descriptorsWrite[7].pTexelBufferView = nullptr;
+
+				descriptorsWrite[8].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite[8].dstSet = m_DescriptorSet[i];
+				descriptorsWrite[8].dstBinding = 6;
+				descriptorsWrite[8].dstArrayElement = 2;
+				descriptorsWrite[8].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorsWrite[8].descriptorCount = 1;
+				descriptorsWrite[8].pBufferInfo = &lightBufferInfo;
+				descriptorsWrite[8].pImageInfo = nullptr;
+				descriptorsWrite[8].pTexelBufferView = nullptr;
+
+				descriptorsWrite[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite[9].dstSet = m_DescriptorSet[i];
+				descriptorsWrite[9].dstBinding = 6;
+				descriptorsWrite[9].dstArrayElement = 3;
+				descriptorsWrite[9].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descriptorsWrite[9].descriptorCount = 1;
+				descriptorsWrite[9].pBufferInfo = &lightBufferInfo;
+				descriptorsWrite[9].pImageInfo = nullptr;
+				descriptorsWrite[9].pTexelBufferView = nullptr;
+
+
 
 				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}

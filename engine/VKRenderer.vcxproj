@@ -175,6 +175,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClCompile Include="core\VKRCubemap.cpp" />
     <ClCompile Include="core\VKRCubemapMaterial.cpp" />
     <ClCompile Include="core\VKRenderers.cpp" />
+    <ClCompile Include="core\VKRLight.cpp" />
     <ClCompile Include="core\VKRMaterial.cpp" />
     <ClCompile Include="core\VKRModel.cpp" />
     <ClCompile Include="core\VKRRenderPass.cpp" />
@@ -183,6 +184,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClCompile Include="core\VKRTexture.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="video\VKBackend.cpp" />
+    <ClCompile Include="video\VKRRenderable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\DebugModels.h" />
@@ -195,6 +197,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="core\VKRCubemapMaterial.h" />
     <ClInclude Include="core\VKRDebugMaterial.h" />
     <ClInclude Include="core\VKRenderers.h" />
+    <ClInclude Include="core\VKRLight.h" />
     <ClInclude Include="core\VKRMaterial.h" />
     <ClInclude Include="core\VKRModel.h" />
     <ClInclude Include="core\VKRRenderPass.h" />

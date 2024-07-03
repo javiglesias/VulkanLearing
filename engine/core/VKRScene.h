@@ -1,7 +1,6 @@
 #pragma once
 #include "../video/VKBackend.h"
 #include "VKRCubemap.h"
-#include "VKRModel.h"
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -35,9 +34,6 @@ namespace VKR
         private:
             R_Model* tempModel;
             R_Cubemap* m_Cubemap;
-            std::vector<R_DbgModel*> m_DbgModels; // lights
-        public:
-            std::vector<R_Model*> m_StaticModels;
         private: // FUNCIONES
             void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture = nullptr);
             void DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment);

@@ -106,6 +106,30 @@ namespace VKR
 			}
 		}
 
+		void Texture::CreateAndTransitionImageNoMipMaps(VkCommandPool _CommandPool, VkFormat _format, VkImageAspectFlags _aspectMask, VkImageViewType _viewType,
+			uint32_t _arrayLayers, VkImageCreateFlags _flags)
+		{
+			// Como utilizamos lightview, las texturas solo se crean una vez.
+			if (tImageView == nullptr && m_Sampler == nullptr
+				&& tImage == nullptr && tImageMem == nullptr)
+			{
+				auto texSize = tWidth * tHeight * 4;
+				CreateImage(tWidth, tHeight, _format,
+					VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, 1, 0, 1);
+				vkBindImageMemory(g_context.m_LogicDevice, tImage, tImageMem, 0);
+				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					_CommandPool, _arrayLayers, 1);
+				CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), 0, _CommandPool, 0);
+				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					_CommandPool, _arrayLayers, 1);
+				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, 1);
+				m_Sampler = CreateTextureSampler(1);
+				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			}
+		}
+
 		void Texture::CleanTextureData(VkDevice _LogicDevice)
 		{
 			vkDestroySampler(_LogicDevice, m_Sampler, nullptr);

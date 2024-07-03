@@ -31,6 +31,9 @@ namespace VKR
 			void CreateAndTransitionImage(VkCommandPool _CommandPool, VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB,
 				VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D,
 				uint32_t _arrayLayers=1, VkImageCreateFlags _flags=0);
+			void CreateAndTransitionImageNoMipMaps(VkCommandPool _CommandPool, VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB,
+				VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D,
+				uint32_t _arrayLayers=1, VkImageCreateFlags _flags=0);
 			void CleanTextureData(VkDevice _LogicDevice);
 		};
 	}
