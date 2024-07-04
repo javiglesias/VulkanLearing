@@ -220,8 +220,20 @@ namespace VKR
 				lightBufferInfo.buffer = _LightsBuffers[i];
 				lightBufferInfo.offset = 0;
 				lightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
-
-				descriptorsWrite[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				int start = 6;
+				for(int j = start; j < 10; j++)
+				{
+					descriptorsWrite[j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[j].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[j].dstBinding = start;
+					descriptorsWrite[j].dstArrayElement = j - start;
+					descriptorsWrite[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					descriptorsWrite[j].descriptorCount = 1;
+					descriptorsWrite[j].pBufferInfo = &lightBufferInfo;
+					descriptorsWrite[j].pImageInfo = nullptr;
+					descriptorsWrite[j].pTexelBufferView = nullptr;
+				}
+				/*descriptorsWrite[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[6].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[6].dstBinding = 6;
 				descriptorsWrite[6].dstArrayElement = 0;
@@ -259,7 +271,7 @@ namespace VKR
 				descriptorsWrite[9].descriptorCount = 1;
 				descriptorsWrite[9].pBufferInfo = &lightBufferInfo;
 				descriptorsWrite[9].pImageInfo = nullptr;
-				descriptorsWrite[9].pTexelBufferView = nullptr;
+				descriptorsWrite[9].pTexelBufferView = nullptr;*/
 
 
 

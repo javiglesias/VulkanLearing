@@ -41,7 +41,7 @@ namespace VKR
         inline float g_LightDepth = -300.f;
         inline float zFar= 1000000.f;
         inline float zNear = 0.1f;
-        inline float g_debugScale = 300.f;
+        inline float g_debugScale = 1.f;
         inline float g_cubemapDistance = 1000.f;
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;

@@ -287,9 +287,9 @@ namespace VKR
 					libOs[0].Position	= glm::vec4(g_Lights[0]->m_Pos, 1.0);
 					libOs[0].Color		= glm::vec4(g_Lights[0]->m_Color, 1.0);
 				}
-				libOs[1] = {};
-				libOs[2] = {};
-				libOs[3] = {};
+				libOs[1] = libOs[0];
+				libOs[2] = libOs[0];
+				libOs[3] = libOs[0];
 				
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);

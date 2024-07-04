@@ -96,8 +96,8 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					//_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
-					_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
 				}
@@ -110,6 +110,7 @@ namespace VKR
 				ImGui::DragFloat("zNear", &render::zNear);
 				ImGui::DragFloat("Cubemap distance", &render::g_cubemapDistance);
 				ImGui::SliderFloat("Mip level", &render::g_MipLevel, 0.f, 12.f, "%1.f");
+				ImGui::DragFloat("Debug scale", &render::g_debugScale);
 				ImGui::End();
 			}
 			ImGui::Begin("Debug");

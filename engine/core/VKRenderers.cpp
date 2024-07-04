@@ -316,7 +316,7 @@ namespace VKR
             linOLayoutBinding.binding = 6;
             linOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
             linOLayoutBinding.descriptorCount = 4;
-            linOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            linOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             linOLayoutBinding.pImmutableSamplers = nullptr;
 
             std::array<VkDescriptorSetLayoutBinding, 7> ShaderBindings = {
