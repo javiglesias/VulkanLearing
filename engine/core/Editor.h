@@ -3,9 +3,13 @@
 #include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#include "Resource.h"
 
 namespace VKR
 {
+	struct sResource;
+	void LoadAsyncResource(const char* _path);
+	void AddAsyncRequest(sResource* _request);
 	namespace render
 	{
 		class VKBackend;

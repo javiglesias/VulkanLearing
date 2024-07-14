@@ -233,48 +233,6 @@ namespace VKR
 					descriptorsWrite[j].pImageInfo = nullptr;
 					descriptorsWrite[j].pTexelBufferView = nullptr;
 				}
-				/*descriptorsWrite[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[6].dstSet = m_DescriptorSet[i];
-				descriptorsWrite[6].dstBinding = 6;
-				descriptorsWrite[6].dstArrayElement = 0;
-				descriptorsWrite[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[6].descriptorCount = 1;
-				descriptorsWrite[6].pBufferInfo = &lightBufferInfo;
-				descriptorsWrite[6].pImageInfo = nullptr;
-				descriptorsWrite[6].pTexelBufferView = nullptr;
-
-				descriptorsWrite[7].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[7].dstSet = m_DescriptorSet[i];
-				descriptorsWrite[7].dstBinding = 6;
-				descriptorsWrite[7].dstArrayElement = 1;
-				descriptorsWrite[7].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[7].descriptorCount = 1;
-				descriptorsWrite[7].pBufferInfo = &lightBufferInfo;
-				descriptorsWrite[7].pImageInfo = nullptr;
-				descriptorsWrite[7].pTexelBufferView = nullptr;
-
-				descriptorsWrite[8].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[8].dstSet = m_DescriptorSet[i];
-				descriptorsWrite[8].dstBinding = 6;
-				descriptorsWrite[8].dstArrayElement = 2;
-				descriptorsWrite[8].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[8].descriptorCount = 1;
-				descriptorsWrite[8].pBufferInfo = &lightBufferInfo;
-				descriptorsWrite[8].pImageInfo = nullptr;
-				descriptorsWrite[8].pTexelBufferView = nullptr;
-
-				descriptorsWrite[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[9].dstSet = m_DescriptorSet[i];
-				descriptorsWrite[9].dstBinding = 6;
-				descriptorsWrite[9].dstArrayElement = 3;
-				descriptorsWrite[9].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[9].descriptorCount = 1;
-				descriptorsWrite[9].pBufferInfo = &lightBufferInfo;
-				descriptorsWrite[9].pImageInfo = nullptr;
-				descriptorsWrite[9].pTexelBufferView = nullptr;*/
-
-
-
 				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}
 		}

@@ -191,6 +191,8 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="core\debugUtils.h" />
     <ClInclude Include="core\Editor.h" />
     <ClInclude Include="core\jobs.h" />
+    <ClInclude Include="core\PersistenceData.h" />
+    <ClInclude Include="core\Resource.h" />
     <ClInclude Include="core\savedata.h" />
     <ClInclude Include="core\Types.h" />
     <ClInclude Include="core\VKRCubemap.h" />

@@ -128,7 +128,7 @@ namespace VKR
             {
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
-                m_CullMode = VK_CULL_MODE_FRONT_BIT;
+                m_CullMode = VK_CULL_MODE_NONE;
             }
         };
     }

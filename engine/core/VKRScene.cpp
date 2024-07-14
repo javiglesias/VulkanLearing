@@ -235,7 +235,6 @@ namespace VKR
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
 			auto renderContext = GetVKContext();
-
 			GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
@@ -247,8 +246,6 @@ namespace VKR
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos + m_LightForward, m_LightUp);
-			glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
 			/// Render Pass
 			// Update Uniform buffers
@@ -264,6 +261,28 @@ namespace VKR
 			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
 			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			uint32_t count = 0;
+			// lights
+			m_LightsOs.clear();
+			for(auto& light : g_Lights)
+			{
+				glm::mat4 lightViewMat	= glm::lookAt(light->m_Pos, light->m_Pos + m_LightForward, m_LightUp);
+				glm::mat4 lightProjMat	= glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
+				LightBufferObject temp;
+				temp			= {};
+				temp.addOpts	= glm::vec4(light->m_Pos, 1.0);
+				temp.Opts.x		= g_ShadowBias;
+				temp.Opts.y		= g_ShadowBias;
+				temp.View		= lightViewMat;
+				temp.Proj		= lightProjMat;
+				temp.Position	= glm::vec4(light->m_Pos, 1.0);
+				temp.Color		= glm::vec4(light->m_Color, 1.0);
+				m_LightsOs.push_back(temp);
+			}
+			uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);
+			uint32_t lightDynamicOffset1 = (count + 1) * static_cast<uint32_t>(lightDynAlign);
+			uint32_t lightDynamicOffset2 = (count + 2) * static_cast<uint32_t>(lightDynAlign);
+			uint32_t lightDynamicOffset3 = (count + 3) * static_cast<uint32_t>(lightDynAlign);
+			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame]  + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 			// Render Pass
 			for (auto& model : m_StaticModels)
 			{
@@ -274,31 +293,11 @@ namespace VKR
 				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
 				dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
 				dynO.modelOpts.y = g_MipLevel;
-
-				LightBufferObject libOs[4];
-				libOs[0] = {};
-				if(g_Lights.size() > 0)
-				{
-					libOs[0].addOpts	= glm::vec4(m_PointLightPos, 1.0);
-					libOs[0].Opts.x		= g_ShadowBias;
-					libOs[0].Opts.y		= g_ShadowBias;
-					libOs[0].View		= lightViewMat;
-					libOs[0].Proj		= lightProjMat;
-					libOs[0].Position	= glm::vec4(g_Lights[0]->m_Pos, 1.0);
-					libOs[0].Color		= glm::vec4(g_Lights[0]->m_Color, 1.0);
-				}
-				libOs[1] = libOs[0];
-				libOs[2] = libOs[0];
-				libOs[3] = libOs[0];
+				dynO.addOpts.x = m_LightsOs.size();
 				
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-				uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);
-				uint32_t lightDynamicOffset1 = (count + 1) * static_cast<uint32_t>(lightDynAlign);
-				uint32_t lightDynamicOffset2 = (count + 2) * static_cast<uint32_t>(lightDynAlign);
-				uint32_t lightDynamicOffset3 = (count + 3) * static_cast<uint32_t>(lightDynAlign);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
-				memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame]  + lightDynamicOffset0, &libOs, sizeof(libOs));
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
@@ -331,14 +330,13 @@ namespace VKR
 					mappedMemoryRange.memory = _backend->m_DynamicBuffersMemory[_CurrentFrame];
 					mappedMemoryRange.size = sizeof(dynO);
 					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
-
-					VkMappedMemoryRange lightsMappedMemoryRange{};
-					lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
-					lightsMappedMemoryRange.size = sizeof(libOs);
-					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 				}
 				++count;
+				VkMappedMemoryRange lightsMappedMemoryRange{};
+				lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
+				lightsMappedMemoryRange.size = m_LightsOs.size() * sizeof(LightBufferObject);
+				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 			}
 			// DEBUG Render
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
@@ -375,7 +373,7 @@ namespace VKR
 				++debugCount;
 			}
 			//_backend->EndRenderPass(_CurrentFrame);
-			//DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 		}
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
@@ -556,7 +554,7 @@ namespace VKR
 		}
 		void Scene::Init()
 		{
-			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/office.png");
+			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 		}
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{

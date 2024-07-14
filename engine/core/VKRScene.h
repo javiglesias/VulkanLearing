@@ -34,6 +34,7 @@ namespace VKR
         private:
             R_Model* tempModel;
             R_Cubemap* m_Cubemap;
+            std::vector<LightBufferObject> m_LightsOs;
         private: // FUNCIONES
             void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture = nullptr);
             void DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment);

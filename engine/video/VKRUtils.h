@@ -431,7 +431,7 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.srcSubresource.mipLevel = i - 1;
 		blit.srcSubresource.baseArrayLayer = 0;
-		blit.srcSubresource. layerCount = 1;
+		blit.srcSubresource.layerCount = 1;
 
 		blit.dstOffsets[0] = {0, 0, 0};
 		blit.dstOffsets[1] = {_width > 1 ? _width / 2 : 1, 
@@ -455,13 +455,13 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 		if (_height > 1) _height /= 2;
 	}
 	// record commands blitimage
-	/*iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
 							VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
-							1, &iBarrier);*/
+							1, &iBarrier);
 	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
 }
 
@@ -549,7 +549,8 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 }
 
 inline 
-VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, VkImageViewType _viewType, uint32_t _arrayLayers, float _mipLevels = 1)
+VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, 
+							VkImageViewType _viewType, uint32_t _arrayLayers = 1, float _mipLevels = 1)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageView tImageView;
@@ -574,7 +575,10 @@ VkImageView CreateTextureImageView(VkImage _tImage)
 }
 
 inline 
-VkSampler CreateTextureSampler(float _Mipmaps)
+VkSampler CreateTextureSampler(float _Mipmaps, 
+							VkSamplerAddressMode _u = VK_SAMPLER_ADDRESS_MODE_REPEAT, 
+							VkSamplerAddressMode _v = VK_SAMPLER_ADDRESS_MODE_REPEAT, 
+							VkSamplerAddressMode _w = VK_SAMPLER_ADDRESS_MODE_REPEAT)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkPhysicalDeviceProperties deviceProp;
@@ -583,9 +587,9 @@ VkSampler CreateTextureSampler(float _Mipmaps)
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeU = _u;
+	samplerInfo.addressModeV = _v;
+	samplerInfo.addressModeW = _w;
 	samplerInfo.anisotropyEnable = VK_TRUE;
 	vkGetPhysicalDeviceProperties(renderContext.m_GpuInfo.m_Device, &deviceProp);
 	samplerInfo.maxAnisotropy = deviceProp.limits.maxSamplerAnisotropy;

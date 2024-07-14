@@ -14,7 +14,7 @@ layout(set=0, binding=6) uniform LightBufferObject
 	vec4 lightColor;
 	vec4 lightOpts; // 0: lightType, 1: shadow 
 	vec4 additionalLightOpts; // Kc, Kl, Kq
-} libO[];
+} libO[4];
 
 layout(location = 0) in vec3 fragPosition;
 layout(location = 1) in vec2 texCoord;
@@ -22,12 +22,13 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 viewerPosition;
 layout(location = 4) in vec4 shadowCoord;
 layout(location = 5) in float mipLevel;
+layout(location = 6) in float nLights;
 
 layout(location = 0) out vec4 outColor;
 
 vec3 lightPosition = libO[0].lightPosition.xyz;
-vec3 lightColor = libO[1].lightColor.xyz;
-float shadowBias = libO[3].lightOpts.y;
+vec3 lightColor = libO[0].lightColor.xyz;
+float shadowBias = libO[0].lightOpts.y;
 float projectShadow = libO[0].lightOpts.x;
 vec4 pointLightConstants = libO[0].additionalLightOpts;
 
@@ -55,13 +56,21 @@ float PointLight()
 	// kl = constante linear
 	// kq = constante cuadratica
 	// atenuacion = 1/ (kc+ kl*d + kq*(d*d));
-	vec3 dir = lightPosition - fragPosition;
-	float d = length(dir);
-	float att = 1.0
-				/ (pointLightConstants[0]
-					+ pointLightConstants[1] * d 
-					+ pointLightConstants[2] * (d*d)
-				);
+	float att;
+	for(int l = 0; l < 4; l++)
+	{
+		if(l >= nLights) break;
+		vec3 lightPos = libO[l].lightPosition.xyz;
+		vec4 pointLightC = libO[l].additionalLightOpts;
+		vec3 dir = lightPos - fragPosition;
+		float d = length(dir);
+		att += 1.0
+			/ (pointLightC[0]
+				+ pointLightC[1] * d 
+				+ pointLightC[2] * (d*d)
+			);
+	}
+	
 	return att;
 }
 

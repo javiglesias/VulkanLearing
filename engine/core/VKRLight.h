@@ -18,6 +18,7 @@ namespace VKR
 		struct Light : public Renderable
 		{
 		public:
+			bool m_Editable = false;
 			float m_DebugScale;
 			glm::vec3 m_Pos {0.f, 1.f, 0.f};
 			glm::vec3 m_Color {1.f};

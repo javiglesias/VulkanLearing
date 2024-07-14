@@ -1,8 +1,5 @@
 #include "Editor.h"
 #include "VKRScene.h"
-#include "jobs.h"
-#include "savedata.h"
-#include <string>
 
 namespace VKR
 {
@@ -96,14 +93,20 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
-					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
+					//_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
 				}
 				if (ImGui::Button("Reload shaders"))
 				{
 					_mainScene->ReloadShaders(_backend);
+				}
+
+				if (ImGui::Button("add request"))
+				{
+					sResource resource_("resources/models/Lantern/glTF/Lantern.gltf");
+					AddAsyncRequest(&resource_);
 				}
 
 				ImGui::DragFloat("zFar", &render::zFar);
@@ -115,10 +118,12 @@ namespace VKR
 			}
 			ImGui::Begin("Debug");
 			{
-				if (_backend->m_ShadowVisualizer == nullptr)
+				/*if (_backend->m_ShadowVisualizer == nullptr)
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
+				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
+				ImGui::LabelText("", "%.3f", g_DeltaTime);
+
 				ImGui::End();
 			}
 			ImGui::Begin("World");
@@ -128,7 +133,6 @@ namespace VKR
 					ImGui::Selectable(model->m_Path, &model->m_Editable);
 					if (model->m_Editable)
 					{
-						ImGui::LabelText("", "%s", model->m_Path);
 						float center[3];
 						center[0] = model->m_Pos.x;
 						center[1] = model->m_Pos.y;
@@ -160,8 +164,12 @@ namespace VKR
 			{
 				if (ImGui::Button("Create Point Light"))
 				{
-					g_Lights.push_back(new Light());
-					_mainScene->PrepareDebugScene(_backend);
+					// TO-DO: Max 4 Lights rait nao.
+					if(g_Lights.size() < 4)
+					{
+						g_Lights.push_back(new Light());
+						_mainScene->PrepareDebugScene(_backend);
+					}
 				}
 
 				if (ImGui::Button("Create Spot Light"))
@@ -170,7 +178,18 @@ namespace VKR
 				}
 				for (auto& light : g_Lights)
 				{
-					ImGui::LabelText("", "light");
+					ImGui::Selectable("light", &light->m_Editable);
+					if(light->m_Editable)
+					{
+						float center[3];
+						center[0] = light->m_Pos.x;
+						center[1] = light->m_Pos.y;
+						center[2] = light->m_Pos.z;
+						ImGui::DragFloat3("Pos", center, 0.1f);
+						light->m_Pos.x = center[0];
+						light->m_Pos.y = center[1];
+						light->m_Pos.z = center[2];
+					}
 				}
 				if (ImGui::Button("Delete"))
 				{

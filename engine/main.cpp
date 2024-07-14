@@ -7,11 +7,6 @@ int main(int _argc, char** _args)
 	auto backend = VKR::render::GetVKBackend();
 	VKR::render::Editor* editor;
 	auto mainScene = VKR::render::GetVKMainScene();
-	float newFrame = 0.0f;
-	float accumulatedTime = 0.0f;
-	float deltaTime = 0.0f;
-	float currentFrame = 0.0f;
-	float frameCap = 0.016f; // 60fps
 	int currentLocalFrame = 0;
 	
 	backend.Init();
@@ -20,11 +15,15 @@ int main(int _argc, char** _args)
 		backend.m_SwapchainImagesCount);
 	auto renderContext = VKR::render::GetVKContext();
 	mainScene.LoadCubemapModel("resources/models/Box/glTF/", "Box.gltf", glm::vec3(0.f, 1.f, 0.f));
-	//mainScene.PrepareCubemapScene(&backend);
+	mainScene.PrepareCubemapScene(&backend);
 	while (!backend.BackendShouldClose())
 	{
-		deltaTime = newFrame - currentFrame;
-		accumulatedTime += deltaTime;
+		backend.StartPerfFrame();
+		if(VKR::render::m_SceneDirty)
+		{
+			mainScene.PrepareScene(&backend);
+			VKR::render::m_SceneDirty = false;
+		}
 		backend.PollEvents();
 		editor->Loop(&mainScene, &backend);
 		//m_Scene->Loop(); // Gestionamos si se ha cargado un nuevo modelo a la escena y actualizamos la info de render.
@@ -34,6 +33,7 @@ int main(int _argc, char** _args)
 		backend.EndRenderPass(currentLocalFrame);
 		backend.SubmitAndPresent(currentLocalFrame, &imageIdx);
 		currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
+		backend.EndPerfFrame();
 	}
 	mainScene.Cleanup(renderContext.m_LogicDevice);
 	editor->Cleanup();

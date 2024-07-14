@@ -64,9 +64,9 @@ namespace VKR
 				tHeight = m_DefualtHeight;
 			}
 			tHeight=tWidth;
-			m_Size = (tWidth* tHeight * 4);
+			m_Size = (tWidth * tHeight * 4);
 			// Buffer transfer of pixels
-			CreateBuffer(6*m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			CreateBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 			void* data;
@@ -91,14 +91,14 @@ namespace VKR
 				vkBindImageMemory(g_context.m_LogicDevice, tImage, tImageMem, 0);
 				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					_CommandPool, _arrayLayers, 1);
-				for (size_t i = 0; i < _arrayLayers; i++)
+				/*for (size_t i = 0; i < _arrayLayers; i++)
 				{
 					auto offset = texSize * i;
-					CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), offset, _CommandPool, i);
-				}
+				}*/
+				CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), 0, _CommandPool, 0);
 				GenerateMipmap(tImage, _CommandPool, m_Mipmaps, tWidth, tHeight);
-				/*TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-					_CommandPool, _arrayLayers, m_Mipmaps);*/
+				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					_CommandPool, _arrayLayers, m_Mipmaps);
 				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, m_Mipmaps);
 				m_Sampler = CreateTextureSampler(m_Mipmaps);
 				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
@@ -116,7 +116,7 @@ namespace VKR
 				auto texSize = tWidth * tHeight * 4;
 				CreateImage(tWidth, tHeight, _format,
 					VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, 1, 0, 1);
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, _arrayLayers, 0, 1);
 				vkBindImageMemory(g_context.m_LogicDevice, tImage, tImageMem, 0);
 				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					_CommandPool, _arrayLayers, 1);
@@ -125,6 +125,35 @@ namespace VKR
 					_CommandPool, _arrayLayers, 1);
 				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, 1);
 				m_Sampler = CreateTextureSampler(1);
+				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			}
+		}
+
+		void Texture::CreateAndTransitionImageCubemap(VkCommandPool _CommandPool, VkFormat _format, 
+													VkImageAspectFlags _aspectMask, VkImageViewType _viewType,
+													uint32_t _arrayLayers, VkImageCreateFlags _flags)
+		{
+			// Como utilizamos lightview, las texturas solo se crean una vez.
+			if (tImageView == nullptr && m_Sampler == nullptr
+				&& tImage == nullptr && tImageMem == nullptr)
+			{
+				auto texSize = tWidth * tHeight * 4;
+				CreateImage(tWidth, tHeight, _format,
+					VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, _arrayLayers, 0, 1);
+				// VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
+				vkBindImageMemory(g_context.m_LogicDevice, tImage, tImageMem, 0);
+				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					_CommandPool, _arrayLayers, 1);
+				CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), 0, _CommandPool, 0);
+				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					_CommandPool, _arrayLayers, 1);
+				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, 1);
+				m_Sampler = CreateTextureSampler(1, 
+												VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+												VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+												VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
 			}

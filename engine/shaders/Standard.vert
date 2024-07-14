@@ -11,9 +11,10 @@ layout(set=0, binding=4) uniform DynamicBufferObject
 {
     mat4 model;
     vec4 modelOpts; // 0: MipLevel
+	vec4 addOpts; // 0: num current Lights
 } dynO;
 
-layout(location = 0) in vec3 inPosition;
+layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aNormal;
 
@@ -23,6 +24,7 @@ layout(location = 2) out vec3 normal;
 layout(location = 3) out vec3 viewerPosition;
 layout(location = 4) out vec4 shadowCoord;
 layout(location = 5) out float mipLevel;
+layout(location = 6) out float nLights;
 
 void main() {
     gl_Position = ubo.projection * ubo.view * dynO.model * vec4(inPosition, 1.0);
@@ -32,4 +34,5 @@ void main() {
     viewerPosition = ubo.viewerPosition;
 	mipLevel = dynO.modelOpts.x;
 	shadowCoord = dynO.model * vec4(inPosition, 1.0);
+	nLights = dynO.addOpts[0];
 }

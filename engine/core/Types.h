@@ -38,7 +38,8 @@ struct DynamicBufferObject
 {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::vec4 modelOpts; // 0: miplevel
-	alignas(16) glm::vec4 aligned[3];
+	alignas(16) glm::vec4 addOpts; // 0: num current Lights
+	alignas(16) glm::vec4 aligned[2];
 };
 struct LightBufferObject
 {

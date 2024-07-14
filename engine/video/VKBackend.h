@@ -6,6 +6,8 @@
 #include "../core/VKRModel.h"
 #include "../core/VKRLight.h"
 
+#include <thread>
+
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -22,6 +24,8 @@ namespace VKR
             READY,
             DESTROYED
         };
+        inline std::thread* g_SaveDataThread;
+        inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
         inline const int FRAMES_IN_FLIGHT = 2;
         inline const int m_Width = 1600;
@@ -32,6 +36,7 @@ namespace VKR
         inline bool m_IndexedRender = true;
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
+        inline bool m_SceneDirty = false;
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
@@ -47,6 +52,8 @@ namespace VKR
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 0.f;
         inline float g_Rotation = 0.f;
+        inline float g_ElapsedTime;
+        inline double g_DeltaTime;
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
@@ -180,6 +187,11 @@ namespace VKR
             void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void Shutdown();
             void Cleanup();
+            void StartPerfFrame();
+            void EndPerfFrame()  ;
+            double GetTime();
+            double fGetTime();
+
         private:
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
                                 const char** m_Extensions,

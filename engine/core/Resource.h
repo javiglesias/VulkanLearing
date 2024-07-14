@@ -1,0 +1,30 @@
+#pragma once
+#include <corecrt_memory.h>
+namespace VKR
+{
+	enum STATE
+	{
+		LOADING,
+		READY,
+		COUNT
+	};
+	enum TYPE
+	{
+		UNDEFINED=-1,
+		MESH,
+		TEXTURE,
+		SOUND
+	};
+	struct sResource
+	{
+		STATE m_State{LOADING};
+		TYPE m_Type{UNDEFINED};
+		char m_PathFromLoad[256];
+		void (*m_LoadFunc)(const char*);
+		sResource() {}
+		sResource(const char* _PathFromLoad)
+		{
+			memcpy(m_PathFromLoad, _PathFromLoad, sizeof(m_PathFromLoad));
+		}
+	};
+}

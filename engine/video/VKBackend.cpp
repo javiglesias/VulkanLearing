@@ -1,6 +1,8 @@
 #include "VKBackend.h"
+#include "../core/PersistenceData.h"
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
+
 
 
 namespace VKR
@@ -408,6 +410,9 @@ namespace VKR
 			GenerateDBGBuffers();
 			CreateSyncObjects(0);
 			CreateSyncObjects(1);
+			g_SaveDataThread = new std::thread(SaveCurrentState, this);
+			// TODO: start the load thread
+			g_LoadDataThread = new std::thread(ContentManager, this);
 			m_GPipelineStatus = READY;
 		}
 
@@ -827,6 +832,8 @@ namespace VKR
 
 		void VKBackend::Cleanup()
 		{
+			g_SaveDataThread->join();
+			g_LoadDataThread->join();
 			printf("Cleanup\n");
 			g_context.Cleanup();
 			glslang::FinalizeProcess();
@@ -884,6 +891,21 @@ namespace VKR
 			CleanSwapChain();
 			// m_Scene->Cleanup();
 			m_ShadowMat->Cleanup(g_context.m_LogicDevice);
+		}
+
+		void VKBackend::StartPerfFrame()
+		{
+			g_DeltaTime = glfwGetTime();
+		}
+		
+		void VKBackend::EndPerfFrame()
+		{
+			g_DeltaTime -= glfwGetTime();
+		}
+
+		double VKBackend::GetTime()
+		{
+			return glfwGetTime();
 		}
 
 		void VKBackend::Shutdown()
