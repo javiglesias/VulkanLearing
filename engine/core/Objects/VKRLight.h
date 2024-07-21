@@ -1,5 +1,5 @@
 #pragma once
-#include "../video/VKRRenderable.h"
+
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -15,7 +15,7 @@ namespace VKR
 			LIGHT_SPOT,
 			LIGHT_OMNI
 		};
-		struct Light : public Renderable
+		struct Light
 		{
 		public:
 			bool m_Editable = false;
@@ -34,7 +34,6 @@ namespace VKR
 
 		public: // Functions
 			Light();
-			virtual void AddCommand() override;
 		};
 		
 		struct Directional : public Light

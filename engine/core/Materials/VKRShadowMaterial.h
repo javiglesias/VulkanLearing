@@ -3,6 +3,7 @@
 #include <vector>
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
+#include "../video/VKBufferObjects.h"
 namespace VKR
 {
 	namespace render

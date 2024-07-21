@@ -1,5 +1,5 @@
 #include "VKRTexture.h"
-#include "../video/VKRUtils.h"
+#include "../../video/VKRUtils.h"
 #include <string>
 #include <cmath>
 

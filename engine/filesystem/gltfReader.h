@@ -1,4 +1,15 @@
-#if 0
+#include <glm/vec3.hpp>
+
+#include "../cgltf/cgltf.h"
+#include "../core/Objects/VKRModel.h"
+#if 1
+namespace VKR::render
+{
+	struct R_Mesh;
+}
+
+inline cgltf_data* read_glTF(char* filename)
+{
 	cgltf_options options {};
 	cgltf_parse_file(&options, filename, &modelData);
 	cgltf_data* modelData = NULL;
@@ -20,11 +31,11 @@
  						unsigned int indices[idxAccessor->count];
 						cgltf_accessor_unpack_indices(mesh->primitives[p].indices, &indices,
 							sizeof(unsigned int), idxAccessor->count);
+						VKR::render::R_Mesh* tempMesh = new VKR::render::R_Mesh();
 						for(cgltf_size i = 0; i < idxAccessor->count; i++)
 						{
-							m_Indices.push_back(indices[i]);
+							tempMesh->m_Indices.push_back(indices[i]);
 						}
-
 						for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 						{
 							if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)
@@ -38,7 +49,7 @@
 									{
 										int idx = 3*pos;
 										printf("\nVertex %zd: %f, %f, %f", p, position[idx], position[idx+1], position[idx+2]);
-										m_ModelTriangles.push_back({glm::vec3(position[idx], position[idx+1], position[idx+2]), {1.0f, 0.0f, 0.0f}});
+										tempMesh->m_Vertices.push_back({glm::vec3(position[idx], position[idx+1], position[idx+2]), {1.0f, 0.0f, 0.0f}});
 									}
 								else
 								{
@@ -49,8 +60,9 @@
 					}
 				}
 			}
+		}
+		else
+			exit(-88);
+		return modelData;
 	}
-	else
-		exit(-88);
-	return modelData;
 #endif

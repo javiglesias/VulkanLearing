@@ -39,22 +39,22 @@
     <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\Editor.cpp">
+    <ClCompile Include="core\Editor\Editor.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRCubemap.cpp">
+    <ClCompile Include="core\Objects\VKRCubemap.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRCubemapMaterial.cpp">
+    <ClCompile Include="core\Materials\VKRCubemapMaterial.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="core\VKRenderers.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRMaterial.cpp">
+    <ClCompile Include="core\Materials\VKRMaterial.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRModel.cpp">
+    <ClCompile Include="core\Objects\VKRModel.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="core\VKRRenderPass.cpp">
@@ -63,51 +63,54 @@
     <ClCompile Include="core\VKRScene.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRTexture.cpp">
+    <ClCompile Include="core\Materials\VKRTexture.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="video\VKBackend.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRShader.cpp">
+    <ClCompile Include="core\Materials\VKRShader.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\VKRLight.cpp">
+    <ClCompile Include="core\Objects\VKRLight.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="video\VKRRenderable.h">
+    <ClCompile Include="video\VKBufferObjects.h">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Objects\VKRCamera.h">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="core\DebugModels.h">
+    <ClInclude Include="core\Objects\DebugModels.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\debugUtils.h">
+    <ClInclude Include="filesystem\gltfReader.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\Editor.h">
+    <ClInclude Include="core\Editor\Editor.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\Types.h">
+    <ClInclude Include="video\Types.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRCubemap.h">
+    <ClInclude Include="core\Objects\VKRCubemap.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRCubemapMaterial.h">
+    <ClInclude Include="core\Materials\VKRCubemapMaterial.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRDebugMaterial.h">
+    <ClInclude Include="core\Materials\VKRDebugMaterial.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="core\VKRenderers.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRMaterial.h">
+    <ClInclude Include="core\Materials\VKRMaterial.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRModel.h">
+    <ClInclude Include="core\Objects\VKRModel.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="core\VKRRenderPass.h">
@@ -116,13 +119,13 @@
     <ClInclude Include="core\VKRScene.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRShader.h">
+    <ClInclude Include="core\Materials\VKRShader.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRShadowMaterial.h">
+    <ClInclude Include="core\Materials\VKRShadowMaterial.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRTexture.h">
+    <ClInclude Include="core\Materials\VKRTexture.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="video\VKBackend.h">
@@ -137,16 +140,28 @@
     <ClInclude Include="core\jobs.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\savedata.h">
+    <ClInclude Include="filesystem\savedata.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\VKRLight.h">
+    <ClInclude Include="core\Objects\VKRLight.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\Resource.h">
+    <ClInclude Include="filesystem\Resource.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\PersistenceData.h">
+    <ClInclude Include="filesystem\PersistenceData.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="perfmon\Renderdoc.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="perfmon\Nsight.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="perfmon\Custom.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\cgltf\cgltf.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

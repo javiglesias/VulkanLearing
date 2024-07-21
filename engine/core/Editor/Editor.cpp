@@ -1,5 +1,5 @@
 #include "Editor.h"
-#include "VKRScene.h"
+#include "../VKRScene.h"
 
 namespace VKR
 {
@@ -9,7 +9,7 @@ namespace VKR
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
 		{
 			auto renderContext = VKR::render::GetVKContext();
-			// IMGUI_CHECKVERSION();
+			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGui_ImplGlfw_InitForVulkan(_Window, true);
 			// UI descriptor Pool
@@ -93,8 +93,8 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					//_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
-					_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
 				}
@@ -103,17 +103,13 @@ namespace VKR
 					_mainScene->ReloadShaders(_backend);
 				}
 
-				if (ImGui::Button("add request"))
-				{
-					sResource resource_("resources/models/Lantern/glTF/Lantern.gltf");
-					AddAsyncRequest(&resource_);
-				}
 
-				ImGui::DragFloat("zFar", &render::zFar);
-				ImGui::DragFloat("zNear", &render::zNear);
-				ImGui::DragFloat("Cubemap distance", &render::g_cubemapDistance);
-				ImGui::SliderFloat("Mip level", &render::g_MipLevel, 0.f, 12.f, "%1.f");
-				ImGui::DragFloat("Debug scale", &render::g_debugScale);
+				ImGui::DragFloat("zFar", &zFar);
+				ImGui::DragFloat("zNear", &zNear);
+				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
+				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
+				ImGui::SliderFloat("Mip level", &g_MipLevel, 0.f, 12.f, "%1.f");
+				ImGui::DragFloat("Debug scale", &g_debugScale);
 				ImGui::End();
 			}
 			ImGui::Begin("Debug");
@@ -122,7 +118,11 @@ namespace VKR
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
-				ImGui::LabelText("", "%.3f", g_DeltaTime);
+				ImGui::LabelText("Elapsed time:", "%.2f", g_ElapsedTime);
+				ImGui::LabelText("Frame time:", "%.2f", g_FrameTime[g_CurrentFrameTime]);
+				ImGui::LabelText("Frame n:", "%d", g_CurrentFrame);
+				const float *cycles = g_FrameTime;
+				ImGui::PlotLines("Frame time", cycles, g_FrameGranularity);
 
 				ImGui::End();
 			}

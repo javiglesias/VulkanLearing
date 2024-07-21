@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
-#include "VKRShader.h"
-#include "Types.h"
+#include "Materials/VKRShader.h"
+#include "../video/Types.h"
 
 namespace VKR
 {

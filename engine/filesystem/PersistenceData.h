@@ -1,7 +1,7 @@
 #pragma once
 #include "Resource.h"
 #include "../video/VKBackend.h"
-#include "VKRModel.h"
+#include "../core/Objects/VKRModel.h"
 #include <vector>
 #include <mutex>
 namespace VKR

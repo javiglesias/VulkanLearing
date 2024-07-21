@@ -1,5 +1,5 @@
 #include "VKBackend.h"
-#include "../core/PersistenceData.h"
+#include "../filesystem/PersistenceData.h"
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
 
@@ -893,20 +893,6 @@ namespace VKR
 			m_ShadowMat->Cleanup(g_context.m_LogicDevice);
 		}
 
-		void VKBackend::StartPerfFrame()
-		{
-			g_DeltaTime = glfwGetTime();
-		}
-		
-		void VKBackend::EndPerfFrame()
-		{
-			g_DeltaTime -= glfwGetTime();
-		}
-
-		double VKBackend::GetTime()
-		{
-			return glfwGetTime();
-		}
 
 		void VKBackend::Shutdown()
 		{

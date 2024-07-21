@@ -1,5 +1,6 @@
 #pragma once
-#include "Types.h"
+#include "../../video/Types.h"
+#include "../../video/VKBufferObjects.h"
 #include "VKRTexture.h"
 
 #include <glm/fwd.hpp>

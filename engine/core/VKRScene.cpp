@@ -1,6 +1,7 @@
 #include "VKRScene.h"
 
-#include "Types.h"
+#include "../video/Types.h"
+#include "../perfmon/Custom.h"
 
 namespace VKR
 {
@@ -14,11 +15,12 @@ namespace VKR
 
 		R_Model* Scene::LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
+			PERF_INIT()
 			char filename[128];
 			sprintf(filename, "%s%s", _filepath, _modelName);
 			printf("\nLoading %s\n", _modelName);
 			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
-			if (!scene->HasMeshes())
+			if (!scene || !scene->HasMeshes())
 				exit(-225);
 			tempModel = new R_Model();
 			//Process Node
@@ -28,6 +30,7 @@ namespace VKR
 			sprintf(tempModel->m_Path, _filepath, 64);
 			tempModel->m_Pos = _position;
 			tempModel->m_Scale = _scale;
+			PERF_END("LOAD MODEL")
 			return tempModel;
 		}
 		void Scene::LoadStaticModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
@@ -217,6 +220,7 @@ namespace VKR
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();*/
+			PERF_INIT()
 			auto renderContext = GetVKContext();
 			if(m_GraphicsRender->m_VertShader->GLSLCompile(true) &&
 				m_GraphicsRender->m_FragShader->GLSLCompile(true))
@@ -230,6 +234,7 @@ namespace VKR
 				m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 				m_GraphicsRender->CleanShaderModules();
 			}
+			PERF_END("RELOAD SHADERS")
 		}
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
@@ -373,11 +378,13 @@ namespace VKR
 				++debugCount;
 			}
 			//_backend->EndRenderPass(_CurrentFrame);
-			DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			if(g_DrawCubemap)
+				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 		}
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
 		{
+			PERF_INIT()
 			auto renderContext = GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
 			m_Cubemap->m_Material->PrepareMaterialToDraw(_backend);
@@ -404,7 +411,7 @@ namespace VKR
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
 			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
-
+			PERF_END("PREPARE CUBEMAP")
 		}
 		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
 		{
@@ -448,6 +455,7 @@ namespace VKR
 		}
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
+			PERF_INIT()
 			auto renderContext = GetVKContext();
 			_backend->m_CurrentModelsToDraw = m_StaticModels.size();
 			/// 1 - Actualizar los DynamicDescriptorBuffers
@@ -551,6 +559,7 @@ namespace VKR
 					}
 				}
 			}
+			PERF_END("PREPARE DRAW SCENE")
 		}
 		void Scene::Init()
 		{

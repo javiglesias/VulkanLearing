@@ -4,12 +4,12 @@
 [submodule "dependencies/assimp"]
 	path = dependencies/assimp
 	url = https://github.com/assimp/assimp
-[submodule "dependencies/dependencies/cgltf"]
-	path = dependencies/dependencies/cgltf
-	url = https://github.com/jkuhlmann/cgltf
 [submodule "dependencies/stb"]
 	path = dependencies/stb
 	url = https://github.com/nothings/stb
 [submodule "dependencies/imgui"]
 	path = dependencies/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "dependencies/cgltf"]
+	path = dependencies/cgltf
+	url = https://github.com/jkuhlmann/cgltf

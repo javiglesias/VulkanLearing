@@ -1,6 +1,8 @@
 #pragma once
 #include "../video/VKBackend.h"
-#include "VKRCubemap.h"
+#include "Objects/VKRCubemap.h"
+#include "../video/VKBufferObjects.h"
+
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>

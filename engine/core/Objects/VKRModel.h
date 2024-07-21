@@ -1,7 +1,7 @@
 #pragma once
-#include "VKRMaterial.h"
-#include "VKRDebugMaterial.h"
-#include "Types.h"
+#include "../Materials/VKRMaterial.h"
+#include "../Materials/VKRDebugMaterial.h"
+#include "../../video/Types.h"
 
 #include <unordered_map>
 

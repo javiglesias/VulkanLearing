@@ -2,9 +2,9 @@
 
 #include "VKRUtils.h"
 #include "../core/VKRenderers.h"
-#include "../core/VKRShadowMaterial.h"
-#include "../core/VKRModel.h"
-#include "../core/VKRLight.h"
+#include "../core/Materials/VKRShadowMaterial.h"
+#include "../core/Objects/VKRModel.h"
+#include "../core/Objects/VKRLight.h"
 
 #include <thread>
 
@@ -37,6 +37,7 @@ namespace VKR
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
+        inline bool g_DrawCubemap = true;
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
@@ -52,8 +53,14 @@ namespace VKR
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 0.f;
         inline float g_Rotation = 0.f;
-        inline float g_ElapsedTime;
+        inline constexpr int g_FrameGranularity = 10240;
+        inline float g_FrameTime[g_FrameGranularity];
+        inline int g_CurrentFrameTime = 0;
+        inline long long g_CurrentFrame = 0;
         inline double g_DeltaTime;
+        inline double g_ElapsedTime;
+		
+
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
@@ -187,10 +194,8 @@ namespace VKR
             void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void Shutdown();
             void Cleanup();
-            void StartPerfFrame();
-            void EndPerfFrame()  ;
-            double GetTime();
-            double fGetTime();
+
+            double GetTime() {return glfwGetTime(); }
 
         private:
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,

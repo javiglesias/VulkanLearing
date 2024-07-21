@@ -1,5 +1,5 @@
 #pragma once
-#include "VKRCubemapMaterial.h"
+#include "../Materials/VKRCubemapMaterial.h"
 
 namespace VKR
 {
