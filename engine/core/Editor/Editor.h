@@ -1,8 +1,14 @@
 #pragma once
 
+#ifdef _WINDOWS
 #include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#else
+#include "../../../dependencies/imgui/misc/single_file/imgui_single_file.h"
+#include "../../../dependencies/imgui/backends/imgui_impl_glfw.h"
+#include "../../../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#endif
 
 namespace VKR
 {

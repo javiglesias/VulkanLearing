@@ -1,6 +1,11 @@
 #pragma once
 #include "../core/VKRRenderPass.h"
+#ifdef _WINDOWS
 #include <Windows.h>
+#else
+#include <cstdio>
+#include <cstring>
+#endif
 #include <cmath>
 
 namespace VKR
@@ -219,7 +224,7 @@ namespace VKR
 					break;
 			}
 
-			/// Ahora vamos a crear el device logico para interactuar con él
+			/// Ahora vamos a crear el device logico para interactuar con ï¿½l
 			float queuePriority = 1.f;
 
 			g_context.m_GpuInfo.m_QueueCreateInfos.push_back({
@@ -643,11 +648,15 @@ enum CONSOLE_COLOR
 	YELLOW = 14,
 	NORMAL = 15
 };
+#ifdef _WINDOWS
 inline HANDLE  hConsole;
+#endif
 inline
 void ChangeColorConsole(CONSOLE_COLOR _color)
 {
+	#ifdef _WINDOWS
 	if (!hConsole)
 		hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, _color);
+	#endif
 }

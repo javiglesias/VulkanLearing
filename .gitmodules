@@ -13,3 +13,6 @@
 [submodule "dependencies/cgltf"]
 	path = dependencies/cgltf
 	url = https://github.com/jkuhlmann/cgltf
+[submodule "dependencies/glslang"]
+	path = dependencies/glslang
+	url = https://github.com/KhronosGroup/glslang

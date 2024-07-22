@@ -1,7 +1,13 @@
 #pragma once
+#ifdef _WINDOWS
 #include "glslang/Public/ShaderLang.h"
 #include "glslang/Public/ResourceLimits.h"
 #include "glslang/SPIRV/GlslangToSpv.h"
+#else
+#include "../../../dependencies/glslang/SPIRV/GlslangToSpv.h"
+#include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
+#include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
+#endif
 #include <fstream>
 #include <vector>
 
