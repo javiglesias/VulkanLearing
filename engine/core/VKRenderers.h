@@ -1,5 +1,6 @@
-#pragma once
-#include <vulkan/vulkan_core.h>
+#ifndef _C_RENDERERERS
+#define _C_RENDERERERS
+
 #include "Materials/VKRShader.h"
 #include "../video/Types.h"
 
@@ -90,7 +91,7 @@ namespace VKR
         {
         public: // Functions
             bool Initialize() override;
-            void CreateDescriptorSetLayout();
+            void CreateDescriptorSetLayout() override;
 
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
@@ -133,3 +134,4 @@ namespace VKR
         };
     }
 }
+#endif

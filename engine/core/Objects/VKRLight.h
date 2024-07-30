@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_LIGHT
+#define _C_LIGHT
 
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
@@ -54,3 +55,4 @@ namespace VKR
 		};
 	}
 }
+#endif

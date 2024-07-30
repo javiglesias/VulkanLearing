@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_MODEL
+#define _C_MODEL
 #include "../Materials/VKRMaterial.h"
 #include "../Materials/VKRDebugMaterial.h"
 #include "../../video/Types.h"
@@ -73,3 +74,4 @@ namespace VKR
 		};
 	}
 }
+#endif

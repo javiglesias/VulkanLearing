@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_PERSISTENCE_DATA
+#define _C_PERSISTENCE_DATA
 #include "Resource.h"
 #include "../video/VKBackend.h"
 #include "../core/Objects/VKRModel.h"
@@ -144,3 +145,4 @@ namespace VKR
 		}
 	}
 }
+#endif

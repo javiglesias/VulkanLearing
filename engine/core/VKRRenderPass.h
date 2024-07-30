@@ -1,6 +1,6 @@
-#pragma once
+#ifndef _C_RENDER_PASS
+#define _C_RENDER_PASS
 #include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan.h>
 #include <vector>
 
 namespace VKR
@@ -29,3 +29,4 @@ namespace VKR
         };
     }
 }
+#endif

@@ -10,13 +10,16 @@
 *.userosscache
 *.sln.docstates
 *.kate-swp
+*.su
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
 # Mono auto generated files
 mono_crash.*
-
+#dependencies
+[Dd]ependencies/
+*.geany
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

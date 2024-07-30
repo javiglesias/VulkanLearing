@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _C_CUBEMAP
+#define _C_CUBEMAP
+
 #include "../Materials/VKRCubemapMaterial.h"
 
 namespace VKR
@@ -24,3 +26,4 @@ namespace VKR
 		};
 	}
 }
+#endif

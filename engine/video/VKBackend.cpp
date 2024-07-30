@@ -1,8 +1,16 @@
 #include "VKBackend.h"
 #include "../filesystem/PersistenceData.h"
+
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
+
+#ifndef _WINDOWS
+#include <signal.h>
+#endif
 
 
 namespace VKR
@@ -195,8 +203,10 @@ namespace VKR
 
 		void VKBackend::Init()
 		{
+			#ifdef _WINDOWS
 			glslang::InitializeProcess();
 			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
+			#endif
 			m_GPipelineStatus = CREATING;
 			uint32_t mExtensionCount = 0;
 			const char** mExtensions;
@@ -472,7 +482,11 @@ namespace VKR
 			VkDeviceSize checkBufferSize = m_CurrentModelsToDraw * DynAlign;
 			VkDeviceSize dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
 			if(dynBufferSize != checkBufferSize )
+			#ifdef _WINDOWS
 				__debugbreak();
+			#else
+				raise(SIGTRAP);
+			#endif
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -490,7 +504,11 @@ namespace VKR
 			checkBufferSize = m_CurrentModelsToDraw * (4 * lightDynAlign);
 			VkDeviceSize lightsBufferSize = m_CurrentModelsToDraw * (4 * sizeof(LightBufferObject));
 			if(lightsBufferSize != checkBufferSize )
+				#ifdef _WINDOWS
 				__debugbreak();
+			#else
+				raise(SIGTRAP);
+			#endif
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(lightsBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -829,6 +847,10 @@ namespace VKR
 		{
 			glfwPollEvents();
 		}
+		double VKBackend::GetTime() 
+		{
+			return glfwGetTime(); 
+		}
 
 		void VKBackend::Cleanup()
 		{
@@ -836,7 +858,9 @@ namespace VKR
 			g_LoadDataThread->join();
 			printf("Cleanup\n");
 			g_context.Cleanup();
+			#ifdef _WINDOWS
 			glslang::FinalizeProcess();
+			#endif
 			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);
 			delete m_GraphicsRender;
 			delete m_DbgRender;

@@ -1,14 +1,10 @@
-#pragma once
+#ifndef _C_EDITOR
+#define _C_EDITOR
 
-#ifdef _WINDOWS
-#include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
-#include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
-#include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
-#else
-#include "../../../dependencies/imgui/misc/single_file/imgui_single_file.h"
-#include "../../../dependencies/imgui/backends/imgui_impl_glfw.h"
-#include "../../../dependencies/imgui/backends/imgui_impl_vulkan.h"
-#endif
+#include <vulkan/vulkan.h>
+#include <sys/types.h>
+
+class GLFWwindow;
 
 namespace VKR
 {
@@ -33,3 +29,4 @@ namespace VKR
 		};	
 	}
 }
+#endif

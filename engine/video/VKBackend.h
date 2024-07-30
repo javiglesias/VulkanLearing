@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef _C_BACKEND
+#define _C_BACKEND
 #include "VKRUtils.h"
 #include "../core/VKRenderers.h"
 #include "../core/Materials/VKRShadowMaterial.h"
@@ -8,10 +8,7 @@
 
 #include <thread>
 
-
-#define GLFW_INCLUDE_NONE
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+class GLFWwindow;
 
 namespace VKR
 {
@@ -37,7 +34,7 @@ namespace VKR
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
-        inline bool g_DrawCubemap = true;
+        inline bool g_DrawCubemap = false;
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
@@ -195,7 +192,7 @@ namespace VKR
             void Shutdown();
             void Cleanup();
 
-            double GetTime() {return glfwGetTime(); }
+            double GetTime();
 
         private:
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
@@ -236,3 +233,4 @@ namespace VKR
     }
 }
 
+#endif

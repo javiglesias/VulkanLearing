@@ -1,7 +1,6 @@
-﻿#include "video/VKBackend.h"
+﻿#include "perfmon/Custom.h"
 #include "core/Editor/Editor.h"
 #include "core/VKRScene.h"
-#include "perfmon/Custom.h"
 
 int main(int _argc, char** _args)
 {
@@ -18,10 +17,10 @@ int main(int _argc, char** _args)
 	editor = new VKR::render::Editor(VKR::render::m_Window, backend.m_Instance, backend.m_Capabilities.minImageCount,
 		backend.m_SwapchainImagesCount);
 	auto renderContext = VKR::render::GetVKContext();
-	mainScene.LoadCubemapModel("resources/models/Box/glTF/", "Box.gltf", glm::vec3(0.f, 1.f, 0.f));
-	mainScene.PrepareCubemapScene(&backend);
+	// mainScene.LoadCubemapModel("resources/models/Box/glTF/", "Box.gltf", glm::vec3(0.f, 1.f, 0.f));
+	// mainScene.PrepareCubemapScene(&backend);
 	currentFrame = backend.GetTime();
-	_initlializePerfmon(&backend);
+	// _initlializePerfmon(&backend);
 	while (!backend.BackendShouldClose())
 	{
 		deltaTime = nextFrame - currentFrame;

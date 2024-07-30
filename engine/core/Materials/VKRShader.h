@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_SHADER
+#define _C_SHADER
 #ifdef _WINDOWS
 #include "glslang/Public/ShaderLang.h"
 #include "glslang/Public/ResourceLimits.h"
@@ -36,3 +37,4 @@ namespace VKR
 		};
 	}
 }
+#endif

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _C_CUBEMAP_MATERIAL
+#define _C_CUBEMAP_MATERIAL
+
 #include "../../video/VKBackend.h"
 #include <string>
 #include <glm/fwd.hpp>
@@ -43,3 +45,4 @@ namespace VKR
 		};
 	}
 }
+#endif

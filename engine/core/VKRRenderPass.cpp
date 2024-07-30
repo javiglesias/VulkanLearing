@@ -1,4 +1,5 @@
 #include "VKRRenderPass.h"
+#include <signal.h>
 
 namespace VKR
 {
@@ -89,7 +90,7 @@ namespace VKR
 			renderPassInfo.pDependencies = &subpassDep;
 			if (vkCreateRenderPass(_LogicDevice, &renderPassInfo, nullptr,
 				&m_Pass) != VK_SUCCESS)
-				exit(-8);
+				raise(SIGTRAP);
 		}
 
 		void RenderPass::Cleanup(VkDevice _LogicDevice)

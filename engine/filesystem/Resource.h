@@ -1,5 +1,6 @@
-#pragma once
-#include <corecrt_memory.h>
+#ifndef _C_RESOURCE
+#define _C_RESOURCE
+#include <cstring>
 namespace VKR
 {
 	enum STATE
@@ -28,3 +29,4 @@ namespace VKR
 		}
 	};
 }
+#endif

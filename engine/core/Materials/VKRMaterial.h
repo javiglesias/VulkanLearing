@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_MATERIAL
+#define _C_MATERIAL
 #include "VKRTexture.h"
 
 #include <vector>
@@ -45,3 +46,4 @@ namespace VKR
 		};
 	}
 }
+#endif

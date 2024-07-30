@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_DEBUG_MATERIAL
+#define _C_DEBUG_MATERIAL
 #include "../../video/Types.h"
 #include "../../video/VKBufferObjects.h"
 #include "VKRTexture.h"
@@ -132,3 +133,4 @@ namespace VKR
 		};
 	}
 }
+#endif

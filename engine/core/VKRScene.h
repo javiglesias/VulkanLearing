@@ -1,7 +1,8 @@
-#pragma once
-#include "../video/VKBackend.h"
-#include "Objects/VKRCubemap.h"
+#ifndef _C_SCENE
+#define _C_SCENE
+
 #include "../video/VKBufferObjects.h"
+#include "Objects/VKRModel.h"
 
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
@@ -12,6 +13,10 @@ namespace VKR
 {
     namespace render
     {
+        class VKBackend;
+        class R_Model;
+        class R_Cubemap;
+
         class Scene
         {
         public: // FUNCIONES
@@ -44,3 +49,4 @@ namespace VKR
         Scene& GetVKMainScene();
     }
 }
+#endif

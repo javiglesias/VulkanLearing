@@ -1,7 +1,7 @@
 #include "VKRScene.h"
-
-#include "../video/Types.h"
 #include "../perfmon/Custom.h"
+#include "../video/Types.h"
+#include "Objects/VKRCubemap.h"
 
 namespace VKR
 {

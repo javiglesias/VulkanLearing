@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_PERFOM_CUSTOM
+#define _C_PERFOM_CUSTOM
 #include "../video/VKBackend.h"
 
 #define PERF_INIT(_NAME) _initPerf(_NAME);
@@ -21,3 +22,4 @@ inline void _endPerf(const char* _name)
 	end = backend->GetTime();
 	printf("PM_%s : %.3f\n", _name, (end-start));
 }
+#endif

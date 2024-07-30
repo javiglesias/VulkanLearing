@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_TYPES
+#define _C_TYPES
 #include <vulkan/vulkan_core.h>
 #include <array>
 #define GLM_FORCE_RADIANS
@@ -72,3 +73,4 @@ struct Vertex3D {
 		return attributeDescriptions;
 	}
 };
+#endif

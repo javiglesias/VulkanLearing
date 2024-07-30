@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_UTILS
+#define _C_UTILS
 #include "../core/VKRRenderPass.h"
 #ifdef _WINDOWS
 #include <Windows.h>
@@ -660,3 +661,4 @@ void ChangeColorConsole(CONSOLE_COLOR _color)
 	SetConsoleTextAttribute(hConsole, _color);
 	#endif
 }
+#endif

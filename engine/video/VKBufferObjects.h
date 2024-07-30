@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_BUFFER_OBJECTS
+#define _C_BUFFER_OBJECTS
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -50,3 +51,4 @@ struct LightBufferObject
 	alignas(16) glm::vec4 addOpts; // Kc, Kl, Kq
 	alignas(16) glm::vec4 aligned[4]; //16
 };
+#endif

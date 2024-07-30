@@ -1,4 +1,3 @@
-#pragma once
 #include "VKRModel.h"
 #include "DebugModels.h"
 

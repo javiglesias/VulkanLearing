@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _C_TEXTURE
+#define _C_TEXTURE
 #include <string>
 #include <vulkan/vulkan_core.h>
 
@@ -41,3 +42,4 @@ namespace VKR
 		};
 	}
 }
+#endif
