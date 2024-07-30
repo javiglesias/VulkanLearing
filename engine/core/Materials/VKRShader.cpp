@@ -7,7 +7,9 @@ namespace VKR
 		Shader::Shader(const std::string& _filename, int _shaderStage)
 		{
 			m_Filename = _filename;
+			#ifdef _WINDOWS
 			m_Stage = (EShLanguage)_shaderStage;
+			#endif
 		}
 		void Shader::ReadFile()
 		{
@@ -30,6 +32,7 @@ namespace VKR
 
 		void Shader::ToSPVShader()
 		{
+			#ifdef _WINDOWS
 			glslang::TProgram m_Program;
 			m_SpirvSrc.clear();
 			m_Program.addShader(m_TShader);
@@ -39,12 +42,14 @@ namespace VKR
 			m_IntermediateSrc = m_Program.getIntermediate(m_Stage);
 			glslang::GlslangToSpv(*m_IntermediateSrc, m_SpirvSrc);    // convert the glslang intermediate into SPIR-V bytes
 			printf("SPIRV creation: %s\n", m_TShader->getInfoLog());
+			#endif
 		}
 
 		bool Shader::GLSLCompile(bool _recompile)
 		{
 			if(_recompile) ReadFile();
 			auto str = m_RawSource.c_str();
+			#ifdef _WINDOWS
 			m_TShader = nullptr;
 			m_TShader = new glslang::TShader(m_Stage);
 			m_TShader->setStrings(&str, 1);
@@ -62,6 +67,8 @@ namespace VKR
 			strcpy(parseResult, m_TShader->getInfoLog());
 			printf("Parse shader: %s\n", parseResult);
 			return (strcmp(parseResult, "") == 0);
+			#endif
+			return false;
 		}
 	}
 }

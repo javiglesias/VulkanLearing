@@ -19,6 +19,7 @@
 mono_crash.*
 #dependencies
 [Dd]ependencies/
+[Bb]uild/
 *.geany
 # Build results
 [Dd]ebug/

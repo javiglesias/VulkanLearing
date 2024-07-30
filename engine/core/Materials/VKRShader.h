@@ -6,8 +6,8 @@
 #include "glslang/SPIRV/GlslangToSpv.h"
 #else
 #include "../../../dependencies/glslang/SPIRV/GlslangToSpv.h"
-#include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
-#include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
+// #include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
+// #include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
 #endif
 #include <fstream>
 #include <vector>
@@ -22,8 +22,10 @@ namespace VKR
 		private: // variables
 			std::string m_Filename;
 			std::string m_RawSource;
+			#ifdef _WINDOWS
 			EShLanguage m_Stage;
 			glslang::TShader* m_TShader;
+			#endif
 		public: // variables
 			std::vector<uint32_t> m_SpirvSrc;
 			std::vector<uint32_t> spirvCode;

@@ -1,8 +1,0 @@
-Launching Vulkan Application:
-- Layers fully controlled by the application.
-- Application: VulkanLearing
-- Executable: C:\dev\VulkanLearing\x64\Debug\pruebaVulkan.exe
-- Working Directory: C:\dev\VulkanLearing\x64\Debug
-- Command-line Arguments: Sponza/glTF Sponza.gltf
-- Log file: C:\dev\VulkanLearing\LogVulkanLearing.txt
-Process terminated
