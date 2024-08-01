@@ -132,7 +132,7 @@ namespace VKR
 				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
 				ImGui::LabelText("Elapsed time:", "%.2f", g_ElapsedTime);
 				ImGui::LabelText("Frame time:", "%.2f", g_FrameTime[g_CurrentFrameTime]);
-				ImGui::LabelText("Frame n:", "%d", g_CurrentFrame);
+				ImGui::LabelText("Frame n:", "%lld", g_CurrentFrame);
 				const float *cycles = g_FrameTime;
 				ImGui::PlotLines("Frame time", cycles, g_FrameGranularity);
 

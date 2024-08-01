@@ -5,7 +5,7 @@
 #include "glslang/Public/ResourceLimits.h"
 #include "glslang/SPIRV/GlslangToSpv.h"
 #else
-#include "../../../dependencies/glslang/SPIRV/GlslangToSpv.h"
+// #include "../../../dependencies/glslang/SPIRV/GlslangToSpv.h"
 // #include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
 // #include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
 #endif
@@ -21,21 +21,31 @@ namespace VKR
 		{
 		private: // variables
 			std::string m_Filename;
+#ifdef _WINDOWS
 			std::string m_RawSource;
-			#ifdef _WINDOWS
 			EShLanguage m_Stage;
 			glslang::TShader* m_TShader;
-			#endif
 		public: // variables
 			std::vector<uint32_t> m_SpirvSrc;
 			std::vector<uint32_t> spirvCode;
+#else
+		private:
+			std::vector<char> m_CompiledSource;
+		public:
+			std::vector<char> m_CompiledSpv;
+#endif
 		public: // functions
 			Shader(const std::string& _filename, int _shaderStage);
-			std::vector<uint32_t> LoadShader();
+			#ifdef _WINDOWS
+			std::vector<uint32_t>
+			#else
+			std::vector<char>
+			#endif 
+			LoadShader();
 			bool GLSLCompile(bool _recompile = false);
 		private: // Functions
-			void ReadFile();
 			void ToSPVShader();
+			void ReadFile();
 		};
 	}
 }

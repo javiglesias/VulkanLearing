@@ -155,8 +155,13 @@ namespace VKR
             auto spvCompiled = _shader->LoadShader();
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            #ifdef _WINDOWS
             shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
             shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
+            #else
+                shaderModuleCreateInfo.codeSize = spvCompiled.size();
+                shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());
+            #endif
             if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
                 != VK_SUCCESS)
                 return false;

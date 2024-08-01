@@ -56,7 +56,6 @@ namespace VKR
 		void RenderPass::CreateDepthOnlySubPass()
 		{
 			/// Attachment References
-			VkAttachmentReference depthAttachmentRef{};
 			depthAttachmentRef.attachment = 0;
 			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 

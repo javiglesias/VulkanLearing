@@ -66,7 +66,7 @@ namespace VKR
 		}
 		R_Model::R_Model()
 		{
-			memset(m_Path, (int)'FA', 64);
+			memset(m_Path, (int)'F', 64);
 		}
 	}
 }

@@ -11,6 +11,9 @@
 *.sln.docstates
 *.kate-swp
 *.su
+*.o
+*.pdb
+*.out
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
