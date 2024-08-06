@@ -2,13 +2,16 @@ SRCS := $(shell find ./engine -name '*.cpp')
 OBJS := $(SRCS:%=./engine/%.o)
 CXX = clang++
 SPV := $(shell find ./dependencies/glslang -name '*.cpp')
+
 IMGUI = dependencies/imgui/imgui.cpp dependencies/imgui/imgui_draw.cpp dependencies/imgui/imgui_widgets.cpp dependencies/imgui/imgui_tables.cpp dependencies/imgui/backends/imgui_impl_glfw.cpp dependencies/imgui/backends/imgui_impl_vulkan.cpp
+CGLTF = dependencies/cgltf/cgltf.h
 CFLAGS = -g -std=gnu++17 -Wc++17-extensions
 LIBS = -lglfw  -lvulkan -ldl -lpthread -lX11 -lassimp 
+
 GLSLIBS = dependencies/glslang/glslang/libglslang.a dependencies/glslang/glslang/libMachineIndependent.a dependencies/glslang/glslang/libglslang-default-resource-limits.a dependencies/glslang/glslang/libGenericCodeGen.a
 SPVLIBS = dependencies/glslang/External/spirv-tools/source/libSPIRV-Tools.a dependencies/glslang/SPIRV/libSPIRV.a dependencies/glslang/SPIRV/libSPVRemapper.a
-INC = -I"dependencies/glfw/include" -I"dependencies/assimp/include" -I"dependencies/glslang/glslang/Public" -I"dependencies/glslang/SPIRV" -I"dependencies/glslang/include" -I"dependencies/glslang/External/spirv-tools/include"
-DLIBS = -L"dependencies/assimp/bin" -L"dependencies/glfw/src" -L"dependencies/glslang/glslang" -L"dependencies/glslang/SPIRV" -L"dependencies/glslang/External/spirv-tools/source"
+INC = -I"dependencies/glfw/include" -I"dependencies/assimp/include" -I"dependencies/cgltf"
+DLIBS = -L"dependencies/assimp/bin" -L"dependencies/glfw/src"
 VulkanLearning:
 	$(CXX) $(CFLAGS)  $(SRCS) $(IMGUI) -o VulkanLearning.out $(INC) $(DLIBS) $(LIBS)
 

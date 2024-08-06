@@ -91,10 +91,11 @@ vec3 DirectionalLight(vec3 _color)
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
 	float shadow = ShadowCalculation(shadowCoord, inShadowTexture);
-	ambient  *= att;
-	diffuse  *= att;
-	specular *= att;
+	// ambient  *= att;
+	// diffuse  *= att;
+	// specular *= att;
 	return (ambient + (1.0 - shadow) * (diffuse + specular)) * _color;
+	// return vec3(0.0, norm.x, norm.y);
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 

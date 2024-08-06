@@ -1,4 +1,5 @@
 #include "VKRShader.h"
+#include <csignal>
 
 namespace VKR
 {
@@ -27,10 +28,15 @@ namespace VKR
 #else	
 			m_CompiledSource.clear();
 			std::ifstream f(m_Filename, std::ios::ate | std::ios::binary);
-			size_t fileSize = (size_t)f.tellg();
-			m_CompiledSource.resize(fileSize);
-			f.seekg(0);
-			f.read(m_CompiledSource.data(), fileSize);
+			if(f.is_open())
+			{
+				size_t fileSize = (size_t)f.tellg();
+				m_CompiledSource.resize(fileSize);
+				f.seekg(0);
+				f.read(m_CompiledSource.data(), fileSize);
+			} else {
+				raise(SIGTRAP);
+			}
 			f.close();
 #endif
 		}
@@ -91,7 +97,7 @@ namespace VKR
 #else // we have to read the file compiled
 			
 #endif
-			return false;
+			return true;
 		}
 	}
 }

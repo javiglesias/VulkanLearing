@@ -2,6 +2,7 @@
 #include "../perfmon/Custom.h"
 #include "../video/Types.h"
 #include "Objects/VKRCubemap.h"
+#include "../filesystem/gltfReader.h"
 
 namespace VKR
 {
@@ -36,6 +37,9 @@ namespace VKR
 		void Scene::LoadStaticModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
 			m_StaticModels.push_back(LoadModel(_filepath, _modelName, _position, _scale, _customTexture));
+			// char filename[128];
+			// sprintf(filename, "%s%s", _filepath, _modelName);
+			// auto data = filesystem::read_glTF(_filepath, _modelName);
 		}
 
 		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)

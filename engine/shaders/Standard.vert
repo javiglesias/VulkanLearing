@@ -10,7 +10,7 @@ layout(set=0, binding=0) uniform UniformBufferObject
 layout(set=0, binding=4) uniform DynamicBufferObject
 {
     mat4 model;
-    vec4 modelOpts; // 0: MipLevel
+    vec4 modelOpts; // 0: shadow?, 1:MipLevel
 	vec4 addOpts; // 0: num current Lights
 } dynO;
 
@@ -32,7 +32,7 @@ void main() {
 	fragPosition = inPosition;
 	normal = mat3(transpose(inverse(dynO.model))) * aNormal;
     viewerPosition = ubo.viewerPosition;
-	mipLevel = dynO.modelOpts.x;
+	mipLevel = dynO.modelOpts.y;
 	shadowCoord = dynO.model * vec4(inPosition, 1.0);
 	nLights = dynO.addOpts[0];
 }
