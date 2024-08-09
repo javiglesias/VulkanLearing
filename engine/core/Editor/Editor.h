@@ -1,6 +1,7 @@
 #ifndef _C_EDITOR
 #define _C_EDITOR
 
+#include <vector>
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
 
@@ -19,6 +20,7 @@ namespace VKR
 		{
 		private:
 			VkDescriptorPool m_UIDescriptorPool;
+			std::vector<char*> m_Models;
 		public:
 			Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
 			void Cleanup();

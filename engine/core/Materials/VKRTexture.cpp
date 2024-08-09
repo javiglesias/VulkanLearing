@@ -20,8 +20,8 @@ namespace VKR
 		void Texture::LoadTexture(bool isCubemap)
 		{
 			stbi_uc* pixels;
-
-			pixels = stbi_load(m_Path.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+			if( !m_Path.empty())
+				pixels = stbi_load(m_Path.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
 				printf("\rMissing Texture %s\n", m_Path.c_str());

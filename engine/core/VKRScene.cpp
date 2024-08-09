@@ -3,6 +3,7 @@
 #include "../video/Types.h"
 #include "Objects/VKRCubemap.h"
 #include "../filesystem/gltfReader.h"
+#include "Objects/VKRModel.h"
 
 namespace VKR
 {
@@ -37,9 +38,15 @@ namespace VKR
 		void Scene::LoadStaticModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
 			m_StaticModels.push_back(LoadModel(_filepath, _modelName, _position, _scale, _customTexture));
-			// char filename[128];
-			// sprintf(filename, "%s%s", _filepath, _modelName);
-			// auto data = filesystem::read_glTF(_filepath, _modelName);
+		}
+
+		void Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		{
+			char filename[128];
+			tempModel = new R_Model();
+			sprintf(filename, "%s%s", _filepath, _modelName);
+			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
+			m_StaticModels.push_back(tempModel);
 		}
 
 		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
@@ -189,10 +196,10 @@ namespace VKR
 						VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 						VkDeviceSize offsets[] = { 0 };
 						vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
-						vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 						// Draw Loop
-						if (m_IndexedRender && mesh->m_Indices.size() > 0)
+						if (mesh->m_Indices.size() > 0)
 						{
+							vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 							vkCmdDrawIndexed(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
 						}
 						else
@@ -323,10 +330,10 @@ namespace VKR
 					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_PipelineLayout, 0, 1,
 						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_CurrentFrame], 5, dynOffsets.data());
 					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
-					vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 					// Draw Loop
-					if (m_IndexedRender && mesh->m_Indices.size() > 0)
+					if ( mesh->m_Indices.size() > 0)
 					{
+						vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 						vkCmdDrawIndexed(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
 					}
 					else

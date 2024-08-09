@@ -11,6 +11,7 @@
 #include "../../../dependencies/imgui/misc/single_file/imgui_single_file.h"
 #include "../../../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../../../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#include <dirent.h>
 #endif
 
 namespace VKR
@@ -61,6 +62,17 @@ namespace VKR
 			init_info.ImageCount = _ImageCount;
 			init_info.CheckVkResultFn = nullptr;
 			ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);
+			// list all the directories for the model loading
+			const char* path = "./resources/models";
+			DIR* directory = opendir(path);
+			dirent* entry = readdir(directory);
+			while(entry != NULL)
+			{
+				m_Models.push_back(entry->d_name);
+				fprintf(stderr, "directory %s\n", entry->d_name);
+				entry = readdir(directory);
+			}
+			closedir(directory);
 		}
 		void Editor::Cleanup()
 		{
@@ -105,7 +117,15 @@ namespace VKR
 				render::m_Rotation.z = rotation[2];
 				if (ImGui::Button("Load demo"))
 				{
-					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/BarramundiFish/glTF/", "BarramundiFish.gltf", glm::vec3(0.f, 0.f, 0.f));
+					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
+					VKR::render::m_CreateTestModel = false;
+					_mainScene->PrepareScene(_backend);
+				}
+
+				if (ImGui::Button("Load cgltf"))
+				{
+					_mainScene->LoadModel_ALT("resources/models/Avocado/glTF/", "Avocado.gltf", glm::vec3(0.f, 0.f, 0.f));
 					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
@@ -115,6 +135,23 @@ namespace VKR
 					_mainScene->ReloadShaders(_backend);
 				}
 
+				 static ImGuiComboFlags flags = 0;
+				 static int item_current_idx = 0;
+				  const char* combo_preview_value = "FIRST";
+				if (ImGui::BeginCombo("combo 1", combo_preview_value, flags))
+				{
+					for (int n = 0; n < m_Models.size(); n++)
+					{
+						const bool is_selected = (item_current_idx == n);
+						if (ImGui::Selectable(m_Models[n], is_selected))
+							item_current_idx = n;
+
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
