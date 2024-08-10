@@ -1,6 +1,8 @@
 #include "Editor.h"
+#include "EditorModels.h"
 #include "../../video/VKBackend.h"
 #include "../VKRScene.h"
+#include <cstdio>
 
 #ifdef _WINDOWS
 #include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
@@ -62,17 +64,16 @@ namespace VKR
 			init_info.ImageCount = _ImageCount;
 			init_info.CheckVkResultFn = nullptr;
 			ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);
-			// list all the directories for the model loading
-			const char* path = "./resources/models";
-			DIR* directory = opendir(path);
-			dirent* entry = readdir(directory);
-			while(entry != NULL)
-			{
-				m_Models.push_back(entry->d_name);
-				fprintf(stderr, "directory %s\n", entry->d_name);
-				entry = readdir(directory);
-			}
-			closedir(directory);
+			// // list all the directories for the model loading
+			// const char* path = "./resources/models";
+			// DIR* directory = opendir(path);
+			// dirent* entry = readdir(directory);
+			// while(entry != NULL)
+			// {
+			// 	m_Models.push_back(entry->d_name);
+			// 	entry = readdir(directory);
+			// }
+			// closedir(directory);
 		}
 		void Editor::Cleanup()
 		{
@@ -125,10 +126,13 @@ namespace VKR
 
 				if (ImGui::Button("Load cgltf"))
 				{
-					_mainScene->LoadModel_ALT("resources/models/Avocado/glTF/", "Avocado.gltf", glm::vec3(0.f, 0.f, 0.f));
-					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
-					VKR::render::m_CreateTestModel = false;
-					_mainScene->PrepareScene(_backend);
+					if(_mainScene->LoadModel_ALT("resources/models/Avocado/glTF/", "Avocado.gltf", glm::vec3(0.f, 0.f, 0.f)))
+					{
+						VKR::render::m_CreateTestModel = false;
+						_mainScene->PrepareScene(_backend);
+					} else {
+					fprintf(stderr, "ERROR LOADING MODEL WITH cgltf.h");
+					}
 				}
 				if (ImGui::Button("Reload shaders"))
 				{
@@ -137,13 +141,13 @@ namespace VKR
 
 				 static ImGuiComboFlags flags = 0;
 				 static int item_current_idx = 0;
-				  const char* combo_preview_value = "FIRST";
-				if (ImGui::BeginCombo("combo 1", combo_preview_value, flags))
+				  const char* combo_preview_value =ModelList[0];
+				if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
 				{
-					for (int n = 0; n < m_Models.size(); n++)
+					for (int n = 1; n < MODELS_SIZE; n++)
 					{
 						const bool is_selected = (item_current_idx == n);
-						if (ImGui::Selectable(m_Models[n], is_selected))
+						if (ImGui::Selectable(ModelList[n], is_selected))
 							item_current_idx = n;
 
 						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -151,6 +155,16 @@ namespace VKR
 							ImGui::SetItemDefaultFocus();
 					}
 					ImGui::EndCombo();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Load"))
+				{
+					char _filepath[128];
+					sprintf(_filepath, "resources/models/%s/glTF/", ModelList[item_current_idx]);
+					char modelName[32];
+					sprintf(modelName, "%s.gltf", ModelList[item_current_idx]);
+					if(_mainScene->LoadModel_ALT(_filepath, modelName, glm::vec3(0.f, 0.f, 0.f)))
+						_mainScene->PrepareScene(_backend);
 				}
 
 				ImGui::DragFloat("zFar", &zFar);

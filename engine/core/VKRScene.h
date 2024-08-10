@@ -34,7 +34,7 @@ namespace VKR
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void LoadStaticModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
-            void LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position,
+            bool LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);

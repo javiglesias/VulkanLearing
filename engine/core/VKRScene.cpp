@@ -4,6 +4,7 @@
 #include "Objects/VKRCubemap.h"
 #include "../filesystem/gltfReader.h"
 #include "Objects/VKRModel.h"
+#include <cstddef>
 
 namespace VKR
 {
@@ -40,13 +41,15 @@ namespace VKR
 			m_StaticModels.push_back(LoadModel(_filepath, _modelName, _position, _scale, _customTexture));
 		}
 
-		void Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		bool Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
 			char filename[128];
 			tempModel = new R_Model();
 			sprintf(filename, "%s%s", _filepath, _modelName);
 			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
+			if(data == nullptr) return false;
 			m_StaticModels.push_back(tempModel);
+			return true;
 		}
 
 		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)

@@ -13,10 +13,11 @@ namespace VKR
 		cgltf_data* read_glTF(const char* _filepath, const char* _modelName, render::R_Model* tempModel_)
 		{
 			cgltf_options options {};
-			char filename[41];
+			char filename[128];
 			sprintf(filename, "%s%s", _filepath, _modelName);
 			cgltf_data* modelData = NULL;
 			cgltf_parse_file(&options, filename, &modelData);
+			if(modelData == NULL) return nullptr;
 			cgltf_load_buffers(&options, modelData, _filepath);
 			if(cgltf_validate(modelData) == cgltf_result_success)
 			{
@@ -57,8 +58,6 @@ namespace VKR
 											n += (int)(accessor->stride/sizeof(float));
 											// fprintf(stderr, "\n");
 										}
-										// const float* position_data = (float *)accessor->buffer_view->buffer->data;
-										// fprintf(stderr, "position %f,%f,%f\n", position_data[0], position_data[1], position_data[2]);
 									}
 								}
 								else if(cgltf_attribute_type_normal == mesh->primitives[p].attributes[a].type)
@@ -92,15 +91,42 @@ namespace VKR
 									n += (int)(accessor->stride/sizeof(unsigned short));
 								}
 							}
-						//  TODO MATERIALS
-							auto materialID = cgltf_material_index(modelData, mesh->primitives[p].material);
-							tempMesh->m_Material = materialID;
-							tempModel_->m_Materials[materialID] = new render::R_Material();
-							fprintf(stderr, "Material %ld: %s\n", materialID, mesh->primitives[p].material->name);
-							// std::string pathTexture = std::string(mesh->primitives[p].material->normal_texture.texture->image->uri);
-							tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
-							tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
-							tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
+							//  MATERIALS
+							cgltf_size materialID = 0;
+							if(mesh->primitives[p].material)
+							{
+								materialID = cgltf_material_index(modelData, mesh->primitives[p].material);
+								tempMesh->m_Material = materialID;
+								tempModel_->m_Materials[materialID] = new render::R_Material();
+								fprintf(stderr, "Material %ld: %s\n", materialID, mesh->primitives[p].material->name);
+								tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
+								tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
+								tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
+								if(mesh->primitives[p].material->normal_texture.texture != nullptr)
+								{
+									std::string pathTexture = std::string(mesh->primitives[p].material->normal_texture.texture->image->uri);
+									tempModel_->m_Materials[materialID]->m_TextureDiffuse->m_Path =  _filepath + pathTexture;
+								}
+								if(mesh->primitives[p].material->specular.specular_texture.texture != nullptr)
+								{
+									std::string pathTexture = std::string(mesh->primitives[p].material->specular.specular_texture.texture->image->uri);
+									tempModel_->m_Materials[materialID]->m_TextureSpecular->m_Path = _filepath + pathTexture;
+								}
+								if(mesh->primitives[p].material->pbr_metallic_roughness.base_color_texture.texture != nullptr)
+								{
+									std::string pathTexture = std::string(mesh->primitives[p].material->pbr_metallic_roughness.base_color_texture.texture->image->uri);
+									tempModel_->m_Materials[materialID]->m_TextureAmbient->m_Path = _filepath + pathTexture;
+									
+								}
+							}
+							else
+							{
+								tempMesh->m_Material = materialID;
+								tempModel_->m_Materials[materialID] = new render::R_Material();
+								tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
+								tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
+								tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
+							}
 							tempModel_->m_Materials[materialID]->m_TextureShadowMap = new render::Texture();
 						}
 						tempModel_->m_Meshes.push_back(tempMesh);
