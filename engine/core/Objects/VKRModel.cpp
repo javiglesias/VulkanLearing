@@ -21,8 +21,11 @@ namespace VKR
 		{
 			switch(_type)
 			{
-			case PRIMITIVE::SPHERE:
+			case SPHERE:
 				AddSphereDebug();
+				break;
+			case ARROW:
+				AddArrowDebug();
 				break;
 			case CUBE:
 				AddCubeDebug();
@@ -48,6 +51,11 @@ namespace VKR
 		void R_DbgModel::AddSphereDebug()
 		{
 			m_Vertices = m_SphereVertices;
+		}
+
+		void R_DbgModel::AddArrowDebug()
+		{
+			m_Vertices = m_Arrow;
 		}
 
 		void R_DbgModel::AddCubeDebug()

@@ -3,6 +3,7 @@
 #include "../video/Types.h"
 #include "Objects/VKRCubemap.h"
 #include "../filesystem/gltfReader.h"
+#include "Objects/VKRLight.h"
 #include "Objects/VKRModel.h"
 #include <cstddef>
 
@@ -142,84 +143,92 @@ namespace VKR
 			}
 		}
 
+		/// Shadow Pass
 		void Scene::ShadowPass(VKBackend* _backend, int _CurrentFrame)
 		{
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
-			glm::mat4 shadowProjMat = glm::ortho<float>(-g_LightRight, g_LightRight, -g_LightUp, g_LightUp, -g_LightDepth, g_LightDepth);
-			shadowProjMat[1][1] *= -1;
-			glm::mat4 lightViewMat = glm::lookAt(m_LightPos, m_LightPos+m_LightCenter, m_LightUp);
-			glm::mat4 lightModelMat = glm::mat4(1.f);
+			glm::mat4 orthogonalProjMat = glm::ortho<float>(g_DirectionalLight->m_Right, -g_DirectionalLight->m_Right,
+																												g_DirectionalLight->m_Up, -g_DirectionalLight->m_Up , 
+																												g_DirectionalLight->m_Depth, -g_DirectionalLight->m_Depth);
+			glm::mat4 lightViewMat = glm::lookAt( g_DirectionalLight->m_Pos, g_DirectionalLight->m_Pos + g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
+			glm::mat4 lightProjMat = orthogonalProjMat * lightViewMat;
 			auto renderContext = GetVKContext();
-			/// Shadow Pass
+			// Clear Color
+			VkClearValue clearValue;
+			clearValue.depthStencil = { 1.0f, 0 };
+			// Update Uniform buffers
+			ShadowUniformBufferObject ubo{};
+			ubo.view = lightViewMat;
+			ubo.projection = lightProjMat;
+			ubo.depthMVP = lightProjMat * lightViewMat;
+			memcpy(_backend->m_ShadowUniformBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
+
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = renderContext.m_ShadowPass->m_Pass;
+			renderPassInfo.framebuffer = _backend->m_ShadowFramebuffer;
+			renderPassInfo.renderArea.offset = { 0,0 };
+			renderPassInfo.renderArea.extent = _backend->m_CurrentExtent;
+			renderPassInfo.clearValueCount = 1;
+			renderPassInfo.pClearValues = &clearValue;
+			vkCmdBeginRenderPass(_backend->m_CommandBuffer[_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_Pipeline);
+			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
+
+			auto dynamicAlignment = sizeof(DynamicBufferObject);
+			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
 			{
-				// Clear Color
-				VkClearValue clearValue;
-				clearValue.depthStencil = { 1.0f, 0 };
-				// Update Uniform buffers
-				ShadowUniformBufferObject ubo{};
-				ubo.view = lightViewMat;
-				ubo.projection = shadowProjMat;
-				ubo.depthMVP = shadowProjMat * lightViewMat * lightModelMat;
-				memcpy(_backend->m_ShadowUniformBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
-
-				VkRenderPassBeginInfo renderPassInfo{};
-				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = renderContext.m_ShadowPass->m_Pass;
-				renderPassInfo.framebuffer = _backend->m_ShadowFramebuffer;
-				renderPassInfo.renderArea.offset = { 0,0 };
-				renderPassInfo.renderArea.extent = _backend->m_CurrentExtent;
-				renderPassInfo.clearValueCount = 1;
-				renderPassInfo.pClearValues = &clearValue;
-				vkCmdBeginRenderPass(_backend->m_CommandBuffer[_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_Pipeline);
-				vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-				vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
-
-				auto dynamicAlignment = sizeof(DynamicBufferObject);
-				if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
-				{
-					dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-				}
-				uint32_t count = 0;
-				// Sombras(Depth Pass)
-				for (auto& model : m_StaticModels)
-				{
-					DynamicBufferObject dynO{};
-					dynO.model = glm::mat4(1.0f);
-					uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-					memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
-					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout,
-						0, 1, &_backend->m_ShadowMat->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
-					for (auto& mesh : model->m_Meshes)
-					{
-						// Update Uniform buffers
-
-						VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
-						VkDeviceSize offsets[] = { 0 };
-						vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
-						// Draw Loop
-						if (mesh->m_Indices.size() > 0)
-						{
-							vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-							vkCmdDrawIndexed(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
-						}
-						else
-						{
-							vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_Vertices.size(), 1, 0, 0);
-						}
-						// Flush to make changes visible to the host
-						VkMappedMemoryRange mappedMemoryRange{};
-						mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-						mappedMemoryRange.memory = _backend->m_ShadowDynamicBuffersMemory[_CurrentFrame];
-						mappedMemoryRange.size = sizeof(dynO);
-						vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
-					}
-					++count;
-				}
-				vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
+				dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			}
+			uint32_t count = 0;
+			// Sombras(Depth Pass)
+			for (auto& model : m_StaticModels)
+			{
+				DynamicBufferObject dynO{};
+				dynO.model = model->m_ModelMatrix;
+				dynO.model = glm::translate(dynO.model, model->m_Pos);
+				dynO.model = glm::scale(dynO.model, model->m_Scale);
+				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
+				dynO.modelOpts = glm::vec4(0); // 0: miplevel
+				dynO.addOpts = glm::vec4(0); // 0: num current Lights
+				dynO.aligned[0] =  glm::vec4(0);
+				dynO.aligned[1] =  glm::vec4(0);
+				
+				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+				memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout,
+					0, 1, &_backend->m_ShadowMat->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
+				for (auto& mesh : model->m_Meshes)
+				{
+					// Update Uniform buffers
+
+					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
+					VkDeviceSize offsets[] = { 0 };
+					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
+					// Draw Loop
+					if (mesh->m_Indices.size() > 0)
+					{
+						vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+						vkCmdDrawIndexed(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
+					}
+					else
+					{
+						vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_Vertices.size(), 1, 0, 0);
+					}
+				}
+				++count;
+				// Flush to make changes visible to the host
+				VkMappedMemoryRange mappedMemoryRange{};
+				mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+				mappedMemoryRange.memory = _backend->m_ShadowDynamicBuffersMemory[_CurrentFrame];
+				mappedMemoryRange.size = sizeof(dynO);
+				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+				break;
+			}
+			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
 		}
 
 		void Scene::GeometryPass(VKBackend* _backend, int _CurrentFrame)
@@ -254,7 +263,7 @@ namespace VKR
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
 			auto renderContext = GetVKContext();
-			GeometryPass(_backend, _CurrentFrame);
+			// GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
@@ -282,9 +291,25 @@ namespace VKR
 			uint32_t count = 0;
 			// lights
 			m_LightsOs.clear();
+			// Ambient Light
+			{
+				glm::mat4 lightViewMat = glm::lookAt( g_DirectionalLight->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
+				glm::mat4 lightProjMat	= glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
+				LightBufferObject temp;
+				temp			= {};
+				temp.addOpts	= glm::vec4(g_DirectionalLight->m_Pos, 1.0);
+				temp.Opts.x		= g_ShadowBias;
+				temp.Opts.y		= g_ShadowBias;
+				temp.View		= lightViewMat;
+				temp.Proj		= lightProjMat;
+				temp.Position	= glm::vec4(g_DirectionalLight->m_Pos, 1.0);
+				temp.Color		= glm::vec4(g_DirectionalLight->m_Color, 1.0);
+				m_LightsOs.push_back(temp);
+			}
+			//Point Ligts
 			for(auto& light : g_Lights)
 			{
-				glm::mat4 lightViewMat	= glm::lookAt(light->m_Pos, light->m_Pos + m_LightForward, m_LightUp);
+				glm::mat4 lightViewMat = glm::lookAt( light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
 				glm::mat4 lightProjMat	= glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 				LightBufferObject temp;
 				temp			= {};
@@ -370,7 +395,7 @@ namespace VKR
 			{
 				DynamicBufferObject dynO{};
 				dynO.model = model->m_ModelMatrix;
-				dynO.model = glm::translate(dynO.model, m_LightPos);
+				dynO.model = glm::translate(dynO.model, g_DirectionalLight->m_Pos);
 				dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_debugScale);
 				dynO.model = glm::rotate<float>(dynO.model, g_Rotation, m_Rotation);
 
@@ -575,9 +600,11 @@ namespace VKR
 			}
 			PERF_END("PREPARE DRAW SCENE")
 		}
-		void Scene::Init()
+		void Scene::Init(VKBackend* _backend)
 		{
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
+			g_DirectionalLight = new Directional();
+			PrepareDebugScene(_backend);
 		}
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{

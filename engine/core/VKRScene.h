@@ -21,7 +21,7 @@ namespace VKR
         {
         public: // FUNCIONES
             Scene() {}
-            void Init();
+            void Init(VKBackend* _backend);
             void Loop();
             void ReloadShaders(VKBackend* _backend);
             void DrawScene(VKBackend* _backend, int _CurrentFrame);

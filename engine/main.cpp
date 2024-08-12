@@ -13,7 +13,7 @@ int main(int _argc, char** _args)
 	float deltaTime = 0.f;
 	
 	backend.Init();
-	mainScene.Init();
+	mainScene.Init(&backend);
 	editor = new VKR::render::Editor(VKR::render::m_Window, backend.m_Instance, backend.m_Capabilities.minImageCount,
 		backend.m_SwapchainImagesCount);
 	auto renderContext = VKR::render::GetVKContext();

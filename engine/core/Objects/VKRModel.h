@@ -18,6 +18,7 @@ namespace VKR
 		enum PRIMITIVE : uint8_t
 		{
 			SPHERE,
+			ARROW,
 			QUAD,
 			TERRAIN,
 			CUBE
@@ -68,6 +69,7 @@ namespace VKR
 			R_DbgModel(PRIMITIVE _type);
 			void Cleanup(VkDevice _LogicDevice);
 			void AddSphereDebug();
+			void AddArrowDebug();
 			void AddCubeDebug();
 			void AddQuadDebug();
 			void AddTerrainDebug();

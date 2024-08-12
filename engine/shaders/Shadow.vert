@@ -18,5 +18,5 @@ layout (location = 2) in vec3 aNormal;
 
 
 void main() {
-    gl_Position = ubo.MVP * vec4(inPosition, 1.0);
+    gl_Position = ubo.projection* dynO.model * vec4(inPosition, 1.0);
 }

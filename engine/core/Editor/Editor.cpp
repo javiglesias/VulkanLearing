@@ -116,9 +116,16 @@ namespace VKR
 				render::m_Rotation.x = rotation[0];
 				render::m_Rotation.y = rotation[1];
 				render::m_Rotation.z = rotation[2];
+				if (ImGui::Button("Load demo Sponza"))
+				{
+					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
+					VKR::render::m_CreateTestModel = false;
+					_mainScene->PrepareScene(_backend);
+				}
 				if (ImGui::Button("Load demo"))
 				{
-					_mainScene->LoadStaticModel("resources/models/BarramundiFish/glTF/", "BarramundiFish.gltf", glm::vec3(0.f, 0.f, 0.f));
+					_mainScene->LoadStaticModel("resources/models/Corset/glTF/", "Corset.gltf", glm::vec3(0.f, 0.f, 0.f));
 					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
 					VKR::render::m_CreateTestModel = false;
 					_mainScene->PrepareScene(_backend);
@@ -215,6 +222,15 @@ namespace VKR
 						model->m_RotAngle.y = rotation[1];
 						model->m_RotAngle.z = rotation[2];
 						ImGui::DragFloat("R.GRAD", &model->m_RotGRAD);
+						
+						float scale[3];
+						scale[0] = model->m_Scale.x;
+						scale[1] = model->m_Scale.y;
+						scale[2] = model->m_Scale.z;
+						ImGui::InputFloat3("Scale", scale);
+						model->m_Scale.x = scale[0];
+						model->m_Scale.y = scale[1];
+						model->m_Scale.z = scale[2];
 					}
 				}
 				if (ImGui::Button("Delete"))
@@ -238,6 +254,30 @@ namespace VKR
 				if (ImGui::Button("Create Spot Light"))
 				{
 
+				}
+				// Directional Light opts
+				if (ImGui::TreeNode("Directional Light settings"))
+				{
+					float position[3];
+					position[0] = g_DirectionalLight->m_Pos.x;
+					position[1] = g_DirectionalLight->m_Pos.y;
+					position[2] = g_DirectionalLight->m_Pos.z;
+					ImGui::DragFloat3("Pos", position, 0.1f);
+					g_DirectionalLight->m_Pos.x = position[0];
+					g_DirectionalLight->m_Pos.y = position[1];
+					g_DirectionalLight->m_Pos.z = position[2];
+					ImGui::DragFloat("Right size", &g_DirectionalLight->m_Right);
+					ImGui::DragFloat("Up size", &g_DirectionalLight->m_Up);
+					ImGui::DragFloat("Depth size", &g_DirectionalLight->m_Depth);
+					float center[3];
+					center[0] = g_DirectionalLight->m_Center.x;
+					center[1] = g_DirectionalLight->m_Center.y;
+					center[2] = g_DirectionalLight->m_Center.z;
+					ImGui::DragFloat3("Look At", center, 0.1f);
+					g_DirectionalLight->m_Center.x = center[0];
+					g_DirectionalLight->m_Center.y = center[1];
+					g_DirectionalLight->m_Center.z = center[2];
+					ImGui::TreePop();
 				}
 				for (auto& light : g_Lights)
 				{

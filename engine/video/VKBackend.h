@@ -39,9 +39,6 @@ namespace VKR
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
         inline float m_CameraFOV = 70.f;
-        inline float g_LightRight = 300.0;
-        inline float g_LightUp = -300.f;
-        inline float g_LightDepth = -300.f;
         inline float zFar= 1000000.f;
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
@@ -63,11 +60,6 @@ namespace VKR
         inline std::string g_ConsoleMSG;
         inline glm::vec3 m_PointLightPos = glm::vec3(0.f, 3.f, 0.f);
         inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
-        inline glm::vec3 m_LightPos = glm::vec3(0.f, 3.f, 0.f);
-        inline glm::vec3 m_LightCenter = glm::vec3(0.f, 0.f, -1.f);
-        inline glm::vec3 m_LightRot = glm::vec3(0.f);
-        inline glm::vec3 m_LightForward = glm::vec3(0.f, 0.f, 1.f);
-        inline glm::vec3 m_LightUp = glm::vec3(0.f, -1.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
         inline glm::vec3 m_CameraPos = glm::vec3(0.f);
         inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
@@ -80,6 +72,7 @@ namespace VKR
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
         inline std::vector<R_Model*> m_StaticModels;
         inline std::vector<Light*> g_Lights;
+        inline Directional* g_DirectionalLight;
 
         class VKBackend
         {
