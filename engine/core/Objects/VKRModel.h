@@ -58,7 +58,7 @@ namespace VKR
 		struct R_DbgModel
 		{
 		public:
-			R_DbgMaterial m_Material;
+			R_DbgMaterial* m_Material;
 			VkBuffer m_VertexBuffer;
 			VkDeviceMemory m_VertexBufferMemory;
 			glm::vec3 m_Pos{ 0.0f };
@@ -66,13 +66,8 @@ namespace VKR
 			glm::mat4 m_ModelMatrix = glm::mat4{ 1.0 };
 			std::vector<DBG_Vertex3D> m_Vertices;
 		public:
-			R_DbgModel(PRIMITIVE _type);
+			R_DbgModel(const char* _filepath, const char* _modelName);
 			void Cleanup(VkDevice _LogicDevice);
-			void AddSphereDebug();
-			void AddArrowDebug();
-			void AddCubeDebug();
-			void AddQuadDebug();
-			void AddTerrainDebug();
 		};
 	}
 }

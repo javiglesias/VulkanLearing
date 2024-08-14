@@ -38,7 +38,6 @@ namespace VKR
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
-            void CreateDebugModel(PRIMITIVE _type);
             void Cleanup(VkDevice _LogicDevice);
         private:
             R_Model* tempModel;

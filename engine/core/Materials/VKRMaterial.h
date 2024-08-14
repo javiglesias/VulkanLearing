@@ -36,6 +36,10 @@ namespace VKR
 			Texture* m_TextureSpecular;
 			Texture* m_TextureAmbient;
 			Texture* m_TextureShadowMap;
+			Texture* m_TextureEmissive;
+			Texture* m_TextureOcclusion;
+			Texture* m_TextureMetallicRoughness;
+			Texture* m_TextureNormal;
 		public:
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptorPool(VkDevice _LogicDevice);

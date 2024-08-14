@@ -16,18 +16,27 @@ namespace VKR
 
 			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
 			m_TextureDiffuse->LoadTexture();
-			m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureSpecular->LoadTexture();
-			m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureAmbient->LoadTexture();
+			m_TextureEmissive->LoadTexture();
+			m_TextureOcclusion->LoadTexture();
+			m_TextureMetallicRoughness->LoadTexture();
+			m_TextureNormal->LoadTexture();
+
+			m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
+			m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureAmbient->CreateAndTransitionImage(_backend->m_CommandPool);
+			m_TextureEmissive->CreateAndTransitionImage(_backend->m_CommandPool);
+			m_TextureOcclusion->CreateAndTransitionImage(_backend->m_CommandPool);
+			m_TextureMetallicRoughness->CreateAndTransitionImage(_backend->m_CommandPool);
+			m_TextureNormal->CreateAndTransitionImage(_backend->m_CommandPool);
 		}
 
 		void R_Material::CreateDescriptorPool(VkDevice _LogicDevice)
 		{
 			if (m_DescriptorPool == nullptr)
 			{
-				std::array<VkDescriptorPoolSize, 7> descPoolSize{};
+				std::array<VkDescriptorPoolSize, 11> descPoolSize{};
 				// UBO
 				descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
@@ -51,6 +60,22 @@ namespace VKR
 
 				descPoolSize[6].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 				descPoolSize[6].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				// Textura Emissive
+				descPoolSize[7].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[7].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				// Textura Occlusion
+				descPoolSize[8].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[8].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				// Textura Metallic Rough
+				descPoolSize[9].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[9].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				// Textura Metallic Rough
+				descPoolSize[10].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[10].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 				VkDescriptorPoolCreateInfo descPoolInfo{};
 				descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -91,7 +116,7 @@ namespace VKR
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
-				std::array<VkWriteDescriptorSet, 10> descriptorsWrite{};
+				std::array<VkWriteDescriptorSet, 14> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[0].dstBinding = 0;
@@ -191,36 +216,37 @@ namespace VKR
 				descriptorsWrite[4].pTexelBufferView = nullptr;
 
 				//Shadow
-				VkDescriptorImageInfo TextureShadowImage{};
-				TextureShadowImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				TextureShadowImage.imageView = m_TextureShadowMap->tImageView;
-				if (m_TextureShadowMap->m_Sampler != nullptr)
 				{
-					TextureShadowImage.sampler = m_TextureShadowMap->m_Sampler;
+					VkDescriptorImageInfo TextureShadowImage{};
+					TextureShadowImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureShadowImage.imageView = m_TextureShadowMap->tImageView;
+					if (m_TextureShadowMap->m_Sampler != nullptr)
+					{
+						TextureShadowImage.sampler = m_TextureShadowMap->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureShadowMap->m_Path;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[5].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[5].dstBinding = 5;
+					descriptorsWrite[5].dstArrayElement = 0;
+					descriptorsWrite[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[5].descriptorCount = 1;
+					descriptorsWrite[5].pBufferInfo = nullptr;
+					descriptorsWrite[5].pImageInfo = &TextureShadowImage;
+					descriptorsWrite[5].pTexelBufferView = nullptr;
 				}
-				else
-				{
-					printf("Invalid Sampler for frame %ld\n", i);
-					continue;
-				}
-				g_ConsoleMSG += m_TextureShadowMap->m_Path;
-				g_ConsoleMSG += '\n';
-				descriptorsWrite[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[5].dstSet = m_DescriptorSet[i];
-				descriptorsWrite[5].dstBinding = 5;
-				descriptorsWrite[5].dstArrayElement = 0;
-				descriptorsWrite[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				descriptorsWrite[5].descriptorCount = 1;
-				descriptorsWrite[5].pBufferInfo = nullptr;
-				descriptorsWrite[5].pImageInfo = &TextureShadowImage;
-				descriptorsWrite[5].pTexelBufferView = nullptr;
-
 				// Dynamic
 				VkDescriptorBufferInfo lightBufferInfo{};
 				lightBufferInfo.buffer = _LightsBuffers[i];
 				lightBufferInfo.offset = 0;
 				lightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
-				int start = 6;
+				int start = 6, end = 6;
 				for(int j = start; j < 10; j++)
 				{
 					descriptorsWrite[j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -232,7 +258,114 @@ namespace VKR
 					descriptorsWrite[j].pBufferInfo = &lightBufferInfo;
 					descriptorsWrite[j].pImageInfo = nullptr;
 					descriptorsWrite[j].pTexelBufferView = nullptr;
+					end = j;
 				}
+				//Emissive
+				{
+					VkDescriptorImageInfo TextureEmissiveImage{};
+					TextureEmissiveImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureEmissiveImage.imageView = m_TextureEmissive->tImageView;
+					if (m_TextureEmissive->m_Sampler != nullptr)
+					{
+						TextureEmissiveImage.sampler = m_TextureEmissive->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureEmissive->m_Path;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[end+1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+1].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+1].dstBinding = end+1;
+					descriptorsWrite[end+1].dstArrayElement = 0;
+					descriptorsWrite[end+1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+1].descriptorCount = 1;
+					descriptorsWrite[end+1].pBufferInfo = nullptr;
+					descriptorsWrite[end+1].pImageInfo = &TextureEmissiveImage;
+					descriptorsWrite[end+1].pTexelBufferView = nullptr;
+				}
+				//Occlusion
+				{
+					VkDescriptorImageInfo TextureOcclusionImage{};
+					TextureOcclusionImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureOcclusionImage.imageView = m_TextureOcclusion->tImageView;
+					if (m_TextureOcclusion->m_Sampler != nullptr)
+					{
+						TextureOcclusionImage.sampler = m_TextureOcclusion->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureOcclusion->m_Path;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[end+2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+2].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+2].dstBinding = end+2;
+					descriptorsWrite[end+2].dstArrayElement = 0;
+					descriptorsWrite[end+2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+2].descriptorCount = 1;
+					descriptorsWrite[end+2].pBufferInfo = nullptr;
+					descriptorsWrite[end+2].pImageInfo = &TextureOcclusionImage;
+					descriptorsWrite[end+2].pTexelBufferView = nullptr;
+				}
+
+				//Metallic
+				{
+					VkDescriptorImageInfo TextureMetallicImage{};
+					TextureMetallicImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureMetallicImage.imageView = m_TextureMetallicRoughness->tImageView;
+					if (m_TextureMetallicRoughness->m_Sampler != nullptr)
+					{
+						TextureMetallicImage.sampler = m_TextureMetallicRoughness->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureMetallicRoughness->m_Path;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[end+3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+3].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+3].dstBinding = end+3;
+					descriptorsWrite[end+3].dstArrayElement = 0;
+					descriptorsWrite[end+3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+3].descriptorCount = 1;
+					descriptorsWrite[end+3].pBufferInfo = nullptr;
+					descriptorsWrite[end+3].pImageInfo = &TextureMetallicImage;
+					descriptorsWrite[end+3].pTexelBufferView = nullptr;
+				}
+				//Normal
+				{
+					VkDescriptorImageInfo TextureNormalImage{};
+					TextureNormalImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					TextureNormalImage.imageView = m_TextureNormal->tImageView;
+					if (m_TextureNormal->m_Sampler != nullptr)
+					{
+						TextureNormalImage.sampler = m_TextureNormal->m_Sampler;
+					}
+					else
+					{
+						printf("Invalid Sampler for frame %ld\n", i);
+						continue;
+					}
+					g_ConsoleMSG += m_TextureNormal->m_Path;
+					g_ConsoleMSG += '\n';
+					descriptorsWrite[end+4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+4].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+4].dstBinding = end+4;
+					descriptorsWrite[end+4].dstArrayElement = 0;
+					descriptorsWrite[end+4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+4].descriptorCount = 1;
+					descriptorsWrite[end+4].pBufferInfo = nullptr;
+					descriptorsWrite[end+4].pImageInfo = &TextureNormalImage;
+					descriptorsWrite[end+4].pTexelBufferView = nullptr;
+				}
+
 				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}
 		}

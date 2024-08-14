@@ -47,6 +47,7 @@ namespace VKR
 			char filename[128];
 			tempModel = new R_Model();
 			sprintf(filename, "%s%s", _filepath, _modelName);
+			sprintf(tempModel->m_Path , "%s",  _modelName);
 			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
 			if(data == nullptr) return false;
 			m_StaticModels.push_back(tempModel);
@@ -56,13 +57,6 @@ namespace VKR
 		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
 			m_Cubemap->m_gltf = LoadModel(_filepath, _modelName, _position, _scale, _customTexture);
-		}
-
-		void Scene::CreateDebugModel(PRIMITIVE _type)
-		{
-			auto tempModel = new R_DbgModel(_type);
-			tempModel->m_Material.m_Texture = new Texture();
-			m_DbgModels.push_back(tempModel);
 		}
 
 		void Scene::ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture)
@@ -405,7 +399,7 @@ namespace VKR
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DbgDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_PipelineLayout, 0, 1, 
-					&model->m_Material.m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
+					&model->m_Material->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
 				vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
 				vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], model->m_Vertices.size(), 1, 0, 0);
 				// Flush to make changes visible to the host
@@ -630,14 +624,14 @@ namespace VKR
 			}*/
 			for (auto& dbgModel : m_DbgModels)
 			{
-				dbgModel->m_Material.m_Texture->LoadTexture();
+				dbgModel->m_Material->m_Texture->LoadTexture();
 				/// 2 - Crear descriptor pool de materiales(CreateDescPool)`
-				dbgModel->m_Material.CreateDescriptorPool(renderContext.m_LogicDevice);
+				dbgModel->m_Material->CreateDescriptorPool(renderContext.m_LogicDevice);
 
 				/// 3 - Crear Descriptor set de material(createMeshDescSet)
-				dbgModel->m_Material.CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_DbgRender->m_DescSetLayout);
+				dbgModel->m_Material->CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_DbgRender->m_DescSetLayout);
 				/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-				dbgModel->m_Material.m_Texture->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
+				dbgModel->m_Material->m_Texture->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
 				/// 5 - Crear buffers de vertices
 				void* data;
 				VkDeviceSize bufferSize = sizeof(dbgModel->m_Vertices[0]) * dbgModel->m_Vertices.size();
@@ -660,7 +654,7 @@ namespace VKR
 				vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 				vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
-				dbgModel->m_Material.UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_DbgUniformBuffers, _backend->m_DbgDynamicBuffers);
+				dbgModel->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_DbgUniformBuffers, _backend->m_DbgDynamicBuffers);
 
 			}
 		}

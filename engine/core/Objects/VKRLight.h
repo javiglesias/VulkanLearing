@@ -1,6 +1,7 @@
 #ifndef _C_LIGHT
 #define _C_LIGHT
 
+#include "VKRModel.h"
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -9,6 +10,7 @@ namespace VKR
 {
 	namespace render
 	{
+		class R_DbgModel;
 		enum LightType
 		{
 			LIGHT_DIRECTIONAL,
@@ -28,7 +30,7 @@ namespace VKR
 			float m_ShadowCameraFOV;
 			float m_ShadowAspectRatio;
 			float m_ShadowBias = 0.0025f;
-
+			R_DbgModel* m_LightVisual;
 		public: // Functions
 			Light();
 		};
@@ -40,7 +42,6 @@ namespace VKR
 			float m_Up        	= 300.f;
 			glm::vec3 m_UpVector = glm::vec3(0.f, -1.f, 0.f);
 			glm::vec3 m_Center 		= glm::vec3(0.f);
-			Directional();
 		};
 		struct Point : public Light
 		{

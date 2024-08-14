@@ -1,6 +1,5 @@
 #version 460
 
-
 layout(set=0, binding=1) uniform sampler2D inDiffuseTexture;
 layout(set=0, binding=2) uniform sampler2D inSpecularTexture;
 layout(set=0, binding=3) uniform sampler2D inAmbientTexture;
@@ -16,6 +15,11 @@ layout(set=0, binding=6) uniform LightBufferObject
 	vec4 additionalLightOpts; // Kc, Kl, Kq
 } libO[4];
 
+layout(set=0, binding=7) uniform sampler2D inEmissiveTexture;
+layout(set=0, binding=8) uniform sampler2D inOcclusionTexture;
+layout(set=0, binding=9) uniform sampler2D inMetallicRoughnessTexture;
+layout(set=0, binding=10) uniform sampler2D inNormalTexture;
+
 layout(location = 0) in vec3 fragPosition;
 layout(location = 1) in vec2 texCoord;
 layout(location = 2) in vec3 normal;
@@ -23,6 +27,9 @@ layout(location = 3) in vec3 viewerPosition;
 layout(location = 4) in vec4 shadowCoord;
 layout(location = 5) in float mipLevel;
 layout(location = 6) in float nLights;
+layout(location = 7) in float renderDepth;
+layout(location = 8) in float renderSpecular;
+layout(location = 9) in float renderNormals;
 
 layout(location = 0) out vec4 outColor;
 
@@ -91,11 +98,16 @@ vec3 DirectionalLight(vec3 _color)
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
 	vec4 fragLight = libO[0].lightProj * vec4(shadowCoord);
-	float shadow = ShadowCalculation(fragLight, inShadowTexture);
-	//ambient  *= att;
-	// diffuse  *= att;
-	// specular *= att;
-	return (ambient + (1.0 - shadow) * (diffuse + specular)) * _color;
+	if(renderDepth > 0)
+	{
+		return fragLight.xyz;
+	} else {
+		float shadow = ShadowCalculation(fragLight, inShadowTexture);
+		//ambient  *= att;
+		// diffuse  *= att;
+		// specular *= att;
+		return (ambient + (1.0 - shadow) * (diffuse + specular)) * _color;
+	}
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 

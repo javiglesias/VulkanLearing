@@ -1,6 +1,7 @@
 #include "VKRLight.h"
 #include "../../video/VKBackend.h"
 #include "VKRModel.h"
+#include "../../filesystem/gltfReader.h"
 
 namespace VKR 
 {
@@ -8,15 +9,8 @@ namespace VKR
 	{
 		Light::Light()
 		{
-			auto tempModel = new R_DbgModel(ARROW);
-			tempModel->m_Material.m_Texture = new Texture();
-			m_DbgModels.push_back(tempModel);
-		}
-		Directional::Directional()
-		{
-			auto tempModel = new R_DbgModel(ARROW);
-			tempModel->m_Material.m_Texture = new Texture();
-			m_DbgModels.push_back(tempModel);
+			m_LightVisual = new R_DbgModel("resources/models/Cube/glTF/", "Cube.gltf");
+			m_DbgModels.push_back(m_LightVisual);
 		}
 	}
 }
