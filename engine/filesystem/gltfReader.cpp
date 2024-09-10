@@ -23,17 +23,17 @@ namespace VKR
 			{
 				printf("\nModel file validated (nodes %ld)", modelData->nodes_count);
 				//  MATERIALS
-				cgltf_size materialID = 0;
+				size_t materialID = 0;
 				if(modelData->materials_count > 0)
 				{
-					for (int i = 0 ; i < modelData->materials_count; i++) 
+					for (size_t i = 0 ; i < modelData->materials_count; i++) 
 					{
 						auto material = modelData->materials[i];
 						materialID = i;
 						if (tempModel_->m_Materials[materialID] == nullptr)
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
-							fprintf(stderr, "Material %ld: %s\n", materialID, material.name);
+							fprintf(stderr, "Material %llu: %s\n", materialID, material.name);
 							tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
@@ -56,6 +56,11 @@ namespace VKR
 								
 							}
 						}
+						tempModel_->m_Materials[materialID]->m_TextureEmissive = new render::Texture();
+						tempModel_->m_Materials[materialID]->m_TextureMetallicRoughness = new render::Texture();
+						tempModel_->m_Materials[materialID]->m_TextureOcclusion = new render::Texture();
+						tempModel_->m_Materials[materialID]->m_TextureNormal = new render::Texture();
+						tempModel_->m_Materials[materialID]->m_TextureShadowMap = new render::Texture();
 					}
 				}
 				else
@@ -65,7 +70,6 @@ namespace VKR
 					tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
 					tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
 				}
-				tempModel_->m_Materials[materialID]->m_TextureShadowMap = new render::Texture();
 
 				for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
 				{
@@ -80,34 +84,58 @@ namespace VKR
 							printf("\tPrimitive %zd\n", p);
 							for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 							{
+								tempMesh->m_Material = cgltf_material_index(modelData, mesh->primitives[p].material);
+								auto accessor = mesh->primitives[p].attributes[a].data;
+								Vertex3D tempVertex;
 								if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)
 								{
-									auto accessor = mesh->primitives[p].attributes[a].data;
 									if(accessor->type == cgltf_type_vec3)
 									{
-										fprintf(stderr, "vertex count %ld\n", accessor->count);
-										float vertices[3*accessor->count];
+										fprintf(stderr, "vertex count %llu\n", accessor->count);
+										float* vertices = new float[3*accessor->count];
 										int n = 0; 
 										float *buffer = (float *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset/sizeof(float) + accessor->offset/sizeof(float); 
 										for (unsigned int k = 0; k < accessor->count; k++) 
 										{
-											// fprintf(stderr, "Vertex %d: ",k );
 											float tempVrtx[3];
 											for (int l = 0; l < 3; l++) 
 											{
 												vertices[3*k + l] = buffer[n + l];
 												tempVrtx[l] = buffer[n + l];
-												// fprintf(stderr, " %f ", buffer[n + l]);
 											}
-											tempMesh->m_Vertices.push_back(Vertex3D{glm::vec3(tempVrtx[0], tempVrtx[1], tempVrtx[2])});
+											tempVertex.m_Pos = glm::vec3(tempVrtx[0], tempVrtx[1], tempVrtx[2]);
+											if(tempMesh->m_Vertices.size() <= k)
+												tempMesh->m_Vertices.push_back(tempVertex);
+											else
+												tempMesh->m_Vertices[k].m_Pos = tempVertex.m_Pos;
 											n += (int)(accessor->stride/sizeof(float));
-											// fprintf(stderr, "\n");
 										}
 									}
 								}
 								else if(cgltf_attribute_type_normal == mesh->primitives[p].attributes[a].type)
-								{	
-
+								{
+									if(accessor->type == cgltf_type_vec3)
+									{
+										fprintf(stderr, "normal count %llu\n", accessor->count);
+										float* values = new float[3*accessor->count];
+										int n = 0; 
+										float *buffer = (float *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset/sizeof(float) + accessor->offset/sizeof(float); 
+										for (unsigned int k = 0; k < accessor->count; k++) 
+										{
+											float tempNormal[3];
+											for (int l = 0; l < 3; l++) 
+											{
+												values[3*k + l] = buffer[n + l];
+												tempNormal[l] = buffer[n + l];
+											}
+											tempVertex.m_Normal = glm::vec3(tempNormal[0], tempNormal[1], tempNormal[2]);
+											if(tempMesh->m_Vertices.size() <= k)
+												tempMesh->m_Vertices.push_back(tempVertex);
+											else
+												tempMesh->m_Vertices[k].m_Normal = tempVertex.m_Normal;
+											n += (int)(accessor->stride/sizeof(float));
+										}
+									}
 								}
 								else if(cgltf_attribute_type_tangent == mesh->primitives[p].attributes[a].type)
 								{
@@ -115,7 +143,28 @@ namespace VKR
 								}
 								else if(cgltf_attribute_type_texcoord == mesh->primitives[p].attributes[a].type)
 								{
-
+									if(accessor->type == cgltf_type_vec2)
+									{
+										fprintf(stderr, "Texcoord count %llu\n", accessor->count);
+										float* values = new float[2*accessor->count];
+										int n = 0; 
+										float *buffer = (float *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset/sizeof(float) + accessor->offset/sizeof(float); 
+										for (unsigned int k = 0; k < accessor->count; k++) 
+										{
+											float tempTexCoord[2];
+											for (int l = 0; l < 2; l++) 
+											{
+												values[2*k + l] = buffer[n + l];
+												tempTexCoord[l] = buffer[n + l];
+											}
+											tempVertex.m_TexCoord = glm::vec2(tempTexCoord[0], tempTexCoord[1]);
+											if(tempMesh->m_Vertices.size() <= k)
+												tempMesh->m_Vertices.push_back(tempVertex);
+											else
+												tempMesh->m_Vertices[k].m_TexCoord = tempVertex.m_TexCoord;
+											n += (int)(accessor->stride/sizeof(float));
+										}
+									}
 								}
 								else 
 								{
@@ -142,7 +191,11 @@ namespace VKR
 				}
 			}
 			else
+#ifdef _WINDOWS
+				__debugbreak();
+#else
 				raise(SIGTRAP);
+#endif
 			return modelData;
 		}
 		cgltf_data* read_glTF_DBG(const char* _filepath, const char* _modelName, render::R_DbgModel* tempModel_)

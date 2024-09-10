@@ -12,7 +12,8 @@ namespace VKR
 	enum TYPE
 	{
 		UNDEFINED=-1,
-		MESH,
+		STATIC_MODEL,
+		DBG_MODEL,
 		TEXTURE,
 		SOUND
 	};

@@ -454,7 +454,7 @@ namespace VKR
 
 		void VKBackend::GenerateBuffers()
 		{
-			VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+			VkDeviceSize bufferSize = MAX_MODELS * sizeof(UniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -476,11 +476,11 @@ namespace VKR
 				vkMapMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], 0,
 					cubemapBufferSize, 0, &m_CubemapUniformBuffersMapped[i]);
 			}
-			auto DynAlign = sizeof(DynamicBufferObject);
+			auto DynAlign =  sizeof(DynamicBufferObject);
 			DynAlign = (DynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			VkDeviceSize checkBufferSize = m_CurrentModelsToDraw * DynAlign;
-			VkDeviceSize dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
+			VkDeviceSize checkBufferSize = MAX_MODELS *  DynAlign;
+			VkDeviceSize dynBufferSize = MAX_MODELS *  sizeof(DynamicBufferObject);
 			if(dynBufferSize != checkBufferSize )
 			#ifdef _WINDOWS
 				__debugbreak();
@@ -501,10 +501,10 @@ namespace VKR
 			auto lightDynAlign = sizeof(LightBufferObject);
 			lightDynAlign = (lightDynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			checkBufferSize = m_CurrentModelsToDraw * (4 * lightDynAlign);
-			VkDeviceSize lightsBufferSize = m_CurrentModelsToDraw * (4 * sizeof(LightBufferObject));
+			checkBufferSize = MAX_MODELS * (4 * lightDynAlign);
+			VkDeviceSize lightsBufferSize = MAX_MODELS * (4 * sizeof(LightBufferObject));
 			if(lightsBufferSize != checkBufferSize )
-				#ifdef _WINDOWS
+			#ifdef _WINDOWS
 				__debugbreak();
 			#else
 				raise(SIGTRAP);
@@ -551,7 +551,7 @@ namespace VKR
 			m_ShadowDynamicBuffers.resize(FRAMES_IN_FLIGHT);
 			m_ShadowDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_ShadowDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			dynBufferSize = m_CurrentModelsToDraw * sizeof(DynamicBufferObject);
+			dynBufferSize = MAX_MODELS * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -766,10 +766,10 @@ namespace VKR
 				exit(-17);
 		}
 
-		uint32_t VKBackend::DrawFrame(unsigned int _InFlightFrame)
+		uint32_t VKBackend::BeginFrame(unsigned int _InFlightFrame)
 		{
 			// Ahora vamos a simular el siguiente frame
-
+			PollEvents();
 			uint32_t imageIdx;
 			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame], VK_TRUE, UINT64_MAX);
 			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame]);

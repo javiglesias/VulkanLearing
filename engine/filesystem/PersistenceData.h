@@ -136,7 +136,7 @@ namespace VKR
 					sprintf(filename, "%s",resource->m_PathFromLoad);
 					LoadAsyncResource(filename);
 					resource->m_State=READY;
-					render::m_StaticModels.push_back(tempModel);
+					//render::m_StaticModels.push_back(tempModel);
 					render::m_SceneDirty = true;
 				}
 				toLoadResourcesAsync.pop_back();

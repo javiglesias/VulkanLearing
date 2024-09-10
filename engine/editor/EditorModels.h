@@ -21,6 +21,7 @@ static const char* ModelList[] =
 	"BoxTexturedNonPowerOfTwo",
 	"BoxVertexColors",
 	"Box With Spaces",
+	"Bistro",
 	"BrainStem",
 	"Buggy",
 	"Cameras",

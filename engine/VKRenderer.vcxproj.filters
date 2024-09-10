@@ -39,7 +39,7 @@
     <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="core\Editor\Editor.cpp">
+    <ClCompile Include="editor\Editor.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="core\Objects\VKRCubemap.cpp">
@@ -81,6 +81,12 @@
     <ClCompile Include="core\Objects\VKRCamera.h">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="filesystem\gltfReader.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystem\ResourceManager.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\Objects\DebugModels.h">
@@ -89,7 +95,7 @@
     <ClInclude Include="filesystem\gltfReader.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="core\Editor\Editor.h">
+    <ClInclude Include="editor\Editor.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="video\Types.h">
@@ -162,6 +168,9 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="..\dependencies\cgltf\cgltf.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="filesystem\ResourceManager.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

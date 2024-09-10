@@ -1,11 +1,10 @@
 #include "Editor.h"
 #include "EditorModels.h"
-#include "../../video/VKBackend.h"
-#include "../VKRScene.h"
+#include "../video/VKBackend.h"
+#include "../core/VKRScene.h"
 #include <cstdio>
 
 #ifdef _WINDOWS
-#include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #else
@@ -116,20 +115,6 @@ namespace VKR
 				render::m_Rotation.x = rotation[0];
 				render::m_Rotation.y = rotation[1];
 				render::m_Rotation.z = rotation[2];
-				if (ImGui::Button("Load demo Sponza"))
-				{
-					_mainScene->LoadStaticModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
-					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
-					VKR::render::m_CreateTestModel = false;
-					_mainScene->PrepareScene(_backend);
-				}
-				if (ImGui::Button("Load demo"))
-				{
-					_mainScene->LoadStaticModel("resources/models/Corset/glTF/", "Corset.gltf", glm::vec3(0.f, 0.f, 0.f));
-					//_mainScene->LoadStaticModel("resources/models/Lantern/glTF/", "Lantern.gltf", glm::vec3(0.f, 2.f, 0.f));
-					VKR::render::m_CreateTestModel = false;
-					_mainScene->PrepareScene(_backend);
-				}
 
 				if (ImGui::Button("Load cgltf"))
 				{
@@ -170,8 +155,8 @@ namespace VKR
 					sprintf(_filepath, "resources/models/%s/glTF/", ModelList[item_current_idx]);
 					char modelName[32];
 					sprintf(modelName, "%s.gltf", ModelList[item_current_idx]);
-					if(_mainScene->LoadModel_ALT(_filepath, modelName, glm::vec3(0.f, 0.f, 0.f)))
-						_mainScene->PrepareScene(_backend);
+					_mainScene->LoadModel_ALT(_filepath, modelName, glm::vec3(0.f, 0.f, 0.f));
+					_mainScene->PrepareScene(_backend);
 				}
 
 				ImGui::DragFloat("zFar", &zFar);
@@ -198,8 +183,9 @@ namespace VKR
 			}
 			ImGui::Begin("World");
 			{
-				for (auto& model : m_StaticModels)
+				for (int i = 0; i < m_CurrentStaticModels; i++)
 				{
+					R_Model* model = m_StaticModels[i];
 					ImGui::Selectable(model->m_Path, &model->m_Editable);
 					if (model->m_Editable)
 					{
@@ -233,10 +219,10 @@ namespace VKR
 						model->m_Scale.z = scale[2];
 					}
 				}
-				if (ImGui::Button("Delete"))
+				/*if (ImGui::Button("Delete"))
 				{
 					m_StaticModels.pop_back();
-				}
+				}*/
 				ImGui::End();
 			}
 			ImGui::Begin("Lights");

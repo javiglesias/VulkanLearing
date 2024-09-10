@@ -38,6 +38,7 @@ namespace VKR
 			R_Mesh() {}
 			void Cleanup(VkDevice _LogicDevice);
 		};
+		
 		struct R_Model //Render Model
 		{// lo necesario para poder renderizar un Modelo
 		public:

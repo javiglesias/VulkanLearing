@@ -63,10 +63,10 @@ float PointLight()
 	// kl = constante linear
 	// kq = constante cuadratica
 	// atenuacion = 1/ (kc+ kl*d + kq*(d*d));
-	float att;
-	for(int l = 0; l < 4; l++)
+	float att = 1.0;
+	for(int l = 1; l < nLights; l++)
 	{
-		if(l >= nLights) break;
+		att = 0.0;
 		vec3 lightPos = libO[l].lightPosition.xyz;
 		vec4 pointLightC = libO[l].additionalLightOpts;
 		vec3 dir = lightPos - fragPosition;
@@ -77,13 +77,12 @@ float PointLight()
 				+ pointLightC[2] * (d*d)
 			);
 	}
-	
 	return att;
 }
 
 vec3 DirectionalLight(vec3 _color)
 {
-	// float att = PointLight();
+	float att = PointLight();
 	float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
 	float mipmapLevel = textureQueryLod(inAmbientTexture, texCoord).x;
@@ -103,7 +102,7 @@ vec3 DirectionalLight(vec3 _color)
 		return fragLight.xyz;
 	} else {
 		float shadow = ShadowCalculation(fragLight, inShadowTexture);
-		//ambient  *= att;
+		ambient  *= att;
 		// diffuse  *= att;
 		// specular *= att;
 		return (ambient + (1.0 - shadow) * (diffuse + specular)) * _color;

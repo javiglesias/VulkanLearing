@@ -19,7 +19,7 @@ namespace VKR
 		}
 		void Texture::LoadTexture(bool isCubemap)
 		{
-			stbi_uc* pixels;
+			stbi_uc* pixels = nullptr;
 			if( !m_Path.empty())
 				pixels = stbi_load(m_Path.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)

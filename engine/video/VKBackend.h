@@ -8,12 +8,13 @@
 
 #include <thread>
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace VKR
 {
     namespace render
     {
+		#define MAX_MODELS 256
         enum G_PIPELINE_STATUS
         {
 	        INVALID,
@@ -70,7 +71,8 @@ namespace VKR
         inline DebugRenderer* m_DbgRender;
         inline CubemapRenderer* m_CubemapRender;
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
-        inline std::vector<R_Model*> m_StaticModels;
+        inline R_Model* m_StaticModels[MAX_MODELS];
+        inline int m_CurrentStaticModels = 0;
         inline std::vector<Light*> g_Lights;
         inline Directional* g_DirectionalLight;
 
@@ -82,7 +84,6 @@ namespace VKR
             bool m_RenderInitialized = false;
             uint32_t m_LastImageIdx;
             uint32_t m_FrameToPresent;
-            uint32_t m_CurrentModelsToDraw = 1;
             uint32_t m_CurrentDebugModelsToDraw = 1;
             int m_TotalTextures;
             VkResult m_PresentResult;
@@ -179,7 +180,7 @@ namespace VKR
             bool BackendShouldClose();
             void PollEvents();
             void BeginRenderPass(unsigned int _InFlightFrame);
-            uint32_t DrawFrame(unsigned int _InFlightFrame);
+            uint32_t BeginFrame(unsigned int _InFlightFrame);
             void EndRenderPass(unsigned _InFlightFrame);
             void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void Shutdown();

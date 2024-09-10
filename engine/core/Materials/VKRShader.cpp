@@ -35,7 +35,12 @@ namespace VKR
 				f.seekg(0);
 				f.read(m_CompiledSource.data(), fileSize);
 			} else {
+#ifdef _WINDOWS
+				__debugbreak();
+#else
 				raise(SIGTRAP);
+#endif
+
 			}
 			f.close();
 #endif

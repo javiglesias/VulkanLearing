@@ -6,6 +6,7 @@
 #include "Objects/VKRLight.h"
 #include "Objects/VKRModel.h"
 #include <cstddef>
+#include "../filesystem/ResourceManager.h"
 
 namespace VKR
 {
@@ -16,50 +17,8 @@ namespace VKR
 		{
 			return g_MainScene;
 		}
-
-		R_Model* Scene::LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			PERF_INIT()
-			char filename[128];
-			sprintf(filename, "%s%s", _filepath, _modelName);
-			printf("\nLoading %s\n", _modelName);
-			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
-			if (!scene || !scene->HasMeshes())
-				exit(-225);
-			tempModel = new R_Model();
-			//Process Node
-			auto node = scene->mRootNode;
-			ProcessModelNode(node, scene, _filepath, _customTexture);
-			// Insert new static model
-			sprintf(tempModel->m_Path, _filepath, 64);
-			tempModel->m_Pos = _position;
-			tempModel->m_Scale = _scale;
-			PERF_END("LOAD MODEL")
-			return tempModel;
-		}
-		void Scene::LoadStaticModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			m_StaticModels.push_back(LoadModel(_filepath, _modelName, _position, _scale, _customTexture));
-		}
-
-		bool Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			char filename[128];
-			tempModel = new R_Model();
-			sprintf(filename, "%s%s", _filepath, _modelName);
-			sprintf(tempModel->m_Path , "%s",  _modelName);
-			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
-			if(data == nullptr) return false;
-			m_StaticModels.push_back(tempModel);
-			return true;
-		}
-
-		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			m_Cubemap->m_gltf = LoadModel(_filepath, _modelName, _position, _scale, _customTexture);
-		}
-
-		void Scene::ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture)
+		R_Model* tempModel;
+		void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture)
 		{
 			// CHILDREN
 			for (unsigned int i = 0; i < _node->mNumChildren; i++)
@@ -136,6 +95,53 @@ namespace VKR
 				tempModel->m_Meshes.push_back(tempMesh);
 			}
 		}
+		void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		{
+			PERF_INIT()
+			char filename[128];
+			sprintf(filename, "%s%s", _filepath, _modelName);
+			printf("\nLoading %s\n", _modelName);
+			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
+			if (!scene || !scene->HasMeshes())
+				exit(-225);
+			tempModel = new R_Model();
+			//Process Node
+			auto node = scene->mRootNode;
+			ProcessModelNode(node, scene, _filepath, _customTexture);
+			// Insert new static model
+			sprintf(tempModel->m_Path, _filepath, 64);
+			tempModel->m_Pos = _position;
+			tempModel->m_Scale = _scale;
+			PERF_END("LOAD MODEL")
+			m_StaticModels[m_CurrentStaticModels] = tempModel;
+			m_CurrentStaticModels++;
+		}
+		void DispatchRMThread()
+		{
+			const char* _path = "resources/models/Sponza/glTF/";
+			const char* _name = "Sponza.gltf";
+			LoadModel(_path, _name);
+			m_SceneDirty = true;
+			return;
+		}
+
+		bool Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		{
+			char filename[128];
+			tempModel = new R_Model();
+			sprintf(filename, "%s%s", _filepath, _modelName);
+			sprintf(tempModel->m_Path , "%s",  _modelName);
+			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
+			if(data == nullptr) return false;
+			m_StaticModels[m_CurrentStaticModels] = tempModel;
+			m_CurrentStaticModels++;
+			return true;
+		}
+
+		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
+		{
+			//m_Cubemap->m_gltf = LoadModel(_filepath, _modelName, _position, _scale, _customTexture);
+		}
 
 		/// Shadow Pass
 		void Scene::ShadowPass(VKBackend* _backend, int _CurrentFrame)
@@ -178,8 +184,9 @@ namespace VKR
 			}
 			uint32_t count = 0;
 			// Sombras(Depth Pass)
-			for (auto& model : m_StaticModels)
+			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				R_Model* model = m_StaticModels[i];
 				DynamicBufferObject dynO{};
 				dynO.model = model->m_ModelMatrix;
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
@@ -220,7 +227,6 @@ namespace VKR
 				mappedMemoryRange.memory = _backend->m_ShadowDynamicBuffersMemory[_CurrentFrame];
 				mappedMemoryRange.size = sizeof(dynO);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
-				break;
 			}
 			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
 		}
@@ -256,6 +262,20 @@ namespace VKR
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
+			if(m_CreateTestModel)
+			{
+				RMThread = new std::thread(DispatchRMThread);
+				//LoadModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
+				RM::_AddRequest(STATIC_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
+				m_CreateTestModel = false;
+			}
+			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
+			//editor->Loop(this, _backend);
+			if(m_SceneDirty)
+			{
+				PrepareScene(_backend);
+				m_SceneDirty = false;
+			}
 			auto renderContext = GetVKContext();
 			// GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
@@ -280,8 +300,8 @@ namespace VKR
 			// Drawing Commands
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_Pipeline);
 			// REFRESH RENDER MODE FUNCTIONS
-			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
+			//vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			//vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			uint32_t count = 0;
 			// lights
 			m_LightsOs.clear();
@@ -322,8 +342,9 @@ namespace VKR
 			uint32_t lightDynamicOffset3 = (count + 3) * static_cast<uint32_t>(lightDynAlign);
 			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame]  + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 			// Render Pass
-			for (auto& model : m_StaticModels)
+			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				R_Model* model = m_StaticModels[i];
 				DynamicBufferObject dynO{};
 				dynO.model = model->m_ModelMatrix;
 				dynO.model = glm::translate(dynO.model, model->m_Pos);
@@ -413,6 +434,8 @@ namespace VKR
 			//_backend->EndRenderPass(_CurrentFrame);
 			if(g_DrawCubemap)
 				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			_backend->EndRenderPass(_CurrentFrame);
+			_backend->SubmitAndPresent(_CurrentFrame, &imageIdx);
 		}
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
@@ -490,9 +513,8 @@ namespace VKR
 		{
 			PERF_INIT()
 			auto renderContext = GetVKContext();
-			_backend->m_CurrentModelsToDraw = m_StaticModels.size();
 			/// 1 - Actualizar los DynamicDescriptorBuffers
-			_backend->GenerateBuffers();
+			//_backend->GenerateBuffers();
 			/*VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
@@ -504,8 +526,9 @@ namespace VKR
 				vkMapMemory(renderContext.m_LogicDevice, _backend->m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
 			}*/
-			for (auto& model : m_StaticModels)
+			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				R_Model* model = m_StaticModels[i];
 				for (auto& mesh : model->m_Meshes)
 				{
 
@@ -576,8 +599,9 @@ namespace VKR
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
 			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
-			for (auto& model : m_StaticModels)
+			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				R_Model* model = m_StaticModels[i];
 				for (int i = 0; i < model->m_Meshes.size(); i++)
 				{
 					for (int j = 1; j < model->m_Meshes.size(); j++)
@@ -605,23 +629,6 @@ namespace VKR
 			auto renderContext = GetVKContext();
             _backend->m_CurrentDebugModelsToDraw = m_DbgModels.size();
 			_backend->GenerateDBGBuffers();
-			/*if (m_DbgModels.size() > 0)
-			{
-				m_DbgModels[0]->m_Pos = m_LightPos;
-
-				/// N - Actualizar los DynamicDescriptorBuffers
-				VkDeviceSize dynDbgBufferSize = m_DbgModels.size() * sizeof(DynamicBufferObject);
-				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-				{
-					CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-						VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						_backend->m_DbgDynamicBuffers[i], _backend->m_DbgDynamicBuffersMemory[i]);
-					vkMapMemory(renderContext.m_LogicDevice, _backend->m_DbgDynamicBuffersMemory[i], 0,
-						dynDbgBufferSize, 0, &_backend->m_DbgDynamicBuffersMapped[i]);
-				}
-			}*/
 			for (auto& dbgModel : m_DbgModels)
 			{
 				dbgModel->m_Material->m_Texture->LoadTexture();
@@ -663,8 +670,9 @@ namespace VKR
 		{
 			printf("Scene Cleanup\n");
 			vkDeviceWaitIdle(_LogicDevice);
-			for (auto& model : m_StaticModels)
+			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				R_Model* model = m_StaticModels[i];
 				for (auto& [idx, mat] : model->m_Materials)
 				{
 					mat->Cleanup(_LogicDevice);

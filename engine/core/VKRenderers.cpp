@@ -323,7 +323,39 @@ namespace VKR
             linOLayoutBinding.descriptorCount = 4;
             linOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             linOLayoutBinding.pImmutableSamplers = nullptr;
+#if 0
+            // Textura emissive
+            VkDescriptorSetLayoutBinding textureEmissiveLayoutBinding{};
+            textureEmissiveLayoutBinding.binding = 10;
+            textureEmissiveLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureEmissiveLayoutBinding.descriptorCount = 1;
+            textureEmissiveLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureEmissiveLayoutBinding.pImmutableSamplers = nullptr;
 
+            // Textura oclussion
+            VkDescriptorSetLayoutBinding textureOclussionLayoutBinding{};
+            textureOclussionLayoutBinding.binding = 11;
+            textureOclussionLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureOclussionLayoutBinding.descriptorCount = 1;
+            textureOclussionLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureOclussionLayoutBinding.pImmutableSamplers = nullptr;
+
+            // Textura Metallness
+            VkDescriptorSetLayoutBinding textureMetallnessLayoutBinding{};
+            textureMetallnessLayoutBinding.binding = 12;
+            textureMetallnessLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureMetallnessLayoutBinding.descriptorCount = 1;
+            textureMetallnessLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureMetallnessLayoutBinding.pImmutableSamplers = nullptr;
+
+            // Textura Normal
+            VkDescriptorSetLayoutBinding textureNormalLayoutBinding{};
+            textureNormalLayoutBinding.binding = 13;
+            textureNormalLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureNormalLayoutBinding.descriptorCount = 1;
+            textureNormalLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureNormalLayoutBinding.pImmutableSamplers = nullptr;
+#endif
             std::array<VkDescriptorSetLayoutBinding, 7> ShaderBindings = {
                 uboLayoutBinding,
                 textureDiffuseLayoutBinding,
@@ -332,6 +364,13 @@ namespace VKR
                 textureShadowLayoutBinding,
                 dynOLayoutBinding,
                 linOLayoutBinding
+#if 0
+            	,
+                textureEmissiveLayoutBinding,
+                textureOclussionLayoutBinding,
+                textureMetallnessLayoutBinding,
+                textureNormalLayoutBinding
+#endif
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

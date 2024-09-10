@@ -18,25 +18,25 @@ namespace VKR
 			m_TextureDiffuse->LoadTexture();
 			m_TextureSpecular->LoadTexture();
 			m_TextureAmbient->LoadTexture();
-			m_TextureEmissive->LoadTexture();
+			/*m_TextureEmissive->LoadTexture();
 			m_TextureOcclusion->LoadTexture();
 			m_TextureMetallicRoughness->LoadTexture();
-			m_TextureNormal->LoadTexture();
+			m_TextureNormal->LoadTexture();*/
 
 			m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureAmbient->CreateAndTransitionImage(_backend->m_CommandPool);
-			m_TextureEmissive->CreateAndTransitionImage(_backend->m_CommandPool);
+			/*m_TextureEmissive->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureOcclusion->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureMetallicRoughness->CreateAndTransitionImage(_backend->m_CommandPool);
-			m_TextureNormal->CreateAndTransitionImage(_backend->m_CommandPool);
+			m_TextureNormal->CreateAndTransitionImage(_backend->m_CommandPool);*/
 		}
 
 		void R_Material::CreateDescriptorPool(VkDevice _LogicDevice)
 		{
 			if (m_DescriptorPool == nullptr)
 			{
-				std::array<VkDescriptorPoolSize, 11> descPoolSize{};
+				std::array<VkDescriptorPoolSize, 10> descPoolSize{};
 				// UBO
 				descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
@@ -60,22 +60,28 @@ namespace VKR
 
 				descPoolSize[6].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 				descPoolSize[6].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-
-				// Textura Emissive
-				descPoolSize[7].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[7].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 				descPoolSize[7].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-
-				// Textura Occlusion
-				descPoolSize[8].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[8].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 				descPoolSize[8].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-
-				// Textura Metallic Rough
-				descPoolSize[9].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[9].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 				descPoolSize[9].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
-				// Textura Metallic Rough
-				descPoolSize[10].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				descPoolSize[10].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+				//// Textura Emissive
+				//descPoolSize[10].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				//descPoolSize[10].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				//// Textura Occlusion
+				//descPoolSize[11].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				//descPoolSize[11].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				//// Textura Metallic Rough
+				//descPoolSize[12].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				//descPoolSize[12].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+
+				//// Textura Metallic Rough
+				//descPoolSize[13].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				//descPoolSize[13].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 				VkDescriptorPoolCreateInfo descPoolInfo{};
 				descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -116,7 +122,7 @@ namespace VKR
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
-				std::array<VkWriteDescriptorSet, 14> descriptorsWrite{};
+				std::array<VkWriteDescriptorSet, 10> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[0].dstBinding = 0;
@@ -260,6 +266,7 @@ namespace VKR
 					descriptorsWrite[j].pTexelBufferView = nullptr;
 					end = j;
 				}
+#if 0
 				//Emissive
 				{
 					VkDescriptorImageInfo TextureEmissiveImage{};
@@ -276,15 +283,15 @@ namespace VKR
 					}
 					g_ConsoleMSG += m_TextureEmissive->m_Path;
 					g_ConsoleMSG += '\n';
-					descriptorsWrite[end+1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[end+1].dstSet = m_DescriptorSet[i];
-					descriptorsWrite[end+1].dstBinding = end+1;
-					descriptorsWrite[end+1].dstArrayElement = 0;
-					descriptorsWrite[end+1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					descriptorsWrite[end+1].descriptorCount = 1;
-					descriptorsWrite[end+1].pBufferInfo = nullptr;
-					descriptorsWrite[end+1].pImageInfo = &TextureEmissiveImage;
-					descriptorsWrite[end+1].pTexelBufferView = nullptr;
+					descriptorsWrite[end].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end].dstBinding = end;
+					descriptorsWrite[end].dstArrayElement = 0;
+					descriptorsWrite[end].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end].descriptorCount = 1;
+					descriptorsWrite[end].pBufferInfo = nullptr;
+					descriptorsWrite[end].pImageInfo = &TextureEmissiveImage;
+					descriptorsWrite[end].pTexelBufferView = nullptr;
 				}
 				//Occlusion
 				{
@@ -302,15 +309,15 @@ namespace VKR
 					}
 					g_ConsoleMSG += m_TextureOcclusion->m_Path;
 					g_ConsoleMSG += '\n';
-					descriptorsWrite[end+2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[end+2].dstSet = m_DescriptorSet[i];
-					descriptorsWrite[end+2].dstBinding = end+2;
-					descriptorsWrite[end+2].dstArrayElement = 0;
-					descriptorsWrite[end+2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					descriptorsWrite[end+2].descriptorCount = 1;
-					descriptorsWrite[end+2].pBufferInfo = nullptr;
-					descriptorsWrite[end+2].pImageInfo = &TextureOcclusionImage;
-					descriptorsWrite[end+2].pTexelBufferView = nullptr;
+					descriptorsWrite[end+1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+1].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+1].dstBinding = end+1;
+					descriptorsWrite[end+1].dstArrayElement = 0;
+					descriptorsWrite[end+1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+1].descriptorCount = 1;
+					descriptorsWrite[end+1].pBufferInfo = nullptr;
+					descriptorsWrite[end+1].pImageInfo = &TextureOcclusionImage;
+					descriptorsWrite[end+1].pTexelBufferView = nullptr;
 				}
 
 				//Metallic
@@ -329,15 +336,15 @@ namespace VKR
 					}
 					g_ConsoleMSG += m_TextureMetallicRoughness->m_Path;
 					g_ConsoleMSG += '\n';
-					descriptorsWrite[end+3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[end+3].dstSet = m_DescriptorSet[i];
-					descriptorsWrite[end+3].dstBinding = end+3;
-					descriptorsWrite[end+3].dstArrayElement = 0;
-					descriptorsWrite[end+3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					descriptorsWrite[end+3].descriptorCount = 1;
-					descriptorsWrite[end+3].pBufferInfo = nullptr;
-					descriptorsWrite[end+3].pImageInfo = &TextureMetallicImage;
-					descriptorsWrite[end+3].pTexelBufferView = nullptr;
+					descriptorsWrite[end+2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+2].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+2].dstBinding = end+2;
+					descriptorsWrite[end+2].dstArrayElement = 0;
+					descriptorsWrite[end+2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+2].descriptorCount = 1;
+					descriptorsWrite[end+2].pBufferInfo = nullptr;
+					descriptorsWrite[end+2].pImageInfo = &TextureMetallicImage;
+					descriptorsWrite[end+2].pTexelBufferView = nullptr;
 				}
 				//Normal
 				{
@@ -355,17 +362,17 @@ namespace VKR
 					}
 					g_ConsoleMSG += m_TextureNormal->m_Path;
 					g_ConsoleMSG += '\n';
-					descriptorsWrite[end+4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[end+4].dstSet = m_DescriptorSet[i];
-					descriptorsWrite[end+4].dstBinding = end+4;
-					descriptorsWrite[end+4].dstArrayElement = 0;
-					descriptorsWrite[end+4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					descriptorsWrite[end+4].descriptorCount = 1;
-					descriptorsWrite[end+4].pBufferInfo = nullptr;
-					descriptorsWrite[end+4].pImageInfo = &TextureNormalImage;
-					descriptorsWrite[end+4].pTexelBufferView = nullptr;
+					descriptorsWrite[end+3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorsWrite[end+3].dstSet = m_DescriptorSet[i];
+					descriptorsWrite[end+3].dstBinding = end+3;
+					descriptorsWrite[end+3].dstArrayElement = 0;
+					descriptorsWrite[end+3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					descriptorsWrite[end+3].descriptorCount = 1;
+					descriptorsWrite[end+3].pBufferInfo = nullptr;
+					descriptorsWrite[end+3].pImageInfo = &TextureNormalImage;
+					descriptorsWrite[end+3].pTexelBufferView = nullptr;
 				}
-
+#endif
 				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}
 		}
@@ -382,6 +389,18 @@ namespace VKR
 			m_TextureAmbient = nullptr;
 			m_TextureShadowMap->CleanTextureData(_LogicDevice);
 			m_TextureShadowMap = nullptr;
+			if(m_TextureEmissive)
+				m_TextureEmissive->CleanTextureData(_LogicDevice);
+			if(m_TextureOcclusion)
+				m_TextureOcclusion->CleanTextureData(_LogicDevice);
+			if(m_TextureMetallicRoughness)
+				m_TextureMetallicRoughness->CleanTextureData(_LogicDevice);
+			if(m_TextureNormal)
+				m_TextureNormal->CleanTextureData(_LogicDevice);
+			m_TextureEmissive = nullptr;
+			m_TextureOcclusion = nullptr;
+			m_TextureMetallicRoughness = nullptr;
+			m_TextureNormal = nullptr;
 		}
 	}
 }

@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace VKR
 {
