@@ -17,15 +17,15 @@ namespace VKR
 			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
 			if(data == nullptr) return false;
 			render::m_StaticModels[render::m_CurrentStaticModels] = tempModel;
-			render::m_CurrentStaticModels++;
+			render::m_WaitingModels++;
 			return true;
 		}
 
 		void _AddRequest(TYPE _type, const char* _filepath, const char* _resourceName)
 		{
 			_RMRequests[_NumRequests].type = _type;
-			_RMRequests[_NumRequests].filepath = _filepath;
-			_RMRequests[_NumRequests].resourceName = _resourceName;
+			strcpy(_RMRequests[_NumRequests].filepath, _filepath);
+			strcpy(_RMRequests[_NumRequests].resourceName, _resourceName);
 			_NumRequests++;
 		}
 
@@ -39,11 +39,11 @@ namespace VKR
 			while(true)
 			{
 				if(_NumRequests > 0)
-					switch(_RMRequests[_NumRequests].type)
+					switch(_RMRequests[_NumRequests-1].type)
 					{
 						case STATIC_MODEL:
 						{
-							LoadModel_ALT(_RMRequests[_NumRequests].filepath, _RMRequests[_NumRequests].resourceName);
+							LoadModel_ALT(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName);
 							render::m_SceneDirty = true;
 							_NumRequests--;
 							break;

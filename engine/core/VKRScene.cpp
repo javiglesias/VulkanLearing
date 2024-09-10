@@ -262,17 +262,12 @@ namespace VKR
 
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
-			if(m_CreateTestModel)
-			{
-				RMThread = new std::thread(DispatchRMThread);
-				//LoadModel("resources/models/Sponza/glTF/", "Sponza.gltf", glm::vec3(0.f, 0.f, 0.f));
-				RM::_AddRequest(STATIC_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
-				m_CreateTestModel = false;
-			}
 			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
 			//editor->Loop(this, _backend);
 			if(m_SceneDirty)
 			{
+				m_CurrentStaticModels += m_WaitingModels;
+				m_WaitingModels = 0;
 				PrepareScene(_backend);
 				m_SceneDirty = false;
 			}

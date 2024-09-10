@@ -8,8 +8,8 @@ namespace VKR
 		struct RMRequest
 		{
 			TYPE type;
-			const char* filepath;
-			const char* resourceName;
+			char filepath[256];
+			char resourceName[64];
 		};
 		static RMRequest _RMRequests[256];
 		static int _NumRequests = 0;

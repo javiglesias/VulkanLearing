@@ -1,5 +1,6 @@
 #include "VKBackend.h"
 #include "../filesystem/PersistenceData.h"
+#include "../filesystem/ResourceManager.h"
 
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
@@ -93,7 +94,7 @@ namespace VKR
 
 			if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
 			{
-				m_CreateTestModel = true;
+				RM::_AddRequest(STATIC_MODEL,"resources/models/Avocado/glTF/", "Avocado.gltf");
 			}
 
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down

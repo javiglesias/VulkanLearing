@@ -18,7 +18,6 @@ namespace VKR
         class VKBackend;
         class R_Model;
         class R_Cubemap;
-        inline std::thread* RMThread;
         
         void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture = nullptr);
         void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position = glm::vec3(0.f),
