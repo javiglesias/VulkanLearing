@@ -506,7 +506,6 @@ namespace VKR
 		}
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
-			PERF_INIT()
 			auto renderContext = GetVKContext();
 			/// 1 - Actualizar los DynamicDescriptorBuffers
 			//_backend->GenerateBuffers();
@@ -526,7 +525,9 @@ namespace VKR
 				R_Model* model = m_StaticModels[i];
 				for (auto& mesh : model->m_Meshes)
 				{
-
+					if(mesh->m_VertexBuffer && mesh->m_IndexBuffer)
+						continue;
+					PERF_INIT()
 					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
 
 					/// 5 - Crear buffers de vertices
@@ -588,6 +589,7 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
+					PERF_END("PREPARE DRAW SCENE")
 				}
 			}
 
@@ -611,7 +613,6 @@ namespace VKR
 					}
 				}
 			}
-			PERF_END("PREPARE DRAW SCENE")
 		}
 		void Scene::Init(VKBackend* _backend)
 		{

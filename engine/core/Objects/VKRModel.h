@@ -30,10 +30,10 @@ namespace VKR
 			std::vector<uint16_t> m_Indices;
 			// Base_color, metallicRoughtness, normal Textures
 			uint32_t m_Material;
-			VkBuffer m_VertexBuffer;
-			VkDeviceMemory m_VertexBufferMemory;
-			VkBuffer m_IndexBuffer;
-			VkDeviceMemory m_IndexBufferMemory;
+			VkBuffer m_VertexBuffer = nullptr;
+			VkDeviceMemory m_VertexBufferMemory = nullptr;
+			VkBuffer m_IndexBuffer = nullptr;
+			VkDeviceMemory m_IndexBufferMemory = nullptr;
 		public:
 			R_Mesh() {}
 			void Cleanup(VkDevice _LogicDevice);
