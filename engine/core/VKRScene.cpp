@@ -18,6 +18,7 @@ namespace VKR
 			return g_MainScene;
 		}
 		R_Model* tempModel;
+
 		void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture)
 		{
 			// CHILDREN
@@ -95,6 +96,7 @@ namespace VKR
 				tempModel->m_Meshes.push_back(tempMesh);
 			}
 		}
+
 		void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
 		{
 			PERF_INIT()
@@ -110,19 +112,11 @@ namespace VKR
 			ProcessModelNode(node, scene, _filepath, _customTexture);
 			// Insert new static model
 			sprintf(tempModel->m_Path, _filepath, 64);
-			tempModel->m_Pos = _position;
-			tempModel->m_Scale = _scale;
+			/*tempModel->m_Pos = _position;
+			tempModel->m_Scale = _scale;*/
 			PERF_END("LOAD MODEL")
 			m_StaticModels[m_CurrentStaticModels] = tempModel;
 			m_CurrentStaticModels++;
-		}
-		void DispatchRMThread()
-		{
-			const char* _path = "resources/models/Sponza/glTF/";
-			const char* _name = "Sponza.gltf";
-			LoadModel(_path, _name);
-			m_SceneDirty = true;
-			return;
 		}
 
 		bool Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
@@ -187,16 +181,7 @@ namespace VKR
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
 				R_Model* model = m_StaticModels[i];
-				DynamicBufferObject dynO{};
-				dynO.model = model->m_ModelMatrix;
-				dynO.model = glm::translate(dynO.model, model->m_Pos);
-				dynO.model = glm::scale(dynO.model, model->m_Scale);
-				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
-				dynO.modelOpts = glm::vec4(0); // 0: miplevel
-				dynO.addOpts = glm::vec4(0); // 0: num current Lights
-				dynO.aligned[0] =  glm::vec4(0);
-				dynO.aligned[1] =  glm::vec4(0);
-				
+				DynamicBufferObject dynO{};				
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
@@ -205,7 +190,14 @@ namespace VKR
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
-
+					dynO.model = mesh->m_ModelMatrix;
+					/*dynO.model = glm::translate(dynO.model, mesh->m_Pos);
+					dynO.model = glm::scale(dynO.model, mesh->m_Scale);*/
+					//dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
+					dynO.modelOpts = glm::vec4(0); // 0: miplevel
+					dynO.addOpts = glm::vec4(0); // 0: num current Lights
+					dynO.aligned[0] =  glm::vec4(0);
+					dynO.aligned[1] =  glm::vec4(0);
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
 					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
@@ -266,8 +258,6 @@ namespace VKR
 			//editor->Loop(this, _backend);
 			if(m_SceneDirty)
 			{
-				m_CurrentStaticModels += m_WaitingModels;
-				m_WaitingModels = 0;
 				PrepareScene(_backend);
 				m_SceneDirty = false;
 			}
@@ -340,22 +330,20 @@ namespace VKR
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
 				R_Model* model = m_StaticModels[i];
-				DynamicBufferObject dynO{};
-				dynO.model = model->m_ModelMatrix;
-				dynO.model = glm::translate(dynO.model, model->m_Pos);
-				dynO.model = glm::scale(dynO.model, model->m_Scale);
-				dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
-				dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
-				dynO.modelOpts.y = g_MipLevel;
-				dynO.addOpts.x = m_LightsOs.size();
-				
+				DynamicBufferObject dynO{};				
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
-
+					dynO.model = mesh->m_ModelMatrix;
+					/*dynO.model = glm::translate(dynO.model, mesh->m_Pos);
+					dynO.model = glm::scale(dynO.model, mesh->m_Scale);*/
+					//dynO.model = glm::rotate<float>(dynO.model, mesh->m_Rotation);
+					dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
+					dynO.modelOpts.y = g_MipLevel;
+					dynO.addOpts.x = m_LightsOs.size();
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
 					std::vector<uint32_t> dynOffsets = {
@@ -405,9 +393,9 @@ namespace VKR
 			{
 				DynamicBufferObject dynO{};
 				dynO.model = model->m_ModelMatrix;
-				dynO.model = glm::translate(dynO.model, g_DirectionalLight->m_Pos);
-				dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_debugScale);
-				dynO.model = glm::rotate<float>(dynO.model, g_Rotation, m_Rotation);
+				//dynO.model = glm::translate(dynO.model, g_DirectionalLight->m_Pos);
+				//dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_debugScale);
+				//dynO.model = glm::rotate<float>(dynO.model, g_Rotation, m_Rotation);
 
 				uint32_t dynamicOffset = debugCount * static_cast<uint32_t>(dynamicAlignment);
 				VkBuffer vertesBuffers[] = { model->m_VertexBuffer };
@@ -464,6 +452,7 @@ namespace VKR
 			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
 			PERF_END("PREPARE CUBEMAP")
 		}
+
 		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
 		{
 			// Cubemap draw
@@ -504,6 +493,7 @@ namespace VKR
 			mappedMemoryRange.size = sizeof(dynO);
 			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 		}
+
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
@@ -520,13 +510,11 @@ namespace VKR
 				vkMapMemory(renderContext.m_LogicDevice, _backend->m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
 			}*/
-			for (int i = 0; i < m_CurrentStaticModels; i++)
+			for (int i = 0; i < m_CurrentPendingModels; i++)
 			{
-				R_Model* model = m_StaticModels[i];
+				R_Model* model = m_PendingBuffersModels[i];
 				for (auto& mesh : model->m_Meshes)
 				{
-					if(mesh->m_VertexBuffer && mesh->m_IndexBuffer)
-						continue;
 					PERF_INIT()
 					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
 
@@ -591,8 +579,10 @@ namespace VKR
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
 					PERF_END("PREPARE DRAW SCENE")
 				}
+				m_StaticModels[m_CurrentStaticModels] = model;
+				m_CurrentStaticModels++;
 			}
-
+			m_CurrentPendingModels = 0;
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
 			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
@@ -614,12 +604,14 @@ namespace VKR
 				}
 			}
 		}
+
 		void Scene::Init(VKBackend* _backend)
 		{
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 			g_DirectionalLight = new Directional();
 			PrepareDebugScene(_backend);
 		}
+
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();

@@ -16,8 +16,8 @@ namespace VKR
 			sprintf(tempModel->m_Path , "%s",  _modelName);
 			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
 			if(data == nullptr) return false;
-			render::m_StaticModels[render::m_CurrentStaticModels] = tempModel;
-			render::m_WaitingModels++;
+			render::m_PendingBuffersModels[render::m_CurrentPendingModels] = tempModel;
+			render::m_CurrentPendingModels++;
 			return true;
 		}
 

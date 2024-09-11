@@ -15,6 +15,7 @@ namespace VKR
     namespace render
     {
 		#define MAX_MODELS 256
+		#define MAX_MESHES 1024
         enum G_PIPELINE_STATUS
         {
 	        INVALID,
@@ -72,8 +73,9 @@ namespace VKR
         inline CubemapRenderer* m_CubemapRender;
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
         inline R_Model* m_StaticModels[MAX_MODELS];
+        inline R_Model* m_PendingBuffersModels[MAX_MODELS];
         inline int m_CurrentStaticModels = 0;
-        inline int m_WaitingModels = 0;
+        inline int m_CurrentPendingModels = 0;
         inline std::vector<Light*> g_Lights;
         inline Directional* g_DirectionalLight;
 

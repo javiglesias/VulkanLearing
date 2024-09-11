@@ -21,7 +21,7 @@ namespace VKR
 			cgltf_load_buffers(&options, modelData, _filepath);
 			if(cgltf_validate(modelData) == cgltf_result_success)
 			{
-				printf("\nModel file validated (nodes %ld)", modelData->nodes_count);
+				printf("\nModel file validated (nodes %ld)\n", modelData->nodes_count);
 				//  MATERIALS
 				size_t materialID = 0;
 				if(modelData->materials_count > 0)
@@ -78,7 +78,21 @@ namespace VKR
 					if(mesh)
 					{
 						VKR::render::R_Mesh* tempMesh = new VKR::render::R_Mesh();
-						printf("\n\tMesh %zd %s (%ld)\n", n, mesh->name, mesh->primitives_count);
+						tempMesh->m_ModelMatrix = glm::mat4(1.f);
+						//modelData->nodes[n].translation
+						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
+											modelData->nodes[n].translation[1],
+											modelData->nodes[n].translation[2]);
+						tempMesh->m_ModelMatrix = glm::translate(tempMesh->m_ModelMatrix, tempMesh->m_Pos);
+						//modelData->nodes[n].rotation
+						/*tempMesh->m_Rotation = glm::vec3(modelData->nodes[n].rotation[0],
+											modelData->nodes[n].rotation[1],
+											modelData->nodes[n].rotation[2]);*/
+						//modelData->nodes[n].scale
+						tempMesh->m_Scale = glm::vec3(modelData->nodes[n].scale[0],
+											modelData->nodes[n].scale[1],
+											modelData->nodes[n].scale[2]);
+						tempMesh->m_ModelMatrix  = glm::scale(tempMesh->m_ModelMatrix, tempMesh->m_Scale);
 						for(cgltf_size p = 0; p < mesh->primitives_count; p++)
 						{
 							printf("\tPrimitive %zd\n", p);
@@ -203,9 +217,9 @@ namespace VKR
 			render::R_Model* _model = new render::R_Model();
 			auto result =  read_glTF(_filepath, _modelName, _model);
 			// TODO cast R_Model to R_DbgModel
-			tempModel_->m_Rotation = _model->m_RotAngle;
-			tempModel_->m_ModelMatrix = _model->m_ModelMatrix;
-			tempModel_->m_Pos = _model->m_Pos;
+			//tempModel_->m_Rotation = _model->m_RotAngle;
+			tempModel_->m_ModelMatrix = glm::mat4(1.f);
+			//tempModel_->m_Pos = _model->m_Pos;
 			tempModel_->m_Material = new render::R_DbgMaterial();
 			tempModel_->m_Material->m_Texture = new render::Texture(_model->m_Materials[0]->m_TextureAmbient->m_Path);
 			for (auto& mesh : _model->m_Meshes) 

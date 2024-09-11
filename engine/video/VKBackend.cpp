@@ -94,7 +94,7 @@ namespace VKR
 
 			if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
 			{
-				RM::_AddRequest(STATIC_MODEL,"resources/models/Avocado/glTF/", "Avocado.gltf");
+				RM::_AddRequest(STATIC_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
 			}
 
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down

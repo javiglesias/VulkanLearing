@@ -181,6 +181,7 @@ namespace VKR
 
 				ImGui::End();
 			}
+#if 0
 			ImGui::Begin("World");
 			{
 				for (int i = 0; i < m_CurrentStaticModels; i++)
@@ -225,6 +226,7 @@ namespace VKR
 				}*/
 				ImGui::End();
 			}
+#endif
 			ImGui::Begin("Lights");
 			{
 				if (ImGui::Button("Create Point Light"))
