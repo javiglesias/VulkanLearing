@@ -1,5 +1,4 @@
 #include "VKBackend.h"
-#include "../filesystem/PersistenceData.h"
 #include "../filesystem/ResourceManager.h"
 
 #include <vulkan/vulkan.h>
@@ -94,7 +93,11 @@ namespace VKR
 
 			if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
 			{
-				RM::_AddRequest(STATIC_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
+				RM::_AddRequest(ASSIMP_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
+			}
+			if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
+			{
+				RM::_AddRequest(STATIC_MODEL,"resources/models/Avocado/glTF/", "Avocado.gltf");
 			}
 
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
@@ -421,17 +424,20 @@ namespace VKR
 			GenerateDBGBuffers();
 			CreateSyncObjects(0);
 			CreateSyncObjects(1);
-			g_SaveDataThread = new std::thread(SaveCurrentState, this);
-			// TODO: start the load thread
-			g_LoadDataThread = new std::thread(ContentManager, this);
 			m_GPipelineStatus = READY;
 		}
 
 		void VKBackend::GenerateDBGBuffers()
 		{
+			// first clean old buffers
 			VkDeviceSize dbgBufferSize = sizeof(DebugUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
+				if(m_DbgUniformBuffers[i])
+				{
+					vkDestroyBuffer(g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
+					vkFreeMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
+				}
 				CreateBuffer(dbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -443,6 +449,11 @@ namespace VKR
 			VkDeviceSize dynDbgBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
+				if(m_DbgDynamicBuffers[i])
+				{
+					vkDestroyBuffer(g_context.m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
+					vkFreeMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
+				}
 				CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -855,8 +866,8 @@ namespace VKR
 
 		void VKBackend::Cleanup()
 		{
-			g_SaveDataThread->join();
-			g_LoadDataThread->join();
+			if(g_LoadDataThread)
+				g_LoadDataThread->join();
 			printf("Cleanup\n");
 			g_context.Cleanup();
 			#ifdef _WINDOWS
@@ -870,32 +881,32 @@ namespace VKR
 
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
+				vkDestroyBuffer(g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
+
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_LightsBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_LightsBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
-
-				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapDynamicBuffers[i], nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], nullptr);
-
-				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapUniformBuffers[i], nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], nullptr);
+				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
-
-				vkDestroyBuffer(g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_ShadowUniformBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], nullptr);
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_ShadowDynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapDynamicBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], nullptr);
 			}
 			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
 			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);

@@ -24,6 +24,7 @@ namespace VKR
 		public:
 			void Cleanup(VkDevice _LogicDevice)
 			{
+				m_Texture->CleanTextureData(_LogicDevice);
 				// Delete Material things
 				vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
 			}

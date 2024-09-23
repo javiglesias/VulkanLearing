@@ -116,16 +116,6 @@ namespace VKR
 				render::m_Rotation.y = rotation[1];
 				render::m_Rotation.z = rotation[2];
 
-				if (ImGui::Button("Load cgltf"))
-				{
-					if(_mainScene->LoadModel_ALT("resources/models/Avocado/glTF/", "Avocado.gltf", glm::vec3(0.f, 0.f, 0.f)))
-					{
-						VKR::render::m_CreateTestModel = false;
-						_mainScene->PrepareScene(_backend);
-					} else {
-					fprintf(stderr, "ERROR LOADING MODEL WITH cgltf.h");
-					}
-				}
 				if (ImGui::Button("Reload shaders"))
 				{
 					_mainScene->ReloadShaders(_backend);
@@ -147,16 +137,6 @@ namespace VKR
 							ImGui::SetItemDefaultFocus();
 					}
 					ImGui::EndCombo();
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Load"))
-				{
-					char _filepath[128];
-					sprintf(_filepath, "resources/models/%s/glTF/", ModelList[item_current_idx]);
-					char modelName[32];
-					sprintf(modelName, "%s.gltf", ModelList[item_current_idx]);
-					_mainScene->LoadModel_ALT(_filepath, modelName, glm::vec3(0.f, 0.f, 0.f));
-					_mainScene->PrepareScene(_backend);
 				}
 
 				ImGui::DragFloat("zFar", &zFar);

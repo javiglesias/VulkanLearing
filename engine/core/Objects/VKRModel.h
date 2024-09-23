@@ -6,11 +6,6 @@
 
 #include <unordered_map>
 
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/cimport.h>
-
-
 namespace VKR
 {
 	namespace render
@@ -48,6 +43,8 @@ namespace VKR
 		public:
 			R_Model();
 		public:
+			
+			glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 			std::vector<R_Mesh*> m_Meshes;
 			std::unordered_map<uint32_t, R_Material*> m_Materials;
 			char m_Path[64];

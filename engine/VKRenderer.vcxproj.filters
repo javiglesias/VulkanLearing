@@ -140,28 +140,10 @@
     <ClInclude Include="video\VKRUtils.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="memory\mem_alloc.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="core\jobs.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="filesystem\savedata.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
     <ClInclude Include="core\Objects\VKRLight.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="filesystem\Resource.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="filesystem\PersistenceData.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="perfmon\Renderdoc.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
-    <ClInclude Include="perfmon\Nsight.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="perfmon\Custom.h">

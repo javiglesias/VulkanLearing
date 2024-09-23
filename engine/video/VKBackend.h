@@ -23,7 +23,6 @@ namespace VKR
             READY,
             DESTROYED
         };
-        inline std::thread* g_SaveDataThread;
         inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
         inline const int FRAMES_IN_FLIGHT = 2;
@@ -47,7 +46,7 @@ namespace VKR
         inline float g_cubemapDistance = 1000.f;
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
-        inline float g_MipLevel = 0.f;
+        inline float g_MipLevel = 1.f;
         inline float g_Rotation = 0.f;
         inline constexpr int g_FrameGranularity = 10240;
         inline float g_FrameTime[g_FrameGranularity];

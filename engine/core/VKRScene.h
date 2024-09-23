@@ -18,10 +18,7 @@ namespace VKR
         class VKBackend;
         class R_Model;
         class R_Cubemap;
-        
-        void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture = nullptr);
-        void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position = glm::vec3(0.f),
-            glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
+
         class Scene
         {
         public: // FUNCIONES
@@ -35,8 +32,6 @@ namespace VKR
             void PrepareDebugScene(VKBackend* _backend);
             void ShadowPass(VKBackend* _backend, int _CurrentFrame);
             void GeometryPass(VKBackend* _backend, int _CurrentFrame);
-            bool LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position,
-                glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
                 glm::vec3 _scale = glm::vec3(1.f), char* _customTexture = nullptr);
             void Cleanup(VkDevice _LogicDevice);

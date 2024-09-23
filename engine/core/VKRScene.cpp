@@ -2,7 +2,6 @@
 #include "../perfmon/Custom.h"
 #include "../video/Types.h"
 #include "Objects/VKRCubemap.h"
-#include "../filesystem/gltfReader.h"
 #include "Objects/VKRLight.h"
 #include "Objects/VKRModel.h"
 #include <cstddef>
@@ -17,129 +16,15 @@ namespace VKR
 		{
 			return g_MainScene;
 		}
-		R_Model* tempModel;
-
-		void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath, char* _customTexture)
-		{
-			// CHILDREN
-			for (unsigned int i = 0; i < _node->mNumChildren; i++)
-			{
-				ProcessModelNode(_node->mChildren[i], _scene, _filepath);
-			}
-			int lastTexIndex = 0;
-			uint32_t tempMaterial = -1;
-			for (int m = 0; m < _node->mNumMeshes; m++)
-			{
-				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
-				R_Mesh* tempMesh = new R_Mesh();
-				//Process Mesh
-				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
-				{
-					const aiFace& face = mesh->mFaces[f];
-					for (unsigned int j = 0; j < face.mNumIndices; j++)
-					{
-						// m_Indices.push_back(face.mIndices[0]);
-						// m_Indices.push_back(face.mIndices[1]);
-						// m_Indices.push_back(face.mIndices[2]);
-						tempMesh->m_Indices.push_back(face.mIndices[0]);
-						tempMesh->m_Indices.push_back(face.mIndices[1]);
-						tempMesh->m_Indices.push_back(face.mIndices[2]);
-					}
-				}
-				for (unsigned int v = 0; v < mesh->mNumVertices; v++)
-				{
-					Vertex3D tempVertex;
-					tempVertex.m_Pos = { mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z };
-					if (mesh->mTextureCoords[0])
-					{
-						tempVertex.m_TexCoord = { mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y };
-					}
-					else
-					{
-						tempVertex.m_TexCoord = { 0.f, 0.f };
-					}
-					tempVertex.m_Normal = { mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z };
-					// New New Mexico
-					tempMesh->m_Vertices.push_back(tempVertex);
-				}
-				// Textura por Mesh
-				int texIndex = 0;
-				aiString path;
-				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr &&
-					_customTexture == nullptr && _scene->HasMaterials())
-				{
-					tempModel->m_Materials[mesh->mMaterialIndex] = new R_Material();
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-					auto textureDiffuse = std::string(_filepath);
-					textureDiffuse += path.data;
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new Texture(textureDiffuse);
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
-					auto textureSpecular = std::string(_filepath);
-					textureSpecular += path.data;
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(textureSpecular);
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
-					auto textureAmbient = std::string(_filepath);
-					textureAmbient += path.data;
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(textureAmbient);
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new Texture();
-				}
-				else if (_customTexture != nullptr) // renemos que crear el modelo con textura custom
-				{
-					tempModel->m_Materials[mesh->mMaterialIndex] = new R_Material();
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new Texture(std::string(_customTexture));
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new Texture(std::string(_customTexture));
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new Texture(std::string(_customTexture));
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new Texture();
-				}
-				tempMesh->m_Material = mesh->mMaterialIndex;
-				//++m_TotalTextures;
-				tempModel->m_Meshes.push_back(tempMesh);
-			}
-		}
-
-		void LoadModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			PERF_INIT()
-			char filename[128];
-			sprintf(filename, "%s%s", _filepath, _modelName);
-			printf("\nLoading %s\n", _modelName);
-			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
-			if (!scene || !scene->HasMeshes())
-				exit(-225);
-			tempModel = new R_Model();
-			//Process Node
-			auto node = scene->mRootNode;
-			ProcessModelNode(node, scene, _filepath, _customTexture);
-			// Insert new static model
-			sprintf(tempModel->m_Path, _filepath, 64);
-			/*tempModel->m_Pos = _position;
-			tempModel->m_Scale = _scale;*/
-			PERF_END("LOAD MODEL")
-			m_StaticModels[m_CurrentStaticModels] = tempModel;
-			m_CurrentStaticModels++;
-		}
-
-		bool Scene::LoadModel_ALT(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			char filename[128];
-			tempModel = new R_Model();
-			sprintf(filename, "%s%s", _filepath, _modelName);
-			sprintf(tempModel->m_Path , "%s",  _modelName);
-			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
-			if(data == nullptr) return false;
-			m_StaticModels[m_CurrentStaticModels] = tempModel;
-			m_CurrentStaticModels++;
-			return true;
-		}
-
-		void Scene::LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position, glm::vec3 _scale, char* _customTexture)
-		{
-			//m_Cubemap->m_gltf = LoadModel(_filepath, _modelName, _position, _scale, _customTexture);
-		}
 
 		/// Shadow Pass
 		void Scene::ShadowPass(VKBackend* _backend, int _CurrentFrame)
 		{
+			if(m_SceneDirty)
+			{
+				PrepareScene(_backend);
+				m_SceneDirty = false;
+			}
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 orthogonalProjMat = glm::ortho<float>(g_DirectionalLight->m_Right, -g_DirectionalLight->m_Right,
 																												g_DirectionalLight->m_Up, -g_DirectionalLight->m_Up , 
@@ -187,17 +72,10 @@ namespace VKR
 				memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout,
 					0, 1, &_backend->m_ShadowMat->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
+				dynO.model = model->m_ModelMatrix;
 				for (auto& mesh : model->m_Meshes)
 				{
 					// Update Uniform buffers
-					dynO.model = mesh->m_ModelMatrix;
-					/*dynO.model = glm::translate(dynO.model, mesh->m_Pos);
-					dynO.model = glm::scale(dynO.model, mesh->m_Scale);*/
-					//dynO.model = glm::rotate(dynO.model, model->m_RotGRAD, model->m_RotAngle);
-					dynO.modelOpts = glm::vec4(0); // 0: miplevel
-					dynO.addOpts = glm::vec4(0); // 0: num current Lights
-					dynO.aligned[0] =  glm::vec4(0);
-					dynO.aligned[1] =  glm::vec4(0);
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					VkDeviceSize offsets[] = { 0 };
 					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
@@ -211,9 +89,9 @@ namespace VKR
 					{
 						vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_Vertices.size(), 1, 0, 0);
 					}
+					// Flush to make changes visible to the host
 				}
 				++count;
-				// Flush to make changes visible to the host
 				VkMappedMemoryRange mappedMemoryRange{};
 				mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 				mappedMemoryRange.memory = _backend->m_ShadowDynamicBuffersMemory[_CurrentFrame];
@@ -256,11 +134,6 @@ namespace VKR
 		{
 			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
 			//editor->Loop(this, _backend);
-			if(m_SceneDirty)
-			{
-				PrepareScene(_backend);
-				m_SceneDirty = false;
-			}
 			auto renderContext = GetVKContext();
 			// GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
@@ -330,29 +203,26 @@ namespace VKR
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
 				R_Model* model = m_StaticModels[i];
-				DynamicBufferObject dynO{};				
+				DynamicBufferObject dynO{};
+				// Update Uniform buffers
+				dynO.model = model->m_ModelMatrix;
+				dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
+				dynO.modelOpts.y = g_MipLevel;
+				dynO.addOpts.x = m_LightsOs.size();
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+				VkDeviceSize offsets[] = { 0 };
+				std::vector<uint32_t> dynOffsets = {
+					dynamicOffset,
+					lightDynamicOffset0,
+					lightDynamicOffset1,
+					lightDynamicOffset2,
+					lightDynamicOffset3,
+				};
 				for (auto& mesh : model->m_Meshes)
 				{
-					// Update Uniform buffers
-					dynO.model = mesh->m_ModelMatrix;
-					/*dynO.model = glm::translate(dynO.model, mesh->m_Pos);
-					dynO.model = glm::scale(dynO.model, mesh->m_Scale);*/
-					//dynO.model = glm::rotate<float>(dynO.model, mesh->m_Rotation);
-					dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
-					dynO.modelOpts.y = g_MipLevel;
-					dynO.addOpts.x = m_LightsOs.size();
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
-					VkDeviceSize offsets[] = { 0 };
-					std::vector<uint32_t> dynOffsets = {
-						dynamicOffset,
-						lightDynamicOffset0,
-						lightDynamicOffset1,
-						lightDynamicOffset2,
-						lightDynamicOffset3,
-					};
 					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_PipelineLayout, 0, 1,
 						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_CurrentFrame], 5, dynOffsets.data());
 					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
@@ -366,14 +236,14 @@ namespace VKR
 					{
 						vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_Vertices.size(), 1, 0, 0);
 					}
-					// Flush to make changes visible to the host
-					VkMappedMemoryRange mappedMemoryRange{};
-					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-					mappedMemoryRange.memory = _backend->m_DynamicBuffersMemory[_CurrentFrame];
-					mappedMemoryRange.size = sizeof(dynO);
-					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 				}
 				++count;
+				// Flush to make changes visible to the host
+				VkMappedMemoryRange mappedMemoryRange{};
+				mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+				mappedMemoryRange.memory = _backend->m_DynamicBuffersMemory[_CurrentFrame];
+				mappedMemoryRange.size = sizeof(dynO);
+				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 				VkMappedMemoryRange lightsMappedMemoryRange{};
 				lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];

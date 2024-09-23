@@ -194,11 +194,8 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="core\Objects\DebugModels.h" />
     <ClInclude Include="filesystem\gltfReader.h" />
     <ClInclude Include="editor\Editor.h" />
-    <ClInclude Include="core\jobs.h" />
-    <ClInclude Include="filesystem\PersistenceData.h" />
     <ClInclude Include="filesystem\Resource.h" />
     <ClInclude Include="filesystem\ResourceManager.h" />
-    <ClInclude Include="filesystem\savedata.h" />
     <ClInclude Include="video\Types.h" />
     <ClInclude Include="core\Objects\VKRCubemap.h" />
     <ClInclude Include="core\Materials\VKRCubemapMaterial.h" />
@@ -212,10 +209,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="core\Materials\VKRShader.h" />
     <ClInclude Include="core\Materials\VKRShadowMaterial.h" />
     <ClInclude Include="core\Materials\VKRTexture.h" />
-    <ClInclude Include="memory\mem_alloc.h" />
     <ClInclude Include="perfmon\Custom.h" />
-    <ClInclude Include="perfmon\Nsight.h" />
-    <ClInclude Include="perfmon\Renderdoc.h" />
     <ClInclude Include="video\VKBackend.h" />
     <ClInclude Include="video\VKRUtils.h" />
   </ItemGroup>

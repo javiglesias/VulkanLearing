@@ -13,6 +13,7 @@ namespace VKR
 	{
 		UNDEFINED=-1,
 		STATIC_MODEL,
+		ASSIMP_MODEL,
 		DBG_MODEL,
 		TEXTURE,
 		SOUND
