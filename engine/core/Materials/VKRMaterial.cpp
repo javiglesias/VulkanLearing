@@ -16,16 +16,18 @@ namespace VKR
 
 			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
 			m_TextureDiffuse->LoadTexture();
+			m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureSpecular->LoadTexture();
+			m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureAmbient->LoadTexture();
+			m_TextureAmbient->CreateAndTransitionImage(_backend->m_CommandPool);
+
+			//GenerateMipmap(m_TextureDiffuse->tImage, _backend->m_CommandPool, 11, m_TextureDiffuse->tWidth, m_TextureDiffuse->tHeight);
 			/*m_TextureEmissive->LoadTexture();
 			m_TextureOcclusion->LoadTexture();
 			m_TextureMetallicRoughness->LoadTexture();
 			m_TextureNormal->LoadTexture();*/
 
-			m_TextureDiffuse->CreateAndTransitionImage(_backend->m_CommandPool);
-			m_TextureSpecular->CreateAndTransitionImage(_backend->m_CommandPool);
-			m_TextureAmbient->CreateAndTransitionImage(_backend->m_CommandPool);
 			/*m_TextureEmissive->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureOcclusion->CreateAndTransitionImage(_backend->m_CommandPool);
 			m_TextureMetallicRoughness->CreateAndTransitionImage(_backend->m_CommandPool);

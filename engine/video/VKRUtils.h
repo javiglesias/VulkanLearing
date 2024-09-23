@@ -462,7 +462,7 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 	}
 	// record commands blitimage
 	iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -556,7 +556,7 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 
 inline 
 VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, 
-							VkImageViewType _viewType, uint32_t _arrayLayers = 1, float _mipLevels = 1)
+							VkImageViewType _viewType, uint32_t _arrayLayers = 1, float _levelCount = 1)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageView tImageView;
@@ -567,7 +567,7 @@ VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlag
 	viewInfo.format = _format;
 	viewInfo.subresourceRange.aspectMask = _aspectMask;
 	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = _mipLevels;
+	viewInfo.subresourceRange.levelCount = _levelCount;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = _arrayLayers;
 	VK_ASSERT(vkCreateImageView(renderContext.m_LogicDevice, &viewInfo, nullptr, &tImageView));

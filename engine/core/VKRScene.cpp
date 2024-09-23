@@ -380,6 +380,7 @@ namespace VKR
 				vkMapMemory(renderContext.m_LogicDevice, _backend->m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
 			}*/
+			PERF_INIT()
 			for (int i = 0; i < m_CurrentPendingModels; i++)
 			{
 				R_Model* model = m_PendingBuffersModels[i];
@@ -405,6 +406,11 @@ namespace VKR
 					vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 					memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
 					vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+					if(mesh->m_VertexBuffer)
+					{
+						vkDestroyBuffer(renderContext.m_LogicDevice, mesh->m_VertexBuffer, nullptr);
+						vkFreeMemory(renderContext.m_LogicDevice, mesh->m_VertexBufferMemory, nullptr);
+					}
 					CreateBuffer(bufferSize,
 						VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -429,6 +435,11 @@ namespace VKR
 						vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 						memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
 						vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+						if(mesh->m_IndexBuffer)
+						{
+							vkDestroyBuffer(renderContext.m_LogicDevice, mesh->m_IndexBuffer, nullptr);
+							vkFreeMemory(renderContext.m_LogicDevice, mesh->m_IndexBufferMemory, nullptr);
+						}
 						CreateBuffer(bufferSize,
 							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 							VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -447,11 +458,12 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
-					PERF_END("PREPARE DRAW SCENE")
+					PERF_END("PREPARE MESH")
 				}
 				m_StaticModels[m_CurrentStaticModels] = model;
 				m_CurrentStaticModels++;
 			}
+			PERF_END("PREPARE DRAW SCENE")
 			m_CurrentPendingModels = 0;
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
