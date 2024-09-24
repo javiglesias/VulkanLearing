@@ -6,6 +6,7 @@
 #include "Objects/VKRModel.h"
 #include <cstddef>
 #include "../filesystem/ResourceManager.h"
+#include "../editor/Editor.h"
 
 namespace VKR
 {
@@ -133,7 +134,7 @@ namespace VKR
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
 			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
-			//editor->Loop(this, _backend);
+			g_editor->Loop(this, _backend);
 			auto renderContext = GetVKContext();
 			// GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
@@ -287,6 +288,7 @@ namespace VKR
 			//_backend->EndRenderPass(_CurrentFrame);
 			if(g_DrawCubemap)
 				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
 			_backend->EndRenderPass(_CurrentFrame);
 			_backend->SubmitAndPresent(_CurrentFrame, &imageIdx);
 		}
@@ -492,6 +494,8 @@ namespace VKR
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 			g_DirectionalLight = new Directional();
 			PrepareDebugScene(_backend);
+			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
+		_backend->m_SwapchainImagesCount);
 		}
 
 		void Scene::PrepareDebugScene(VKBackend* _backend)
@@ -557,6 +561,8 @@ namespace VKR
 				model->Cleanup(_LogicDevice);
 			}
 			m_Cubemap->Cleanup(_LogicDevice);
+			g_editor->Cleanup();
+			g_editor->Shutdown();
 		}
 	}
 }

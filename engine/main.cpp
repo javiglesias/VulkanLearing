@@ -19,8 +19,6 @@ int main(int _argc, char** _args)
 	RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
 	mainScene.Init(&backend);
-	/*VKR::render::Editor* editor = new VKR::render::Editor(VKR::render::m_Window, backend.m_Instance, backend.m_Capabilities.minImageCount,
-		backend.m_SwapchainImagesCount);*/
 	auto renderContext = VKR::render::GetVKContext();
 	// mainScene.LoadCubemapModel("resources/models/Box/glTF/", "Box.gltf", glm::vec3(0.f, 1.f, 0.f));
 	// mainScene.PrepareCubemapScene(&backend);
@@ -37,16 +35,13 @@ int main(int _argc, char** _args)
 			VKR::render::g_FrameTime[VKR::render::g_CurrentFrameTime] = deltaTime;
 			++VKR::render::g_CurrentFrameTime %= VKR::render::g_FrameGranularity;
 			mainScene.DrawScene(&backend, currentLocalFrame);
-			//editor->Draw(backend.m_CommandBuffer[currentLocalFrame]);
 			currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
 			++VKR::render::g_CurrentFrame;
 		}
 		nextFrame = backend.GetTime();
 	}
 	mainScene.Cleanup(renderContext.m_LogicDevice);
-	//editor->Cleanup();
 	backend.Cleanup();
-	//editor->Shutdown();
 	backend.Shutdown();
 	return 0;
 }
