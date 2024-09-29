@@ -20,8 +20,6 @@ int main(int _argc, char** _args)
 	backend.Init();
 	mainScene.Init(&backend);
 	auto renderContext = VKR::render::GetVKContext();
-	// mainScene.LoadCubemapModel("resources/models/Box/glTF/", "Box.gltf", glm::vec3(0.f, 1.f, 0.f));
-	// mainScene.PrepareCubemapScene(&backend);
 	currentFrame = backend.GetTime();
 	// _initlializePerfmon(&backend);
 	while (!backend.BackendShouldClose())

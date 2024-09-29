@@ -35,7 +35,7 @@ namespace VKR
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
-        inline bool g_DrawCubemap = false;
+        inline bool g_DrawCubemap = true;
         inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;

@@ -109,17 +109,19 @@ namespace VKR
 
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
-			/*m_CubemapRender->Initialize();
+			auto renderContext = GetVKContext();
+			vkDeviceWaitIdle(renderContext.m_LogicDevice);
+			vkDestroyPipeline(renderContext.m_LogicDevice, m_CubemapRender->m_Pipeline, nullptr);
+			vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_CubemapRender->m_PipelineLayout, nullptr);
+			m_CubemapRender->Initialize();
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
-			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
-			m_CubemapRender->CleanShaderModules();*/
+			m_CubemapRender->CreatePipeline(renderContext.m_RenderPass->m_Pass);
+			m_CubemapRender->CleanShaderModules();
 			PERF_INIT()
-			auto renderContext = GetVKContext();
 			if(m_GraphicsRender->m_VertShader->GLSLCompile(true) &&
 				m_GraphicsRender->m_FragShader->GLSLCompile(true))
 			{
-				vkDeviceWaitIdle(renderContext.m_LogicDevice);
 				vkDestroyPipeline(renderContext.m_LogicDevice, m_GraphicsRender->m_Pipeline, nullptr);
 				vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_GraphicsRender->m_PipelineLayout, nullptr);
 				m_GraphicsRender->Initialize();
@@ -354,10 +356,7 @@ namespace VKR
 			vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_PipelineLayout, 0, 1,
 				&m_Cubemap->m_Material->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
 			vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
-			for (auto& mesh : m_Cubemap->m_gltf->m_Meshes)
-			{
-				vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_Vertices.size(), 1, 0, 0);
-			}
+			vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], m_Cubemap->m_Vertices.size(), 1, 0, 0);
 			// Flush to make changes visible to the host
 			VkMappedMemoryRange mappedMemoryRange{};
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -494,6 +493,7 @@ namespace VKR
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 			g_DirectionalLight = new Directional();
 			PrepareDebugScene(_backend);
+			PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
 		}
