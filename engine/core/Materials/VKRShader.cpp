@@ -69,11 +69,11 @@ namespace VKR
 			m_SpirvSrc.clear();
 			m_Program.addShader(m_TShader);
 			m_Program.link(EShMsgDefault);    // link and report default error/warning messages
-			printf("Linking program: %s\n", m_Program.getInfoLog()); // get the log for linking the program
+			printf("Linking program %s: %s\n", m_Filename.c_str(), m_Program.getInfoLog()); // get the log for linking the program
 			glslang::TIntermediate* m_IntermediateSrc;
 			m_IntermediateSrc = m_Program.getIntermediate(m_Stage);
 			glslang::GlslangToSpv(*m_IntermediateSrc, m_SpirvSrc);    // convert the glslang intermediate into SPIR-V bytes
-			printf("SPIRV creation: %s\n", m_TShader->getInfoLog());
+			printf("SPIRV creation %s: %s\n", m_Filename.c_str(), m_TShader->getInfoLog());
 			#endif
 		}
 

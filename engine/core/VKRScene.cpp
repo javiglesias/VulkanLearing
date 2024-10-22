@@ -158,7 +158,14 @@ namespace VKR
 			ubo.cameraPosition = m_CameraPos;
 			memcpy(_backend->m_Uniform_SBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
 			_backend->BeginRenderPass(_CurrentFrame);
-			// Drawing Commands
+#pragma region GRID
+			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GridRender->m_Pipeline);
+			DebugUniformBufferObject gubo{};
+			gubo.view = viewMat;
+			gubo.projection = projMat;
+			memcpy(_backend->m_GridUniformBuffersMapped[_CurrentFrame], &gubo, sizeof(gubo));
+#pragma endregion
+#pragma region MODELS
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_Pipeline);
 			// REFRESH RENDER MODE FUNCTIONS
 			//vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
@@ -168,40 +175,40 @@ namespace VKR
 			m_LightsOs.clear();
 			// Ambient Light
 			{
-				glm::mat4 lightViewMat = glm::lookAt( g_DirectionalLight->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
-				glm::mat4 lightProjMat	= glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
+				glm::mat4 lightViewMat = glm::lookAt(g_DirectionalLight->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
+				glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 				LightBufferObject temp;
-				temp			= {};
-				temp.addOpts	= glm::vec4(g_DirectionalLight->m_Pos, 1.0);
-				temp.Opts.x		= g_ShadowBias;
-				temp.Opts.y		= g_ShadowBias;
-				temp.View		= lightViewMat;
-				temp.Proj		= lightProjMat;
-				temp.Position	= glm::vec4(g_DirectionalLight->m_Pos, 1.0);
-				temp.Color		= glm::vec4(g_DirectionalLight->m_Color, 1.0);
+				temp = {};
+				temp.addOpts = glm::vec4(g_DirectionalLight->m_Pos, 1.0);
+				temp.Opts.x = g_ShadowBias;
+				temp.Opts.y = g_ShadowBias;
+				temp.View = lightViewMat;
+				temp.Proj = lightProjMat;
+				temp.Position = glm::vec4(g_DirectionalLight->m_Pos, 1.0);
+				temp.Color = glm::vec4(g_DirectionalLight->m_Color, 1.0);
 				m_LightsOs.push_back(temp);
 			}
 			//Point Ligts
-			for(auto& light : g_Lights)
+			for (auto& light : g_Lights)
 			{
-				glm::mat4 lightViewMat = glm::lookAt( light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
-				glm::mat4 lightProjMat	= glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
+				glm::mat4 lightViewMat = glm::lookAt(light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
+				glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 				LightBufferObject temp;
-				temp			= {};
-				temp.addOpts	= glm::vec4(light->m_Pos, 1.0);
-				temp.Opts.x		= g_ShadowBias;
-				temp.Opts.y		= g_ShadowBias;
-				temp.View		= lightViewMat;
-				temp.Proj		= lightProjMat;
-				temp.Position	= glm::vec4(light->m_Pos, 1.0);
-				temp.Color		= glm::vec4(light->m_Color, 1.0);
+				temp = {};
+				temp.addOpts = glm::vec4(light->m_Pos, 1.0);
+				temp.Opts.x = g_ShadowBias;
+				temp.Opts.y = g_ShadowBias;
+				temp.View = lightViewMat;
+				temp.Proj = lightProjMat;
+				temp.Position = glm::vec4(light->m_Pos, 1.0);
+				temp.Color = glm::vec4(light->m_Color, 1.0);
 				m_LightsOs.push_back(temp);
 			}
 			uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);
 			uint32_t lightDynamicOffset1 = (count + 1) * static_cast<uint32_t>(lightDynAlign);
 			uint32_t lightDynamicOffset2 = (count + 2) * static_cast<uint32_t>(lightDynAlign);
 			uint32_t lightDynamicOffset3 = (count + 3) * static_cast<uint32_t>(lightDynAlign);
-			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame]  + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
+			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 			// Render Pass
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
@@ -230,7 +237,7 @@ namespace VKR
 						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_CurrentFrame], 5, dynOffsets.data());
 					vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
 					// Draw Loop
-					if ( mesh->m_Indices.size() > 0)
+					if (mesh->m_Indices.size() > 0)
 					{
 						vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 						vkCmdDrawIndexed(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
@@ -253,7 +260,8 @@ namespace VKR
 				lightsMappedMemoryRange.size = m_LightsOs.size() * sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 			}
-			// DEBUG Render
+#pragma endregion
+#pragma region DEBUG
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_DbgRender->m_Pipeline);
 			//Debug
 			DebugUniformBufferObject dubo{};
@@ -287,9 +295,11 @@ namespace VKR
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
 				++debugCount;
 			}
-			//_backend->EndRenderPass(_CurrentFrame);
+#pragma endregion
+#pragma region CUBEMAP
 			if(g_DrawCubemap)
 				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+#pragma endregion
 			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
 			_backend->EndRenderPass(_CurrentFrame);
 			_backend->SubmitAndPresent(_CurrentFrame, &imageIdx);
@@ -492,7 +502,7 @@ namespace VKR
 		{
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 			g_DirectionalLight = new Directional();
-			PrepareDebugScene(_backend);
+			//PrepareDebugScene(_backend);
 			PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);

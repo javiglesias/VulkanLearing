@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <string>
 #include "../core/Objects/VKRModel.h"
+#include "../video/VKRenderable.h"
 
 namespace VKR
 {
@@ -77,7 +78,7 @@ namespace VKR
 					auto camera = modelData->nodes[n].camera;
 					if(mesh)
 					{
-						VKR::render::R_Mesh* tempMesh = new VKR::render::R_Mesh();
+						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
 						tempMesh->m_ModelMatrix = glm::mat4(1.f);
 						//modelData->nodes[n].translation
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],

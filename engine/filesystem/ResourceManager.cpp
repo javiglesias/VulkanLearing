@@ -12,6 +12,7 @@ namespace VKR
 	namespace RM
 	{
 		render::R_Model* tempModel;
+		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_);
 		bool LoadModel_ALT(const char* _filepath, const char* _modelName)
 		{
 			char filename[128];
@@ -37,7 +38,7 @@ namespace VKR
 			for (int m = 0; m < _node->mNumMeshes; m++)
 			{
 				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
-				render::R_Mesh* tempMesh = new render::R_Mesh();
+				render::VKRenderable* tempMesh = new render::VKRenderable();
 				//Process Mesh
 				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
 				{
@@ -74,24 +75,47 @@ namespace VKR
 				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-					auto textureDiffuse = std::string(_filepath);
-					textureDiffuse += path.data;
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse = new render::Texture(textureDiffuse);
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_SPECULAR, texIndex, &path);
-					auto textureSpecular = std::string(_filepath);
-					textureSpecular += path.data;
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular = new render::Texture(textureSpecular);
-					_scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_AMBIENT, texIndex, &path);
-					auto textureAmbient = std::string(_filepath);
-					textureAmbient += path.data;
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient = new render::Texture(textureAmbient);
+					GenerateTextureMesh(_filepath, aiTextureType_BASE_COLOR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureBaseColor);
+					GenerateTextureMesh(_filepath, aiTextureType_DIFFUSE_ROUGHNESS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse);
+					GenerateTextureMesh(_filepath, aiTextureType_SPECULAR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular);
+					GenerateTextureMesh(_filepath, aiTextureType_AMBIENT, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient);
+					GenerateTextureMesh(_filepath, aiTextureType_NORMALS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureNormal);
+					GenerateTextureMesh(_filepath, aiTextureType_METALNESS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureMetallicRoughness);
+					GenerateTextureMesh(_filepath, aiTextureType_AMBIENT_OCCLUSION, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureOcclusion);
+					GenerateTextureMesh(_filepath, aiTextureType_EMISSION_COLOR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureEmissive);
+					/*GenerateTextureMesh(_filepath, aiTextureType_LIGHTMAP, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse);*/
 					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new render::Texture();
 				}
 				tempMesh->m_Material = mesh->mMaterialIndex;
 				//++m_TotalTextures;
 				tempModel->m_Meshes.push_back(tempMesh);
 			}
+		}
+
+		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
+		{
+			aiString path;
+			// TODO Con esta textura pueden producirse artefactos al hacer calculos, sustituir por la baseColor
+			auto textureDefault = std::string("resources/Textures/defaultMissing.png");
+			auto diff = _material->GetTexture(_type, _texIndex, &path);
+			if (diff == aiReturn_SUCCESS)
+			{
+				auto texture = std::string(_filepath);
+				texture += path.data;
+				*outTex_ = new render::Texture(texture);
+				textureDefault = std::string(texture);
+			}
+			else
+				*outTex_ = new render::Texture(textureDefault);
 		}
 
 		void LoadModel(const char* _filepath, const char* _modelName)

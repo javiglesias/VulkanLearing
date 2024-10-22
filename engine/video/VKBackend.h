@@ -40,10 +40,10 @@ namespace VKR
         inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
         inline float m_CameraFOV = 70.f;
-        inline float zFar= 1000000.f;
+        inline float zFar= 1000001.f;
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
-        inline float g_cubemapDistance = 1000.f;
+        inline float g_cubemapDistance = 1000000.f;
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 1.f;
@@ -68,6 +68,7 @@ namespace VKR
         inline glm::vec3 m_Rotation = glm::vec3(0.f, 1.f, 1.f);
 		inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
+		inline ShaderRenderer* m_GridRender;
         inline DebugRenderer* m_DbgRender;
         inline CubemapRenderer* m_CubemapRender;
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
@@ -136,9 +137,9 @@ namespace VKR
             // DEBUG BUFFERS
             std::vector<VkBuffer> m_DbgUniformBuffers;
             std::vector<VkDeviceMemory> m_DbgUniformBuffersMemory;
+            std::vector<void*> m_DbgUniformBuffersMapped;
             std::vector<VkBuffer> m_DbgDynamicBuffers;
             std::vector<VkDeviceMemory> m_DbgDynamicBuffersMemory;
-            std::vector<void*> m_DbgUniformBuffersMapped;
             std::vector<void*> m_DbgDynamicBuffersMapped;
             // SHADOW BUFFERS
             std::vector<VkBuffer> m_ShadowUniformBuffers;
@@ -154,6 +155,11 @@ namespace VKR
             std::vector<VkDeviceMemory> m_CubemapDynamicBuffersMemory;
             std::vector<void*> m_CubemapUniformBuffersMapped;
             std::vector<void*> m_CubemapDynamicBuffersMapped;
+            
+            // GRID BUFFERS
+            std::vector<VkBuffer> m_GridUniformBuffers;
+            std::vector<VkDeviceMemory> m_GridUniformBuffersMemory;
+            std::vector<void*> m_GridUniformBuffersMapped;
 
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;

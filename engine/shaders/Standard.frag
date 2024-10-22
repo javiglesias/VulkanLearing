@@ -1,11 +1,11 @@
 #version 460
 
-layout(set=0, binding=1) uniform sampler2D inDiffuseTexture;
-layout(set=0, binding=2) uniform sampler2D inSpecularTexture;
-layout(set=0, binding=3) uniform sampler2D inAmbientTexture;
+layout(set=0, binding=1) uniform sampler2D inBaseColorTexture;
+layout(set=0, binding=2) uniform sampler2D inDiffuseTexture;
+layout(set=0, binding=3) uniform sampler2D inSpecularTexture;
 layout(set=0, binding=5) uniform sampler2D inShadowTexture;
 
-layout(set=0, binding=6) uniform LightBufferObject
+layout(set=0, binding=6) uniform LightBufferObject // 6,7,8,9
 {
 	mat4 lightView;
 	mat4 lightProj;
@@ -15,10 +15,11 @@ layout(set=0, binding=6) uniform LightBufferObject
 	vec4 additionalLightOpts; // Kc, Kl, Kq
 } libO[4];
 
-layout(set=0, binding=7) uniform sampler2D inEmissiveTexture;
-layout(set=0, binding=8) uniform sampler2D inOcclusionTexture;
-layout(set=0, binding=9) uniform sampler2D inMetallicRoughnessTexture;
-layout(set=0, binding=10) uniform sampler2D inNormalTexture;
+layout(set=0, binding=10) uniform sampler2D inAmbientTexture;
+layout(set=0, binding=11) uniform sampler2D inEmissiveTexture;
+layout(set=0, binding=12) uniform sampler2D inOcclusionTexture;
+layout(set=0, binding=13) uniform sampler2D inMetallicRoughnessTexture;
+layout(set=0, binding=14) uniform sampler2D inNormalTexture;
 
 layout(location = 0) in vec3 fragPosition;
 layout(location = 1) in vec2 texCoord;
@@ -51,7 +52,7 @@ vec3 rgb_to_grayscale_luminosity(vec3 color) {
 void main() 
 {
 	// vec4 shadowCoordFinal = shadowCoord * libO[2].lightProj * libO[0].lightView;
-	vec3 color = textureLod(inAmbientTexture, texCoord, mipLevel).rgb;
+	vec3 color = textureLod(inBaseColorTexture, texCoord, mipLevel).rgb;
 	vec3 result = DirectionalLight(color);
 	outColor = vec4(result, 1.0);
 }
@@ -82,11 +83,12 @@ float PointLight()
 
 vec3 DirectionalLight(vec3 _color)
 {
+	vec3 _normal = texture(inNormalTexture, texCoord).rgb;
 	float att = PointLight();
 	float ambientStrength = 0.1;
-    vec3 ambient = ambientStrength * lightColor;
+    vec3 ambient = libO[0].lightColor.rgb * ambientStrength;
 	float mipmapLevel = textureQueryLod(inAmbientTexture, texCoord).x;
-	vec3 norm = normalize(normal);
+	vec3 norm = normalize(_normal * 2.0 - 1.0); // transform normal vector to range [-1,1]
 	vec3 lightDir = normalize(lightPosition - fragPosition);
 	float diff = max(dot(norm, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
@@ -96,17 +98,13 @@ vec3 DirectionalLight(vec3 _color)
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 	// Caulculate shadows
-	vec4 fragLight = libO[0].lightProj * vec4(shadowCoord);
-	if(renderDepth > 0)
-	{
-		return fragLight.xyz;
-	} else {
-		float shadow = ShadowCalculation(fragLight, inShadowTexture);
-		ambient  *= att;
-		// diffuse  *= att;
-		// specular *= att;
-		return (ambient + (1.0 - shadow) * (diffuse + specular)) * _color;
-	}
+	vec4 fraglight = libO[0].lightProj * vec4(shadowCoord);
+	float shadow = ShadowCalculation(fraglight, inShadowTexture);
+	// ambient  *= att;
+	// diffuse  *= att;
+	// specular *= att;
+	return (ambient + (1.0 - shadow)* (diffuse + specular)) * _color;
+
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 

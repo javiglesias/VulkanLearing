@@ -420,7 +420,7 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 	iBarrier.image = _image;
 	iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	iBarrier.subresourceRange.layerCount = 1;
-	iBarrier.subresourceRange.levelCount = 1;
+	iBarrier.subresourceRange.levelCount = _mipLevels;
 	for (uint8_t i = 1; i < _mipLevels; i++)
 	{
 		iBarrier.subresourceRange.baseMipLevel = i - 1;

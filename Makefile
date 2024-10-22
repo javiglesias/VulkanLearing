@@ -1,7 +1,7 @@
-SRCS := $(shell find ./engine -name '*.cpp')
+SRCS := $(shell find /engine -name '*.cpp')
 OBJS := $(SRCS:%=./engine/%.o)
 CXX = clang++
-SPV := $(shell find ./dependencies/glslang -name '*.cpp')
+SPV := $(shell find /dependencies/glslang -name '*.cpp')
 
 IMGUI = dependencies/imgui/imgui.cpp dependencies/imgui/imgui_draw.cpp dependencies/imgui/imgui_widgets.cpp dependencies/imgui/imgui_tables.cpp dependencies/imgui/backends/imgui_impl_glfw.cpp dependencies/imgui/backends/imgui_impl_vulkan.cpp
 CGLTF = dependencies/cgltf/cgltf.h

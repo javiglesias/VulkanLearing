@@ -188,6 +188,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="video\VKBackend.cpp" />
     <ClCompile Include="video\VKBufferObjects.h" />
+    <ClCompile Include="video\VKRenderable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dependencies\cgltf\cgltf.h" />
@@ -211,6 +212,7 @@ $(SolutionDir)BuildShaders.bat</Command>
     <ClInclude Include="core\Materials\VKRTexture.h" />
     <ClInclude Include="perfmon\Custom.h" />
     <ClInclude Include="video\VKBackend.h" />
+    <ClInclude Include="video\VKRenderable.h" />
     <ClInclude Include="video\VKRUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

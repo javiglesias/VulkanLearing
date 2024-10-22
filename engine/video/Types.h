@@ -9,6 +9,29 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+struct Grid_Vertex3D
+{
+	glm::vec3 m_Pos{ 0.0f };
+
+	static VkVertexInputBindingDescription getBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription{};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Grid_Vertex3D);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		return bindingDescription;
+	}
+	static std::array<VkVertexInputAttributeDescription, 1> getAttributeDescriptions() {
+
+		std::array<VkVertexInputAttributeDescription, 1> attributeDescriptions{};
+		attributeDescriptions[0].binding = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Grid_Vertex3D, m_Pos);
+		return attributeDescriptions;
+	}
+};
+
 struct DBG_Vertex3D 
 {
 	glm::vec3 m_Pos {0.0f};

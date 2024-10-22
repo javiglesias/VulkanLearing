@@ -121,23 +121,23 @@ namespace VKR
 					_mainScene->ReloadShaders(_backend);
 				}
 
-				 static ImGuiComboFlags flags = 0;
-				 static int item_current_idx = 0;
-				  const char* combo_preview_value =ModelList[0];
-				if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
-				{
-					for (int n = 1; n < MODELS_SIZE; n++)
-					{
-						const bool is_selected = (item_current_idx == n);
-						if (ImGui::Selectable(ModelList[n], is_selected))
-							item_current_idx = n;
+				// static ImGuiComboFlags flags = 0;
+				// static int item_current_idx = 0;
+				//  const char* combo_preview_value =ModelList[0];
+				//if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
+				//{
+				//	for (int n = 1; n < MODELS_SIZE; n++)
+				//	{
+				//		const bool is_selected = (item_current_idx == n);
+				//		if (ImGui::Selectable(ModelList[n], is_selected))
+				//			item_current_idx = n;
 
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndCombo();
-				}
+				//		// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				//		if (is_selected)
+				//			ImGui::SetItemDefaultFocus();
+				//	}
+				//	ImGui::EndCombo();
+				//}
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
@@ -234,6 +234,7 @@ namespace VKR
 					g_DirectionalLight->m_Pos.x = position[0];
 					g_DirectionalLight->m_Pos.y = position[1];
 					g_DirectionalLight->m_Pos.z = position[2];
+					glm::translate(g_DirectionalLight->m_LightModel, glm::vec3(position[0], position[1], position[2]));
 					ImGui::DragFloat("Right size", &g_DirectionalLight->m_Right);
 					ImGui::DragFloat("Up size", &g_DirectionalLight->m_Up);
 					ImGui::DragFloat("Depth size", &g_DirectionalLight->m_Depth);

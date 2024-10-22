@@ -42,6 +42,7 @@ namespace VKR
 			float m_Up        	= 300.f;
 			glm::vec3 m_UpVector = glm::vec3(0.f, -1.f, 0.f);
 			glm::vec3 m_Center 		= glm::vec3(0.f, 0.f, -1.f);
+			glm::mat4 m_LightModel{ 1.f };
 		};
 		struct Point : public Light
 		{

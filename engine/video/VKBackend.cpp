@@ -336,11 +336,13 @@ namespace VKR
 			m_ShadowRender = new ShadowRenderer(g_context.m_LogicDevice);
 			m_ShadowMat = new R_ShadowMaterial();
 			m_DbgRender = new DebugRenderer(g_context.m_LogicDevice);
+			m_GridRender = new ShaderRenderer(g_context.m_LogicDevice);
 			// primero creamos el layout de los descriptors
 			m_CubemapRender->CreateDescriptorSetLayout();
 			m_GraphicsRender->CreateDescriptorSetLayout();
 			m_ShadowRender->CreateDescriptorSetLayout();
 			m_DbgRender->CreateDescriptorSetLayout();
+			m_GridRender->CreateDescriptorSetLayout();
 			// Shadow Descriptors
 			m_ShadowMat->CreateDescriptorPool(g_context.m_LogicDevice);
 			m_ShadowMat->CreateDescriptorSet(g_context.m_LogicDevice, m_ShadowRender->m_DescSetLayout);
@@ -382,6 +384,13 @@ namespace VKR
 			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();
 
+			//Grid vertex Render
+			m_GridRender->Initialize();
+			m_GridRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			m_GridRender->CreatePipelineLayout();
+			m_GridRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_GridRender->CleanShaderModules();
+
 			vkGetPhysicalDeviceMemoryProperties(g_context.m_GpuInfo.m_Device, &m_Mem_Props);
 			CreateCommandBuffer();
 			// Creamos los recursos para el Shadow map
@@ -419,6 +428,12 @@ namespace VKR
 			m_CubemapDynamicBuffers.resize(FRAMES_IN_FLIGHT);
 			m_CubemapDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_CubemapDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+
+			// Grid buffers
+			// Uniform buffers
+			m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
 
 			GenerateBuffers();
 			GenerateDBGBuffers();
@@ -576,7 +591,22 @@ namespace VKR
 			}
 			// Shadow DescriptorSet
 			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
-
+			
+			// GRID UNIFORM BUFFERS
+			m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			bufferSize = sizeof(DebugUniformBufferObject);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_GridUniformBuffers[i], m_GridUniformBuffersMemory[i]);
+				vkMapMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], 0,
+					bufferSize, 0, &m_GridUniformBuffersMapped[i]);
+			}
 		}
 
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
@@ -834,9 +864,9 @@ namespace VKR
 			presentInfo.pImageIndices = _imageIdx;
 			presentInfo.pResults = nullptr;
 			m_PresentResult = vkQueuePresentKHR(g_context.m_PresentQueue, &presentInfo);
-			if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
+			/*if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
 				&& m_NeedToRecreateSwapchain)
-				RecreateSwapChain();
+				RecreateSwapChain();*/
 			/*else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);*/
 		}
@@ -878,6 +908,7 @@ namespace VKR
 			delete m_DbgRender;
 			delete m_ShadowRender;
 			delete m_CubemapRender;
+			delete m_GridRender;
 
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
@@ -907,6 +938,9 @@ namespace VKR
 
 				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapDynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], nullptr);
+
+				vkDestroyBuffer(g_context.m_LogicDevice, m_GridUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], nullptr);
 			}
 			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
 			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);

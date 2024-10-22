@@ -276,9 +276,16 @@ namespace VKR
             uboLayoutBinding.descriptorCount = 1;
             uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
             uboLayoutBinding.pImmutableSamplers = nullptr;
+            // Textura BaseColor
+            VkDescriptorSetLayoutBinding textureBaseColorLayoutBinding{};
+            textureBaseColorLayoutBinding.binding = 1;
+            textureBaseColorLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureBaseColorLayoutBinding.descriptorCount = 1;
+            textureBaseColorLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureBaseColorLayoutBinding.pImmutableSamplers = nullptr;
             // Textura Diffuse
             VkDescriptorSetLayoutBinding textureDiffuseLayoutBinding{};
-            textureDiffuseLayoutBinding.binding = 1;
+            textureDiffuseLayoutBinding.binding = 2;
             textureDiffuseLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             textureDiffuseLayoutBinding.descriptorCount = 1;
             textureDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -286,20 +293,18 @@ namespace VKR
 
             // Textura specular
             VkDescriptorSetLayoutBinding textureSpecularLayoutBinding{};
-            textureSpecularLayoutBinding.binding = 2;
+            textureSpecularLayoutBinding.binding = 3;
             textureSpecularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             textureSpecularLayoutBinding.descriptorCount = 1;
             textureSpecularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             textureSpecularLayoutBinding.pImmutableSamplers = nullptr;
-
-            // Textura Ambient
-            VkDescriptorSetLayoutBinding textureAmbientLayoutBinding{};
-            textureAmbientLayoutBinding.binding = 3;
-            textureAmbientLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            textureAmbientLayoutBinding.descriptorCount = 1;
-            textureAmbientLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-            textureAmbientLayoutBinding.pImmutableSamplers = nullptr;
-
+            // estructura Dynamic Uniforms
+            VkDescriptorSetLayoutBinding dynOLayoutBinding{};
+            dynOLayoutBinding.binding = 4;
+            dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            dynOLayoutBinding.descriptorCount = 1;
+            dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            dynOLayoutBinding.pImmutableSamplers = nullptr;
             // Textura Shadow
             VkDescriptorSetLayoutBinding textureShadowLayoutBinding{};
             textureShadowLayoutBinding.binding = 5;
@@ -308,14 +313,6 @@ namespace VKR
             textureShadowLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             textureShadowLayoutBinding.pImmutableSamplers = nullptr;
 
-            // estructura Dynamic Uniforms
-            VkDescriptorSetLayoutBinding dynOLayoutBinding{};
-            dynOLayoutBinding.binding = 4;
-            dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-            dynOLayoutBinding.descriptorCount = 1;
-            dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-            dynOLayoutBinding.pImmutableSamplers = nullptr;
-
             // estructura Light Uniforms
             VkDescriptorSetLayoutBinding linOLayoutBinding{};
             linOLayoutBinding.binding = 6;
@@ -323,10 +320,18 @@ namespace VKR
             linOLayoutBinding.descriptorCount = 4;
             linOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             linOLayoutBinding.pImmutableSamplers = nullptr;
-#if 0
+            
+            // Textura Ambient
+            VkDescriptorSetLayoutBinding textureAmbientLayoutBinding{};
+            textureAmbientLayoutBinding.binding = 10;
+            textureAmbientLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            textureAmbientLayoutBinding.descriptorCount = 1;
+            textureAmbientLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            textureAmbientLayoutBinding.pImmutableSamplers = nullptr;
+#if 1
             // Textura emissive
             VkDescriptorSetLayoutBinding textureEmissiveLayoutBinding{};
-            textureEmissiveLayoutBinding.binding = 10;
+            textureEmissiveLayoutBinding.binding = 11;
             textureEmissiveLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             textureEmissiveLayoutBinding.descriptorCount = 1;
             textureEmissiveLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -334,7 +339,7 @@ namespace VKR
 
             // Textura oclussion
             VkDescriptorSetLayoutBinding textureOclussionLayoutBinding{};
-            textureOclussionLayoutBinding.binding = 11;
+            textureOclussionLayoutBinding.binding = 12;
             textureOclussionLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             textureOclussionLayoutBinding.descriptorCount = 1;
             textureOclussionLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -342,7 +347,7 @@ namespace VKR
 
             // Textura Metallness
             VkDescriptorSetLayoutBinding textureMetallnessLayoutBinding{};
-            textureMetallnessLayoutBinding.binding = 12;
+            textureMetallnessLayoutBinding.binding = 13;
             textureMetallnessLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             textureMetallnessLayoutBinding.descriptorCount = 1;
             textureMetallnessLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -350,22 +355,23 @@ namespace VKR
 
             // Textura Normal
             VkDescriptorSetLayoutBinding textureNormalLayoutBinding{};
-            textureNormalLayoutBinding.binding = 13;
+            textureNormalLayoutBinding.binding = 14;
             textureNormalLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             textureNormalLayoutBinding.descriptorCount = 1;
             textureNormalLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             textureNormalLayoutBinding.pImmutableSamplers = nullptr;
 #endif
-            std::array<VkDescriptorSetLayoutBinding, 7> ShaderBindings = {
+            std::array<VkDescriptorSetLayoutBinding, 12> ShaderBindings = {
                 uboLayoutBinding,
+                textureBaseColorLayoutBinding,
                 textureDiffuseLayoutBinding,
                 textureSpecularLayoutBinding,
-                textureAmbientLayoutBinding,
                 textureShadowLayoutBinding,
                 dynOLayoutBinding,
                 linOLayoutBinding
-#if 0
+#if 1
             	,
+                textureAmbientLayoutBinding,
                 textureEmissiveLayoutBinding,
                 textureOclussionLayoutBinding,
                 textureMetallnessLayoutBinding,
@@ -493,6 +499,48 @@ namespace VKR
                 uboLayoutBinding,
             	cubemapDiffuseLayoutBinding,
                 dynOLayoutBinding
+            };
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
+            layoutInfo.pBindings = ShaderBindings.data();
+            if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
+                exit(-99);
+        }
+        // SHADER RENDERER
+        bool ShaderRenderer::Initialize()
+        {
+            // DEBUG SHADERS
+            //"engine/shaders/Standard.vert"
+            m_VertShader = new Shader("engine/shaders/Grid.vert", 0);
+            m_FragShader = new Shader("engine/shaders/Grid.frag", 4);
+            if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
+                CreateShaderModule(m_FragShader, &m_FragShaderModule))
+            {
+                CreateShaderStages();
+                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
+                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
+                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_GridAttributeDescriptions.size());
+                m_VertexInputInfo.pVertexBindingDescriptions = &m_GridBindingDescription;
+                m_VertexInputInfo.pVertexAttributeDescriptions = m_GridAttributeDescriptions.data();
+                return true;
+            }
+            return false;
+        }
+
+        void ShaderRenderer::CreateDescriptorSetLayout()
+        {
+            // estructura UBO
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+
+            std::array<VkDescriptorSetLayoutBinding, 1> ShaderBindings = {
+                uboLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

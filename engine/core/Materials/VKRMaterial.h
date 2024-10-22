@@ -32,14 +32,15 @@ namespace VKR
 			STATE m_Status = UNDEFINED;
 			char _vertPath[64];
 			char _fragPath[64];
+			Texture* m_TextureBaseColor;
 			Texture* m_TextureDiffuse;
 			Texture* m_TextureSpecular;
 			Texture* m_TextureAmbient;
-			Texture* m_TextureShadowMap;
-			Texture* m_TextureEmissive;
 			Texture* m_TextureOcclusion;
 			Texture* m_TextureMetallicRoughness;
 			Texture* m_TextureNormal;
+			Texture* m_TextureShadowMap;
+			Texture* m_TextureEmissive;
 		public:
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptorPool(VkDevice _LogicDevice);

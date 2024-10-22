@@ -9,8 +9,6 @@ namespace VKR
 	{
 		Light::Light()
 		{
-			m_LightVisual = new R_DbgModel("resources/models/Cube/glTF/", "Cube.gltf");
-			m_DbgModels.push_back(m_LightVisual);
 		}
 	}
 }

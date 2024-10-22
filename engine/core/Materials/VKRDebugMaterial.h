@@ -3,7 +3,7 @@
 #include "../../video/Types.h"
 #include "../../video/VKBufferObjects.h"
 #include "VKRTexture.h"
-
+#include <vector>
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
 
