@@ -16,7 +16,7 @@ namespace VKR
     namespace render
     {
         class VKBackend;
-        class R_Model;
+        struct R_Model;
         class R_Cubemap;
 
         class Scene

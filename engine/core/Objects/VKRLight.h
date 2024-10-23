@@ -10,7 +10,7 @@ namespace VKR
 {
 	namespace render
 	{
-		class R_DbgModel;
+		struct R_DbgModel;
 		enum LightType
 		{
 			LIGHT_DIRECTIONAL,
@@ -22,17 +22,19 @@ namespace VKR
 		{
 		public:
 			bool m_Editable = false;
-			float m_DebugScale;
+			float m_DebugScale = 0.1f;
 			glm::vec3 m_Pos {0.f, 0.f, 1.f};
 			glm::vec3 m_Color {1.f};
+			glm::mat4 m_ModelMatrix{1.f};
+			R_DbgModel* m_LightVisual;
 		private: // Variables
 			LightType m_Type{LIGHT_POINT};
 			float m_ShadowCameraFOV;
 			float m_ShadowAspectRatio;
 			float m_ShadowBias = 0.0025f;
-			R_DbgModel* m_LightVisual;
 		public: // Functions
 			Light();
+			void Cleanup(VkDevice _LogicDevice);
 		};
 		
 		struct Directional : public Light
@@ -42,7 +44,6 @@ namespace VKR
 			float m_Up        	= 300.f;
 			glm::vec3 m_UpVector = glm::vec3(0.f, -1.f, 0.f);
 			glm::vec3 m_Center 		= glm::vec3(0.f, 0.f, -1.f);
-			glm::mat4 m_LightModel{ 1.f };
 		};
 		struct Point : public Light
 		{

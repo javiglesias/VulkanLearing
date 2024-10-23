@@ -48,7 +48,7 @@ namespace VKR
 
 			/// Sub-pass
 			m_Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			m_Subpass.colorAttachmentCount = m_ColorAttachments.size();
+			m_Subpass.colorAttachmentCount = static_cast<uint32_t>(m_ColorAttachments.size());
 			m_Subpass.pColorAttachments = &colorAttachmentRef;
 			m_Subpass.pDepthStencilAttachment = &depthAttachmentRef;
 		}

@@ -7,7 +7,7 @@ namespace VKR
 {
 	namespace render
 	{
-		class R_Model;
+		struct R_Model;
 		class R_Cubemap
 		{
 		public: // variables

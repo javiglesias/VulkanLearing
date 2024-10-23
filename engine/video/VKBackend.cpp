@@ -25,8 +25,8 @@ namespace VKR
 		// INPUT CALLBACKS
 		void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 		{
-			float x_offset = (_xPos - m_LastXPosition);
-			float y_offset = (m_LastYPosition - _yPos);
+			double x_offset = (_xPos - m_LastXPosition);
+			double y_offset = (m_LastYPosition - _yPos);
 			float senseo = 0.1f;
 			m_LastXPosition = _xPos;
 			m_LastYPosition = _yPos;
@@ -40,9 +40,9 @@ namespace VKR
 				if (m_CameraPitch > 89.f)  m_CameraPitch = 89.f;
 				if (m_CameraPitch < -89.f) m_CameraPitch = -89.f;
 				glm::vec3 camera_direction;
-				camera_direction.x = cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch)));
-				camera_direction.y = sin(glm::radians(m_CameraPitch));
-				camera_direction.z = sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch));
+				camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
+				camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
+				camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
 				m_CameraForward = glm::normalize(camera_direction);
 				m_LastXPosition = _xPos;
 				m_LastYPosition = _yPos;
@@ -97,7 +97,12 @@ namespace VKR
 			}
 			if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
 			{
-				RM::_AddRequest(STATIC_MODEL,"resources/models/Avocado/glTF/", "Avocado.gltf");
+				RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
+			}
+
+			if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
+			{
+				RM::_AddRequest(ASSIMP_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
 			}
 
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
@@ -214,9 +219,6 @@ namespace VKR
 			m_GPipelineStatus = CREATING;
 			uint32_t mExtensionCount = 0;
 			const char** mExtensions;
-			glm::mat4 m_matrix;
-			glm::vec4 m_vec;
-			// 	cgltf_data* m_ModelData;
 			/// VULKAN/glfw THINGS
 			if (!g_context.m_GpuInfo.CheckValidationLayerSupport()) exit(-2);
 			VkApplicationInfo mAppInfo = {};
@@ -626,7 +628,7 @@ namespace VKR
 			_createInfo->pApplicationInfo = _appInfo;
 			_createInfo->enabledExtensionCount = m_extensionCount;
 			_createInfo->ppEnabledExtensionNames = m_InstanceExtensions.data();
-			_createInfo->enabledLayerCount = g_context.m_GpuInfo.m_ValidationLayers.size();
+			_createInfo->enabledLayerCount = (uint32_t)g_context.m_GpuInfo.m_ValidationLayers.size();
 			_createInfo->ppEnabledLayerNames = g_context.m_GpuInfo.m_ValidationLayers.data();
 		}
 

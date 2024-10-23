@@ -35,9 +35,9 @@ namespace VKR
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
-        inline bool g_DrawCubemap = true;
-        inline float m_LastYPosition = 0.f, m_LastXPosition = 0.f;
-        inline float m_CameraYaw = 0.f, m_CameraPitch = 0.f;
+        inline bool g_DrawCubemap = false;
+        inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
+        inline double m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
         inline float m_CameraFOV = 70.f;
         inline float zFar= 1000001.f;
@@ -49,7 +49,7 @@ namespace VKR
         inline float g_MipLevel = 1.f;
         inline float g_Rotation = 0.f;
         inline constexpr int g_FrameGranularity = 10240;
-        inline float g_FrameTime[g_FrameGranularity];
+        inline double g_FrameTime[g_FrameGranularity];
         inline int g_CurrentFrameTime = 0;
         inline long long g_CurrentFrame = 0;
         inline double g_DeltaTime;

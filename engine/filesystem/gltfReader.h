@@ -6,8 +6,8 @@ namespace VKR
 {
 	namespace render
 	{
-		class R_Model;
-		class R_DbgModel;
+		struct R_Model;
+		struct R_DbgModel;
 	}
 	namespace filesystem
 	{

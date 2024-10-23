@@ -13,9 +13,9 @@ int main(int _argc, char** _args)
 	auto backend = VKR::render::GetVKBackend();
 	auto mainScene = VKR::render::GetVKMainScene();
 	int currentLocalFrame = 0;
-	float currentFrame = 0.f;
-	float nextFrame = 0.f;
-	float deltaTime = 0.f;
+	double currentFrame = 0.f;
+	double nextFrame = 0.f;
+	double deltaTime = 0.f;
 	RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
 	mainScene.Init(&backend);

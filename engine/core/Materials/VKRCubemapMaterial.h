@@ -10,7 +10,7 @@ namespace VKR
 {
 	namespace render
 	{
-		class Texture;
+		struct Texture;
 		struct R_CubemapMaterial
 		{
 		private:

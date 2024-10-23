@@ -156,7 +156,7 @@ namespace VKR
 				ImGui::LabelText("Elapsed time:", "%.2f", g_ElapsedTime);
 				ImGui::LabelText("Frame time:", "%.2f", g_FrameTime[g_CurrentFrameTime]);
 				ImGui::LabelText("Frame n:", "%lld", g_CurrentFrame);
-				const float *cycles = g_FrameTime;
+				const float *cycles = (float*)g_FrameTime;
 				ImGui::PlotLines("Frame time", cycles, g_FrameGranularity);
 
 				ImGui::End();
@@ -234,7 +234,8 @@ namespace VKR
 					g_DirectionalLight->m_Pos.x = position[0];
 					g_DirectionalLight->m_Pos.y = position[1];
 					g_DirectionalLight->m_Pos.z = position[2];
-					glm::translate(g_DirectionalLight->m_LightModel, glm::vec3(position[0], position[1], position[2]));
+					g_DirectionalLight->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(position[0], position[1], position[2]));
+					g_DirectionalLight->m_ModelMatrix = glm::scale(g_DirectionalLight->m_ModelMatrix, glm::vec3(g_DirectionalLight->m_DebugScale));
 					ImGui::DragFloat("Right size", &g_DirectionalLight->m_Right);
 					ImGui::DragFloat("Up size", &g_DirectionalLight->m_Up);
 					ImGui::DragFloat("Depth size", &g_DirectionalLight->m_Depth);
@@ -245,7 +246,7 @@ namespace VKR
 					ImGui::DragFloat3("Look At", center, 0.1f);
 					g_DirectionalLight->m_Center.x = center[0];
 					g_DirectionalLight->m_Center.y = center[1];
-					g_DirectionalLight->m_Center.z = center[2];
+					g_DirectionalLight->m_Center.z = center[2];					
 					ImGui::TreePop();
 				}
 				for (auto& light : g_Lights)

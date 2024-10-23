@@ -173,8 +173,7 @@ namespace VKR
 				}
 				else
 				{
-					printf("Invalid Sampler for frame %ld\n", i);
-					continue;
+					printf("Invalid Sampler for frame\n");
 				}
 				g_ConsoleMSG += m_TextureBaseColor->m_Path;
 				g_ConsoleMSG += '\n';
@@ -197,8 +196,7 @@ namespace VKR
 				}
 				else
 				{
-					printf("Invalid Sampler for frame %ld\n", i);
-					continue;
+					printf("Invalid Sampler for frame\n");
 				}
 				g_ConsoleMSG += m_TextureDiffuse->m_Path;
 				g_ConsoleMSG += '\n';
@@ -223,7 +221,7 @@ namespace VKR
 				}
 				else
 				{
-					printf("Invalid Sampler for frame %ld\n", i);
+					printf("Invalid Sampler for frame\n");
 				}
 				descriptorsWrite[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[3].dstSet = m_DescriptorSet[i];
@@ -261,7 +259,7 @@ namespace VKR
 					}
 					else
 					{
-						printf("Invalid Sampler for frame %ld\n", i);
+						printf("Invalid Sampler for frame\n");
 					}
 					g_ConsoleMSG += m_TextureShadowMap->m_Path;
 					g_ConsoleMSG += '\n';
@@ -306,7 +304,7 @@ namespace VKR
 				}
 				else
 				{
-					printf("Invalid Sampler for frame %ld\n", i);
+					printf("Invalid Sampler for frame\n");
 				}
 				descriptorsWrite[10].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[10].dstSet = m_DescriptorSet[i];
@@ -328,7 +326,7 @@ namespace VKR
 					}
 					else
 					{
-						printf("Invalid Sampler for frame %ld\n", i);
+						printf("Invalid Sampler for frame\n");
 					}
 					g_ConsoleMSG += m_TextureEmissive->m_Path;
 					g_ConsoleMSG += '\n';
@@ -355,8 +353,7 @@ namespace VKR
 					}
 					else
 					{
-						printf("Invalid Sampler for frame %ld\n", i);
-						continue;
+						printf("Invalid Sampler for frame\n");
 					}
 					descriptorsWrite[12].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[12].dstSet = m_DescriptorSet[i];
@@ -382,7 +379,7 @@ namespace VKR
 					}
 					else
 					{
-						printf("Invalid Sampler for frame %ld\n", i);
+						printf("Invalid Sampler for frame\n");
 					}
 					descriptorsWrite[13].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[13].dstSet = m_DescriptorSet[i];
@@ -407,7 +404,7 @@ namespace VKR
 					}
 					else
 					{
-						printf("Invalid Sampler for frame %ld\n", i);
+						printf("Invalid Sampler for frame\n");
 					}
 					descriptorsWrite[14].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorsWrite[14].dstSet = m_DescriptorSet[i];
@@ -420,7 +417,7 @@ namespace VKR
 					descriptorsWrite[14].pTexelBufferView = nullptr;
 				}
 #endif
-				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
+				vkUpdateDescriptorSets(_LogicDevice, (uint32_t)descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}
 		}
 

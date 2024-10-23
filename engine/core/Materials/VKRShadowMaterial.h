@@ -98,7 +98,7 @@ namespace VKR
 					descriptorsWrite[1].pBufferInfo = &dynBufferInfo;
 					descriptorsWrite[1].pImageInfo = nullptr;
 					descriptorsWrite[1].pTexelBufferView = nullptr;
-					vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
+					vkUpdateDescriptorSets(_LogicDevice, (uint32_t)descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 				}
 			}
 			void Cleanup(VkDevice _LogicDevice)

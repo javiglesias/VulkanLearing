@@ -39,8 +39,8 @@ namespace VKR
             /// Definimos el Viewport de la app
             _Viewport->x = 0.f;
             _Viewport->y = 0.f;
-            _Viewport->width = _CurrentExtent->width;
-            _Viewport->height = _CurrentExtent->height;
+            _Viewport->width = (float)_CurrentExtent->width;
+            _Viewport->height = (float)_CurrentExtent->height;
             _Viewport->minDepth = 0.0f;
             _Viewport->maxDepth = 1.0f;
             /// definamos el Scissor Rect de la app

@@ -142,7 +142,7 @@ namespace VKR
 			VkPhysicalDeviceProperties* deviceProp = new VkPhysicalDeviceProperties[deviceCount];
 			VkPhysicalDeviceFeatures* deviceFeatures = new VkPhysicalDeviceFeatures[deviceCount];
 			unsigned int m_GPUSelected = 0;
-			for (int it = 0; it < deviceCount; it++)
+			for (unsigned int it = 0; it < deviceCount; it++)
 			{
 				vkGetPhysicalDeviceProperties(m_PhysicalDevices[it], &deviceProp[it]);
 				if (strstr(deviceProp[it].deviceName, "NVIDIA") || strstr(deviceProp[it].deviceName, "AMD"))
@@ -151,7 +151,7 @@ namespace VKR
 					char tmp[512];
 					sprintf(tmp, "\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
 					//g_ConsoleMSG += tmp;
-					g_context.m_GpuInfo.minUniformBufferOffsetAlignment = deviceProp[m_GPUSelected].limits.minUniformBufferOffsetAlignment;
+					g_context.m_GpuInfo.minUniformBufferOffsetAlignment = (uint32_t)deviceProp[m_GPUSelected].limits.minUniformBufferOffsetAlignment;
 				}
 				vkGetPhysicalDeviceFeatures(m_PhysicalDevices[it], &deviceFeatures[it]);
 			}
@@ -167,9 +167,9 @@ namespace VKR
 			VkDeviceCreateInfo m_CreateInfo{};
 			m_CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			m_CreateInfo.pQueueCreateInfos = g_context.m_GpuInfo.m_QueueCreateInfos.data();
-			m_CreateInfo.queueCreateInfoCount = g_context.m_GpuInfo.m_QueueCreateInfos.size();
+			m_CreateInfo.queueCreateInfoCount = (uint32_t)g_context.m_GpuInfo.m_QueueCreateInfos.size();
 			m_CreateInfo.pEnabledFeatures = &m_GpuInfo.m_Features;
-			m_CreateInfo.enabledExtensionCount = g_context.m_GpuInfo.m_DeviceExtensions.size();
+			m_CreateInfo.enabledExtensionCount = (uint32_t)g_context.m_GpuInfo.m_DeviceExtensions.size();
 			m_CreateInfo.ppEnabledExtensionNames = g_context.m_GpuInfo.m_DeviceExtensions.data();
 			m_CreateInfo.enabledLayerCount = 0;
 
@@ -556,7 +556,7 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 
 inline 
 VkImageView CreateImageView(VkImage _tImage, VkFormat _format, VkImageAspectFlags _aspectMask, 
-							VkImageViewType _viewType, uint32_t _arrayLayers = 1, float _levelCount = 1)
+							VkImageViewType _viewType, uint32_t _arrayLayers = 1, uint32_t _levelCount = 1)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkImageView tImageView;

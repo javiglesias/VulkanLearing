@@ -98,10 +98,8 @@ namespace VKR
 					TextureDiffuseImage.sampler = m_Texture->m_Sampler;
 				}
 				else
-				{
-					printf("Invalid Sampler for frame %ld\n", i);
-					continue;
-				}
+					printf("Invalid Sampler for frame\n");
+
 				g_ConsoleMSG += m_Texture->m_Path;
 				g_ConsoleMSG += '\n';
 				descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -130,7 +128,7 @@ namespace VKR
 				descriptorsWrite[2].pImageInfo = nullptr;
 				descriptorsWrite[2].pTexelBufferView = nullptr;
 
-				vkUpdateDescriptorSets(_LogicDevice, descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
+				vkUpdateDescriptorSets(_LogicDevice, static_cast<uint32_t>(descriptorsWrite.size()), descriptorsWrite.data(), 0, nullptr);
 			}
 		}
 		void R_CubemapMaterial::Cleanup(VkDevice _LogicDevice)

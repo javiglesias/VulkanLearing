@@ -35,7 +35,7 @@ namespace VKR
 			}
 			int lastTexIndex = 0;
 			uint32_t tempMaterial = -1;
-			for (int m = 0; m < _node->mNumMeshes; m++)
+			for (unsigned int m = 0; m < _node->mNumMeshes; m++)
 			{
 				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
 				render::VKRenderable* tempMesh = new render::VKRenderable();

@@ -22,19 +22,19 @@ namespace VKR
 			cgltf_load_buffers(&options, modelData, _filepath);
 			if(cgltf_validate(modelData) == cgltf_result_success)
 			{
-				printf("\nModel file validated (nodes %ld)\n", modelData->nodes_count);
+				printf("\nModel file validated (nodes %d)\n", static_cast<int>(modelData->nodes_count));
 				//  MATERIALS
-				size_t materialID = 0;
+				int materialID = 0;
 				if(modelData->materials_count > 0)
 				{
-					for (size_t i = 0 ; i < modelData->materials_count; i++) 
+					for (int i = 0 ; i < modelData->materials_count; i++) 
 					{
 						auto material = modelData->materials[i];
 						materialID = i;
 						if (tempModel_->m_Materials[materialID] == nullptr)
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
-							fprintf(stderr, "Material %llu: %s\n", materialID, material.name);
+							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
 							tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
@@ -99,7 +99,7 @@ namespace VKR
 							printf("\tPrimitive %zd\n", p);
 							for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 							{
-								tempMesh->m_Material = cgltf_material_index(modelData, mesh->primitives[p].material);
+								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, mesh->primitives[p].material));
 								auto accessor = mesh->primitives[p].attributes[a].data;
 								Vertex3D tempVertex;
 								if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)
