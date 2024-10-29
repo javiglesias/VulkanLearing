@@ -16,6 +16,8 @@ namespace VKR
 		inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
 		inline auto m_GridBindingDescription = Grid_Vertex3D::getBindingDescription();
 		inline auto m_GridAttributeDescriptions = Grid_Vertex3D::getAttributeDescriptions();
+        inline auto m_QuadBindingDescription = Vertex2D::getBindingDescription();
+        inline auto m_QuadAttributeDescriptions = Vertex2D::getAttributeDescriptions();
 		inline auto m_ShadowBindingDescription = m_BindingDescription;
 		inline auto m_ShadowAttributeDescriptions = m_AttributeDescriptions;
         inline auto m_CubemapBindingDescription = m_DbgBindingDescription    ;
@@ -142,6 +144,18 @@ namespace VKR
             void CreateDescriptorSetLayout() override;
 
             ShaderRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
+            {
+                m_LogicDevice = _LogicalDevice;
+            }
+        };
+
+        struct QuadRenderer : Renderer
+        {
+        public: // Functions
+            bool Initialize() override;
+            void CreateDescriptorSetLayout() override;
+
+            QuadRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
             }

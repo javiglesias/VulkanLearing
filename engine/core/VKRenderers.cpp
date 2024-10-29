@@ -549,5 +549,28 @@ namespace VKR
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
         }
-    }
+        bool QuadRenderer::Initialize()
+        {
+            // DEBUG SHADERS
+            //"engine/shaders/Standard.vert"
+            m_VertShader = new Shader("engine/shaders/Quad.vert", 0);
+            m_FragShader = new Shader("engine/shaders/Quad.frag", 4);
+            if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
+                CreateShaderModule(m_FragShader, &m_FragShaderModule))
+            {
+                CreateShaderStages();
+                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
+                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
+                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_GridAttributeDescriptions.size());
+                m_VertexInputInfo.pVertexBindingDescriptions = &m_GridBindingDescription;
+                m_VertexInputInfo.pVertexAttributeDescriptions = m_GridAttributeDescriptions.data();
+                return true;
+            }
+            return false;
+        }
+        void QuadRenderer::CreateDescriptorSetLayout()
+        {
+        }
+}
 }

@@ -431,7 +431,6 @@ namespace VKR
 				for (auto& mesh : model->m_Meshes)
 				{
 					PERF_INIT("PREPARE_MESH")
-					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
 
 					/// 5 - Crear buffers de vertices
 					void* data;
@@ -495,6 +494,9 @@ namespace VKR
 						vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 					}
 
+					PERF_END("PREPARE_MESH")
+					PERF_INIT("PREPARE_MATERIAL")
+					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
 					/// 8 - Actualizar Descrip Sets(UpdateDescriptorSet)
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = _backend->m_ShadowImageView;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = _backend->m_ShadowImage;
@@ -502,7 +504,7 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
-					PERF_END("PREPARE_MESH")
+					PERF_END("PREPARE_MATERIAL")
 				}
 				m_StaticModels[m_CurrentStaticModels] = model;
 				m_CurrentStaticModels++;
