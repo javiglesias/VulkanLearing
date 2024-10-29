@@ -212,7 +212,7 @@ namespace VKR
 
 		void VKBackend::Init()
 		{
-			#ifdef _WINDOWS
+			#ifdef WIN32
 			glslang::InitializeProcess();
 			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
 			#endif
@@ -511,7 +511,7 @@ namespace VKR
 			VkDeviceSize checkBufferSize = MAX_MODELS *  DynAlign;
 			VkDeviceSize dynBufferSize = MAX_MODELS *  sizeof(DynamicBufferObject);
 			if(dynBufferSize != checkBufferSize )
-			#ifdef _WINDOWS
+			#ifdef WIN32
 				__debugbreak();
 			#else
 				raise(SIGTRAP);
@@ -533,7 +533,7 @@ namespace VKR
 			checkBufferSize = MAX_MODELS * (4 * lightDynAlign);
 			VkDeviceSize lightsBufferSize = MAX_MODELS * (4 * sizeof(LightBufferObject));
 			if(lightsBufferSize != checkBufferSize )
-			#ifdef _WINDOWS
+			#ifdef WIN32
 				__debugbreak();
 			#else
 				raise(SIGTRAP);
@@ -902,7 +902,7 @@ namespace VKR
 				g_LoadDataThread->join();
 			printf("Cleanup\n");
 			g_context.Cleanup();
-			#ifdef _WINDOWS
+			#ifdef WIN32
 			glslang::FinalizeProcess();
 			#endif
 			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);

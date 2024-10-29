@@ -155,7 +155,7 @@ namespace VKR
             auto spvCompiled = _shader->LoadShader();
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            #ifdef _WINDOWS
+            #ifdef WIN32
             shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
             shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
             #else

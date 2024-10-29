@@ -8,7 +8,7 @@ namespace VKR
 		Shader::Shader(const std::string& _filename, int _shaderStage)
 		{
 			m_Filename = _filename;
-#ifdef _WINDOWS
+#ifdef WIN32
 			m_Stage = (EShLanguage)_shaderStage;
 #else
 			m_Filename += ".spv";
@@ -16,7 +16,7 @@ namespace VKR
 		}
 		void Shader::ReadFile()
 		{
-#ifdef _WINDOWS
+#ifdef WIN32
 			m_RawSource.clear();
 			std::ifstream f(m_Filename, std::ios::ate | std::ios::binary);
 			size_t fileSize = (size_t)f.tellg();
@@ -35,7 +35,7 @@ namespace VKR
 				f.seekg(0);
 				f.read(m_CompiledSource.data(), fileSize);
 			} else {
-#ifdef _WINDOWS
+#ifdef WIN32
 				__debugbreak();
 #else
 				raise(SIGTRAP);
@@ -45,7 +45,7 @@ namespace VKR
 			f.close();
 #endif
 		}
-		#ifdef _WINDOWS
+		#ifdef WIN32
 		std::vector<uint32_t>
 		#else
 		std::vector<char>
@@ -53,7 +53,7 @@ namespace VKR
 		Shader::LoadShader()
 		{
 			ReadFile();
-			#ifdef _WINDOWS
+			#ifdef WIN32
 			if(GLSLCompile())
 				ToSPVShader();
 			return m_SpirvSrc;
@@ -64,7 +64,7 @@ namespace VKR
 
 		void Shader::ToSPVShader()
 		{
-			#ifdef _WINDOWS
+			#ifdef WIN32
 			glslang::TProgram m_Program;
 			m_SpirvSrc.clear();
 			m_Program.addShader(m_TShader);
@@ -80,7 +80,7 @@ namespace VKR
 		bool Shader::GLSLCompile(bool _recompile)
 		{
 			if(_recompile) ReadFile();
-#ifdef _WINDOWS
+#ifdef WIN32
 			auto str = m_RawSource.c_str();
 			m_TShader = nullptr;
 			m_TShader = new glslang::TShader(m_Stage);

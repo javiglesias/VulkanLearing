@@ -4,7 +4,7 @@
 #include "../core/VKRScene.h"
 #include <cstdio>
 
-#ifdef _WINDOWS
+#ifdef WIN32
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #else

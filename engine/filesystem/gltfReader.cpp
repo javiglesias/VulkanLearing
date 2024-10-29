@@ -206,7 +206,7 @@ namespace VKR
 				}
 			}
 			else
-#ifdef _WINDOWS
+#ifdef WIN32
 				__debugbreak();
 #else
 				raise(SIGTRAP);

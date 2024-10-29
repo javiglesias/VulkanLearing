@@ -89,7 +89,7 @@ namespace VKR
 			renderPassInfo.pDependencies = &subpassDep;
 			if (vkCreateRenderPass(_LogicDevice, &renderPassInfo, nullptr,
 				&m_Pass) != VK_SUCCESS)
-#ifdef _WINDOWS
+#ifdef WIN32
 				__debugbreak();
 #else
 				raise(SIGTRAP);

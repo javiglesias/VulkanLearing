@@ -1,12 +1,12 @@
 #ifndef _C_UTILS
 #define _C_UTILS
 #include "../core/VKRRenderPass.h"
-#ifdef _WINDOWS
+#ifdef WIN32
 #include <Windows.h>
 #else
-#include <cstdio>
 #include <cstring>
 #endif
+#include <cstdio>
 #include <cmath>
 
 namespace VKR
@@ -649,13 +649,13 @@ enum CONSOLE_COLOR
 	YELLOW = 14,
 	NORMAL = 15
 };
-#ifdef _WINDOWS
+#ifdef WIN32
 inline HANDLE  hConsole;
 #endif
 inline
 void ChangeColorConsole(CONSOLE_COLOR _color)
 {
-	#ifdef _WINDOWS
+	#ifdef WIN32
 	if (!hConsole)
 		hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, _color);

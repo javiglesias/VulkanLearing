@@ -1,8 +1,7 @@
-SRCS := $(shell find /engine -name '*.cpp')
 OBJS := $(SRCS:%=./engine/%.o)
 CXX = clang++
-SPV := $(shell find /dependencies/glslang -name '*.cpp')
 
+SRCS = engine/main.cpp engine/core/VKRenderers.cpp engine/core/VKRRenderPass.cpp engine/core/VKRScene.cpp engine/core/Materials/VKRCubemapMaterial.cpp engine/core/Materials/VKRMaterial.cpp engine/core/Materials/VKRShader.cpp engine/core/Materials/VKRTexture.cpp engine/core/Objects/VKRCubemap.cpp engine/core/Objects/VKRLight.cpp engine/core/Objects/VKRModel.cpp engine/editor/Editor.cpp engine/filesystem/gltfReader.cpp engine/filesystem/ResourceManager.cpp engine/video/VKBackend.cpp engine/video/VKRenderable.cpp
 IMGUI = dependencies/imgui/imgui.cpp dependencies/imgui/imgui_draw.cpp dependencies/imgui/imgui_widgets.cpp dependencies/imgui/imgui_tables.cpp dependencies/imgui/backends/imgui_impl_glfw.cpp dependencies/imgui/backends/imgui_impl_vulkan.cpp
 CGLTF = dependencies/cgltf/cgltf.h
 CFLAGS = -g -std=gnu++17 -Wc++17-extensions
@@ -15,17 +14,6 @@ DLIBS = -L"dependencies/assimp/bin" -L"dependencies/glfw/src"
 VulkanLearning:
 	$(CXX) $(CFLAGS)  $(SRCS) $(IMGUI) -o VulkanLearning.out $(INC) $(DLIBS) $(LIBS)
 
-objects:
-	$(CXX) $(CFLAGS) -c $(SRCS) $(INC) $(DLIBS) $(LIBS)
-
-shaders:
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc --target-env=vulkan1.3 -std=460 engine/shaders/Standard.vert -o engine/shaders/Standard.vert.spv
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc --target-env=vulkan1.3 -std=460 engine/shaders/Standard.frag -o engine/shaders/Standard.frag.spv
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc engine/shaders/Debug.vert -o engine/shaders/Debug.vert.spv
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc engine/shaders/Debug.frag -o engine/shaders/Debug.frag.spv
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc engine/shaders/Shadow.vert -o engine/shaders/Shadow.vert.spv
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc engine/shaders/Cubemap.vert -o engine/shaders/Cubemap.vert.spv
-	./build/Vulkan_1.3.268.0/x86_64/bin/glslc engine/shaders/Cubemap.frag -o engine/shaders/Cubemap.frag.spv
 .PHONY: clean
 clean:
 	rm -f VulkanLearning.out
