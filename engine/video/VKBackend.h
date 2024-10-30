@@ -1,11 +1,11 @@
 #ifndef _C_BACKEND
 #define _C_BACKEND
+
 #include "VKRUtils.h"
 #include "../core/VKRenderers.h"
 #include "../core/Materials/VKRShadowMaterial.h"
 #include "../core/Objects/VKRModel.h"
 #include "../core/Objects/VKRLight.h"
-
 #include <thread>
 
 struct GLFWwindow;

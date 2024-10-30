@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <string>
 #include "../core/Objects/VKRModel.h"
+#include "../core/Materials/VKRTexture.h"
 #include "../video/VKRenderable.h"
 
 namespace VKR

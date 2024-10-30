@@ -1,8 +1,8 @@
 #ifndef _C_MATERIAL
 #define _C_MATERIAL
-#include "VKRTexture.h"
 
 #include <vector>
+#include <string>
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
 
@@ -13,6 +13,7 @@ namespace VKR
 		extern std::string g_ConsoleMSG;
 		extern const int FRAMES_IN_FLIGHT;
 		class VKBackend;
+		class Texture;
 		struct R_Material
 		{
 			VkShaderModule m_VertShaderModule;

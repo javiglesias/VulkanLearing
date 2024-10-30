@@ -13,6 +13,7 @@ namespace VKR
 		struct Texture
 		{
 		private: // Variables
+			void* m_Data;
 			int m_DefualtWidth, m_DefualtHeight, m_DefualtChannels;
 			uint8_t m_Mipmaps = 1;
 			VkBuffer m_StagingBuffer;

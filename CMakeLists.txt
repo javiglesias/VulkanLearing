@@ -11,28 +11,44 @@ include_directories(${PROJECT_SOURCE_DIR}/dependencies/glm-0.9.9.0/glm)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/assimp/include)
 add_executable(VKRenderer engine/main.cpp
         engine/core/VKRenderers.cpp
+        engine/core/VKRenderers.h
         engine/core/VKRRenderPass.cpp
+        engine/core/VKRRenderPass.h
         engine/core/VKRScene.cpp
+        engine/core/VKRScene.h
+        engine/core/Materials/VKRDebugMaterial.cpp
+        engine/core/Materials/VKRDebugMaterial.h
         engine/core/Materials/VKRCubemapMaterial.cpp
+        engine/core/Materials/VKRCubemapMaterial.h
         engine/core/Materials/VKRMaterial.cpp
+        engine/core/Materials/VKRMaterial.h
         engine/core/Materials/VKRShader.cpp
+        engine/core/Materials/VKRShader.h
         engine/core/Materials/VKRTexture.cpp
+        engine/core/Materials/VKRTexture.h
         engine/core/Objects/VKRCubemap.cpp
+        engine/core/Objects/VKRCubemap.h
         engine/core/Objects/VKRLight.cpp
+        engine/core/Objects/VKRLight.h
         engine/core/Objects/VKRModel.cpp
+        engine/core/Objects/VKRModel.h
         engine/editor/Editor.cpp
+        engine/editor/Editor.h
         engine/perfmon/Custom.h
         engine/filesystem/gltfReader.cpp
+        engine/filesystem/gltfReader.h
         engine/filesystem/ResourceManager.cpp
+        engine/filesystem/ResourceManager.h
         engine/video/VKBackend.cpp
+        engine/video/VKBackend.h
         engine/video/VKRenderable.cpp
+        engine/video/VKRenderable.h
         dependencies/imgui/imgui.cpp
         dependencies/imgui/imgui_draw.cpp
         dependencies/imgui/imgui_tables.cpp
         dependencies/imgui/imgui_widgets.cpp
         dependencies/imgui/backends/imgui_impl_glfw.cpp
         dependencies/imgui/backends/imgui_impl_vulkan.cpp
-        dependencies/cgltf/cgltf.h
 )
 target_compile_features(VKRenderer PRIVATE cxx_std_20)
 

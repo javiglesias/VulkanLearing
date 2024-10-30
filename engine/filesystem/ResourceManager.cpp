@@ -1,6 +1,7 @@
 #include "ResourceManager.h"
 #include "gltfReader.h"
 #include "../core/Objects/VKRModel.h"
+#include "../core/Materials/VKRTexture.h"
 #include "../video/VKBackend.h"
 
 #include <assimp/scene.h>
@@ -95,6 +96,7 @@ namespace VKR
 						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse);*/
 					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new render::Texture();
 				}
+
 				tempMesh->m_Material = mesh->mMaterialIndex;
 				//++m_TotalTextures;
 				tempModel->m_Meshes.push_back(tempMesh);
@@ -115,7 +117,7 @@ namespace VKR
 				textureDefault = std::string(texture);
 			}
 			else
-				*outTex_ = new render::Texture(textureDefault);
+				*outTex_ = new render::Texture();
 		}
 
 		void LoadModel(const char* _filepath, const char* _modelName)

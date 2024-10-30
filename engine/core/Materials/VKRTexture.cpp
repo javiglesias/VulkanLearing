@@ -16,11 +16,8 @@ namespace VKR
 				m_Path = std::string("resources/Textures/checkerW.png");
 			else
 				m_Path = _path;
-		}
-		void Texture::LoadTexture(bool isCubemap)
-		{
 			stbi_uc* pixels = nullptr;
-			if( !m_Path.empty())
+			if (!m_Path.empty())
 				pixels = stbi_load(m_Path.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
@@ -33,6 +30,12 @@ namespace VKR
 			}
 			m_Mipmaps = (uint8_t)std::log2(tWidth > tHeight ? tWidth : tHeight);
 			m_Size = tWidth * tHeight * 4;
+			m_Data = malloc((size_t)m_Size);
+			memcpy(m_Data, pixels, (size_t)m_Size);
+			stbi_image_free(pixels);
+		}
+		void Texture::LoadTexture(bool isCubemap)
+		{
 			if (isCubemap)
 				m_Size *= 6;
 			// Buffer transfer of pixels
@@ -43,10 +46,8 @@ namespace VKR
 			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, m_Size, 0, &data);
 			if (isCubemap)
 				m_Size /= 6;
-			memcpy(data, pixels, (size_t)m_Size);
+			memcpy(data, m_Data, (size_t)m_Size);
 			vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
-			stbi_image_free(pixels);
-
 		}
 
 		void Texture::LoadCubemapTexture()

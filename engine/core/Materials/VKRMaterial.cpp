@@ -1,24 +1,35 @@
 #include "VKRMaterial.h"
-#include "../../video/VKBackend.h"
+#include "VKRTexture.h"
+#include "../../perfmon/Custom.h"
 
 namespace VKR
 {
 	namespace render
 	{
+		extern std::string g_ConsoleMSG;
 		void R_Material::PrepareMaterialToDraw(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
+			PERF_INIT("CREATE_DESC_POOL")
 			/// 2 - Crear descriptor pool de materiales(CreateDescPool)
 			CreateDescriptorPool(renderContext.m_LogicDevice);
+			PERF_END("CREATE_DESC_POOL")
 
 			/// 3 - Crear Descriptor set de material(createMeshDescSet)
+			PERF_INIT("CREATE_MESH_DESC")
 			CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_GraphicsRender->m_DescSetLayout);
+			PERF_END("CREATE_MESH_DESC")
 
+			PERF_INIT("CREATE_TEXTURES")
 			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
 			if (m_TextureBaseColor)
 			{
+			PERF_INIT("LOAD_TEXTURE")
 				m_TextureBaseColor->LoadTexture();
+			PERF_END("LOAD_TEXTURE")
+			PERF_INIT("TRANSITION_TEXTURE")
 				m_TextureBaseColor->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
+			PERF_END("TRANSITION_TEXTURE")
 			}
 			if (m_TextureDiffuse)
 			{
@@ -57,6 +68,7 @@ namespace VKR
 				m_TextureMetallicRoughness->LoadTexture();
 				m_TextureMetallicRoughness->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
 			}
+			PERF_END("CREATE_TEXTURES")
 		}
 
 		void R_Material::CreateDescriptorPool(VkDevice _LogicDevice)

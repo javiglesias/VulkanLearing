@@ -7,6 +7,7 @@
 #include <cstddef>
 #include "../filesystem/ResourceManager.h"
 #include "../editor/Editor.h"
+#include "Materials/VKRTexture.h"
 
 namespace VKR
 {
@@ -497,20 +498,23 @@ namespace VKR
 					PERF_END("PREPARE_MESH")
 					PERF_INIT("PREPARE_MATERIAL")
 					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
+					PERF_END("PREPARE_MATERIAL")
 					/// 8 - Actualizar Descrip Sets(UpdateDescriptorSet)
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = _backend->m_ShadowImageView;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = _backend->m_ShadowImage;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;
+					PERF_INIT("UPDATE_DESCRIPTORS")
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
-					PERF_END("PREPARE_MATERIAL")
+					PERF_END("UPDATE_DESCRIPTORS")
 				}
 				m_StaticModels[m_CurrentStaticModels] = model;
 				m_CurrentStaticModels++;
 			}
 			PERF_END("PREPARE_DRAW_SCENE")
 			m_CurrentPendingModels = 0;
+			m_PendingBuffersModels[0] = nullptr;
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
 			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
