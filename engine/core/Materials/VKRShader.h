@@ -5,7 +5,6 @@
 #include "glslang/Public/ResourceLimits.h"
 #include "glslang/SPIRV/GlslangToSpv.h"
 #ifndef WIN32
- #include "../../../dependencies/glslang/SPIRV/GlslangToSpv.h"
  #include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
  #include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
 #endif

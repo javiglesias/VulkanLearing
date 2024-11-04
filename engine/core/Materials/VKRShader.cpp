@@ -16,7 +16,7 @@ namespace VKR
 		}
 		void Shader::ReadFile()
 		{
-#ifdef WIN32
+#if 0
 			m_RawSource.clear();
 			std::ifstream f(m_Filename, std::ios::ate | std::ios::binary);
 			size_t fileSize = (size_t)f.tellg();
@@ -53,7 +53,7 @@ namespace VKR
 		Shader::LoadShader()
 		{
 			ReadFile();
-			#ifdef WIN32
+			#if 0
 			if(GLSLCompile())
 				ToSPVShader();
 			return m_SpirvSrc;
@@ -64,23 +64,23 @@ namespace VKR
 
 		void Shader::ToSPVShader()
 		{
-			#ifdef WIN32
-			glslang::TProgram m_Program;
-			m_SpirvSrc.clear();
-			m_Program.addShader(m_TShader);
-			m_Program.link(EShMsgDefault);    // link and report default error/warning messages
-			printf("Linking program %s: %s\n", m_Filename.c_str(), m_Program.getInfoLog()); // get the log for linking the program
-			glslang::TIntermediate* m_IntermediateSrc;
-			m_IntermediateSrc = m_Program.getIntermediate(m_Stage);
-			glslang::GlslangToSpv(*m_IntermediateSrc, m_SpirvSrc);    // convert the glslang intermediate into SPIR-V bytes
-			printf("SPIRV creation %s: %s\n", m_Filename.c_str(), m_TShader->getInfoLog());
+			#if 0
+				glslang::TProgram m_Program;
+				m_SpirvSrc.clear();
+				m_Program.addShader(m_TShader);
+				m_Program.link(EShMsgDefault);    // link and report default error/warning messages
+				printf("Linking program %s: %s\n", m_Filename.c_str(), m_Program.getInfoLog()); // get the log for linking the program
+				glslang::TIntermediate* m_IntermediateSrc;
+				m_IntermediateSrc = m_Program.getIntermediate(m_Stage);
+				glslang::GlslangToSpv(*m_IntermediateSrc, m_SpirvSrc);    // convert the glslang intermediate into SPIR-V bytes
+				printf("SPIRV creation %s: %s\n", m_Filename.c_str(), m_TShader->getInfoLog());
 			#endif
 		}
 
 		bool Shader::GLSLCompile(bool _recompile)
 		{
 			if(_recompile) ReadFile();
-#ifdef WIN32
+#if 0
 			auto str = m_RawSource.c_str();
 			m_TShader = nullptr;
 			m_TShader = new glslang::TShader(m_Stage);
