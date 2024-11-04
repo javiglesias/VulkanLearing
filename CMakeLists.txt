@@ -74,3 +74,4 @@ target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glsl
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/libSPIRV.a)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/libSPVRemapper.a)
 endif (UNIX)
+set(CMAKE_BUILD_TYPE Debug)
