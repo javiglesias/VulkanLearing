@@ -58,6 +58,7 @@ add_executable(VKRenderer engine/main.cpp
 )
 target_compile_features(VKRenderer PRIVATE cxx_std_20)
 if (WIN32)
+add_compile_definitions(_WIN32)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/assimp/lib/Debug/assimp-vc143-mtd.lib)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/Vulkan_1.3.268.0/Lib/vulkan-1.lib)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glfw/src/Debug/glfw3.lib)
