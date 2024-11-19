@@ -22,12 +22,14 @@ add_executable(VKRenderer engine/main.cpp
         engine/core/Materials/VKRCubemapMaterial.h
         engine/core/Materials/VKRMaterial.cpp
         engine/core/Materials/VKRMaterial.h
+        engine/core/Materials/VKRShadowMaterial.h
         engine/core/Materials/VKRShader.cpp
         engine/core/Materials/VKRShader.h
         engine/core/Materials/VKRTexture.cpp
         engine/core/Materials/VKRTexture.h
         engine/core/Objects/VKRCubemap.cpp
         engine/core/Objects/VKRCubemap.h
+        engine/core/Objects/VKRCamera.h
         engine/core/Objects/VKRLight.cpp
         engine/core/Objects/VKRLight.h
         engine/core/Objects/VKRModel.cpp
@@ -43,6 +45,10 @@ add_executable(VKRenderer engine/main.cpp
         engine/video/VKBackend.h
         engine/video/VKRenderable.cpp
         engine/video/VKRenderable.h
+        engine/video/VKBufferObjects.h
+        engine/video/VKRUtils.h
+        engine/video/Types.h
+        engine/memory/mem_alloc.h
         dependencies/imgui/imgui.cpp
         dependencies/imgui/imgui_draw.cpp
         dependencies/imgui/imgui_tables.cpp
