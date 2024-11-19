@@ -429,3 +429,6 @@ CMakeUserPresets.json
 ALL_BUILD.*
 ZERO_CHECK.*
 VKRenderer.*
+VKRenderer*
+*.spv
+
