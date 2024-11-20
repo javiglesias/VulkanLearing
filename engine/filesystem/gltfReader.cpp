@@ -36,6 +36,7 @@ namespace VKR
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
+							tempModel_->m_Materials[materialID]->m_TextureBaseColor = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
 							tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
@@ -49,17 +50,9 @@ namespace VKR
 								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
 								tempModel_->m_Materials[materialID]->m_TextureSpecular->m_Path = _filepath + pathTexture;
 							}
-							if(material.pbr_metallic_roughness.base_color_texture.texture != nullptr)
-							{
-								std::string pathTexture = std::string(material.pbr_metallic_roughness.base_color_texture.texture->image->uri);
-								//material.pbr_metallic_roughness.metallic_roughness_texturematerial.
-								fprintf(stderr, "%s",  (_filepath + pathTexture).c_str());
-								tempModel_->m_Materials[materialID]->m_TextureAmbient->m_Path = _filepath + pathTexture;
-								
-							}
+
 						}
 						tempModel_->m_Materials[materialID]->m_TextureEmissive = new render::Texture();
-						tempModel_->m_Materials[materialID]->m_TextureMetallicRoughness = new render::Texture();
 						tempModel_->m_Materials[materialID]->m_TextureOcclusion = new render::Texture();
 						tempModel_->m_Materials[materialID]->m_TextureNormal = new render::Texture();
 						tempModel_->m_Materials[materialID]->m_TextureShadowMap = new render::Texture();
@@ -100,7 +93,28 @@ namespace VKR
 							printf("\tPrimitive %zd\n", p);
 							for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 							{
-								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, mesh->primitives[p].material));
+								auto meshMaterial = mesh->primitives[p].material;
+								if(meshMaterial->pbr_metallic_roughness.base_color_factor != nullptr)
+								{
+									tempMesh->metallic_roughness.base_color = glm::vec4(
+										meshMaterial->pbr_metallic_roughness.base_color_factor[0],
+										meshMaterial->pbr_metallic_roughness.base_color_factor[1],
+										meshMaterial->pbr_metallic_roughness.base_color_factor[2],
+										meshMaterial->pbr_metallic_roughness.base_color_factor[3]
+									);
+									tempMesh->metallic_roughness.pbr_factors[0] = meshMaterial->pbr_metallic_roughness.metallic_factor;
+									tempMesh->metallic_roughness.pbr_factors[1] = meshMaterial->pbr_metallic_roughness.roughness_factor;
+									// Additional textures PBR Material
+									if (meshMaterial->pbr_metallic_roughness.metallic_roughness_texture.texture != nullptr)
+									{
+										std::string pathTexture = std::string(meshMaterial->pbr_metallic_roughness.metallic_roughness_texture.texture->image->uri);
+										//material.pbr_metallic_roughness.metallic_roughness_texturematerial.
+										fprintf(stderr, "%s", (_filepath + pathTexture).c_str());
+										tempMesh->metallic_roughness.pbr_texture->m_Path = _filepath + pathTexture;
+
+									}
+								}
+								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, meshMaterial));
 								auto accessor = mesh->primitives[p].attributes[a].data;
 								Vertex3D tempVertex;
 								if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)

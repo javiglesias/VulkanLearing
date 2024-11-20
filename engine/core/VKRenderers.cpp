@@ -1,33 +1,57 @@
 #include "VKRenderers.h"
 
+#include "../video/VKBackend.h"
+
 namespace VKR
 {
     namespace render
     {
-        void Renderer::CreateShaderStages()
+        bool Renderer::CreateShaderStages(const char* _vertShader, const char* _fragShader, bool _force_recompile)
         {
-            /// Color Blending
-            m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-            m_ColorBlendAttachment.blendEnable = VK_FALSE;
-            m_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-            m_ColorBlending.logicOpEnable = VK_FALSE;
-            m_ColorBlending.attachmentCount = 1;
-            m_ColorBlending.pAttachments = &m_ColorBlendAttachment;
-            /// Creacion de los shader stage de la Pipeline
-            m_VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            m_VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-            m_VertShaderStageInfo.module = m_VertShaderModule;
-            m_VertShaderStageInfo.pName = "main";
-            m_FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            m_FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-            m_FragShaderStageInfo.module = m_FragShaderModule;
-            m_FragShaderStageInfo.pName = "main";
-            m_ShaderStages[0] = m_VertShaderStageInfo;
-            m_ShaderStages[1] = m_FragShaderStageInfo;
-            /// Dynamic State (stados que permiten ser cambiados sin re-crear toda la pipeline)
-            m_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-            m_DynamicState.dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
-            m_DynamicState.pDynamicStates = m_DynamicStates.data();
+			if(_force_recompile)
+			{
+				vert_shader_modules[_vertShader] = nullptr;
+				frag_shader_modules[_fragShader] = nullptr;
+			}
+			if (vert_shader_modules[_vertShader] != nullptr)
+				m_VertShaderModule = vert_shader_modules[_vertShader];
+			if (frag_shader_modules[_fragShader] != nullptr)
+				m_FragShaderModule = frag_shader_modules[_fragShader];
+			if (vert_shader_modules[_vertShader] && frag_shader_modules[_fragShader])
+				return true;
+
+			m_VertShader = new Shader(_vertShader, 0);
+			m_FragShader = new Shader(_fragShader, 4);
+			if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
+				CreateShaderModule(m_FragShader, &m_FragShaderModule))
+			{
+ 				vert_shader_modules[_vertShader] = m_VertShaderModule;
+				frag_shader_modules[_fragShader] = m_FragShaderModule;
+				/// Color Blending
+				m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+				m_ColorBlendAttachment.blendEnable = VK_FALSE;
+				m_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+				m_ColorBlending.logicOpEnable = VK_FALSE;
+				m_ColorBlending.attachmentCount = 1;
+				m_ColorBlending.pAttachments = &m_ColorBlendAttachment;
+				/// Creacion de los shader stage de la Pipeline
+				m_VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+				m_VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+				m_VertShaderStageInfo.module = m_VertShaderModule;
+				m_VertShaderStageInfo.pName = "main";
+				m_FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+				m_FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+				m_FragShaderStageInfo.module = m_FragShaderModule;
+				m_FragShaderStageInfo.pName = "main";
+				m_ShaderStages[0] = m_VertShaderStageInfo;
+				m_ShaderStages[1] = m_FragShaderStageInfo;
+				/// Dynamic State (stados que permiten ser cambiados sin re-crear toda la pipeline)
+				m_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+				m_DynamicState.dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
+				m_DynamicState.pDynamicStates = m_DynamicStates.data();
+				return true;
+			}
+			return false;
         }
 
         void Renderer::CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor)
@@ -180,16 +204,10 @@ namespace VKR
             vkDestroyShaderModule(m_LogicDevice, m_FragShaderModule, nullptr);
         }
 
-        bool DebugRenderer::Initialize()
+        bool DebugRenderer::Initialize (bool _reload)
         {
-            // DEBUG SHADERS
-            //"engine/shaders/Standard.vert"
-            m_VertShader = new Shader("engine/shaders/Debug.vert", 0);
-            m_FragShader = new Shader("engine/shaders/Debug.frag", 4);
-            if(CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
-                CreateShaderModule(m_FragShader, &m_FragShaderModule))
-            {
-                CreateShaderStages();
+        	if(CreateShaderStages("engine/shaders/Debug.vert", "engine/shaders/Debug.frag", _reload))
+        	{
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 m_VertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -240,12 +258,11 @@ namespace VKR
 
         // GRAPHIC PIPELINE
 
-        bool GraphicsRenderer::Initialize()
+        bool GraphicsRenderer::Initialize (bool _reload)
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            if(CreateShaderModules())
+            if(CreateShaderStages("engine/shaders/Standard.vert", "engine/shaders/Standard.frag", _reload))
             {
-                CreateShaderStages();
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 m_VertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -386,13 +403,13 @@ namespace VKR
                 exit(-99);
         }
 
-        bool ShadowRenderer::Initialize()
+        bool ShadowRenderer::Initialize (bool _reload)
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
             m_VertShader = new Shader("engine/shaders/Shadow.vert", 0);
             if(CreateShaderModule(m_VertShader, &m_VertShaderModule))
             {
-                CreateShaderStages();
+                CreateShaderStages("engine/shaders/Shadow.vert", "", _reload);
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 m_VertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -404,7 +421,7 @@ namespace VKR
             return false;
         }
 
-        void ShadowRenderer::CreateShaderStages()
+        bool ShadowRenderer::CreateShaderStages(const char* _vertShader, const char* _fragShader, bool _force_recompile)
         {
             /// Creacion de los shader stage de la Pipeline
             m_VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -416,6 +433,7 @@ namespace VKR
             m_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             m_DynamicState.dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
             m_DynamicState.pDynamicStates = m_DynamicStates.data();
+			return true;
         }
 
         void ShadowRenderer::CreatePipeline(VkRenderPass _RenderPass)
@@ -449,15 +467,14 @@ namespace VKR
             vkDestroyShaderModule(m_LogicDevice, m_VertShaderModule, nullptr);
         }
 
-        bool CubemapRenderer::Initialize()
+        bool CubemapRenderer::Initialize(bool _reload )
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
             m_VertShader = new Shader("engine/shaders/Cubemap.vert", 0);
             m_FragShader = new Shader("engine/shaders/Cubemap.frag", 4);
-            if(CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
-            CreateShaderModule(m_FragShader, &m_FragShaderModule))
+            if(CreateShaderStages("engine/shaders/Cubemap.vert", "engine/shaders/Cubemap.frag", _reload))
             {
-                CreateShaderStages();
+                
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 m_VertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -508,16 +525,14 @@ namespace VKR
                 exit(-99);
         }
         // SHADER RENDERER
-        bool ShaderRenderer::Initialize()
+        bool ShaderRenderer::Initialize (bool _reload)
         {
             // DEBUG SHADERS
             //"engine/shaders/Standard.vert"
             m_VertShader = new Shader("engine/shaders/Grid.vert", 0);
             m_FragShader = new Shader("engine/shaders/Grid.frag", 4);
-            if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
-                CreateShaderModule(m_FragShader, &m_FragShaderModule))
+            if (CreateShaderStages("engine/shaders/Grid.vert", "engine/shaders/Grid.frag", _reload))
             {
-                CreateShaderStages();
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 m_VertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -549,16 +564,14 @@ namespace VKR
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
         }
-        bool QuadRenderer::Initialize()
+        bool QuadRenderer::Initialize (bool _reload)
         {
             // DEBUG SHADERS
             //"engine/shaders/Standard.vert"
             m_VertShader = new Shader("engine/shaders/Quad.vert", 0);
             m_FragShader = new Shader("engine/shaders/Quad.frag", 4);
-            if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
-                CreateShaderModule(m_FragShader, &m_FragShaderModule))
+            if (CreateShaderStages("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", _reload))
             {
-                CreateShaderStages();
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 m_VertexInputInfo.vertexBindingDescriptionCount = 1;

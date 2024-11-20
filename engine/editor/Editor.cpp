@@ -1,5 +1,6 @@
 #include "Editor.h"
 #include "EditorModels.h"
+#include "../filesystem/ResourceManager.h"
 #include "../video/VKBackend.h"
 #include "../core/VKRScene.h"
 #include <cstdio>
@@ -121,23 +122,32 @@ namespace VKR
 					_mainScene->ReloadShaders(_backend);
 				}
 
-				// static ImGuiComboFlags flags = 0;
-				// static int item_current_idx = 0;
-				//  const char* combo_preview_value =ModelList[0];
-				//if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
-				//{
-				//	for (int n = 1; n < MODELS_SIZE; n++)
-				//	{
-				//		const bool is_selected = (item_current_idx == n);
-				//		if (ImGui::Selectable(ModelList[n], is_selected))
-				//			item_current_idx = n;
+				 static ImGuiComboFlags flags = 0;
+				 static int item_current_idx = 0;
+				  const char* combo_preview_value = ModelList[item_current_idx];
+				if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
+				{
+					for (int n = 1; n < MODELS_SIZE; n++)
+					{
+						const bool is_selected = (item_current_idx == n);
+						if (ImGui::Selectable(ModelList[n], is_selected))
+							item_current_idx = n;
 
-				//		// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				//		if (is_selected)
-				//			ImGui::SetItemDefaultFocus();
-				//	}
-				//	ImGui::EndCombo();
-				//}
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Load"))
+				{
+					char path[128];
+					sprintf(path, "resources/models/%s/glTF/", ModelList[item_current_idx]);
+					char name[64];
+					sprintf(name, "%s.gltf", ModelList[item_current_idx]);
+					RM::_AddRequest(ASSIMP_MODEL, path, name);
+				}
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
@@ -161,7 +171,6 @@ namespace VKR
 
 				ImGui::End();
 			}
-#if 0
 			ImGui::Begin("World");
 			{
 				for (int i = 0; i < m_CurrentStaticModels; i++)
@@ -170,16 +179,16 @@ namespace VKR
 					ImGui::Selectable(model->m_Path, &model->m_Editable);
 					if (model->m_Editable)
 					{
-						float center[3];
-						center[0] = model->m_Pos.x;
-						center[1] = model->m_Pos.y;
-						center[2] = model->m_Pos.z;
+						float center[3] = {0};
 						ImGui::DragFloat3("Pos", center, 0.1f);
-						model->m_Pos.x = center[0];
-						model->m_Pos.y = center[1];
-						model->m_Pos.z = center[2];
-						ImGui::DragFloat("P.Shadow", &model->m_ProjectShadow);
-
+						model->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(center[0], center[1], center[2]));
+						//ImGui::DragFloat("P.Shadow", &model->m_ProjectShadow);
+						ImGui::SameLine();
+						if (ImGui::Button("Un/Hide"))
+						{
+							model->m_Hidden = !model->m_Hidden;
+						}
+#if 0
 						float rotation[3];
 						rotation[0] = model->m_RotAngle.x;
 						rotation[1] = model->m_RotAngle.y;
@@ -198,15 +207,11 @@ namespace VKR
 						model->m_Scale.x = scale[0];
 						model->m_Scale.y = scale[1];
 						model->m_Scale.z = scale[2];
+#endif
 					}
 				}
-				/*if (ImGui::Button("Delete"))
-				{
-					m_StaticModels.pop_back();
-				}*/
 				ImGui::End();
 			}
-#endif
 			ImGui::Begin("Lights");
 			{
 				if (ImGui::Button("Create Point Light"))

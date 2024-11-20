@@ -29,8 +29,9 @@ namespace VKR
 			}
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 orthogonalProjMat = glm::ortho<float>(g_DirectionalLight->m_Right, -g_DirectionalLight->m_Right,
-																												g_DirectionalLight->m_Up, -g_DirectionalLight->m_Up , 
-																												g_DirectionalLight->m_Depth, -g_DirectionalLight->m_Depth);
+									g_DirectionalLight->m_Up, -g_DirectionalLight->m_Up, 
+									g_DirectionalLight->m_Depth, -g_DirectionalLight->m_Depth);
+			orthogonalProjMat[1][1] *= -1;
 			glm::mat4 lightViewMat = glm::lookAt( g_DirectionalLight->m_Pos, g_DirectionalLight->m_Pos + g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
 			glm::mat4 lightProjMat = orthogonalProjMat * lightViewMat;
 			auto renderContext = GetVKContext();
@@ -114,7 +115,7 @@ namespace VKR
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			vkDestroyPipeline(renderContext.m_LogicDevice, m_CubemapRender->m_Pipeline, nullptr);
 			vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_CubemapRender->m_PipelineLayout, nullptr);
-			m_CubemapRender->Initialize();
+			m_CubemapRender->Initialize(true);
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(renderContext.m_RenderPass->m_Pass);
@@ -125,7 +126,7 @@ namespace VKR
 			{
 				vkDestroyPipeline(renderContext.m_LogicDevice, m_GraphicsRender->m_Pipeline, nullptr);
 				vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_GraphicsRender->m_PipelineLayout, nullptr);
-				m_GraphicsRender->Initialize();
+				m_GraphicsRender->Initialize(true);
 				m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 				m_GraphicsRender->CreatePipelineLayout();
 				m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
@@ -135,7 +136,7 @@ namespace VKR
 			{
 				vkDestroyPipeline(renderContext.m_LogicDevice, m_ShadowRender->m_Pipeline, nullptr);
 				vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_ShadowRender->m_PipelineLayout, nullptr);
-				m_ShadowRender->Initialize();
+				m_ShadowRender->Initialize(true);
 				m_ShadowRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 				m_ShadowRender->CreatePipelineLayout();
 				m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
@@ -224,6 +225,7 @@ namespace VKR
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
 				R_Model* model = m_StaticModels[i];
+				if (model->m_Hidden) continue;
 				DynamicBufferObject dynO{};
 				// Update Uniform buffers
 				dynO.model = model->m_ModelMatrix;

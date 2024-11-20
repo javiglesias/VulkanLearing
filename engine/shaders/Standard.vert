@@ -32,7 +32,7 @@ layout(location = 9) out float renderNormals;
 void main() {
     gl_Position = ubo.projection * ubo.view * dynO.model * vec4(inPosition, 1.0);
     texCoord = aTexCoord;
-	fragPosition = inPosition;
+	fragPosition = vec3(dynO.model * vec4(inPosition, 1.0));
 	normal = mat3(transpose(inverse(dynO.model))) * aNormal;
     viewerPosition = ubo.viewerPosition;
 	shadowCoord = dynO.model * vec4(inPosition, 1.0);

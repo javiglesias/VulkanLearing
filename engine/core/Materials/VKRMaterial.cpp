@@ -63,11 +63,11 @@ namespace VKR
 				m_TextureOcclusion->LoadTexture();
 				m_TextureOcclusion->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
 			}
-			if (m_TextureMetallicRoughness)
+			/*if (m_TextureMetallicRoughness)
 			{
 				m_TextureMetallicRoughness->LoadTexture();
 				m_TextureMetallicRoughness->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
-			}
+			}*/
 			PERF_END("CREATE_TEXTURES")
 		}
 
@@ -382,11 +382,11 @@ namespace VKR
 				{
 					VkDescriptorImageInfo TextureMetallicImage{};
 					TextureMetallicImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					TextureMetallicImage.imageView = m_TextureMetallicRoughness->tImageView;
-					if (m_TextureMetallicRoughness->m_Sampler != nullptr)
+					TextureMetallicImage.imageView = m_TextureNormal->tImageView;
+					if (m_TextureNormal->m_Sampler != nullptr)
 					{
-						TextureMetallicImage.sampler = m_TextureMetallicRoughness->m_Sampler;
-						g_ConsoleMSG += m_TextureMetallicRoughness->m_Path;
+						TextureMetallicImage.sampler = m_TextureNormal->m_Sampler;
+						g_ConsoleMSG += m_TextureNormal->m_Path;
 						g_ConsoleMSG += '\n';
 					}
 					else
@@ -448,8 +448,8 @@ namespace VKR
 			m_TextureEmissive = nullptr;
 			m_TextureOcclusion->CleanTextureData(_LogicDevice);
 			m_TextureOcclusion = nullptr;
-			m_TextureMetallicRoughness->CleanTextureData(_LogicDevice);
-			m_TextureMetallicRoughness = nullptr;
+			/*m_TextureMetallicRoughness->CleanTextureData(_LogicDevice);
+			m_TextureMetallicRoughness = nullptr;*/
 			m_TextureNormal->CleanTextureData(_LogicDevice);
 			m_TextureNormal = nullptr;
 			vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);

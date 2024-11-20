@@ -71,6 +71,7 @@ target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glsl
 endif (WIN32)
 
 if (UNIX)
+add_compile_definitions(_UNIX)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/assimp/bin/libassimp.so)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/vulkan/x86_64/lib/libvulkan.so)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glfw/src/libglfw3.a)
