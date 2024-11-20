@@ -74,6 +74,8 @@ namespace VKR
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
         inline R_Model* m_StaticModels[MAX_MODELS];
         inline R_Model* m_PendingBuffersModels[MAX_MODELS];
+		inline std::unordered_map<const char*, VkShaderModule> vert_shader_modules;
+		inline std::unordered_map<const char*, VkShaderModule> frag_shader_modules;
         inline int m_CurrentStaticModels = 0;
         inline int m_CurrentPendingModels = 0;
         inline std::vector<Light*> g_Lights;

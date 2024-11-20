@@ -85,25 +85,25 @@ vec3 DirectionalLight(vec3 _color)
 {
 	vec3 _normal = texture(inNormalTexture, texCoord).rgb;
 	float att = PointLight();
-	float ambientStrength = 0.1;
+	float ambientStrength = 0.05;
     vec3 ambient = libO[0].lightColor.rgb * ambientStrength;
-	float mipmapLevel = textureQueryLod(inAmbientTexture, texCoord).x;
-	vec3 norm = normalize(_normal * 2.0 - 1.0); // transform normal vector to range [-1,1]
+	
+	vec3 norm = normalize(normal * 2.0 - 1.0); // transform normal vector to range [-1,1]
 	vec3 lightDir = normalize(lightPosition - fragPosition);
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = diff * lightColor;
+	float diffuse = max(dot(normal, lightDir), 0.0);
+	
 	float specularStrength = 0.5;
 	vec3 viewDir = normalize(viewerPosition - fragPosition);
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	vec3 specular = specularStrength * spec * lightColor;
+	float specular = specularStrength * spec;
+	
 	// Caulculate shadows
 	vec4 fraglight = libO[0].lightProj * vec4(shadowCoord);
 	float shadow = ShadowCalculation(fraglight, inShadowTexture);
-	// ambient  *= att;
-	// diffuse  *= att;
-	// specular *= att;
-	return (ambient + (1.0 - shadow)* (diffuse + specular)) * _color;
+	
+	return (ambient + (1.0 - shadow))* diffuse * _color;
+	// return (diffuse + ambientStrength + specular) * _color;
 
 }
 const float bias = 0.005;

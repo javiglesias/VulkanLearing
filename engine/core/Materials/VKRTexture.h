@@ -1,6 +1,7 @@
 #ifndef _C_TEXTURE
 #define _C_TEXTURE
 #include <string>
+#include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
 
 namespace VKR

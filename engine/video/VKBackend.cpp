@@ -102,7 +102,7 @@ namespace VKR
 
 			if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
 			{
-				RM::_AddRequest(ASSIMP_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
+				RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
 			}
 
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down

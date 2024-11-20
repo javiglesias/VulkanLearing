@@ -86,8 +86,8 @@ namespace VKR
 						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient);
 					GenerateTextureMesh(_filepath, aiTextureType_NORMALS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
 						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureNormal);
-					GenerateTextureMesh(_filepath, aiTextureType_METALNESS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureMetallicRoughness);
+					/*GenerateTextureMesh(_filepath, aiTextureType_METALNESS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureMetallicRoughness);*/
 					GenerateTextureMesh(_filepath, aiTextureType_AMBIENT_OCCLUSION, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
 						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureOcclusion);
 					GenerateTextureMesh(_filepath, aiTextureType_EMISSION_COLOR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,

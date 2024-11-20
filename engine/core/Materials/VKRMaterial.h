@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include <glm/fwd.hpp>
+#include <glm/vec4.hpp>
 #include <vulkan/vulkan_core.h>
 
 namespace VKR
@@ -14,6 +14,13 @@ namespace VKR
 		extern const int FRAMES_IN_FLIGHT;
 		class VKBackend;
 		class Texture;
+		struct PBR_material
+		{
+			char name[32];
+			glm::vec4 base_color;
+			float pbr_factors[2]; // metallic, roughness
+			Texture* pbr_texture;
+		};
 		struct R_Material
 		{
 			VkShaderModule m_VertShaderModule;
@@ -38,7 +45,6 @@ namespace VKR
 			Texture* m_TextureSpecular;
 			Texture* m_TextureAmbient;
 			Texture* m_TextureOcclusion;
-			Texture* m_TextureMetallicRoughness;
 			Texture* m_TextureNormal;
 			Texture* m_TextureShadowMap;
 			Texture* m_TextureEmissive;
