@@ -13,7 +13,7 @@ namespace VKR
 		extern std::string g_ConsoleMSG;
 		extern const int FRAMES_IN_FLIGHT;
 		class VKBackend;
-		class Texture;
+		struct Texture;
 		struct PBR_material
 		{
 			char name[32];

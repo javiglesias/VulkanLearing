@@ -22,7 +22,7 @@ namespace VKR
 			VkDeviceSize m_Size;
 		public:
 			int tWidth, tHeight, tChannels;
-			std::string m_Path;
+			char m_Path[128] = "";
 			VkImage tImage = nullptr;
 			VkDeviceMemory tImageMem = nullptr;
 			VkImageView tImageView = nullptr;

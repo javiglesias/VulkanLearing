@@ -66,7 +66,10 @@ namespace VKR
 					{
 						tempVertex.m_TexCoord = { 0.f, 0.f };
 					}
-					tempVertex.m_Normal = { mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z };
+					if (mesh->mNormals)
+						tempVertex.m_Normal = { mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z };
+					else
+						tempVertex.m_Normal = {0.f, 1.f, 0.f};
 					// New New Mexico
 					tempMesh->m_Vertices.push_back(tempVertex);
 				}
@@ -165,7 +168,7 @@ namespace VKR
 					{
 						case STATIC_MODEL:
 						{
-							LoadModel(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName);
+							LoadModel_ALT(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName);
 							render::m_SceneDirty = true;
 							_NumRequests--;
 							break;

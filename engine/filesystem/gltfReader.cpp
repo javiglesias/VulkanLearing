@@ -43,12 +43,12 @@ namespace VKR
 							if(material.normal_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.normal_texture.texture->image->uri);
-								tempModel_->m_Materials[materialID]->m_TextureDiffuse->m_Path =  _filepath + pathTexture;
+								sprintf(tempModel_->m_Materials[materialID]->m_TextureDiffuse->m_Path, "%s%s",  _filepath, pathTexture.c_str());
 							}
 							if(material.specular.specular_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
-								tempModel_->m_Materials[materialID]->m_TextureSpecular->m_Path = _filepath + pathTexture;
+								sprintf(tempModel_->m_Materials[materialID]->m_TextureSpecular->m_Path, "%s%s", _filepath, pathTexture.c_str());
 							}
 
 						}
@@ -110,7 +110,7 @@ namespace VKR
 										std::string pathTexture = std::string(meshMaterial->pbr_metallic_roughness.metallic_roughness_texture.texture->image->uri);
 										//material.pbr_metallic_roughness.metallic_roughness_texturematerial.
 										fprintf(stderr, "%s", (_filepath + pathTexture).c_str());
-										tempMesh->metallic_roughness.pbr_texture->m_Path = _filepath + pathTexture;
+										tempMesh->metallic_roughness.pbr_texture = new render::Texture(_filepath + pathTexture);
 
 									}
 								}

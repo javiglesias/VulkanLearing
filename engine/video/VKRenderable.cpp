@@ -1,12 +1,11 @@
 #include "VKRenderable.h"
-
+#include "../core/Materials/VKRTexture.h"
 namespace VKR
 {
 	namespace render
 	{
 		VKRenderable::VKRenderable()
 		{
-
 		}
 		void VKRenderable::Cleanup(VkDevice _LogicDevice)
 		{

@@ -146,7 +146,7 @@ namespace VKR
 					sprintf(path, "resources/models/%s/glTF/", ModelList[item_current_idx]);
 					char name[64];
 					sprintf(name, "%s.gltf", ModelList[item_current_idx]);
-					RM::_AddRequest(ASSIMP_MODEL, path, name);
+					RM::_AddRequest(STATIC_MODEL, path, name);
 				}
 
 				ImGui::DragFloat("zFar", &zFar);

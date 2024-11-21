@@ -13,15 +13,16 @@ namespace VKR
 		Texture::Texture(std::string _path)
 		{
 			if (_path.empty())
-				m_Path = std::string("resources/Textures/checkerW.png");
+				sprintf(m_Path, "resources/Textures/checkerW.png");
 			else
-				m_Path = _path;
+				sprintf(m_Path, "%s", _path.c_str());
 			stbi_uc* pixels = nullptr;
-			if (!m_Path.empty())
-				pixels = stbi_load(m_Path.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+			stbi_set_flip_vertically_on_load(true);
+			if (!m_Path[0] == '\0')
+				pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
-				printf("\rMissing Texture %s\n", m_Path.c_str());
+				printf("\rMissing Texture %s\n", m_Path);
 				stbi_uc* m_DefaultTexture;
 				m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
 				pixels = m_DefaultTexture;
@@ -54,10 +55,10 @@ namespace VKR
 		{
 			stbi_uc* pixels;
 
-			pixels = stbi_load(m_Path.c_str(), &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+			pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
-				printf("\rMissing Texture %s\n", m_Path.c_str());
+				printf("\rMissing Texture %s\n", m_Path);
 				stbi_uc* m_DefaultTexture;
 				m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
 				pixels = m_DefaultTexture;
