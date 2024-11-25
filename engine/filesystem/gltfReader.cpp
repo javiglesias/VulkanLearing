@@ -68,33 +68,39 @@ namespace VKR
 
 				for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
 				{
-					auto mesh = modelData->nodes[n].mesh;
+					cgltf_mesh* mesh = modelData->nodes[n].mesh;
 					auto camera = modelData->nodes[n].camera;
 					if(mesh)
 					{
-						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
-						tempMesh->m_ModelMatrix = glm::mat4(1.f);
-						//modelData->nodes[n].translation
+						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();						
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
 											modelData->nodes[n].translation[1],
 											modelData->nodes[n].translation[2]);
+						tempMesh->m_ModelMatrix = glm::mat4(
+							modelData->nodes[n].matrix[0], modelData->nodes[n].matrix[1], modelData->nodes[n].matrix[2], modelData->nodes[n].matrix[3],
+							modelData->nodes[n].matrix[4], modelData->nodes[n].matrix[5], modelData->nodes[n].matrix[6], modelData->nodes[n].matrix[7],
+							modelData->nodes[n].matrix[8], modelData->nodes[n].matrix[9], modelData->nodes[n].matrix[10], modelData->nodes[n].matrix[11],
+							modelData->nodes[n].matrix[12], modelData->nodes[n].matrix[13], modelData->nodes[n].matrix[14], modelData->nodes[n].matrix[15]
+							);
 						tempMesh->m_ModelMatrix = glm::translate(tempMesh->m_ModelMatrix, tempMesh->m_Pos);
-						//modelData->nodes[n].rotation
-						/*tempMesh->m_Rotation = glm::vec3(modelData->nodes[n].rotation[0],
+						
+						tempMesh->m_Rotation = glm::vec3(modelData->nodes[n].rotation[0],
 											modelData->nodes[n].rotation[1],
-											modelData->nodes[n].rotation[2]);*/
-						//modelData->nodes[n].scale
+											modelData->nodes[n].rotation[2]);
+						//tempMesh->m_ModelMatrix = glm::rotate<float>(tempMesh->m_ModelMatrix, modelData->nodes[n].rotation[3], tempMesh->m_Rotation);
 						tempMesh->m_Scale = glm::vec3(modelData->nodes[n].scale[0],
 											modelData->nodes[n].scale[1],
 											modelData->nodes[n].scale[2]);
-						tempMesh->m_ModelMatrix  = glm::scale(tempMesh->m_ModelMatrix, tempMesh->m_Scale);
+						tempMesh->m_ModelMatrix = glm::scale(tempMesh->m_ModelMatrix, tempMesh->m_Scale);
+
 						for(cgltf_size p = 0; p < mesh->primitives_count; p++)
 						{
 							printf("\tPrimitive %zd\n", p);
 							for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 							{
+#pragma region PBR_material
 								auto meshMaterial = mesh->primitives[p].material;
-								if(meshMaterial->pbr_metallic_roughness.base_color_factor != nullptr)
+								if(meshMaterial && meshMaterial->pbr_metallic_roughness.base_color_factor != nullptr)
 								{
 									tempMesh->metallic_roughness.base_color = glm::vec4(
 										meshMaterial->pbr_metallic_roughness.base_color_factor[0],
@@ -115,6 +121,7 @@ namespace VKR
 									}
 								}
 								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, meshMaterial));
+#pragma endregion
 								auto accessor = mesh->primitives[p].attributes[a].data;
 								Vertex3D tempVertex;
 								if(cgltf_attribute_type_position == mesh->primitives[p].attributes[a].type)

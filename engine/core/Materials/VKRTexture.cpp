@@ -1,5 +1,7 @@
 #include "VKRTexture.h"
 #include "../../video/VKRUtils.h"
+#include "../../perfmon/Custom.h"
+
 #include <string>
 #include <cmath>
 
@@ -16,19 +18,21 @@ namespace VKR
 				sprintf(m_Path, "resources/Textures/checkerW.png");
 			else
 				sprintf(m_Path, "%s", _path.c_str());
+			PERF_INIT("LOAD_TEXTURE")
 			stbi_uc* pixels = nullptr;
 			stbi_set_flip_vertically_on_load(true);
 			if (!m_Path[0] == '\0')
 				pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
-				printf("\rMissing Texture %s\n", m_Path);
+				//printf("\rMissing Texture %s\n", m_Path);
 				stbi_uc* m_DefaultTexture;
 				m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
 				pixels = m_DefaultTexture;
 				tWidth = m_DefualtWidth;
 				tHeight = m_DefualtHeight;
 			}
+			PERF_END("LOAD_TEXTURE")
 			m_Mipmaps = (uint8_t)std::log2(tWidth > tHeight ? tWidth : tHeight);
 			m_Size = tWidth * tHeight * 4;
 			m_Data = malloc((size_t)m_Size);

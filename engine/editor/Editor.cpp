@@ -254,11 +254,14 @@ namespace VKR
 					g_DirectionalLight->m_Center.z = center[2];					
 					ImGui::TreePop();
 				}
-				for (auto& light : g_Lights)
+				for (int i = 0; i < 3; i++)
 				{
-					ImGui::Selectable("light", &light->m_Editable);
-					if(light->m_Editable)
+					char name[64];
+					sprintf(name, "Point Light %d", i);
+					if (ImGui::TreeNode(name))
 					{
+						Point* light = g_PointLights[i];
+						ImGui::Selectable("light", &light->m_Editable);
 						float center[3];
 						center[0] = light->m_Pos.x;
 						center[1] = light->m_Pos.y;
@@ -267,6 +270,7 @@ namespace VKR
 						light->m_Pos.x = center[0];
 						light->m_Pos.y = center[1];
 						light->m_Pos.z = center[2];
+						ImGui::TreePop();
 					}
 				}
 				if (ImGui::Button("Delete"))

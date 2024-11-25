@@ -102,6 +102,10 @@ vec3 DirectionalLight(vec3 _color)
 	vec4 fraglight = libO[0].lightProj * vec4(shadowCoord);
 	float shadow = ShadowCalculation(fraglight, inShadowTexture);
 	
+	ambient *= att;
+	diffuse *= att;
+	specular *= att;
+	
 	return (ambient + (1.0 - shadow))* diffuse * _color;
 	// return (diffuse + ambientStrength + specular) * _color;
 

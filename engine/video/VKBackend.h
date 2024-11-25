@@ -80,6 +80,7 @@ namespace VKR
         inline int m_CurrentPendingModels = 0;
         inline std::vector<Light*> g_Lights;
         inline Directional* g_DirectionalLight;
+        inline Point* g_PointLights[4];
 
         class VKBackend
         {
@@ -127,9 +128,10 @@ namespace VKR
             // RENDER BUFFERS
             std::vector<VkBuffer> m_UniformBuffers;
             std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+            std::vector<void*> m_Uniform_SBuffersMapped;
+
             std::vector<VkBuffer> m_DynamicBuffers;
             std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
-            std::vector<void*> m_Uniform_SBuffersMapped;
             std::vector<void*> m_DynamicBuffersMapped;
 
             std::vector<VkBuffer> m_LightsBuffers;

@@ -530,8 +530,8 @@ namespace VKR
 			auto lightDynAlign = sizeof(LightBufferObject);
 			lightDynAlign = (lightDynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			checkBufferSize = MAX_MODELS * (4 * lightDynAlign);
-			VkDeviceSize lightsBufferSize = MAX_MODELS * (4 * sizeof(LightBufferObject));
+			checkBufferSize = (4 * lightDynAlign);
+			VkDeviceSize lightsBufferSize = (4 * sizeof(LightBufferObject));
 			if(lightsBufferSize != checkBufferSize )
 			#ifdef WIN32
 				__debugbreak();

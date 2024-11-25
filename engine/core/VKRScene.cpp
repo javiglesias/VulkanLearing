@@ -201,8 +201,9 @@ namespace VKR
 				m_LightsOs.push_back(temp);
 			}
 			//Point Ligts
-			for (auto& light : g_Lights)
+			for (int i = 0; i < 3; i++)
 			{
+				Point* light = g_PointLights[i];
 				glm::mat4 lightViewMat = glm::lookAt(light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
 				glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 				LightBufferObject temp;
@@ -210,41 +211,44 @@ namespace VKR
 				temp.addOpts = glm::vec4(light->m_Pos, 1.0);
 				temp.Opts.x = g_ShadowBias;
 				temp.Opts.y = g_ShadowBias;
+				temp.addOpts.x = light->m_Kc;
+				temp.addOpts.y = light->m_Kl;
+				temp.addOpts.z = light->m_Kq;
 				temp.View = lightViewMat;
 				temp.Proj = lightProjMat;
 				temp.Position = glm::vec4(light->m_Pos, 1.0);
 				temp.Color = glm::vec4(light->m_Color, 1.0);
 				m_LightsOs.push_back(temp);
 			}
-			uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);
-			uint32_t lightDynamicOffset1 = (count + 1) * static_cast<uint32_t>(lightDynAlign);
-			uint32_t lightDynamicOffset2 = (count + 2) * static_cast<uint32_t>(lightDynAlign);
-			uint32_t lightDynamicOffset3 = (count + 3) * static_cast<uint32_t>(lightDynAlign);
-			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 			// Render Pass
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
+				uint32_t lightDynamicOffset0 = (count + 0) * static_cast<uint32_t>(lightDynAlign);
+				uint32_t lightDynamicOffset1 = (count + 1) * static_cast<uint32_t>(lightDynAlign);
+				uint32_t lightDynamicOffset2 = (count + 2) * lightDynamicOffset1;
+				uint32_t lightDynamicOffset3 = (count + 3) * lightDynamicOffset1;
+				memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 				R_Model* model = m_StaticModels[i];
 				if (model->m_Hidden) continue;
-				DynamicBufferObject dynO{};
-				// Update Uniform buffers
-				dynO.model = model->m_ModelMatrix;
-				dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
-				dynO.modelOpts.y = g_MipLevel;
-				dynO.addOpts.x = (float)m_LightsOs.size();
-				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
-				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
-				VkDeviceSize offsets[] = { 0 };
-				std::vector<uint32_t> dynOffsets = {
-					dynamicOffset,
-					lightDynamicOffset0,
-					lightDynamicOffset1,
-					lightDynamicOffset2,
-					lightDynamicOffset3,
-				};
 				for (auto& mesh : model->m_Meshes)
 				{
+					DynamicBufferObject dynO{};
+					// Update Uniform buffers
+					dynO.model = mesh->m_ModelMatrix;
+					dynO.modelOpts.x = model->m_ProjectShadow; // project shadow
+					dynO.modelOpts.y = g_MipLevel;
+					dynO.addOpts.x = (float)m_LightsOs.size();
+					// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
+					memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+					VkDeviceSize offsets[] = { 0 };
+					std::vector<uint32_t> dynOffsets = {
+						dynamicOffset,
+						lightDynamicOffset0,
+						lightDynamicOffset1,
+						lightDynamicOffset2,
+						lightDynamicOffset3,
+					};
 					VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
 					vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_PipelineLayout, 0, 1,
 						&model->m_Materials[mesh->m_Material]->m_DescriptorSet[_CurrentFrame], 5, dynOffsets.data());
@@ -259,19 +263,19 @@ namespace VKR
 					{
 						vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Vertices.size()), 1, 0, 0);
 					}
+					// Flush to make changes visible to the host
+					VkMappedMemoryRange mappedMemoryRange{};
+					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+					mappedMemoryRange.memory = _backend->m_DynamicBuffersMemory[_CurrentFrame];
+					mappedMemoryRange.size = sizeof(dynO);
+					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+					VkMappedMemoryRange lightsMappedMemoryRange{};
+					lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+					lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
+					lightsMappedMemoryRange.size = m_LightsOs.size() * sizeof(LightBufferObject);
+					vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 				}
 				++count;
-				// Flush to make changes visible to the host
-				VkMappedMemoryRange mappedMemoryRange{};
-				mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-				mappedMemoryRange.memory = _backend->m_DynamicBuffersMemory[_CurrentFrame];
-				mappedMemoryRange.size = sizeof(dynO);
-				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
-				VkMappedMemoryRange lightsMappedMemoryRange{};
-				lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
-				lightsMappedMemoryRange.size = m_LightsOs.size() * sizeof(LightBufferObject);
-				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 			}
 #pragma endregion
 #pragma region DEBUG
@@ -543,6 +547,10 @@ namespace VKR
 		{
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 			g_DirectionalLight = new Directional();
+			g_PointLights[0] = new Point();
+			g_PointLights[1] = new Point();
+			g_PointLights[2] = new Point();
+			g_PointLights[3] = new Point();
 			PrepareDebugScene(_backend);
 			PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
