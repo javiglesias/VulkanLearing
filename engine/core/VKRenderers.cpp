@@ -330,11 +330,27 @@ namespace VKR
             textureShadowLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             textureShadowLayoutBinding.pImmutableSamplers = nullptr;
 
+			// estructura Light Uniforms
+			VkDescriptorSetLayoutBinding dynLightLayoutBinding{};
+			dynLightLayoutBinding.binding = 6;
+			dynLightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			dynLightLayoutBinding.descriptorCount = 1;
+			dynLightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			dynLightLayoutBinding.pImmutableSamplers = nullptr;
+
+			// estructura Light Uniforms
+			VkDescriptorSetLayoutBinding pointLightLayoutBinding{};
+			pointLightLayoutBinding.binding = 7;
+			pointLightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			pointLightLayoutBinding.descriptorCount = 1;
+			pointLightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			pointLightLayoutBinding.pImmutableSamplers = nullptr;
+
             // estructura Light Uniforms
             VkDescriptorSetLayoutBinding linOLayoutBinding{};
-            linOLayoutBinding.binding = 6;
+            linOLayoutBinding.binding = 8;
             linOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-            linOLayoutBinding.descriptorCount = 4;
+            linOLayoutBinding.descriptorCount = 2;
             linOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             linOLayoutBinding.pImmutableSamplers = nullptr;
             
@@ -378,13 +394,15 @@ namespace VKR
             textureNormalLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             textureNormalLayoutBinding.pImmutableSamplers = nullptr;
 #endif
-            std::array<VkDescriptorSetLayoutBinding, 12> ShaderBindings = {
+            std::array<VkDescriptorSetLayoutBinding, 14> ShaderBindings = {
                 uboLayoutBinding,
                 textureBaseColorLayoutBinding,
                 textureDiffuseLayoutBinding,
                 textureSpecularLayoutBinding,
                 textureShadowLayoutBinding,
                 dynOLayoutBinding,
+				dynLightLayoutBinding,
+				pointLightLayoutBinding,
                 linOLayoutBinding
 #if 1
             	,

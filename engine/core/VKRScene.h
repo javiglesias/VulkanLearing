@@ -24,12 +24,13 @@ namespace VKR
         public: // FUNCIONES
             Scene() {}
             void Init(VKBackend* _backend);
-            void Loop();
+            void Update();
             void ReloadShaders(VKBackend* _backend);
             void DrawScene(VKBackend* _backend, int _CurrentFrame);
             void PrepareCubemapScene(VKBackend* _backend);
+			void PrepareModel(VKBackend* _backend, R_Model* _model);
             void PrepareScene(VKBackend* _backend);
-            void PrepareDebugScene(VKBackend* _backend);
+            //void PrepareDebugScene(VKBackend* _backend);
             void ShadowPass(VKBackend* _backend, int _CurrentFrame);
             void GeometryPass(VKBackend* _backend, int _CurrentFrame);
             void LoadCubemapModel(const char* _filepath, const char* _modelName, glm::vec3 _position,
@@ -37,7 +38,7 @@ namespace VKR
             void Cleanup(VkDevice _LogicDevice);
         private:
             R_Cubemap* m_Cubemap;
-            std::vector<LightBufferObject> m_LightsOs;
+            
         private: // FUNCIONES
             void DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment);
         };

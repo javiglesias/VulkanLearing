@@ -21,6 +21,14 @@ namespace VKR
 	namespace render
 	{
 		extern std::string g_ConsoleMSG;
+
+		int ConsoleInputTextCallback(ImGuiInputTextCallbackData* data)
+		{
+			g_commandLineHistory = new char[data->BufSize];
+			g_commandLineHistory = data->Buf;
+			return 0;
+		}
+
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
 		{
 			auto renderContext = VKR::render::GetVKContext();
@@ -100,6 +108,15 @@ namespace VKR
 			ImGui_ImplVulkan_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
+			ImGui::Begin("console");
+			{
+				ImGui::Text("%s", g_commandLineHistory);
+				g_commandLine = new char[128];
+				memset(g_commandLine, '/0', 128);
+				ImGui::InputText("ConsoleInput", g_commandLine, 128, 0, ConsoleInputTextCallback);
+				ImGui::End();
+			}
+
 #if 1
 			ImGui::Begin("Tools");
 			{
@@ -214,13 +231,14 @@ namespace VKR
 			}
 			ImGui::Begin("Lights");
 			{
+#if 0
 				if (ImGui::Button("Create Point Light"))
 				{
 					// TO-DO: Max 4 Lights rait nao.
 					if(g_Lights.size() < 4)
 					{
 						g_Lights.push_back(new Light());
-						_mainScene->PrepareDebugScene(_backend);
+						//_mainScene->PrepareDebugScene(_backend);
 					}
 				}
 
@@ -228,6 +246,7 @@ namespace VKR
 				{
 
 				}
+#endif
 				// Directional Light opts
 				if (ImGui::TreeNode("Directional Light settings"))
 				{
@@ -239,8 +258,8 @@ namespace VKR
 					g_DirectionalLight->m_Pos.x = position[0];
 					g_DirectionalLight->m_Pos.y = position[1];
 					g_DirectionalLight->m_Pos.z = position[2];
-					g_DirectionalLight->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(position[0], position[1], position[2]));
-					g_DirectionalLight->m_ModelMatrix = glm::scale(g_DirectionalLight->m_ModelMatrix, glm::vec3(g_DirectionalLight->m_DebugScale));
+					g_DirectionalLight->m_LightVisual->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(position[0], position[1], position[2]));
+					g_DirectionalLight->m_LightVisual->m_ModelMatrix = glm::scale(g_DirectionalLight->m_LightVisual->m_ModelMatrix, glm::vec3(g_DirectionalLight->m_DebugScale));
 					ImGui::DragFloat("Right size", &g_DirectionalLight->m_Right);
 					ImGui::DragFloat("Up size", &g_DirectionalLight->m_Up);
 					ImGui::DragFloat("Depth size", &g_DirectionalLight->m_Depth);
@@ -277,14 +296,6 @@ namespace VKR
 				{
 					g_Lights.pop_back();
 				}
-				ImGui::End();
-			}
-
-			ImGui::Begin("DEBUG PANEL");
-			{
-				ImGui::Text("%s", g_ConsoleMSG.c_str());
-				bool isOpen = true;
-				//ImGui::ShowDemoWindow(&isOpen);
 				ImGui::End();
 			}
 #endif

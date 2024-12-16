@@ -7,7 +7,7 @@ layout(set=0, binding=0) uniform UniformBufferObject
     vec3 viewerPosition;
 } ubo;
 
-layout(set=0, binding=4) uniform DynamicBufferObject
+layout(set=0, binding=2) uniform DynamicBufferObject
 {
     mat4 model;
     vec4 modelOpts; // 0: depth, 1:MipLevel, 2: specular, 3: normals

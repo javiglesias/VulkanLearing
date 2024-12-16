@@ -26,8 +26,8 @@ namespace VKR
         inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
         inline const int FRAMES_IN_FLIGHT = 2;
-        inline const int m_Width = 1600;
-        inline const int m_Height = 900;
+        inline const int m_Width = 800;
+        inline const int m_Height = 600;
         inline bool m_NeedToRecreateSwapchain = false;
         inline bool m_MouseCaptured = false;
         inline bool m_CloseEngine = false;
@@ -54,7 +54,8 @@ namespace VKR
         inline long long g_CurrentFrame = 0;
         inline double g_DeltaTime;
         inline double g_ElapsedTime;
-		
+		inline char* g_commandLine;
+		inline char* g_commandLineHistory;
 
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;

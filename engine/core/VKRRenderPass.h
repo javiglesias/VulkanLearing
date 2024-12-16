@@ -17,6 +17,7 @@ namespace VKR
             void CreateDepthOnlySubPass();
             void CreatePass(VkDevice _LogicDevice);
             void Cleanup(VkDevice _LogicDevice);
+			VkRenderPass* GetPass() { return &m_Pass; }
         public:
             VkRenderPass m_Pass;
         private:

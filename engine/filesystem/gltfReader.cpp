@@ -35,35 +35,33 @@ namespace VKR
 						if (tempModel_->m_Materials[materialID] == nullptr)
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
+							tempModel_->m_Materials[materialID]->material.pipeline._buildPipeline();
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
-							tempModel_->m_Materials[materialID]->m_TextureBaseColor = new render::Texture();
-							tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
-							tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
-							tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
+							for(int t= 0; t < 8; t++)
+							{
+								tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
+							}
 							if(material.normal_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.normal_texture.texture->image->uri);
-								sprintf(tempModel_->m_Materials[materialID]->m_TextureDiffuse->m_Path, "%s%s",  _filepath, pathTexture.c_str());
+								sprintf(tempModel_->m_Materials[materialID]->textures[2]->m_Path, "%s%s", _filepath, pathTexture.c_str());
 							}
 							if(material.specular.specular_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
-								sprintf(tempModel_->m_Materials[materialID]->m_TextureSpecular->m_Path, "%s%s", _filepath, pathTexture.c_str());
+								sprintf(tempModel_->m_Materials[materialID]->textures[3]->m_Path, "%s%s", _filepath, pathTexture.c_str());
 							}
 
 						}
-						tempModel_->m_Materials[materialID]->m_TextureEmissive = new render::Texture();
-						tempModel_->m_Materials[materialID]->m_TextureOcclusion = new render::Texture();
-						tempModel_->m_Materials[materialID]->m_TextureNormal = new render::Texture();
-						tempModel_->m_Materials[materialID]->m_TextureShadowMap = new render::Texture();
 					}
 				}
 				else
 				{
 					tempModel_->m_Materials[materialID] = new render::R_Material();
-					tempModel_->m_Materials[materialID]->m_TextureSpecular = new render::Texture();
-					tempModel_->m_Materials[materialID]->m_TextureDiffuse = new render::Texture();
-					tempModel_->m_Materials[materialID]->m_TextureAmbient = new render::Texture();
+					for (int t = 0; t < 8; t++)
+					{
+						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
+					}
 				}
 
 				for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
@@ -235,24 +233,26 @@ namespace VKR
 #endif
 			return modelData;
 		}
-		cgltf_data* read_glTF_DBG(const char* _filepath, const char* _modelName, render::R_DbgModel* tempModel_)
+#if 0
+		cgltf_data* read_glTF_DBG(const char* _filepath, const char* _modelName, render::R_Model* tempModel_)
 		{
-			render::R_Model* _model = new render::R_Model();
-			auto result =  read_glTF(_filepath, _modelName, _model);
+			auto result =  read_glTF(_filepath, _modelName, tempModel_);
 			// TODO cast R_Model to R_DbgModel
 			//tempModel_->m_Rotation = _model->m_RotAngle;
 			tempModel_->m_ModelMatrix = glm::mat4(1.f);
 			//tempModel_->m_Pos = _model->m_Pos;
-			tempModel_->m_Material = new render::R_DbgMaterial();
-			tempModel_->m_Material->m_Texture = new render::Texture(_model->m_Materials[0]->m_TextureAmbient->m_Path);
+			//tempModel_->m_Material = new render::R_Material();
+			//tempModel_->m_Material->m_Texture = new render::Texture(_model->m_Materials[0]->m_TextureAmbient->m_Path);
 			for (auto& mesh : _model->m_Meshes) 
 			{
 				for (auto& vertex : mesh->m_Vertices) 
 				{
 					tempModel_->m_Vertices.push_back({vertex.m_Pos,{0.4f, 0.f, 1.f}});
 				}
+				tempModel_->m_Indices.insert(tempModel_->m_Indices.end(), mesh->m_Indices.begin(), mesh->m_Indices.end());
 			}
 			return result;
 		}
+#endif
 	}
 }

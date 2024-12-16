@@ -1,5 +1,6 @@
 #include "VKBackend.h"
 #include "../filesystem/ResourceManager.h"
+#include "../filesystem/gltfReader.h"
 
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
@@ -97,7 +98,10 @@ namespace VKR
 			}
 			if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
 			{
-				RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
+				//RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
+				auto tempModel = new render::R_Model();
+				auto data = filesystem::read_glTF("resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf", tempModel);
+				render::m_SceneDirty = true;
 			}
 
 			if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
@@ -334,14 +338,13 @@ namespace VKR
 			CreateImageViews();
 
 			m_CubemapRender = new CubemapRenderer(g_context.m_LogicDevice);
-			m_GraphicsRender = new GraphicsRenderer(g_context.m_LogicDevice);
 			m_ShadowRender = new ShadowRenderer(g_context.m_LogicDevice);
 			m_ShadowMat = new R_ShadowMaterial();
 			m_DbgRender = new DebugRenderer(g_context.m_LogicDevice);
 			m_GridRender = new ShaderRenderer(g_context.m_LogicDevice);
 			// primero creamos el layout de los descriptors
 			m_CubemapRender->CreateDescriptorSetLayout();
-			m_GraphicsRender->CreateDescriptorSetLayout();
+
 			m_ShadowRender->CreateDescriptorSetLayout();
 			m_DbgRender->CreateDescriptorSetLayout();
 			m_GridRender->CreateDescriptorSetLayout();
@@ -350,18 +353,18 @@ namespace VKR
 			m_ShadowMat->CreateDescriptorSet(g_context.m_LogicDevice, m_ShadowRender->m_DescSetLayout);
 
 			// Inicializar Renderer
-			m_GraphicsRender->Initialize();
+			//m_GraphicsRender->Initialize();
 			// Setup de la PipelineLayout
-			m_GraphicsRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			//m_GraphicsRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			// CreamosLaPipelileLayout
-			m_GraphicsRender->CreatePipelineLayout();
+			//m_GraphicsRender->CreatePipelineLayout();
 			// Crear Renderpass
 			g_context.CreateRenderPass(&m_SwapChainCreateInfo);
 			g_context.CreateGeometryPass(&m_SwapChainCreateInfo);
 			// Crear Pipeline
-			m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			//m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
 			// Limpiar ShaderModules
-			m_GraphicsRender->CleanShaderModules();
+			//m_GraphicsRender->CleanShaderModules();
 
 			// Lo mismo para el renderer de Debug
 			m_DbgRender->Initialize();

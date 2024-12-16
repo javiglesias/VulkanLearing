@@ -79,25 +79,12 @@ namespace VKR
 				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
-					GenerateTextureMesh(_filepath, aiTextureType_BASE_COLOR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureBaseColor);
-					GenerateTextureMesh(_filepath, aiTextureType_DIFFUSE_ROUGHNESS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse);
-					GenerateTextureMesh(_filepath, aiTextureType_SPECULAR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureSpecular);
-					GenerateTextureMesh(_filepath, aiTextureType_AMBIENT, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureAmbient);
-					GenerateTextureMesh(_filepath, aiTextureType_NORMALS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureNormal);
-					/*GenerateTextureMesh(_filepath, aiTextureType_METALNESS, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureMetallicRoughness);*/
-					GenerateTextureMesh(_filepath, aiTextureType_AMBIENT_OCCLUSION, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureOcclusion);
-					GenerateTextureMesh(_filepath, aiTextureType_EMISSION_COLOR, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureEmissive);
-					/*GenerateTextureMesh(_filepath, aiTextureType_LIGHTMAP, texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-						&tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureDiffuse);*/
-					tempModel->m_Materials[mesh->mMaterialIndex]->m_TextureShadowMap = new render::Texture();
+					for (int t = 0; t < 8; t++)
+					{
+						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]), 
+							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
+					}
 				}
 
 				tempMesh->m_Material = mesh->mMaterialIndex;
