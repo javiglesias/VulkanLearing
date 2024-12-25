@@ -1,6 +1,5 @@
 #include "ResourceManager.h"
 #include "gltfReader.h"
-#include "../core/Objects/VKRModel.h"
 #include "../core/Materials/VKRTexture.h"
 #include "../video/VKBackend.h"
 
@@ -79,6 +78,7 @@ namespace VKR
 				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
+					tempModel->m_Materials[mesh->mMaterialIndex]->material.pipeline._buildPipeline();
 					for (int t = 0; t < 8; t++)
 					{
 						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]), 
@@ -96,21 +96,18 @@ namespace VKR
 		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
 		{
 			aiString path;
-			// TODO Con esta textura pueden producirse artefactos al hacer calculos, sustituir por la baseColor
-			auto textureDefault = std::string("resources/Textures/defaultMissing.png");
 			auto diff = _material->GetTexture(_type, _texIndex, &path);
 			if (diff == aiReturn_SUCCESS)
 			{
 				auto texture = std::string(_filepath);
 				texture += path.data;
 				*outTex_ = new render::Texture(texture);
-				textureDefault = std::string(texture);
 			}
 			else
-				*outTex_ = new render::Texture();
+				*outTex_ = new render::Texture("");
 		}
 
-		void LoadModel(const char* _filepath, const char* _modelName)
+		void LoadModel(const char* _filepath, const char* _modelName, render::R_Model* model_)
 		{
 			//PERF_INIT()
 			char filename[128];
@@ -119,26 +116,28 @@ namespace VKR
 			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
 			if (!scene || !scene->HasMeshes())
 				exit(-225);
-			tempModel = new render::R_Model();
+			if (model_ == nullptr)
+				tempModel = new render::R_Model();
+			else
+				tempModel = model_;
 			//Process Node
 			auto node = scene->mRootNode;
 			ProcessModelNode(node, scene, _filepath);
-			// Insert new static model
-			sprintf(tempModel->m_Path, _filepath, 64);
-			/*tempModel->m_Pos = _position;
-			tempModel->m_Scale = _scale;*/
-			//PERF_END("LOAD MODEL")
-			render::m_PendingBuffersModels[render::m_CurrentPendingModels] = tempModel;
-			render::m_CurrentPendingModels++;
+			sprintf(tempModel->m_Path, "%s%s", _filepath, _modelName);
 		}
 
 
-		void _AddRequest(TYPE _type, const char* _filepath, const char* _resourceName)
+		void _AddRequest(TYPE _type, const char* _filepath, const char* _resourceName, render::R_Model* model_)
 		{
-			_RMRequests[_NumRequests].type = _type;
-			strcpy(_RMRequests[_NumRequests].filepath, _filepath);
-			strcpy(_RMRequests[_NumRequests].resourceName, _resourceName);
-			_NumRequests++;
+			if(model_ != nullptr)
+				LoadModel(_filepath, _resourceName, model_);
+			else
+			{
+				_RMRequests[_NumRequests].type = _type;
+				strcpy(_RMRequests[_NumRequests].filepath, _filepath);
+				strcpy(_RMRequests[_NumRequests].resourceName, _resourceName);
+				_NumRequests++;
+			}
 		}
 
 		void _Init()
@@ -162,7 +161,7 @@ namespace VKR
 						}
 						case ASSIMP_MODEL:
 						{
-							LoadModel(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName);
+							LoadModel(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName, static_cast<render::R_Model*>(_RMRequests[_NumRequests-1].modelPtr));
 							render::m_SceneDirty = true;
 							_NumRequests--;
 							break;

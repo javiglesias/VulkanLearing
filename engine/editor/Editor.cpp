@@ -139,39 +139,39 @@ namespace VKR
 					_mainScene->ReloadShaders(_backend);
 				}
 
-				 static ImGuiComboFlags flags = 0;
-				 static int item_current_idx = 0;
-				  const char* combo_preview_value = ModelList[item_current_idx];
-				if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
-				{
-					for (int n = 1; n < MODELS_SIZE; n++)
-					{
-						const bool is_selected = (item_current_idx == n);
-						if (ImGui::Selectable(ModelList[n], is_selected))
-							item_current_idx = n;
+				// static ImGuiComboFlags flags = 0;
+				// static int item_current_idx = 0;
+				//  const char* combo_preview_value = ModelList[item_current_idx];
+				//if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
+				//{
+				//	for (int n = 1; n < MODELS_SIZE; n++)
+				//	{
+				//		const bool is_selected = (item_current_idx == n);
+				//		if (ImGui::Selectable(ModelList[n], is_selected))
+				//			item_current_idx = n;
 
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndCombo();
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Load"))
+				//		// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				//		if (is_selected)
+				//			ImGui::SetItemDefaultFocus();
+				//	}
+				//	ImGui::EndCombo();
+				//}
+				//ImGui::SameLine();
+				/*if (ImGui::Button("Load"))
 				{
 					char path[128];
 					sprintf(path, "resources/models/%s/glTF/", ModelList[item_current_idx]);
 					char name[64];
 					sprintf(name, "%s.gltf", ModelList[item_current_idx]);
 					RM::_AddRequest(STATIC_MODEL, path, name);
-				}
+				}*/
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
 				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
 				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
 				ImGui::SliderFloat("Mip level", &g_MipLevel, 0.f, 12.f, "%1.f");
-				ImGui::DragFloat("Debug scale", &g_debugScale);
+				//ImGui::DragFloat("Debug scale", &g_debugScale);
 				ImGui::End();
 			}
 			ImGui::Begin("Debug");
@@ -258,8 +258,6 @@ namespace VKR
 					g_DirectionalLight->m_Pos.x = position[0];
 					g_DirectionalLight->m_Pos.y = position[1];
 					g_DirectionalLight->m_Pos.z = position[2];
-					g_DirectionalLight->m_LightVisual->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(position[0], position[1], position[2]));
-					g_DirectionalLight->m_LightVisual->m_ModelMatrix = glm::scale(g_DirectionalLight->m_LightVisual->m_ModelMatrix, glm::vec3(g_DirectionalLight->m_DebugScale));
 					ImGui::DragFloat("Right size", &g_DirectionalLight->m_Right);
 					ImGui::DragFloat("Up size", &g_DirectionalLight->m_Up);
 					ImGui::DragFloat("Depth size", &g_DirectionalLight->m_Depth);

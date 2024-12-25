@@ -9,6 +9,11 @@ include_directories(${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glm-0.9.9.0/glm)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/assimp/include)
+
+file(GLOB SOURCES
+	engine/*.cpp
+	engine/*.h)
+	
 add_executable(VKRenderer engine/main.cpp
         engine/core/VKRenderers.cpp
         engine/core/VKRenderers.h
@@ -83,3 +88,4 @@ target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glsl
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/libSPVRemapper.a)
 endif (UNIX)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_COMPILER clang++)

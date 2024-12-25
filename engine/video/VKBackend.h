@@ -14,8 +14,10 @@ namespace VKR
 {
     namespace render
     {
-		#define MAX_MODELS 256
-		#define MAX_MESHES 1024
+#define MAX_MODELS 256
+#define MAX_MESHES 1024
+#define WIN_HEIGHT 720
+#define WIN_WIDTH 1280
         enum G_PIPELINE_STATUS
         {
 	        INVALID,
@@ -26,8 +28,8 @@ namespace VKR
         inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
         inline const int FRAMES_IN_FLIGHT = 2;
-        inline const int m_Width = 800;
-        inline const int m_Height = 600;
+        inline const int m_Width = WIN_WIDTH;
+        inline const int m_Height = WIN_HEIGHT;
         inline bool m_NeedToRecreateSwapchain = false;
         inline bool m_MouseCaptured = false;
         inline bool m_CloseEngine = false;
@@ -35,7 +37,7 @@ namespace VKR
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
-        inline bool g_DrawCubemap = false;
+        inline bool g_DrawCubemap = true;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline double m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
@@ -67,7 +69,7 @@ namespace VKR
         inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
         inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
         inline glm::vec3 m_Rotation = glm::vec3(0.f, 1.f, 1.f);
-		inline GraphicsRenderer* m_GraphicsRender;
+		//inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
 		inline ShaderRenderer* m_GridRender;
         inline DebugRenderer* m_DbgRender;
@@ -208,7 +210,7 @@ namespace VKR
             void CreateSwapChain();
             void RecreateSwapChain();
             void CreateShadowFramebuffer();
-            void CreateFramebuffers(Renderer* _renderer);
+            void CreateFramebuffers();
             void CreateCommandBuffer();
             void CreateSyncObjects(unsigned _frameIdx);
             void CreateImageViews();

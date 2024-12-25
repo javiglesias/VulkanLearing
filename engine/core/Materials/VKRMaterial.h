@@ -30,12 +30,15 @@ namespace VKR
 			VkPipelineLayout layout;
 			VkDescriptorSetLayout descriptorSetLayout;
 			void _buildPipeline();
+			void Cleanup(VkDevice _LogicDevice);
 		};
 
 		struct MaterialInstance
 		{
 			sMaterialPipeline pipeline;
 			std::vector<VkDescriptorSet> materialSets;
+			VkDescriptorPool descriptorPool = nullptr;
+			void Cleanup(VkDevice _LogicDevice);
 		};
 
 		struct R_Material
@@ -43,16 +46,7 @@ namespace VKR
 			VkShaderModule m_VertShaderModule;
 			VkShaderModule m_FragShaderModule;
 			MaterialInstance material;
-			enum STATE : uint16_t
-			{
-				UNDEFINED,
-				CREATED,
-				INICIALITEZ,
-				READY,
-				DESTROYED
-			};
 
-			STATE m_Status = UNDEFINED;
 			char _vertPath[64];
 			char _fragPath[64];
 			Texture* textures[8];

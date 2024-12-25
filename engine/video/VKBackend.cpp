@@ -92,22 +92,22 @@ namespace VKR
 				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y + m_CameraSpeed, m_CameraPos.z);
 			}
 
-			if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
-			{
-				RM::_AddRequest(ASSIMP_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
-			}
-			if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
-			{
-				//RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
-				auto tempModel = new render::R_Model();
-				auto data = filesystem::read_glTF("resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf", tempModel);
-				render::m_SceneDirty = true;
-			}
+			//if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
+			//{
+			//	RM::_AddRequest(ASSIMP_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
+			//}
+			//if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
+			//{
+			//	//RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
+			//	auto tempModel = new render::R_Model();
+			//	auto data = filesystem::read_glTF("resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf", tempModel);
+			//	render::m_SceneDirty = true;
+			//}
 
-			if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
-			{
-				RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
-			}
+			//if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
+			//{
+			//	RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
+			//}
 
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
 			{
@@ -403,7 +403,7 @@ namespace VKR
 			CreateShadowFramebuffer();
 			// Creamos los recursos para el Depth testing
 			CreateDepthTestingResources();
-			CreateFramebuffers(m_DbgRender);
+			CreateFramebuffers();
 			// Uniform buffers
 			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -436,9 +436,9 @@ namespace VKR
 
 			// Grid buffers
 			// Uniform buffers
-			m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			/*m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);*/
 
 			GenerateBuffers();
 			GenerateDBGBuffers();
@@ -597,21 +597,21 @@ namespace VKR
 			// Shadow DescriptorSet
 			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 			
-			// GRID UNIFORM BUFFERS
-			m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			bufferSize = sizeof(DebugUniformBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_GridUniformBuffers[i], m_GridUniformBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], 0,
-					bufferSize, 0, &m_GridUniformBuffersMapped[i]);
-			}
+			//// GRID UNIFORM BUFFERS
+			//m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
+			//m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			//m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+			//bufferSize = sizeof(DebugUniformBufferObject);
+			//for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			//{
+			//	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			//		VK_SHARING_MODE_CONCURRENT,
+			//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			//		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			//		m_GridUniformBuffers[i], m_GridUniformBuffersMemory[i]);
+			//	vkMapMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], 0,
+			//		bufferSize, 0, &m_GridUniformBuffersMapped[i]);
+			//}
 		}
 
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
@@ -665,7 +665,8 @@ namespace VKR
 			glfwGetFramebufferSize(m_Window, &width, &height);
 			while (width == 0 || height == 0) 
 			{
-				glfwGetFramebufferSize(m_Window, &width, &height);
+				width = WIN_WIDTH;
+				height = WIN_HEIGHT;
 				glfwWaitEvents();
 			}
 			printf("\n\tRe-create Swapchain\n");
@@ -679,7 +680,7 @@ namespace VKR
 			CreateImageViews();
 			// CreateTextureImageView();
 			// CreateTextureSampler();
-			CreateFramebuffers(m_GraphicsRender);
+			CreateFramebuffers();
 			m_NeedToRecreateSwapchain = false;
 		}
 
@@ -698,7 +699,7 @@ namespace VKR
 				exit(-10);
 		}
 
-		void VKBackend::CreateFramebuffers(Renderer* _renderer)
+		void VKBackend::CreateFramebuffers()
 		{
 			// FRAMEBUFFERS
 			m_SwapChainFramebuffers.resize(m_SwapChainImagesViews.size());
@@ -909,7 +910,7 @@ namespace VKR
 			glslang::FinalizeProcess();
 			#endif
 			vkDestroyFramebuffer(g_context.m_LogicDevice, m_ShadowFramebuffer, nullptr);
-			delete m_GraphicsRender;
+			//delete m_GraphicsRender;
 			delete m_DbgRender;
 			delete m_ShadowRender;
 			delete m_CubemapRender;
@@ -944,8 +945,8 @@ namespace VKR
 				vkDestroyBuffer(g_context.m_LogicDevice, m_CubemapDynamicBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(g_context.m_LogicDevice, m_GridUniformBuffers[i], nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], nullptr);
+				/*vkDestroyBuffer(g_context.m_LogicDevice, m_GridUniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], nullptr);*/
 			}
 			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
 			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);

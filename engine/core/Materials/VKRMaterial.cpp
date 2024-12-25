@@ -24,7 +24,7 @@ namespace VKR
 			};
 			VkViewport* viewport = new VkViewport();
 			VkRect2D* scissor = new VkRect2D();
-			VkRenderPass renderPass = GetVKContext().m_RenderPass->m_Pass;
+			
 			VkPipelineRasterizationStateCreateInfo rasterizer{};
 			VkPipelineMultisampleStateCreateInfo multisampling{};
 			VkPipelineDepthStencilStateCreateInfo depthStencil{};
@@ -105,8 +105,8 @@ namespace VKR
 			/// Definimos el Viewport de la app
 			viewport->x = 0.f;
 			viewport->y = 0.f;
-			viewport->width = 800.f;
-			viewport->height = 600.f;
+			viewport->width = WIN_WIDTH;
+			viewport->height = WIN_HEIGHT;
 			viewport->minDepth = 0.0f;
 			viewport->maxDepth = 1.0f;
 			/// definamos el Scissor Rect de la app
@@ -157,7 +157,7 @@ namespace VKR
 			uboLayoutBinding.descriptorCount = 1;
 			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 			uboLayoutBinding.pImmutableSamplers = nullptr;
-			// Textura BaseColor
+			// Texturas
 			VkDescriptorSetLayoutBinding texturesLayoutBinding{};
 			texturesLayoutBinding.binding = 1;
 			texturesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -241,6 +241,8 @@ namespace VKR
 			if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &pipelineInfoCreateInfo,
 				nullptr, &pipeline) != VK_SUCCESS)
 				__debugbreak();
+			vkDestroyShaderModule(m_LogicDevice, vertShaderModule, nullptr);
+			vkDestroyShaderModule(m_LogicDevice, fragShaderModule, nullptr);
 		}
 
 		void R_Material::PrepareMaterialToDraw(VKBackend* _backend)
@@ -271,40 +273,39 @@ namespace VKR
 		
 		void R_Material::CreateDescriptor(VkDevice _LogicDevice)
 		{
-			VkDescriptorPool descriptorPool = nullptr;
 			VkDescriptorSetLayout descriptorLayouts[2];
-			std::array<VkDescriptorPoolSize, 14> descPoolSize{};
+			std::array<VkDescriptorPoolSize, 4> descPoolSize{};
 			// UBO
 			descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 			// Textura BaseColor
-			for (int i = 0; i < 8; i++)
-			{
-				descPoolSize[1 + i].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				descPoolSize[1 + i].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-			}
+			/*for (int i = 0; i < 8; i++)
+			{*/
+				descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			//}
 
 			// Model Matrix
-			descPoolSize[9].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			descPoolSize[9].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-			for (int i = 0; i < 4; i ++)
-			{
-				descPoolSize[10 + i].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descPoolSize[10 + i].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-			}
+			descPoolSize[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			descPoolSize[2].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			/*for (int i = 0; i < 4; i ++)
+			{*/
+				descPoolSize[3].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				descPoolSize[3].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			//}
 
 			VkDescriptorPoolCreateInfo descPoolInfo{};
 			descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
 			descPoolInfo.pPoolSizes = descPoolSize.data();
 			descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
-			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &material.descriptorPool) != VK_SUCCESS)
 				exit(-66);
 			descriptorLayouts[0] = material.pipeline.descriptorSetLayout;
 			descriptorLayouts[1] = material.pipeline.descriptorSetLayout;
 			VkDescriptorSetAllocateInfo descAllocInfo{};
 			descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descAllocInfo.descriptorPool = descriptorPool;
+			descAllocInfo.descriptorPool = material.descriptorPool;
 			descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
 			descAllocInfo.pSetLayouts = descriptorLayouts;
 			material.materialSets.resize(FRAMES_IN_FLIGHT);
@@ -334,15 +335,15 @@ namespace VKR
 				descriptorsWrite[0].pImageInfo = nullptr;
 				descriptorsWrite[0].pTexelBufferView = nullptr;
 				// Texturas
+				VkDescriptorImageInfo Textureimage[8] {};
 				for (int t = 0; t < 8; t++ )
 				{
 					// BaseColor
-					VkDescriptorImageInfo Textureimage{};
-					Textureimage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					Textureimage.imageView = textures[t]->tImageView;
+					Textureimage[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					Textureimage[t].imageView = textures[t]->tImageView;
 					if (textures[t]->m_Sampler != nullptr)
 					{
-						Textureimage.sampler = textures[t]->m_Sampler;
+						Textureimage[t].sampler = textures[t]->m_Sampler;
 					}
 					else
 					{
@@ -355,7 +356,7 @@ namespace VKR
 					descriptorsWrite[1 + t].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					descriptorsWrite[1 + t].descriptorCount = 1;
 					descriptorsWrite[1 + t].pBufferInfo = nullptr;
-					descriptorsWrite[1 + t].pImageInfo = &Textureimage;
+					descriptorsWrite[1 + t].pImageInfo = &Textureimage[t];
 					descriptorsWrite[1 + t].pTexelBufferView = nullptr;
 				}
 				// Dynamic
@@ -428,6 +429,7 @@ namespace VKR
 
 		void R_Material::Cleanup(VkDevice _LogicDevice)
 		{
+			material.Cleanup(_LogicDevice);
 			// Delete Material things
 			textures[0]->CleanTextureData(_LogicDevice);
 			textures[0] = nullptr;
@@ -437,14 +439,27 @@ namespace VKR
 			textures[2] = nullptr;
 			textures[3]->CleanTextureData(_LogicDevice);
 			textures[3] = nullptr;
+			textures[4]->CleanTextureData(_LogicDevice);
+			textures[4] = nullptr;
 			textures[5]->CleanTextureData(_LogicDevice);
 			textures[5] = nullptr;
 			textures[6]->CleanTextureData(_LogicDevice);
 			textures[6] = nullptr;
-			/*textures[7]->CleanTextureData(_LogicDevice);
-			textures[7] = nullptr;*/
-			textures[4]->CleanTextureData(_LogicDevice);
-			textures[4] = nullptr;
+			textures[7]->CleanTextureData(_LogicDevice);
+			textures[7] = nullptr;
+		}
+
+		void MaterialInstance::Cleanup(VkDevice _LogicDevice)
+		{
+			vkDestroyDescriptorPool(_LogicDevice, descriptorPool, nullptr);
+			pipeline.Cleanup(_LogicDevice);
+		}
+
+		void sMaterialPipeline::Cleanup(VkDevice _LogicDevice)
+		{
+			vkDestroyDescriptorSetLayout(_LogicDevice, descriptorSetLayout, nullptr);
+			vkDestroyPipelineLayout(_LogicDevice, layout, nullptr);
+			vkDestroyPipeline(_LogicDevice, pipeline, nullptr);
 		}
 	}
 }

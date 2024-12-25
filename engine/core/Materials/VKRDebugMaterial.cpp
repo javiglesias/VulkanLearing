@@ -2,6 +2,7 @@
 #include "VKRTexture.h"
 #include "../../video/Types.h"
 #include "../../video/VKBufferObjects.h"
+#include "../../video/VKBackend.h"
 #include <glm/fwd.hpp>
 
 

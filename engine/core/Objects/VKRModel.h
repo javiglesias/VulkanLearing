@@ -9,22 +9,13 @@ namespace VKR
 {
 	namespace render
 	{
-		enum PRIMITIVE : uint8_t
-		{
-			SPHERE,
-			ARROW,
-			QUAD,
-			TERRAIN,
-			CUBE
-		};
 		struct R_Model //Render Model
 		{// lo necesario para poder renderizar un Modelo
-		public:
 			R_Model();
+			~R_Model();
 			void Draw(VKBackend* _backend, int _CurrentFrame, int _countModel = 0);
 			void Update();
 			R_Model(const char* _filepath, const char* _modelName);
-		public:
 			
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 			std::vector<VKRenderable*> m_Meshes;

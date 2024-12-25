@@ -1,6 +1,7 @@
 ﻿#include "perfmon/Custom.h"
 #include "core/VKRScene.h"
 #include "filesystem/ResourceManager.h"
+#include "memory/mem_alloc.h"
 
 std::thread* RMThread;
 void _init_resource_manager()
@@ -16,6 +17,7 @@ int main(int _argc, char** _args)
 	double currentFrame = 0.f;
 	double nextFrame = 0.f;
 	double deltaTime = 0.f;
+	auto p = NEW(float);
 	RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
 	mainScene.Init(&backend);
@@ -41,6 +43,7 @@ int main(int _argc, char** _args)
 	mainScene.Cleanup(renderContext.m_LogicDevice);
 	backend.Cleanup();
 	backend.Shutdown();
+	m_endMem();
 	return 0;
 }
 

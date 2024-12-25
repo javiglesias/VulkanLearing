@@ -192,7 +192,6 @@ namespace VKR
 				++count;
 			}
 #pragma endregion
-			g_DirectionalLight->m_LightVisual->Draw(_backend, _CurrentFrame);
 #pragma region DEBUG
 			//Debug
 			DebugUniformBufferObject dubo{};
@@ -328,9 +327,9 @@ namespace VKR
 					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
 			}*/
 			PERF_INIT("PREPARE_DRAW_SCENE")
-			for (int i = 0; i < m_CurrentPendingModels; i++)
+			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
-				R_Model* model = m_PendingBuffersModels[i];
+				R_Model* model = m_StaticModels[i];
 				for (auto& mesh : model->m_Meshes)
 				{
 					PERF_INIT("PREPARE_MESH")
@@ -411,12 +410,8 @@ namespace VKR
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
 					PERF_END("UPDATE_DESCRIPTORS")
 				}
-				m_StaticModels[m_CurrentStaticModels] = model;
-				m_CurrentStaticModels++;
 			}
 			PERF_END("PREPARE_DRAW_SCENE")
-			m_CurrentPendingModels = 0;
-			m_PendingBuffersModels[0] = nullptr;
 			/// 8 - (OPCIONAL)Reordenar modelos
 			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
 			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
@@ -542,19 +537,22 @@ namespace VKR
 		{
 			auto renderContext = GetVKContext();
 			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
+			m_StaticModels[0] = new R_Model("resources/models/Sponza/glTF/", "Sponza.gltf");
+			m_CurrentStaticModels = 1;
 			g_DirectionalLight = new Directional();
-			g_DirectionalLight->m_LightVisual->m_Materials[0]->CreateDescriptor(renderContext.m_LogicDevice);
+			//g_DirectionalLight->m_LightVisual->m_Materials[0]->CreateDescriptor(renderContext.m_LogicDevice);
 			g_PointLights[0] = new Point();
 			g_PointLights[1] = new Point();
 			g_PointLights[2] = new Point();
 			g_PointLights[3] = new Point();
 			//PrepareDebugScene(_backend);
-			PrepareModel(_backend, g_DirectionalLight->m_LightVisual);
-			g_DirectionalLight->m_LightVisual->m_Materials[0]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-				_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
+			//PrepareModel(_backend, g_DirectionalLight->m_LightVisual);
+			//g_DirectionalLight->m_LightVisual->m_Materials[0]->UpdateDescriptorSet(renderContext.m_LogicDevice,
+				//_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
 			PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
+			m_SceneDirty = true;
 		}
 
 		void Scene::Update()
@@ -563,7 +561,7 @@ namespace VKR
 			{
 				m_StaticModels[i]->Update();
 			}
-			g_DirectionalLight->m_LightVisual->Update();
+			//g_DirectionalLight->m_LightVisual->Update();
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)

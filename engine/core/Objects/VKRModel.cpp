@@ -1,6 +1,6 @@
 #include "VKRModel.h"
 #include "DebugModels.h"
-#include "../../filesystem/gltfReader.h"
+#include "../../filesystem/ResourceManager.h"
 #include "../../perfmon/Custom.h"
 #include <cstddef>
 #include <cstring>
@@ -15,12 +15,15 @@ namespace VKR
 			memset(m_Path, (int)'F', 64);
 		}
 
+		R_Model::~R_Model()
+		{
+
+		}
+
 		R_Model::R_Model(const char* _filepath, const char* _modelName)
 		{
 			strcpy(m_Path, _filepath);
-			auto result = filesystem::read_glTF(_filepath,_modelName, this);
-			if (result)
-				return;
+			RM::_AddRequest(TYPE::STATIC_MODEL, _filepath,_modelName, this);
 		}
 
 		void R_Model::Draw(VKBackend* _backend, int _CurrentFrame, int _countModel)

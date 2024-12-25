@@ -1,6 +1,7 @@
 #version 460
 
 layout(set=0, binding=1) uniform sampler2D inTextures[8];
+// 0: basecolor, 1: albedo? 2,3: ???, 4: Normal, 5,6,7: ???
 
 layout(set=0, binding=3) uniform DirLightBufferObject
 {
@@ -89,29 +90,30 @@ float PointLight()
 
 vec3 DirectionalLight(vec3 _color)
 {
-	vec3 _normal = texture(inTextures[6], texCoord).rgb;
 	float att = PointLight();
 	float ambientStrength = 0.05;
     vec3 ambient = _color * ambientStrength;
 	
-	vec3 norm = normalize(normal * 2.0 - 1.0); // transform normal vector to range [-1,1]
+	vec3 normTex = texture(inTextures[4], texCoord).xyz;
+	vec3 norm = normalize(normTex * 2.0 - 1.0); // transform normal vector to range [-1,1]
 	vec3 lightDir = normalize(lightPosition - fragPosition);
-	vec3 diffuse = max(dot(normal, lightDir), 0.0) * _color;
+	vec3 diffuse = max(dot(normTex, lightDir), 0.0) * _color;
 	
 	float specularStrength = 0.5;
 	vec3 viewDir = normalize(viewerPosition - fragPosition);
-	vec3 reflectDir = reflect(-lightDir, norm);
+	vec3 reflectDir = reflect(-lightDir, normTex);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * _color;
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
 	float shadow = ShadowCalculation(fraglight, inTextures[7]);
-	ambient  *= att;
-	diffuse  *= att;
-	specular *= att;
-	return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	// return (diffuse + specular) * _color;
+	// ambient  *= att;
+	// diffuse  *= att;
+	// specular *= att;
+	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
+	return (ambient + diffuse + specular) * _color;
+	// return norm;
 
 }
 const float bias = 0.005;

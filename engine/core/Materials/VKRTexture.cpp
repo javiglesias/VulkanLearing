@@ -15,44 +15,33 @@ namespace VKR
 		Texture::Texture(std::string _path)
 		{
 			if (_path.empty())
-				sprintf(m_Path, "resources/Textures/checkerW.png");
+				sprintf(m_Path, "resources/Textures/defaultMissing.png");
 			else
 				sprintf(m_Path, "%s", _path.c_str());
+		}
+		void Texture::LoadTexture()
+		{
 			PERF_INIT("LOAD_TEXTURE")
-			stbi_uc* pixels = nullptr;
+				stbi_uc* pixels = nullptr;
 			stbi_set_flip_vertically_on_load(true);
-			if (!m_Path[0] == '\0')
-				pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
+			pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
-				//printf("\rMissing Texture %s\n", m_Path);
-				stbi_uc* m_DefaultTexture;
-				m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
-				pixels = m_DefaultTexture;
-				tWidth = m_DefualtWidth;
-				tHeight = m_DefualtHeight;
+				__debugbreak();
+				exit(-666);
 			}
 			PERF_END("LOAD_TEXTURE")
-			m_Mipmaps = (uint8_t)std::log2(tWidth > tHeight ? tWidth : tHeight);
-			m_Size = tWidth * tHeight * 4;
-			m_Data = malloc((size_t)m_Size);
-			memcpy(m_Data, pixels, (size_t)m_Size);
-			stbi_image_free(pixels);
-		}
-		void Texture::LoadTexture(bool isCubemap)
-		{
-			if (isCubemap)
-				m_Size *= 6;
+				m_Mipmaps = (uint8_t)std::log2(tWidth > tHeight ? tWidth : tHeight);
+			auto size = tWidth * tHeight * 4;
 			// Buffer transfer of pixels
-			CreateBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 			void* data;
-			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, m_Size, 0, &data);
-			if (isCubemap)
-				m_Size /= 6;
-			memcpy(data, m_Data, (size_t)m_Size);
+			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
+			memcpy(data, pixels, static_cast<size_t>(size));
 			vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
+			stbi_image_free(pixels);
 		}
 
 		void Texture::LoadCubemapTexture()
@@ -63,21 +52,18 @@ namespace VKR
 			if (!pixels)
 			{
 				printf("\rMissing Texture %s\n", m_Path);
-				stbi_uc* m_DefaultTexture;
-				m_DefaultTexture = stbi_load("resources/Textures/checkerW.png", &m_DefualtWidth, &m_DefualtHeight, &m_DefualtChannels, STBI_rgb_alpha);
-				pixels = m_DefaultTexture;
-				tWidth = m_DefualtWidth;
-				tHeight = m_DefualtHeight;
+				__debugbreak();
+				exit(-666);
 			}
 			tHeight=tWidth;
-			m_Size = (tWidth * tHeight * 4);
+			auto size = (tWidth * tHeight * 4);
 			// Buffer transfer of pixels
-			CreateBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 			void* data;
-			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, m_Size, 0, &data);
-			memcpy(data, pixels, (size_t)m_Size);
+			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
+			memcpy(data, pixels, static_cast<size_t>(size));
 			vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
 			stbi_image_free(pixels);
 
@@ -133,9 +119,10 @@ namespace VKR
 					_CommandPool, _arrayLayers, 1);
 				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, 1);
 				m_Sampler = CreateTextureSampler(1);
-				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
-				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
+				// TODO delete m_StagingBuffer
 			}
+			vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
+			vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
 		}
 
 		void Texture::CreateAndTransitionImageCubemap(VkCommandPool _CommandPool, VkFormat _format, 

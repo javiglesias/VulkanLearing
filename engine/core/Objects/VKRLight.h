@@ -25,7 +25,7 @@ namespace VKR
 			float m_DebugScale = 0.1f;
 			glm::vec3 m_Pos {0.f, 0.f, 1.f};
 			glm::vec3 m_Color {1.f};
-			R_Model* m_LightVisual;
+			//R_Model* m_LightVisual;
 		private: // Variables
 			LightType m_Type{LIGHT_POINT};
 			float m_ShadowCameraFOV;

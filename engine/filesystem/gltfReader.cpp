@@ -37,19 +37,19 @@ namespace VKR
 							tempModel_->m_Materials[materialID] = new render::R_Material();
 							tempModel_->m_Materials[materialID]->material.pipeline._buildPipeline();
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
-							for(int t= 0; t < 8; t++)
+							/*for(int t= 0; t < 8; t++)
 							{
 								tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
-							}
+							}*/
 							if(material.normal_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.normal_texture.texture->image->uri);
-								sprintf(tempModel_->m_Materials[materialID]->textures[2]->m_Path, "%s%s", _filepath, pathTexture.c_str());
+								tempModel_->m_Materials[materialID]->textures[2] = new render::Texture(pathTexture);
 							}
 							if(material.specular.specular_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
-								sprintf(tempModel_->m_Materials[materialID]->textures[3]->m_Path, "%s%s", _filepath, pathTexture.c_str());
+								tempModel_->m_Materials[materialID]->textures[3] = new render::Texture(pathTexture);
 							}
 
 						}
@@ -58,9 +58,10 @@ namespace VKR
 				else
 				{
 					tempModel_->m_Materials[materialID] = new render::R_Material();
+					__debugbreak();
 					for (int t = 0; t < 8; t++)
 					{
-						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
+						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");
 					}
 				}
 
@@ -98,6 +99,24 @@ namespace VKR
 							{
 #pragma region PBR_material
 								auto meshMaterial = mesh->primitives[p].material;
+								/*
+								 *BASE_COLOR
+								 *DIFFUSE_ROUGHNESS,
+								 *SPECULAR,
+								 *AMBIENT,
+								 *NORMALS,
+								 *AMBIENT_OCCLUSION,
+								 *EMISSION_COLOR,
+								 *LIGHTMAP
+								 *
+								 */
+								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, meshMaterial));
+								if (meshMaterial->pbr_metallic_roughness.base_color_texture.texture != nullptr)
+								{
+									std::string pathTexture = std::string(meshMaterial->pbr_metallic_roughness.base_color_texture.texture->image->uri);
+									fprintf(stderr, "%s\n", (_filepath + pathTexture).c_str());
+									tempModel_->m_Materials[tempMesh->m_Material]->textures[0] = new render::Texture(_filepath + pathTexture);
+								}
 								if(meshMaterial && meshMaterial->pbr_metallic_roughness.base_color_factor != nullptr)
 								{
 									tempMesh->metallic_roughness.base_color = glm::vec4(
@@ -118,7 +137,6 @@ namespace VKR
 
 									}
 								}
-								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, meshMaterial));
 #pragma endregion
 								auto accessor = mesh->primitives[p].attributes[a].data;
 								Vertex3D tempVertex;
