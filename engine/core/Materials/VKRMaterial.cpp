@@ -265,7 +265,10 @@ namespace VKR
 				if (textures[t])
 				{
 					textures[t]->LoadTexture();
-					textures[t]->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
+					if(textures[t]->m_Mipmaps > 0)
+						textures[t]->CreateAndTransitionImage(_backend->m_CommandPool);
+					else
+						textures[t]->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
 				}
 			}
 			PERF_END("CREATE_TEXTURES")

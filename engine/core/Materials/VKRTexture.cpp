@@ -82,18 +82,12 @@ namespace VKR
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &tImage, &tImageMem, _arrayLayers, _flags, m_Mipmaps);
 				vkBindImageMemory(g_context.m_LogicDevice, tImage, tImageMem, 0);
 				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					_CommandPool, _arrayLayers, 1);
-				m_Mipmaps = 0;
-				GenerateMipmap(tImage, _CommandPool, m_Mipmaps, tWidth, tHeight);
-				/*for (size_t i = 0; i < _arrayLayers; i++)
-				{
-					auto offset = texSize * i;
-				}*/
-				auto levelCount = m_Mipmaps + 1;
+					_CommandPool, _arrayLayers, m_Mipmaps);
 				CopyBufferToImage(m_StagingBuffer, tImage, static_cast<uint32_t>(tWidth), static_cast<uint32_t>(tHeight), 0, _CommandPool, 0);
+				GenerateMipmap(tImage, _CommandPool, m_Mipmaps, tWidth, tHeight);
 				TransitionImageLayout(tImage, _format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-					_CommandPool, _arrayLayers, levelCount);
-				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, levelCount);
+					_CommandPool, _arrayLayers, m_Mipmaps);
+				tImageView = CreateImageView(tImage, _format, _aspectMask, _viewType, _arrayLayers, m_Mipmaps);
 				m_Sampler = CreateTextureSampler(m_Mipmaps);
 				vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);

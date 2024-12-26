@@ -341,8 +341,7 @@ void CreateImage(unsigned int _Width, unsigned int _Height, VkFormat _format, Vk
 	tImageInfo.extent.width = static_cast<uint32_t>(_Width);
 	tImageInfo.extent.height = static_cast<uint32_t>(_Height);
 	tImageInfo.extent.depth = 1;
-	auto mipmaps = std::floor(std::log2((((_Width) > (_Height)) ? (_Width) : (_Height)))) + 1;
-	tImageInfo.mipLevels = mipmaps < _mipmapLvls ? _mipmapLvls : _mipmapLvls;
+	tImageInfo.mipLevels = _mipmapLvls;
 	tImageInfo.arrayLayers = _arrayLayers;
 	tImageInfo.format = _format;
 	tImageInfo.tiling = _tiling;
@@ -420,17 +419,20 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 	iBarrier.image = _image;
 	iBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	iBarrier.subresourceRange.layerCount = 1;
-	iBarrier.subresourceRange.levelCount = _mipLevels;
+	iBarrier.subresourceRange.levelCount = 1;
+	// copy/blit transactions
 	for (uint8_t i = 1; i < _mipLevels; i++)
 	{
-		iBarrier.subresourceRange.baseMipLevel = i - 1;
-		iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
-							 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0,nullptr, 0, nullptr,
-							 1, &iBarrier);
+		{ // pre-copy transition
+			iBarrier.subresourceRange.baseMipLevel = i - 1;
+			iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr,
+				1, &iBarrier);
+		}
 		VkImageBlit blit{};
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {_width, _height, 1};
@@ -445,28 +447,20 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.dstSubresource.mipLevel = i;
 		blit.dstSubresource.baseArrayLayer = 0;
-		blit.dstSubresource. layerCount = 1;
+		blit.dstSubresource.layerCount = 1;
 		vkCmdBlitImage(commandBuffer, _image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 					   _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
 					   VK_FILTER_LINEAR);
-		// transicionamos la imagen
-		iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
-							 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
-							 1, &iBarrier);
 		if (_width > 1) _width /= 2;
 		if (_height > 1) _height /= 2;
 	}
-	// record commands blitimage
+	// Post-copy transactions
 	iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	iBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
-							VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
+		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
 							1, &iBarrier);
 	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
 }

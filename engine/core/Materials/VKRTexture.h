@@ -14,10 +14,10 @@ namespace VKR
 		struct Texture
 		{
 		private: // Variables
-			uint8_t m_Mipmaps = 1;
 			VkBuffer m_StagingBuffer;
 			VkDeviceMemory m_StaggingBufferMemory;
 		public:
+			uint8_t m_Mipmaps = 0;
 			int tWidth, tHeight, tChannels;
 			char m_Path[128] = "";
 			VkImage tImage = nullptr;

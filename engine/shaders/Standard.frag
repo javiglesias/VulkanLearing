@@ -109,8 +109,8 @@ vec3 DirectionalLight(vec3 _color)
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
 	float shadow = ShadowCalculation(fraglight, inTextures[7]);
 	// ambient  *= att;
-	// diffuse  *= att;
-	// specular *= att;
+	diffuse  *= att;
+	specular *= att;
 	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
 	return (ambient + diffuse + specular) * _color;
 	// return norm;
