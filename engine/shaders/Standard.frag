@@ -1,7 +1,16 @@
 #version 460
 
+/* inTextures
+0: BASE_COLOR,
+1: DIFFUSE_ROUGHNESS,
+2: SPECULAR,
+3: AMBIENT,
+4: NORMALS,
+5: AMBIENT_OCCLUSION,
+6: EMISSION_COLOR,
+7: LIGHTMAP
+*/
 layout(set=0, binding=1) uniform sampler2D inTextures[8];
-// 0: basecolor, 1: albedo? 2,3: ???, 4: Normal, 5,6,7: ???
 
 layout(set=0, binding=3) uniform DirLightBufferObject
 {

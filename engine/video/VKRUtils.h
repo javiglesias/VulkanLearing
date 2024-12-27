@@ -194,7 +194,7 @@ namespace VKR
 				if (strcmp(ext.extensionName, "VK_EXT_buffer_device_address") == 0)
 					continue;
 				g_context.m_GpuInfo.m_DeviceExtensions.push_back(ext.extensionName);
-			}
+			}	
 			/// Buscamos las familias de Colas.
 			unsigned int queueFamilyCount = 0;
 			vkGetPhysicalDeviceQueueFamilyProperties(m_GpuInfo.m_Device, &queueFamilyCount, nullptr);

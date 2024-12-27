@@ -170,6 +170,7 @@ namespace VKR
 				ImGui::DragFloat("zNear", &zNear);
 				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
 				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
+				ImGui::Checkbox("GPU Timestamps", &g_GPUTimestamp);
 				ImGui::SliderFloat("Mip level", &g_MipLevel, 0.f, 12.f, "%1.f");
 				//ImGui::DragFloat("Debug scale", &g_debugScale);
 				ImGui::End();
@@ -180,11 +181,10 @@ namespace VKR
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
-				ImGui::LabelText("Elapsed time:", "%.2f", g_ElapsedTime);
-				ImGui::LabelText("Frame time:", "%.2f", g_FrameTime[g_CurrentFrameTime]);
 				ImGui::LabelText("Frame n:", "%lld", g_CurrentFrame);
-				const float *cycles = (float*)g_FrameTime;
-				ImGui::PlotLines("Frame time", cycles, g_FrameGranularity);
+				ImGui::LabelText("Elapsed time:", "%.f", g_ElapsedTime);
+				ImGui::LabelText("CPU ms:", "%.4f", g_FrameTime[g_CurrentFrameTime]);
+				ImGui::LabelText("GPU ms:", "%.4f", g_TimestampValue);
 
 				ImGui::End();
 			}

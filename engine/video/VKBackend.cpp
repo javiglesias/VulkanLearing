@@ -444,6 +444,7 @@ namespace VKR
 			GenerateDBGBuffers();
 			CreateSyncObjects(0);
 			CreateSyncObjects(1);
+			CreatePerformanceQueries();
 			m_GPipelineStatus = READY;
 		}
 
@@ -758,6 +759,25 @@ namespace VKR
 				exit(-666);
 		}
 
+		void VKBackend::CreatePerformanceQueries()
+		{
+			// VkQueryPoolCreateInfo
+			if (g_context.m_GpuInfo.m_Properties.limits.timestampPeriod <= 0 && g_context.m_GpuInfo.m_Properties.limits.timestampComputeAndGraphics != VK_TRUE)
+				__debugbreak();
+			g_Timestamps.resize(2);
+			VkBool32 presentSupport = false;
+			VkQueryPoolCreateInfo timestampQuery{};
+			timestampQuery.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+			timestampQuery.queryType = VK_QUERY_TYPE_TIMESTAMP;
+			timestampQuery.queryCount = g_Timestamps.size();
+			
+			if (vkCreateQueryPool(g_context.m_LogicDevice, &timestampQuery, nullptr, &m_PerformanceQuery[0]) != VK_SUCCESS)
+				exit(-999);
+			if (vkCreateQueryPool(g_context.m_LogicDevice, &timestampQuery, nullptr, &m_PerformanceQuery[1]) != VK_SUCCESS)
+				exit(-999);
+
+		}
+
 		void VKBackend::CreateShadowResources()
 		{
 			VkFormat depthFormat = g_context.m_GpuInfo.FindDepthTestFormat();
@@ -820,6 +840,7 @@ namespace VKR
 			PollEvents();
 			uint32_t imageIdx;
 			vkWaitForFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame], VK_TRUE, UINT64_MAX);
+			//vkGetQueryPoolResults(); frame anterior al que estamos simulando
 			vkResetFences(g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame]);
 			vkResetCommandBuffer(m_CommandBuffer[_InFlightFrame], 0);
 			auto acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],
@@ -835,6 +856,8 @@ namespace VKR
 			mBeginInfo.pInheritanceInfo = nullptr;
 			if (vkBeginCommandBuffer(m_CommandBuffer[_InFlightFrame], &mBeginInfo) != VK_SUCCESS)
 				exit(-13);
+			if(g_GPUTimestamp)
+				vkCmdResetQueryPool(m_CommandBuffer[_InFlightFrame], m_PerformanceQuery[_InFlightFrame], 0, 2);
 			return imageIdx;
 		}
 
@@ -875,6 +898,22 @@ namespace VKR
 				RecreateSwapChain();*/
 			/*else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);*/
+		}
+
+		void VKBackend::CollectGPUTimestamps(unsigned int _FrameToPresent)
+		{
+			vkDeviceWaitIdle(g_context.m_LogicDevice);
+			vkGetQueryPoolResults(
+					g_context.m_LogicDevice,
+					 m_PerformanceQuery[_FrameToPresent],
+					0,
+				 2,
+					g_Timestamps.size() * sizeof(uint64_t),
+					g_Timestamps.data(),
+					sizeof(uint64_t),
+					VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+			g_TimestampValue = static_cast<float>(g_Timestamps[1] - g_Timestamps[0]) * g_context.m_GpuInfo.m_Properties.limits.timestampPeriod / 1000000.0f;
+
 		}
 
 		void VKBackend::CleanSwapChain()
@@ -964,6 +1003,8 @@ namespace VKR
 			vkDestroyFence(g_context.m_LogicDevice, m_InFlight[0], nullptr);
 			vkDestroyFence(g_context.m_LogicDevice, m_InFlight[1], nullptr);
 			vkDestroyCommandPool(g_context.m_LogicDevice, m_CommandPool, nullptr);
+			vkDestroyQueryPool(g_context.m_LogicDevice, m_PerformanceQuery[0], nullptr);
+			vkDestroyQueryPool(g_context.m_LogicDevice, m_PerformanceQuery[1], nullptr);
 			CleanSwapChain();
 			// m_Scene->Cleanup();
 			m_ShadowMat->Cleanup(g_context.m_LogicDevice);

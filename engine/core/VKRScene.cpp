@@ -152,6 +152,10 @@ namespace VKR
 			auto renderContext = GetVKContext();
 			// GeometryPass(_backend, _CurrentFrame);
 			ShadowPass(_backend, _CurrentFrame);
+			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
+			if(g_GPUTimestamp)
+				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 0);
+
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
@@ -236,8 +240,12 @@ namespace VKR
 			// TODO Draw quads.
 
 			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
+			if (g_GPUTimestamp)
+				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 1);
 			_backend->EndRenderPass(_CurrentFrame);
 			_backend->SubmitAndPresent(_CurrentFrame, &imageIdx);
+			if(g_GPUTimestamp)
+				_backend->CollectGPUTimestamps(_CurrentFrame);
 		}
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)

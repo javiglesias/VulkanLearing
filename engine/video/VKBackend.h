@@ -31,6 +31,7 @@ namespace VKR
         inline const int m_Width = WIN_WIDTH;
         inline const int m_Height = WIN_HEIGHT;
         inline bool m_NeedToRecreateSwapchain = false;
+		inline bool g_GPUTimestamp = false;
         inline bool m_MouseCaptured = false;
         inline bool m_CloseEngine = false;
         inline bool m_IndexedRender = true;
@@ -50,6 +51,7 @@ namespace VKR
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 0.f;
         inline float g_Rotation = 0.f;
+		inline float g_TimestampValue = 0.f;
         inline constexpr int g_FrameGranularity = 10240;
         inline double g_FrameTime[g_FrameGranularity];
         inline int g_CurrentFrameTime = 0;
@@ -82,6 +84,7 @@ namespace VKR
         inline int m_CurrentStaticModels = 0;
         inline int m_CurrentPendingModels = 0;
         inline std::vector<Light*> g_Lights;
+		inline std::vector<uint64_t> g_Timestamps{};
         inline Directional* g_DirectionalLight;
         inline Point* g_PointLights[4];
 
@@ -125,6 +128,7 @@ namespace VKR
 
             VkDescriptorPool m_DescriptorPool;
             VkCommandPool m_CommandPool;
+			VkQueryPool m_PerformanceQuery[FRAMES_IN_FLIGHT];
 
             VkDescriptorSet m_ShadowVisualizer;
 
@@ -198,6 +202,7 @@ namespace VKR
             uint32_t BeginFrame(unsigned int _InFlightFrame);
             void EndRenderPass(unsigned _InFlightFrame);
             void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
+            void CollectGPUTimestamps(unsigned int _FrameToPresent);
             void Shutdown();
             void Cleanup();
 
@@ -213,6 +218,7 @@ namespace VKR
             void CreateFramebuffers();
             void CreateCommandBuffer();
             void CreateSyncObjects(unsigned _frameIdx);
+            void CreatePerformanceQueries();
             void CreateImageViews();
             void CreateShadowResources();
             void CreateDepthTestingResources();
