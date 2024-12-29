@@ -25,6 +25,7 @@ namespace VKR
 			bool m_Hidden = false;
 			float m_RotGRAD = 0.f;
 			float m_ProjectShadow = 0.f;
+			int nMaterials = 0;
 		};
 
 		/*struct R_DbgModel

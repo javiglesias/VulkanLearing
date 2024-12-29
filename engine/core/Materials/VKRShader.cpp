@@ -14,6 +14,7 @@ namespace VKR
 			m_Filename += ".spv";
 #endif
 		}
+
 		void Shader::ReadFile()
 		{
 #ifdef _WIN32

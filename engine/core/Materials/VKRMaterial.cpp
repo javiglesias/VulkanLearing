@@ -36,6 +36,7 @@ namespace VKR
 			VkShaderModule fragShaderModule;
 			VkCullModeFlagBits cullMode = VK_CULL_MODE_BACK_BIT;
 			VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
 			Shader* vertShader = new Shader("engine/shaders/Standard.vert", 0);
 			Shader* fragShader = new Shader("engine/shaders/Standard.frag", 4);
 

@@ -121,17 +121,15 @@ namespace VKR
 			m_CubemapRender->CreatePipeline(renderContext.m_RenderPass->m_Pass);
 			m_CubemapRender->CleanShaderModules();
 			PERF_INIT("RELOAD_SHADERS")
-			/*if(m_GraphicsRender->m_VertShader->GLSLCompile(true) &&
-				m_GraphicsRender->m_FragShader->GLSLCompile(true))
+			for(int m = 0; m < m_CurrentStaticModels; m++)
 			{
-				vkDestroyPipeline(renderContext.m_LogicDevice, m_GraphicsRender->m_Pipeline, nullptr);
-				vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_GraphicsRender->m_PipelineLayout, nullptr);
-				m_GraphicsRender->Initialize(true);
-				m_GraphicsRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
-				m_GraphicsRender->CreatePipelineLayout();
-				m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
-				m_GraphicsRender->CleanShaderModules();
-			}*/
+				for(int mi = 0; mi < m_StaticModels[m]->nMaterials; mi++)
+				{
+					//m_StaticModels[m]->m_Materials[mi]->material.pipeline.Cleanup(renderContext.m_LogicDevice);
+					m_StaticModels[m]->m_Materials[mi]->material.pipeline._buildPipeline();
+					//m_StaticModels[m]->m_Materials[mi]->PrepareMaterialToDraw(_backend);
+				}
+			}
 			if (m_ShadowRender->m_VertShader->GLSLCompile(true))
 			{
 				vkDestroyPipeline(renderContext.m_LogicDevice, m_ShadowRender->m_Pipeline, nullptr);
