@@ -158,7 +158,7 @@ namespace VKR
 			lightDynAlign = (lightDynAlign + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, zNear, zFar);
+			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
 			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
 			/// Render Pass
@@ -232,7 +232,7 @@ namespace VKR
 			if(g_DrawCubemap)
 				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
 #pragma endregion
-			// TODO Draw quads.
+			// TODO Draw quads.r
 
 			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
 			_backend->EndRenderPass(_CurrentFrame);
@@ -280,7 +280,7 @@ namespace VKR
 			auto renderContext = GetVKContext();
 			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
 			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), m_Width / (float)m_Height, zNear, zFar);
+			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
 			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
 			CubemapUniformBufferObject cubo {};
