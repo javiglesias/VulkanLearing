@@ -108,14 +108,14 @@ namespace VKR
 			ImGui_ImplVulkan_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
-			ImGui::Begin("console");
+			/*ImGui::Begin("console");
 			{
 				ImGui::Text("%s", g_commandLineHistory);
 				g_commandLine = new char[128];
 				memset(g_commandLine, '/0', 128);
 				ImGui::InputText("ConsoleInput", g_commandLine, 128, 0, ConsoleInputTextCallback);
 				ImGui::End();
-			}
+			}*/
 
 #if 1
 			ImGui::Begin("Tools");
@@ -183,52 +183,52 @@ namespace VKR
 				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
 				ImGui::LabelText("Frame n:", "%lld", g_CurrentFrame);
 				ImGui::LabelText("Elapsed time:", "%.f", g_ElapsedTime);
-				ImGui::LabelText("CPU ms:", "%.4f", g_FrameTime[g_CurrentFrameTime]);
+				ImGui::LabelText("CPU ms:", "%.4f", g_FrameTime);
 				ImGui::LabelText("GPU ms:", "%.4f", g_TimestampValue);
 
 				ImGui::End();
 			}
-			ImGui::Begin("World");
-			{
-				for (int i = 0; i < m_CurrentStaticModels; i++)
-				{
-					R_Model* model = m_StaticModels[i];
-					ImGui::Selectable(model->m_Path, &model->m_Editable);
-					if (model->m_Editable)
-					{
-						float center[3] = {0};
-						ImGui::DragFloat3("Pos", center, 0.1f);
-						model->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(center[0], center[1], center[2]));
-						//ImGui::DragFloat("P.Shadow", &model->m_ProjectShadow);
-						ImGui::SameLine();
-						if (ImGui::Button("Un/Hide"))
-						{
-							model->m_Hidden = !model->m_Hidden;
-						}
-#if 0
-						float rotation[3];
-						rotation[0] = model->m_RotAngle.x;
-						rotation[1] = model->m_RotAngle.y;
-						rotation[2] = model->m_RotAngle.z;
-						ImGui::InputFloat3("Rot Angle", rotation);
-						model->m_RotAngle.x = rotation[0];
-						model->m_RotAngle.y = rotation[1];
-						model->m_RotAngle.z = rotation[2];
-						ImGui::DragFloat("R.GRAD", &model->m_RotGRAD);
-						
-						float scale[3];
-						scale[0] = model->m_Scale.x;
-						scale[1] = model->m_Scale.y;
-						scale[2] = model->m_Scale.z;
-						ImGui::InputFloat3("Scale", scale);
-						model->m_Scale.x = scale[0];
-						model->m_Scale.y = scale[1];
-						model->m_Scale.z = scale[2];
-#endif
-					}
-				}
-				ImGui::End();
-			}
+//			ImGui::Begin("World");
+//			{
+//				for (int i = 0; i < m_CurrentStaticModels; i++)
+//				{
+//					R_Model* model = m_StaticModels[i];
+//					ImGui::Selectable(model->m_Path, &model->m_Editable);
+//					if (model->m_Editable)
+//					{
+//						float center[3] = {0};
+//						ImGui::DragFloat3("Pos", center, 0.1f);
+//						model->m_ModelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(center[0], center[1], center[2]));
+//						//ImGui::DragFloat("P.Shadow", &model->m_ProjectShadow);
+//						ImGui::SameLine();
+//						if (ImGui::Button("Un/Hide"))
+//						{
+//							model->m_Hidden = !model->m_Hidden;
+//						}
+//#if 0
+//						float rotation[3];
+//						rotation[0] = model->m_RotAngle.x;
+//						rotation[1] = model->m_RotAngle.y;
+//						rotation[2] = model->m_RotAngle.z;
+//						ImGui::InputFloat3("Rot Angle", rotation);
+//						model->m_RotAngle.x = rotation[0];
+//						model->m_RotAngle.y = rotation[1];
+//						model->m_RotAngle.z = rotation[2];
+//						ImGui::DragFloat("R.GRAD", &model->m_RotGRAD);
+//						
+//						float scale[3];
+//						scale[0] = model->m_Scale.x;
+//						scale[1] = model->m_Scale.y;
+//						scale[2] = model->m_Scale.z;
+//						ImGui::InputFloat3("Scale", scale);
+//						model->m_Scale.x = scale[0];
+//						model->m_Scale.y = scale[1];
+//						model->m_Scale.z = scale[2];
+//#endif
+//					}
+//				}
+//				ImGui::End();
+//			}
 			ImGui::Begin("Lights");
 			{
 #if 0

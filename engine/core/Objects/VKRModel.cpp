@@ -77,6 +77,8 @@ namespace VKR
 			}
 			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 			if (m_Hidden) return;
+			if (g_GPUTimestamp)
+				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 0);
 			for (auto& mesh : m_Meshes)
 			{
 				R_Material* material = m_Materials[mesh->m_Material];
@@ -85,7 +87,7 @@ namespace VKR
 				dynO.model = mesh->m_ModelMatrix;
 				dynO.modelOpts.x = m_ProjectShadow; // project shadow
 				dynO.modelOpts.y = g_MipLevel;
-				dynO.addOpts.x = static_cast<float>(m_LightsOs.size());
+				dynO.addOpts.x = 1;
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				VkDeviceSize offsets[] = { 0 };
@@ -119,6 +121,8 @@ namespace VKR
 				lightsMappedMemoryRange.size = sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 			}
+			if (g_GPUTimestamp)
+				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 1);
 		}
 
 		void R_Model::Update()

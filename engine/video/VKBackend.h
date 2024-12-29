@@ -52,11 +52,8 @@ namespace VKR
         inline float g_MipLevel = 0.f;
         inline float g_Rotation = 0.f;
 		inline float g_TimestampValue = 0.f;
-        inline constexpr int g_FrameGranularity = 10240;
-        inline double g_FrameTime[g_FrameGranularity];
-        inline int g_CurrentFrameTime = 0;
+        inline double g_FrameTime;
         inline long long g_CurrentFrame = 0;
-        inline double g_DeltaTime;
         inline double g_ElapsedTime;
 		inline char* g_commandLine;
 		inline char* g_commandLineHistory;

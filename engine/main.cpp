@@ -31,9 +31,7 @@ int main(int _argc, char** _args)
 		{
 			VKR::render::g_ElapsedTime += backend.GetTime();
 			currentFrame = nextFrame;
-			VKR::render::g_DeltaTime = deltaTime;
-			VKR::render::g_FrameTime[VKR::render::g_CurrentFrameTime] = deltaTime;
-			++VKR::render::g_CurrentFrameTime %= VKR::render::g_FrameGranularity;
+			VKR::render::g_FrameTime = deltaTime;
 			mainScene.DrawScene(&backend, currentLocalFrame);
 			currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
 			++VKR::render::g_CurrentFrame;
