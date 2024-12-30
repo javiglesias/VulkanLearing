@@ -8,6 +8,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "../core/Materials/VKRTexture.h"
+
 
 #ifndef _WINDOWS
 #include <signal.h>
@@ -205,6 +207,7 @@ namespace VKR
 		void VKBackend::CreateImageViews()
 		{
 			/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
+			m_SwapChainImagesViews.clear();
 			m_SwapChainImagesViews.resize(m_SwapchainImagesCount);
 			int currentSwapchaingImageView = 0;
 			for (auto& image : m_SwapChainImages)
@@ -251,7 +254,7 @@ namespace VKR
 			/// NORMAL RENDER THINGS
 			glfwInit();
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-			m_Window = glfwCreateWindow(m_Width, m_Height, "Vulkan test", nullptr, nullptr);
+			m_Window = glfwCreateWindow(g_WindowWidth, g_WindowHeight, "Vulkan renderer", nullptr, nullptr);
 			glfwSetFramebufferSizeCallback(m_Window, FramebufferResizeCallback);
 			glfwSetKeyCallback(m_Window, KeyboardInputCallback);
 			glfwSetCursorPosCallback(m_Window, MouseInputCallback);
@@ -375,8 +378,8 @@ namespace VKR
 
 			// Lo Mismo para Shadows
 			m_ShadowRender->Initialize();
-			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
-			m_ShadowRender->CreatePipelineLayout();
+				m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+				m_ShadowRender->CreatePipelineLayout();
 			g_context.CreateShadowRenderPass();
 			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
 			m_ShadowRender->CleanShaderModules();
@@ -664,25 +667,40 @@ namespace VKR
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 			int width = 0, height = 0;
 			glfwGetFramebufferSize(m_Window, &width, &height);
-			while (width == 0 || height == 0) 
+			while (width == 0 || height == 0)
 			{
-				width = WIN_WIDTH;
-				height = WIN_HEIGHT;
 				glfwWaitEvents();
+				glfwGetFramebufferSize(m_Window, &width, &height);
 			}
-			printf("\n\tRe-create Swapchain\n");
+			g_WindowHeight = height;
+			g_WindowWidth = width;
+			printf("\n-----------Re-create Swapchain %d x %d----------------\n", g_WindowWidth, g_WindowHeight);
 			vkDeviceWaitIdle(g_context.m_LogicDevice);
 			// Esperamos a que termine de pintarse y recreamos la swapchain con los nuevos parametros
 			CleanSwapChain();
+			CreateFramebufferAndSwapchain();
+			m_NeedToRecreateSwapchain = false;
+		}
+
+		void VKBackend::CreateFramebufferAndSwapchain()
+		{
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(g_context.m_GpuInfo.m_Device, m_Surface, &m_Capabilities);
+			m_CurrentExtent = m_Capabilities.currentExtent;
 			CreateSwapChain();
 			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
 			m_SwapChainImages.resize(m_SwapchainImagesCount);
 			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 			CreateImageViews();
-			// CreateTextureImageView();
-			// CreateTextureSampler();
+			g_context.CreateRenderPass(&m_SwapChainCreateInfo);
+			m_ShadowRender->Initialize(true);
+			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			m_ShadowRender->CreatePipelineLayout();
+			g_context.CreateShadowRenderPass();
+			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
+			CreateShadowResources();
+			CreateShadowFramebuffer();
+			CreateDepthTestingResources();
 			CreateFramebuffers();
-			m_NeedToRecreateSwapchain = false;
 		}
 
 		void VKBackend::CreateShadowFramebuffer()
@@ -691,7 +709,7 @@ namespace VKR
 			mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			mFramebufferInfo.renderPass = g_context.m_ShadowPass->m_Pass;
 			mFramebufferInfo.attachmentCount = 1;
-			mFramebufferInfo.pAttachments = &m_ShadowImageView;
+			mFramebufferInfo.pAttachments = &m_ShadowTexture->tImageView;
 			mFramebufferInfo.width = m_CurrentExtent.width;
 			mFramebufferInfo.height = m_CurrentExtent.height;
 			mFramebufferInfo.layers = 1;
@@ -781,17 +799,18 @@ namespace VKR
 		void VKBackend::CreateShadowResources()
 		{
 			VkFormat depthFormat = g_context.m_GpuInfo.FindDepthTestFormat();
+			m_ShadowTexture = new Texture("");
 			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
 				VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_ShadowImage, &m_ShadowImageMemory, 1, 0, 1);
+				&m_ShadowTexture->tImage, &m_ShadowTexture->tImageMem, 1, 0, 1);
 			// Transicionamos la imagen
-			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowImage, m_ShadowImageMemory, 0);
-			TransitionImageLayout(m_ShadowImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
+			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowTexture->tImage, m_ShadowTexture->tImageMem, 0);
+			TransitionImageLayout(m_ShadowTexture->tImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
-			m_ShadowImageView = CreateImageView(m_ShadowImage, depthFormat,
+			m_ShadowTexture->tImageView = CreateImageView(m_ShadowTexture->tImage, depthFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
-			m_ShadowImgSamp = CreateShadowTextureSampler();
+			m_ShadowTexture->m_Sampler = CreateShadowTextureSampler();
 		}
 
 		void VKBackend::CreateDepthTestingResources()
@@ -846,7 +865,10 @@ namespace VKR
 			auto acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],
 				VK_NULL_HANDLE, &imageIdx);
 			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
+			{
 				RecreateSwapChain();
+				vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],VK_NULL_HANDLE, &imageIdx);
+			}
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);
 			// Record command buffer
@@ -858,6 +880,7 @@ namespace VKR
 				exit(-13);
 			if(g_GPUTimestamp)
 				vkCmdResetQueryPool(m_CommandBuffer[_InFlightFrame], m_PerformanceQuery[_InFlightFrame], 0, 2);
+			m_LastImageIdx = imageIdx;
 			return imageIdx;
 		}
 
@@ -991,10 +1014,7 @@ namespace VKR
 			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);
 			vkFreeMemory(g_context.m_LogicDevice, m_DepthImageMemory, nullptr);
 
-			vkDestroySampler(g_context.m_LogicDevice, m_ShadowImgSamp, nullptr);
-			vkDestroyImageView(g_context.m_LogicDevice, m_ShadowImageView, nullptr);
-			vkDestroyImage(g_context.m_LogicDevice, m_ShadowImage, nullptr);
-			vkFreeMemory(g_context.m_LogicDevice, m_ShadowImageMemory, nullptr);
+			m_ShadowTexture->CleanTextureData(g_context.m_LogicDevice);
 
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[0], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[1], nullptr);

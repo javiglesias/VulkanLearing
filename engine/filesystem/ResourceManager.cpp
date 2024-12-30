@@ -79,12 +79,14 @@ namespace VKR
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
 					tempModel->m_Materials[mesh->mMaterialIndex]->material.pipeline._buildPipeline();
-					for (int t = 0; t < 8; t++)
+					for (int t = 0; t < 7; t++)
 					{
 						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]), 
 							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
 							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
 					}
+					tempModel->m_Materials[mesh->mMaterialIndex]->textures[7] = new render::Texture("");
+					++tempModel->nMaterials;
 				}
 
 				tempMesh->m_Material = mesh->mMaterialIndex;

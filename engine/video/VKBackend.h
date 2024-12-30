@@ -28,8 +28,8 @@ namespace VKR
         inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
         inline const int FRAMES_IN_FLIGHT = 2;
-        inline const int m_Width = WIN_WIDTH;
-        inline const int m_Height = WIN_HEIGHT;
+        inline int g_WindowWidth = WIN_WIDTH;
+        inline int g_WindowHeight = WIN_HEIGHT;
         inline bool m_NeedToRecreateSwapchain = false;
 		inline bool g_GPUTimestamp = false;
         inline bool m_MouseCaptured = false;
@@ -109,10 +109,7 @@ namespace VKR
             std::vector<VkFramebuffer> m_SwapChainFramebuffers;
             // SHADOW
             VkFramebuffer m_ShadowFramebuffer;
-            VkImage m_ShadowImage;
-            VkDeviceMemory m_ShadowImageMemory;
-            VkImageView m_ShadowImageView;
-            VkSampler m_ShadowImgSamp;
+			Texture* m_ShadowTexture;
             R_ShadowMaterial* m_ShadowMat;
 
             VkSwapchainKHR m_SwapChain;
@@ -211,6 +208,7 @@ namespace VKR
                                 uint32_t m_extensionCount);
             void CreateSwapChain();
             void RecreateSwapChain();
+            void CreateFramebufferAndSwapchain();
             void CreateShadowFramebuffer();
             void CreateFramebuffers();
             void CreateCommandBuffer();

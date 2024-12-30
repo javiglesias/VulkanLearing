@@ -261,7 +261,7 @@ namespace VKR
 
 			PERF_INIT("CREATE_TEXTURES")
 			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-			for (int t = 0; t < 8; t++)
+			for (int t = 0; t < 7; t++)
 			{
 				if (textures[t])
 				{
@@ -272,6 +272,11 @@ namespace VKR
 						textures[t]->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
 				}
 			}
+			// Shadow Texture
+			textures[7]->tImage = _backend->m_ShadowTexture->tImage;
+			textures[7]->tImageView = _backend->m_ShadowTexture->tImageView;
+			textures[7]->tImageMem = _backend->m_ShadowTexture->tImageMem;
+			textures[7]->m_Sampler = _backend->m_ShadowTexture->m_Sampler;
 			PERF_END("CREATE_TEXTURES")
 		}
 		
@@ -363,6 +368,7 @@ namespace VKR
 					descriptorsWrite[1 + t].pImageInfo = &Textureimage[t];
 					descriptorsWrite[1 + t].pTexelBufferView = nullptr;
 				}
+
 				// Dynamic
 				VkDescriptorBufferInfo dynBufferInfo{};
 				dynBufferInfo.buffer = _DynamicBuffers[i];

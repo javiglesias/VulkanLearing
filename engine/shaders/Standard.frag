@@ -117,11 +117,15 @@ vec3 DirectionalLight(vec3 _color)
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
 	float shadow = ShadowCalculation(fraglight, inTextures[7]);
-	// ambient  *= att;
-	diffuse  *= att;
-	specular *= att;
-	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	return (ambient + diffuse + specular) * _color;
+	
+	float Vin = 0.1;
+	float reinhard = Vin / Vin+1; // tonemapping
+	
+	// ambient  *= reinhard;
+	// diffuse  *= reinhard;
+	// specular *= reinhard;
+	return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
+	// return (ambient + diffuse + specular) * _color;
 	// return norm;
 
 }
