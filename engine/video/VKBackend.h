@@ -30,6 +30,7 @@ namespace VKR
         inline const int FRAMES_IN_FLIGHT = 2;
         inline int g_WindowWidth = WIN_WIDTH;
         inline int g_WindowHeight = WIN_HEIGHT;
+		inline int g_ToneMapping = 0;
         inline bool m_NeedToRecreateSwapchain = false;
 		inline bool g_GPUTimestamp = false;
         inline bool m_MouseCaptured = false;

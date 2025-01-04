@@ -117,7 +117,6 @@ namespace VKR
 				ImGui::End();
 			}*/
 
-#if 1
 			ImGui::Begin("Tools");
 			{
 				// Camera
@@ -138,6 +137,27 @@ namespace VKR
 				{
 					_mainScene->ReloadShaders(_backend);
 				}
+				ImGui::BeginGroup();
+				ImGui::SliderInt("tonemapping", &g_ToneMapping, 0, 4);
+				switch (g_ToneMapping)
+				{
+				case 1: // Reinhard
+					ImGui::LabelText("tonemapping", "Reinhard");
+					break;
+				case 2: // Clamp
+					ImGui::LabelText("tonemapping", "Clamp");
+					break;
+				case 3: // Reinhard extended
+					ImGui::LabelText("tonemapping", "Reinhard extended");
+					break;
+				case 4: // Clamp
+					ImGui::LabelText("tonemapping", "Reinhard extended luminance");
+					break;
+				default:
+					ImGui::LabelText("tonemapping", "Default");
+					break;
+				}
+				ImGui::EndGroup();
 
 				// static ImGuiComboFlags flags = 0;
 				// static int item_current_idx = 0;
@@ -175,7 +195,7 @@ namespace VKR
 				//ImGui::DragFloat("Debug scale", &g_debugScale);
 				ImGui::End();
 			}
-			ImGui::Begin("Debug");
+			ImGui::Begin("Times");
 			{
 				/*if (_backend->m_ShadowVisualizer == nullptr)
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -296,7 +316,6 @@ namespace VKR
 				}
 				ImGui::End();
 			}
-#endif
 			ImGui::EndFrame();
 		}
 

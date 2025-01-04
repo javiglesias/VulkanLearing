@@ -88,6 +88,7 @@ namespace VKR
 				dynO.modelOpts.x = m_ProjectShadow; // project shadow
 				dynO.modelOpts.y = g_MipLevel;
 				dynO.addOpts.x = 1;
+				dynO.addOpts.y = static_cast<float>(g_ToneMapping);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
 				memcpy((char*)_backend->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				VkDeviceSize offsets[] = { 0 };

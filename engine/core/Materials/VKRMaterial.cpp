@@ -455,8 +455,6 @@ namespace VKR
 			textures[5] = nullptr;
 			textures[6]->CleanTextureData(_LogicDevice);
 			textures[6] = nullptr;
-			textures[7]->CleanTextureData(_LogicDevice);
-			textures[7] = nullptr;
 		}
 
 		void MaterialInstance::Cleanup(VkDevice _LogicDevice)

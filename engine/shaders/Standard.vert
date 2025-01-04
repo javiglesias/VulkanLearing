@@ -11,7 +11,7 @@ layout(set=0, binding=2) uniform DynamicBufferObject
 {
     mat4 model;
     vec4 modelOpts; // x: depth, y:MipLevel, z: specular, w: normals
-	vec4 addOpts; // x: num current Lights
+	vec4 addOpts; // x: num current Lights, y: tonemapping
 } dynO;
 
 layout (location = 0) in vec3 inPosition;
@@ -28,6 +28,7 @@ layout(location = 6) out float nLights;
 layout(location = 7) out float renderDepth;
 layout(location = 8) out float renderSpecular;
 layout(location = 9) out float renderNormals;
+layout(location = 10) out float tonemapping;
 
 void main() {
     gl_Position = ubo.projection * ubo.view * dynO.model * vec4(inPosition, 1.0);
@@ -36,11 +37,12 @@ void main() {
 	normal = mat3(transpose(inverse(dynO.model))) * aNormal;
     viewerPosition = ubo.viewerPosition;
 	shadowCoord = dynO.model * vec4(inPosition, 1.0);
-    
+	//------------------
 	renderDepth = dynO.modelOpts.x;
 	mipLevel    = dynO.modelOpts.y;
     renderSpecular = dynO.modelOpts.z;
     renderNormals  = dynO.modelOpts.w;
-	
+	//------------------
 	nLights 	   = dynO.addOpts.x;
+	tonemapping = dynO.addOpts.y;
 }
