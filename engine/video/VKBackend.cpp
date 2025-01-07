@@ -11,7 +11,7 @@
 #include "../core/Materials/VKRTexture.h"
 
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <signal.h>
 #endif
 
@@ -781,7 +781,11 @@ namespace VKR
 		{
 			// VkQueryPoolCreateInfo
 			if (g_context.m_GpuInfo.m_Properties.limits.timestampPeriod <= 0 && g_context.m_GpuInfo.m_Properties.limits.timestampComputeAndGraphics != VK_TRUE)
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 			g_Timestamps.resize(2);
 			VkBool32 presentSupport = false;
 			VkQueryPoolCreateInfo timestampQuery{};

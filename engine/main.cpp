@@ -3,7 +3,7 @@
 #include "filesystem/ResourceManager.h"
 #include "memory/mem_alloc.h"
 
-std::thread* RMThread;
+//std::thread* RMThread;
 void _init_resource_manager()
 {
 	VKR::RM::_Init();
@@ -18,7 +18,7 @@ int main(int _argc, char** _args)
 	double nextFrame = 0.f;
 	double deltaTime = 0.f;
 	auto p = NEW(float);
-	RMThread = new std::thread(_init_resource_manager);
+	//RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
 	mainScene.Init(&backend);
 	auto renderContext = VKR::render::GetVKContext();

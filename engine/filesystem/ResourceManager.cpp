@@ -114,7 +114,7 @@ namespace VKR
 			//PERF_INIT()
 			char filename[128];
 			sprintf(filename, "%s%s", _filepath, _modelName);
-			printf("\nLoading %s\n", _modelName);
+			printf("\nLoading %s\n", filename);
 			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
 			if (!scene || !scene->HasMeshes())
 				exit(-225);

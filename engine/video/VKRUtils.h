@@ -110,6 +110,7 @@ namespace VKR
 						return true;
 					}
 				}
+				fprintf(stderr, "NOT FOUND layer: %s", layerName);
 			}
 
 			return false;

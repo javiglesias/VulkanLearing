@@ -58,7 +58,11 @@ namespace VKR
 				else
 				{
 					tempModel_->m_Materials[materialID] = new render::R_Material();
+					#ifdef WIN32
 					__debugbreak();
+					#else
+						raise(SIGTRAP);
+					#endif
 					for (int t = 0; t < 8; t++)
 					{
 						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");

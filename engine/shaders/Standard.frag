@@ -50,6 +50,7 @@ layout(location = 6) in float nLights;
 layout(location = 7) in float renderDepth;
 layout(location = 8) in float renderSpecular;
 layout(location = 9) in float renderNormals;
+layout(location = 10) in float tonemapping;
 
 layout(location = 0) out vec4 outColor;
 
@@ -68,11 +69,49 @@ vec3 rgb_to_grayscale_luminosity(vec3 color) {
     return vec3(value);
 }
 
+float luminance(vec3 _colorIn)
+{
+	// L=0.2126R+0.7152G+0.0722B
+	float lumens = dot(_colorIn, vec3(0.2126, 0.7152, 0.0722));
+	return lumens;
+}
+
+vec3 calculate_luminance(vec3 color_in, float lum_out)
+{
+	float lum_in = luminance(color_in);
+	return color_in * (lum_out / lum_in);	
+}
+
 void main() 
 {
 	// vec4 shadowCoordFinal = shadowCoord * libO[2].lightProj * libO[0].lightView;
 	vec3 color = textureLod(inTextures[0], texCoord, mipLevel).rgb;
-	vec3 result = DirectionalLight(color);
+	vec3 ColorIn = DirectionalLight(color);
+	vec3 result = ColorIn;
+	// RGB Tonemapping
+	if(tonemapping == 1.0)
+	{ // reinhard basic
+		result = ColorIn / (1.0 + ColorIn);
+	} 
+	else if(tonemapping == 2.0)
+	{
+		result = clamp(ColorIn, 0.0, 1.0);
+	}
+	else if(tonemapping == 3.0)
+	{ // reinhard extended
+		vec3 max_white = vec3(1.0);
+		vec3 num = ColorIn * (1.0 + (ColorIn / (max_white * max_white)));
+		result = num;
+	}
+	else if(tonemapping == 4.0)
+	{ // reinhard extended luminance
+		float lum_old = luminance(ColorIn);
+		float lum_max_white = luminance(vec3(1.0));
+		float num = lum_old * (1.0 + (lum_old / (lum_max_white * lum_max_white)));
+		float lum_new = num / (1.0 + lum_old);
+		result = calculate_luminance(ColorIn, lum_new);
+	}
+	// result = rgb_to_grayscale_luminosity(result);
 	outColor = vec4(result, 1.0);
 }
 
@@ -117,9 +156,6 @@ vec3 DirectionalLight(vec3 _color)
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
 	float shadow = ShadowCalculation(fraglight, inTextures[7]);
-	
-	float Vin = 0.1;
-	float reinhard = Vin / Vin+1; // tonemapping
 	
 	// ambient  *= reinhard;
 	// diffuse  *= reinhard;
