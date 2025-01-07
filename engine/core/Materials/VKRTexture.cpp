@@ -5,6 +5,10 @@
 #include <string>
 #include <cmath>
 
+#ifndef WIN32
+#include <signal.h>
+#endif
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../../dependencies/stb/stb_image.h"
 
@@ -27,7 +31,11 @@ namespace VKR
 			pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
 			if (!pixels)
 			{
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 				exit(-666);
 			}
 			PERF_END("LOAD_TEXTURE")
@@ -52,7 +60,11 @@ namespace VKR
 			if (!pixels)
 			{
 				printf("\rMissing Texture %s\n", m_Path);
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 				exit(-666);
 			}
 			tHeight=tWidth;

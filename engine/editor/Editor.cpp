@@ -9,10 +9,10 @@
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #else
-#include "../../../dependencies/imgui/imgui.h"
-#include "../../../dependencies/imgui/misc/single_file/imgui_single_file.h"
-#include "../../../dependencies/imgui/backends/imgui_impl_glfw.h"
-#include "../../../dependencies/imgui/backends/imgui_impl_vulkan.h"
+#include "../../dependencies/imgui/imgui.h"
+#include "../../dependencies/imgui/misc/single_file/imgui_single_file.h"
+#include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
+#include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #include <dirent.h>
 #endif
 
@@ -71,7 +71,11 @@ namespace VKR
 			init_info.MinImageCount = _MinImageCount;
 			init_info.ImageCount = _ImageCount;
 			init_info.CheckVkResultFn = nullptr;
-			ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);
+			init_info.RenderPass = renderContext.m_RenderPass->m_Pass;
+			// Imgui commit: f80e65a406885beedf68856057b278343d5c1407 -> Backends:,Examples: Vulkan: moved RenderPass parameter from ImGui_ImplVulkan_Init() function to ImGui_ImplVulkan_InitInfo structure. (#7308)
+			ImGui_ImplVulkan_Init(&init_info);
+			// ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);
+
 			// // list all the directories for the model loading
 			// const char* path = "./resources/models";
 			// DIR* directory = opendir(path);

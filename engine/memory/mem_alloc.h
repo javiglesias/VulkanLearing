@@ -9,7 +9,7 @@ void* m_alloc(const char* _file, int _line, size_t _blockSize);
 
 #define NEW(X) m_alloc(__FILE__, __LINE__, sizeof(X))
 
-static struct heap_mem_track
+struct heap_mem_track
 {
 	char file_line[128];
 	void* mem_addr;
@@ -21,7 +21,7 @@ inline
 void* m_alloc(const char* _file, int _line, size_t _blockSize)
 {
 	sprintf(heap_track[current_track].file_line, "%s : %d", _file, _line);
-	auto p = _aligned_malloc(_blockSize, 16);
+	auto p = malloc(_blockSize);
 	heap_track[current_track].mem_addr = p;
 	memset(p, 0x69, _blockSize);
 	++current_track;

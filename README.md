@@ -1,8 +1,5 @@
 # VulkanLearing
 Learn Vulkan API and Rendering concepts.
-Este es un repo personal en el que voy aprendiendo como hacer un motor de videojuegos con un backend en Vulkan,
-de momento.
-Mas adelante me gustaria meter otro backend de Directx12 (No se si meter otro de OGL).
 
 ![imagen](https://github.com/javiglesias/VulkanLearing/assets/9042602/15c0e142-f0a9-4765-b079-db5975ab37dc)
 
@@ -12,35 +9,37 @@ Mas adelante me gustaria meter otro backend de Directx12 (No se si meter otro de
 - sudo apt install g++
 - sudo apt install vulkan-tools
 - sudo apt install libvulkan-dev
-- sudo apt install vulkan-validationlayers-dev spirv-tools
+- sudo apt install vulkan-validationlayers
 - sudo apt install libglfw3-dev
 - sudo apt install libglm-dev
--sudo apt-get install libassimp-dev
+- sudo apt-get install libassimp-dev
+- Install spirv-tools
+
 
 # TO-DOs
 
 - [x] Render de primitivas simples para DEBUG en otra pipeline
 - [x] blinn-phong
 - Multiple Lights
-- Hot-Reload de Shaders en tiempo de ejecucion.
+- [x] Hot-Reload Shaders (Windows).
 - Uber Shaders
 - Render 2D (quads, etc)
-- Cubemap (HDR)
+- [x]Cubemap
+- HDR
 - Dithering
 - Render Fuentes
-- Compilacion de Shaders en runtime (ahora mismo se hacen en post-compilacion con glslc.exe)
-- ordenar modelos segun material a la hora de pintar
-- ordenar modelos segun posicion respecto a la camara
-- Point lights
-- mega-texturas
+- [x] ordering models draw calls.
+- [x] Point lights
+- mega-textures?
 - forward+deferred
-- Transparencias(alpha blending)
+- Tranparencies (alpha blending)
 - TXAA/FXAA
 - SSAO
 - SSR
 - PBR
 - Terrain
 - Raytracing
+- [x] Tonemapping Reinhard (extended), Clamp Tonemapping
 
 # 3rd Party libraries
  - assimp
@@ -49,7 +48,4 @@ Mas adelante me gustaria meter otro backend de Directx12 (No se si meter otro de
  - glm
  - imgui
  - stb_image
-## Futuras bibliotecas
- - https://github.com/aiekick/ImGuiFileDialog
- - https://github.com/thedmd/imgui-node-editor
- - FMOD
+ - cgltf

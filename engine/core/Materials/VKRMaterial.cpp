@@ -1,7 +1,9 @@
 #include "VKRMaterial.h"
 #include "VKRTexture.h"
 #include "../../perfmon/Custom.h"
-
+#ifndef WIN32
+#include <signal.h>
+#endif
 namespace VKR
 {
 	namespace render
@@ -52,7 +54,11 @@ namespace VKR
 #endif
 			if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, &vertShaderModule)
 				!= VK_SUCCESS)
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 			vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 			vertShaderStageInfo.module = vertShaderModule;
@@ -71,7 +77,11 @@ namespace VKR
 #endif
 			if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, &fragShaderModule)
 				!= VK_SUCCESS)
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 			/// Creacion de los shader stage de la Pipeline
 			fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -219,7 +229,11 @@ namespace VKR
 			pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 			pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 			if (vkCreatePipelineLayout(m_LogicDevice, &pipelineLayoutCreateInfo, nullptr, &layout) != VK_SUCCESS)
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 			// Creamos la Pipeline para pintar objs
 			VkGraphicsPipelineCreateInfo pipelineInfoCreateInfo{};
 			pipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -241,7 +255,11 @@ namespace VKR
 
 			if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &pipelineInfoCreateInfo,
 				nullptr, &pipeline) != VK_SUCCESS)
-				__debugbreak();
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 			vkDestroyShaderModule(m_LogicDevice, vertShaderModule, nullptr);
 			vkDestroyShaderModule(m_LogicDevice, fragShaderModule, nullptr);
 		}
