@@ -28,7 +28,6 @@ namespace VKR
             void ReloadShaders(VKBackend* _backend);
             void DrawScene(VKBackend* _backend, int _CurrentFrame);
             void PrepareCubemapScene(VKBackend* _backend);
-			void PrepareModel(VKBackend* _backend, R_Model* _model);
             void PrepareScene(VKBackend* _backend);
             //void PrepareDebugScene(VKBackend* _backend);
             void ShadowPass(VKBackend* _backend, int _CurrentFrame);

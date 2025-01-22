@@ -1,5 +1,6 @@
 dependencies/vulkan_1.3.296.0/x86_64/bin/glslc engine/shaders/Standard.vert -o 	engine/shaders/Standard.vert.spv
 dependencies/vulkan_1.3.296.0/x86_64/bin/glslc engine/shaders/Standard.frag -o 	engine/shaders/Standard.frag.spv
+dependencies/vulkan_1.3.296.0/x86_64/bin/glslc engine/shaders/Standard.comp -o 	engine/shaders/Standard.comp.spv
 dependencies/vulkan_1.3.296.0/x86_64/bin/glslc engine/shaders/Debug.vert -o 	 	engine/shaders/Debug.vert.spv
 dependencies/vulkan_1.3.296.0/x86_64/bin/glslc engine/shaders/Debug.frag -o 	 	engine/shaders/Debug.frag.spv
 dependencies/vulkan_1.3.296.0/x86_64/bin/glslc engine/shaders/Shadow.vert -o 	engine/shaders/Shadow.vert.spv

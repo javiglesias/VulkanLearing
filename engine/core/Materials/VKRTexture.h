@@ -9,7 +9,6 @@ namespace VKR
 	namespace render
 	{
 		extern std::string g_ConsoleMSG;
-		extern const int FRAMES_IN_FLIGHT;
 
 		struct Texture
 		{

@@ -12,6 +12,7 @@ namespace VKR
 	namespace RM
 	{
 		render::R_Model* tempModel;
+		
 		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_);
 		bool LoadModel_ALT(const char* _filepath, const char* _modelName)
 		{
@@ -78,7 +79,9 @@ namespace VKR
 				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
-					tempModel->m_Materials[mesh->mMaterialIndex]->material.pipeline._buildPipeline();
+					tempModel->m_Materials[mesh->mMaterialIndex]->material = new render::MaterialInstance();
+					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
+					
 					for (int t = 0; t < 7; t++)
 					{
 						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]), 

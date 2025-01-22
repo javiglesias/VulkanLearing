@@ -35,7 +35,7 @@ namespace VKR
 						if (tempModel_->m_Materials[materialID] == nullptr)
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
-							tempModel_->m_Materials[materialID]->material.pipeline._buildPipeline();
+							tempModel_->m_Materials[materialID]->material->pipeline._buildPipeline();
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
 							/*for(int t= 0; t < 8; t++)
 							{

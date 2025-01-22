@@ -9,13 +9,19 @@ namespace VKR
 		}
 		void VKRenderable::Cleanup(VkDevice _LogicDevice)
 		{
-			if (m_Indices.size() > 0)
+			for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				vkDestroyBuffer(_LogicDevice, m_IndexBuffer, nullptr);
-				vkFreeMemory(_LogicDevice, m_IndexBufferMemory, nullptr);
+				if (m_Indices.size() > 0)
+				{
+					vkDestroyBuffer(_LogicDevice, m_IndexBuffer[i], nullptr);
+					vkFreeMemory(_LogicDevice, m_IndexBufferMemory[i], nullptr);
+				}
+				vkDestroyBuffer(_LogicDevice, m_VertexBuffer[i], nullptr);
+				vkFreeMemory(_LogicDevice, m_VertexBufferMemory[i], nullptr);
+
+				vkDestroyBuffer(_LogicDevice, m_ComputeBuffer[i], nullptr);
+				vkFreeMemory(_LogicDevice, m_ComputeBufferMemory[i], nullptr);
 			}
-			vkDestroyBuffer(_LogicDevice, m_VertexBuffer, nullptr);
-			vkFreeMemory(_LogicDevice, m_VertexBufferMemory, nullptr);
 		}
 	}
 }

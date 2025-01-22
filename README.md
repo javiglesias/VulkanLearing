@@ -24,7 +24,7 @@ Learn Vulkan API and Rendering concepts.
 - [x] Hot-Reload Shaders (Windows).
 - Uber Shaders
 - Render 2D (quads, etc)
-- [x]Cubemap
+- [x] Cubemap
 - HDR
 - Dithering
 - Render Fuentes

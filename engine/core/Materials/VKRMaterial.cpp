@@ -34,61 +34,40 @@ namespace VKR
 			VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 			VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 			VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-			VkShaderModule vertShaderModule;
-			VkShaderModule fragShaderModule;
+			VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
+			
 			VkCullModeFlagBits cullMode = VK_CULL_MODE_BACK_BIT;
 			VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-
-			Shader* vertShader = new Shader("engine/shaders/Standard.vert", 0);
-			Shader* fragShader = new Shader("engine/shaders/Standard.frag", 4);
-
-			auto spvCompiled = vertShader->LoadShader();
-			VkShaderModuleCreateInfo shaderModuleCreateInfo{};
-			shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-#ifdef WIN32
-			shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
-			shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
-#else
-			shaderModuleCreateInfo.codeSize = spvCompiled.size();
-			shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());
-#endif
-			if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, &vertShaderModule)
-				!= VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
-			vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-			vertShaderStageInfo.module = vertShaderModule;
-			vertShaderStageInfo.pName = "main";
+			Shader* vertShader;
+			Shader* fragShader;
+			Shader* computeShader = new Shader("engine/shaders/Standard.comp", 5);
+			Shader* vert_finded = find_shader("engine/shaders/Standard.vert");
+			if(!vert_finded)
+			{
+				vertShader = new Shader("engine/shaders/Standard.vert", 0);
+				add_shader_to_list(vertShader);
+			}
+			else
+			{
+				vertShader = vert_finded; 
+			}
+			vertShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_VERTEX_BIT, &vertShaderStageInfo);
 			shaderStages[0] = vertShaderStageInfo;
-
-
-			spvCompiled = fragShader->LoadShader();
-			shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-#ifdef WIN32
-			shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
-			shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
-#else
-			shaderModuleCreateInfo.codeSize = spvCompiled.size();
-			shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());
-#endif
-			if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, &fragShaderModule)
-				!= VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
-			/// Creacion de los shader stage de la Pipeline
-			fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-			fragShaderStageInfo.module = fragShaderModule;
-			fragShaderStageInfo.pName = "main";
+			
+			Shader* frag_finded = find_shader("engine/shaders/Standard.frag");
+			if(!frag_finded)
+			{
+				fragShader = new Shader("engine/shaders/Standard.frag", 0);
+				add_shader_to_list(fragShader);
+			}
+			else
+			{
+				fragShader = frag_finded; 
+			}
+			fragShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_FRAGMENT_BIT, &fragShaderStageInfo);
 			shaderStages[1] = fragShaderStageInfo;
 
+			computeShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_COMPUTE_BIT, &computeShaderStageInfo);
 
 			/// Color Blending
 			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -248,7 +227,7 @@ namespace VKR
 			pipelineInfoCreateInfo.pColorBlendState = &colorBlending;
 			pipelineInfoCreateInfo.pDynamicState = &dynamicState;
 			pipelineInfoCreateInfo.layout = layout;
-			pipelineInfoCreateInfo.renderPass = GetVKContext().m_RenderPass->m_Pass;
+			pipelineInfoCreateInfo.renderPass = GetVKContext().m_RenderPass->pass;
 			pipelineInfoCreateInfo.subpass = 0;
 			pipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 			pipelineInfoCreateInfo.basePipelineIndex = -1;
@@ -260,8 +239,30 @@ namespace VKR
 				#else
 					raise(SIGTRAP);
 				#endif
-			vkDestroyShaderModule(m_LogicDevice, vertShaderModule, nullptr);
-			vkDestroyShaderModule(m_LogicDevice, fragShaderModule, nullptr);
+
+			// COMPUTE PIPELINE
+			VkComputePipelineCreateInfo compute_pipeInfo {};
+			compute_pipeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+			compute_pipeInfo.layout = compute_layout;
+			compute_pipeInfo.stage = computeShaderStageInfo;
+			if (vkCreateComputePipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &compute_pipeInfo, 
+					nullptr, &compute)  != VK_SUCCESS)
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
+			VkPipelineLayoutCreateInfo compute_pipelineLayout{};
+			compute_pipelineLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			compute_pipelineLayout.setLayoutCount = 1;
+			compute_pipelineLayout.pSetLayouts = &compute_descriptorSetLayout;
+			if (vkCreatePipelineLayout(m_LogicDevice, &compute_pipelineLayout, nullptr, &compute_layout) 
+					!= VK_SUCCESS)
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
 		}
 
 		void R_Material::PrepareMaterialToDraw(VKBackend* _backend)
@@ -326,17 +327,17 @@ namespace VKR
 			descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
 			descPoolInfo.pPoolSizes = descPoolSize.data();
 			descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
-			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &material.descriptorPool) != VK_SUCCESS)
+			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &material->descriptorPool) != VK_SUCCESS)
 				exit(-66);
-			descriptorLayouts[0] = material.pipeline.descriptorSetLayout;
-			descriptorLayouts[1] = material.pipeline.descriptorSetLayout;
+			descriptorLayouts[0] = material->pipeline.descriptorSetLayout;
+			descriptorLayouts[1] = material->pipeline.descriptorSetLayout;
 			VkDescriptorSetAllocateInfo descAllocInfo{};
 			descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descAllocInfo.descriptorPool = material.descriptorPool;
+			descAllocInfo.descriptorPool = material->descriptorPool;
 			descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
 			descAllocInfo.pSetLayouts = descriptorLayouts;
-			material.materialSets.resize(FRAMES_IN_FLIGHT);
-			if (vkAllocateDescriptorSets(_LogicDevice, &descAllocInfo, material.materialSets.data()) != VK_SUCCESS)
+			material->materialSets.resize(FRAMES_IN_FLIGHT);
+			if (vkAllocateDescriptorSets(_LogicDevice, &descAllocInfo, material->materialSets.data()) != VK_SUCCESS)
 				exit(-67);
 		}
 
@@ -353,7 +354,7 @@ namespace VKR
 
 				std::array<VkWriteDescriptorSet, 14> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[0].dstSet = material.materialSets[i];
+				descriptorsWrite[0].dstSet = material->materialSets[i];
 				descriptorsWrite[0].dstBinding = 0;
 				descriptorsWrite[0].dstArrayElement = 0;
 				descriptorsWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -377,7 +378,7 @@ namespace VKR
 						printf("Invalid Sampler for frame\n");
 					}
 					descriptorsWrite[1 + t].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[1 + t].dstSet = material.materialSets[i];
+					descriptorsWrite[1 + t].dstSet = material->materialSets[i];
 					descriptorsWrite[1 + t].dstBinding = 1;
 					descriptorsWrite[1 + t].dstArrayElement = t;
 					descriptorsWrite[1 + t].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -394,7 +395,7 @@ namespace VKR
 				dynBufferInfo.range = sizeof(DynamicBufferObject); // VK_WHOLE
 
 				descriptorsWrite[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[9].dstSet = material.materialSets[i];
+				descriptorsWrite[9].dstSet = material->materialSets[i];
 				descriptorsWrite[9].dstBinding = 2;
 				descriptorsWrite[9].dstArrayElement = 0;
 				descriptorsWrite[9].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -409,7 +410,7 @@ namespace VKR
 				dirLightBufferInfo.offset = 0;
 				dirLightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
 				descriptorsWrite[10].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[10].dstSet = material.materialSets[i];
+				descriptorsWrite[10].dstSet = material->materialSets[i];
 				descriptorsWrite[10].dstBinding = 3;
 				descriptorsWrite[10].dstArrayElement = 0;
 				descriptorsWrite[10].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -424,7 +425,7 @@ namespace VKR
 				pointtLightBufferInfo.offset = 0;
 				pointtLightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
 				descriptorsWrite[11].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[11].dstSet = material.materialSets[i];
+				descriptorsWrite[11].dstSet = material->materialSets[i];
 				descriptorsWrite[11].dstBinding = 4;
 				descriptorsWrite[11].dstArrayElement = 0;
 				descriptorsWrite[11].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -442,7 +443,7 @@ namespace VKR
 				for(int j = start; j < 14; j++) // 4 lights
 				{
 					descriptorsWrite[j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[j].dstSet = material.materialSets[i];
+					descriptorsWrite[j].dstSet = material->materialSets[i];
 					descriptorsWrite[j].dstBinding = 5;
 					descriptorsWrite[j].dstArrayElement = j - start;
 					descriptorsWrite[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -457,7 +458,7 @@ namespace VKR
 
 		void R_Material::Cleanup(VkDevice _LogicDevice)
 		{
-			material.Cleanup(_LogicDevice);
+			material->Cleanup(_LogicDevice);
 			// Delete Material things
 			textures[0]->CleanTextureData(_LogicDevice);
 			textures[0] = nullptr;

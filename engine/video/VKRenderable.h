@@ -7,6 +7,7 @@ namespace VKR
 {
     namespace render
     {
+		inline const int FRAMES_IN_FLIGHT = 2;
         struct VKRenderable
         {
 			std::vector<Vertex3D> m_Vertices;
@@ -18,10 +19,12 @@ namespace VKR
 			glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
 			// Base_color, metallicRoughtness, normal Textures
 			uint32_t m_Material;
-			VkBuffer m_VertexBuffer = nullptr;
-			VkDeviceMemory m_VertexBufferMemory = nullptr;
-			VkBuffer m_IndexBuffer = nullptr;
-			VkDeviceMemory m_IndexBufferMemory = nullptr;
+			VkBuffer m_VertexBuffer[FRAMES_IN_FLIGHT];
+			VkDeviceMemory m_VertexBufferMemory[FRAMES_IN_FLIGHT];
+			VkBuffer m_IndexBuffer[FRAMES_IN_FLIGHT];
+			VkDeviceMemory m_IndexBufferMemory[FRAMES_IN_FLIGHT];
+			VkBuffer m_ComputeBuffer[FRAMES_IN_FLIGHT];
+			VkDeviceMemory m_ComputeBufferMemory[FRAMES_IN_FLIGHT];
 			PBR_material metallic_roughness;
 			VKRenderable();
 			void Cleanup(VkDevice _LogicDevice);

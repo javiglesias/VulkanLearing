@@ -10,7 +10,6 @@ namespace VKR
 {
 	namespace render
 	{
-		extern const int FRAMES_IN_FLIGHT;
 		class VKBackend;
 		struct Texture;
 
@@ -27,8 +26,11 @@ namespace VKR
 			bool debugMaterial;
 
 			VkPipeline pipeline;
+			VkPipeline compute;
 			VkPipelineLayout layout;
+			VkPipelineLayout compute_layout;
 			VkDescriptorSetLayout descriptorSetLayout;
+			VkDescriptorSetLayout compute_descriptorSetLayout;
 			void _buildPipeline();
 			void Cleanup(VkDevice _LogicDevice);
 		};
@@ -41,11 +43,18 @@ namespace VKR
 			void Cleanup(VkDevice _LogicDevice);
 		};
 
+		struct MaterialItem
+		{
+			uint8_t id;
+			MaterialInstance* instance;
+		};
+		static MaterialItem* materialList[256];
+		static int currentMaterials=0;
 		struct R_Material
 		{
 			VkShaderModule m_VertShaderModule;
 			VkShaderModule m_FragShaderModule;
-			MaterialInstance material;
+			MaterialInstance* material;
 
 			char _vertPath[64];
 			char _fragPath[64];
@@ -57,6 +66,32 @@ namespace VKR
 									 std::vector<VkBuffer> _DynamicBuffers, std::vector<VkBuffer> _LightsBuffers);
 			void Cleanup(VkDevice _LogicDevice);
 		};
+
+		static void add_instance_to_list(MaterialInstance* _material)
+		{
+			MaterialItem* nouvo = new MaterialItem();
+			nouvo->id = 0;
+			nouvo->instance = _material;
+			materialList[currentMaterials] = nouvo;
+			++currentMaterials;
+		}
+		static uint8_t MaterialHashId(MaterialInstance _instance)
+		{
+
+			return 0;
+		}
+		static MaterialInstance* find_instance(uint8_t _id)
+		{
+			for (size_t i = 0; i < currentMaterials; i++)
+			{
+				return materialList[i]->instance;
+			}
+			return nullptr;
+		}
+		static void clean_material_list()
+		{
+			currentMaterials = 0;
+		}
 	}
 }
 #endif

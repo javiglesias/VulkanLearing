@@ -5,7 +5,7 @@ namespace VKR
 {
     namespace render
     {
-        RenderPass::RenderPass(VkRenderPass _Pass) : m_Pass(_Pass), m_Subpass{}
+        RenderPass::RenderPass(VkRenderPass _Pass) : pass(_Pass), subpass{}
         {}
 
 		void RenderPass::CreateColorAttachment(VkFormat _format)
@@ -17,7 +17,19 @@ namespace VKR
 			attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			m_ColorAttachments.push_back(attachment);
+			attachments.push_back(attachment);
+		}
+
+		void RenderPass::CreateGeometryAttachment(VkFormat _format)
+		{
+			VkAttachmentDescription attachment{};
+			attachment.format = VK_FORMAT_R32G32B32A32_UINT;
+			attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			attachments.push_back(attachment);
 		}
 
 		void RenderPass::CreateDepthAttachment(VkFormat _format, VkImageLayout _finalLayout)
@@ -32,7 +44,7 @@ namespace VKR
 			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			depthAttachment.finalLayout = _finalLayout;
-			m_DepthAttachments.push_back(depthAttachment);
+			attachments.push_back(depthAttachment);
 		}
 
 		void RenderPass::CreateSubPass()
@@ -40,28 +52,28 @@ namespace VKR
 			// SUB-PASSES
 			/// Attachment References
 			// color
-			colorAttachmentRef.attachment = 0;
-			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			color_ref.attachment = 0;
+			color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			// depth
-			depthAttachmentRef.attachment = 1;
-			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			depth_ref.attachment = 1;
+			depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			/// Sub-pass
-			m_Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			m_Subpass.colorAttachmentCount = static_cast<uint32_t>(m_ColorAttachments.size());
-			m_Subpass.pColorAttachments = &colorAttachmentRef;
-			m_Subpass.pDepthStencilAttachment = &depthAttachmentRef;
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &color_ref;
+			subpass.pDepthStencilAttachment = &depth_ref;
 		}
 
 		void RenderPass::CreateDepthOnlySubPass()
 		{
 			/// Attachment References
-			depthAttachmentRef.attachment = 0;
-			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			depth_ref.attachment = 0;
+			depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			/// Sub-pass
-			m_Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			m_Subpass.pDepthStencilAttachment = &depthAttachmentRef;
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.pDepthStencilAttachment = &depth_ref;
 		}
 
 		void RenderPass::CreatePass(VkDevice _LogicDevice)
@@ -76,19 +88,16 @@ namespace VKR
 			subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 			/// Render pass
-			std::vector<VkAttachmentDescription> attachments;
-			attachments.insert(attachments.end(), m_ColorAttachments.begin(), m_ColorAttachments.end());
-			attachments.insert(attachments.end(), m_DepthAttachments.begin(), m_DepthAttachments.end());
 			VkRenderPassCreateInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 			renderPassInfo.pAttachments = attachments.data();
 			renderPassInfo.subpassCount = 1;
-			renderPassInfo.pSubpasses = &m_Subpass;
+			renderPassInfo.pSubpasses = &subpass;
 			renderPassInfo.dependencyCount = 1;
 			renderPassInfo.pDependencies = &subpassDep;
 			if (vkCreateRenderPass(_LogicDevice, &renderPassInfo, nullptr,
-				&m_Pass) != VK_SUCCESS)
+				&pass) != VK_SUCCESS)
 #ifdef WIN32
 				__debugbreak();
 #else
@@ -98,7 +107,7 @@ namespace VKR
 
 		void RenderPass::Cleanup(VkDevice _LogicDevice)
 		{
-			vkDestroyRenderPass(_LogicDevice, m_Pass, nullptr);
+			vkDestroyRenderPass(_LogicDevice, pass, nullptr);
 		}
     }
 }

@@ -194,9 +194,13 @@ namespace VKR
 				break;
 				// Mensaje sobre un comportamiento invalido y que puede provocar CRASH
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+#ifdef WIN32
 				ChangeColorConsole(CONSOLE_COLOR::RED);
 				fprintf(stderr, "\n\tVLayer message: %s\n", pCallbackData->pMessage);
 				ChangeColorConsole(CONSOLE_COLOR::NORMAL);
+#else
+				fprintf(stderr, "\033[1;31m\n\tVLayer message: %s\033[0m\n", pCallbackData->pMessage);
+#endif
 				break;
 			default:
 				break;
@@ -339,7 +343,6 @@ namespace VKR
 			m_SwapChainImages.resize(m_SwapchainImagesCount);
 			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
 			CreateImageViews();
-
 			m_CubemapRender = new CubemapRenderer(g_context.m_LogicDevice);
 			m_ShadowRender = new ShadowRenderer(g_context.m_LogicDevice);
 			m_ShadowMat = new R_ShadowMaterial();
@@ -365,7 +368,7 @@ namespace VKR
 			g_context.CreateRenderPass(&m_SwapChainCreateInfo);
 			g_context.CreateGeometryPass(&m_SwapChainCreateInfo);
 			// Crear Pipeline
-			//m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			//m_GraphicsRender->CreatePipeline(g_context.m_RenderPass->pass);
 			// Limpiar ShaderModules
 			//m_GraphicsRender->CleanShaderModules();
 
@@ -373,7 +376,7 @@ namespace VKR
 			m_DbgRender->Initialize();
 			m_DbgRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_DbgRender->CreatePipelineLayout();
-			m_DbgRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_DbgRender->CreatePipeline(g_context.m_RenderPass->pass);
 			m_DbgRender->CleanShaderModules();
 
 			// Lo Mismo para Shadows
@@ -381,7 +384,7 @@ namespace VKR
 				m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 				m_ShadowRender->CreatePipelineLayout();
 			g_context.CreateShadowRenderPass();
-			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
+			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->pass);
 			m_ShadowRender->CleanShaderModules();
 
 			// Pa'l cubemap
@@ -389,14 +392,14 @@ namespace VKR
 			m_CubemapRender->Initialize();
 			m_CubemapRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
-			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_CubemapRender->CreatePipeline(g_context.m_RenderPass->pass);
 			m_CubemapRender->CleanShaderModules();
 
 			//Grid vertex Render
 			m_GridRender->Initialize();
 			m_GridRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_GridRender->CreatePipelineLayout();
-			m_GridRender->CreatePipeline(g_context.m_RenderPass->m_Pass);
+			m_GridRender->CreatePipeline(g_context.m_RenderPass->pass);
 			m_GridRender->CleanShaderModules();
 
 			vkGetPhysicalDeviceMemoryProperties(g_context.m_GpuInfo.m_Device, &m_Mem_Props);
@@ -407,6 +410,7 @@ namespace VKR
 			// Creamos los recursos para el Depth testing
 			CreateDepthTestingResources();
 			CreateFramebuffers();
+			CreateGBufferImage();
 			// Uniform buffers
 			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -696,10 +700,11 @@ namespace VKR
 			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_ShadowRender->CreatePipelineLayout();
 			g_context.CreateShadowRenderPass();
-			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->m_Pass);
+			m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->pass);
 			CreateShadowResources();
 			CreateShadowFramebuffer();
 			CreateDepthTestingResources();
+			CreateGBufferImage();
 			CreateFramebuffers();
 		}
 
@@ -707,7 +712,7 @@ namespace VKR
 		{
 			VkFramebufferCreateInfo mFramebufferInfo{};
 			mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			mFramebufferInfo.renderPass = g_context.m_ShadowPass->m_Pass;
+			mFramebufferInfo.renderPass = g_context.m_ShadowPass->pass;
 			mFramebufferInfo.attachmentCount = 1;
 			mFramebufferInfo.pAttachments = &m_ShadowTexture->tImageView;
 			mFramebufferInfo.width = m_CurrentExtent.width;
@@ -730,7 +735,7 @@ namespace VKR
 				};
 				VkFramebufferCreateInfo mFramebufferInfo{};
 				mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				mFramebufferInfo.renderPass = g_context.m_RenderPass->m_Pass;
+				mFramebufferInfo.renderPass = g_context.m_RenderPass->pass;
 				mFramebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 				mFramebufferInfo.pAttachments = attachments.data();
 				mFramebufferInfo.width = m_CurrentExtent.width;
@@ -831,6 +836,20 @@ namespace VKR
 			m_DepthImageView = CreateImageView(m_DepthImage, depthFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 		}
+		void VKBackend::CreateGBufferImage()
+		{
+			VkFormat GBufferFormat = VK_FORMAT_R32G32B32A32_UINT;
+			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, GBufferFormat,
+				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&m_GBufferImage, &m_GBufferImageMemory, 1, 0, 1);
+			// Transicionamos la imagen
+			vkBindImageMemory(g_context.m_LogicDevice, m_GBufferImage, m_GBufferImageMemory, 0);
+			TransitionImageLayout(m_GBufferImage, GBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
+			m_GBufferImageView = CreateImageView(m_GBufferImage, GBufferFormat,
+				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
+		}
 
 		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
 		{
@@ -840,7 +859,7 @@ namespace VKR
 			// Render pass
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = g_context.m_RenderPass->m_Pass;
+			renderPassInfo.renderPass = g_context.m_RenderPass->pass;
 			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_InFlightFrame];
 			renderPassInfo.renderArea.offset = { 0,0 };
 			renderPassInfo.renderArea.extent = m_CurrentExtent;

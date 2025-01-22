@@ -6,6 +6,7 @@
 #else
 #include <cstring>
 #endif
+#include <string>
 #include <cstdio>
 #include <cmath>
 
@@ -13,6 +14,7 @@ namespace VKR
 {
 	namespace render
 	{
+		extern std::string g_ConsoleMSG;
 		struct GPUInfo
 		{
 			uint32_t minUniformBufferOffsetAlignment = 0;
@@ -50,9 +52,11 @@ namespace VKR
 			VKR::render::RenderPass* m_GeometryPass;
 			unsigned int m_GraphicsQueueFamilyIndex = 0;
 			unsigned int m_TransferQueueFamilyIndex = 0;
+			unsigned int m_ComputeQueueFamilyIndex = 0;
 			VkQueue m_GraphicsQueue;
 			VkQueue m_TransferQueue;
 			VkQueue m_PresentQueue;
+			VkQueue m_ComputeQueue;
 
 			//std::array< VkPipeline, SWAPCHAIN_BUFFERING_LEVEL > boundGraphicsPipelines{};
 			void CreateRenderPass(VkSwapchainCreateInfoKHR* m_SwapChainCreateInfo);
@@ -80,7 +84,7 @@ namespace VKR
 				if (_tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & _features) == _features)
 					return format;
 			}
-			//g_ConsoleMSG += "No found supported format\n";
+			g_ConsoleMSG += "No found supported format\n";
 			printf("No found supported format\n");
 			exit(-79);
 		}
@@ -151,7 +155,7 @@ namespace VKR
 					m_GPUSelected = it;
 					char tmp[512];
 					sprintf(tmp, "\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
-					//g_ConsoleMSG += tmp;
+					g_ConsoleMSG += tmp;
 					g_context.m_GpuInfo.minUniformBufferOffsetAlignment = (uint32_t)deviceProp[m_GPUSelected].limits.minUniformBufferOffsetAlignment;
 				}
 				vkGetPhysicalDeviceFeatures(m_PhysicalDevices[it], &deviceFeatures[it]);
@@ -202,27 +206,35 @@ namespace VKR
 			std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 			vkGetPhysicalDeviceQueueFamilyProperties(m_GpuInfo.m_Device, &queueFamilyCount, queueFamilies.data());
 			// VK_QUEUE_GRAPHICS_BIT
-			bool searchingGraphics = true, searchingTransfer = true;
+			bool searchingGraphics = true, searchingTransfer = true, searchingCompute = true;
 			for (const auto& queueFamily : queueFamilies)
 			{
 				if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 				{
 					char tmp[256];
 					sprintf(tmp, "Graphics Family: %d\n", m_TransferQueueFamilyIndex);
-					/*g_ConsoleMSG += tmp;*/
+					g_ConsoleMSG += tmp;
 					searchingGraphics = false;
 				}
 				if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
 				{
 					char tmp[256];
 					sprintf(tmp, "Transfer Family: %d\n", m_TransferQueueFamilyIndex);
-					//g_ConsoleMSG += tmp;
+					g_ConsoleMSG += tmp;
 					searchingTransfer = false;
 				}
 
+				if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+				{
+					char tmp[256];
+					sprintf(tmp, "Compute Family: %d\n", m_ComputeQueueFamilyIndex);
+					g_ConsoleMSG += tmp;
+					searchingCompute = false;
+				}
+				m_ComputeQueueFamilyIndex  += searchingCompute;
 				m_GraphicsQueueFamilyIndex += searchingGraphics;
 				m_TransferQueueFamilyIndex += searchingTransfer;
-				if (!searchingGraphics && !searchingTransfer)
+				if (!searchingGraphics && !searchingTransfer && !searchingCompute)
 					break;
 			}
 
@@ -242,11 +254,18 @@ namespace VKR
 				.queueCount = 1,
 				.pQueuePriorities = &queuePriority
 				});
+			g_context.m_GpuInfo.m_QueueCreateInfos.push_back({
+				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.queueFamilyIndex = m_ComputeQueueFamilyIndex,
+				.queueCount = 1,
+				.pQueuePriorities = &queuePriority
+				});
 
 			// Create logical device associated to physical device
 			CreateLogicalDevice();
 			vkGetDeviceQueue(m_LogicDevice, m_GraphicsQueueFamilyIndex, 0, &m_GraphicsQueue);
 			vkGetDeviceQueue(m_LogicDevice, m_TransferQueueFamilyIndex, 0, &m_TransferQueue);
+			vkGetDeviceQueue(m_LogicDevice, m_ComputeQueueFamilyIndex, 0, &m_ComputeQueue);
 		}
 
 		inline void VKContext::CreateShadowRenderPass()
@@ -281,7 +300,7 @@ namespace VKR
 		{
 
 			m_GeometryPass = new VKR::render::RenderPass();
-			m_GeometryPass->CreateColorAttachment(m_SwapChainCreateInfo->imageFormat);
+			m_GeometryPass->CreateGeometryAttachment(m_SwapChainCreateInfo->imageFormat);
 			m_GeometryPass->CreateDepthAttachment(m_GpuInfo.FindDepthTestFormat(),
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 			m_GeometryPass->CreateSubPass();
@@ -303,6 +322,35 @@ static void VK_ASSERT(bool _check)
 
 inline 
 void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode, VkMemoryPropertyFlags _memFlags, VkBuffer& buffer_,
+	VkDeviceMemory& bufferMem_)
+{
+	auto renderContext = VKR::render::GetVKContext();
+	unsigned int queueFamilyIndices[] = { renderContext.m_GraphicsQueueFamilyIndex, renderContext.m_TransferQueueFamilyIndex };
+	VkBufferCreateInfo mBufferInfo{};
+	mBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	mBufferInfo.size = _size;
+	mBufferInfo.usage = _usage;
+	mBufferInfo.sharingMode = _shareMode;
+	mBufferInfo.pQueueFamilyIndices = queueFamilyIndices;
+	mBufferInfo.queueFamilyIndexCount = 2;
+
+	if (vkCreateBuffer(renderContext.m_LogicDevice, &mBufferInfo, nullptr, &buffer_) != VK_SUCCESS)
+		exit(-6);
+	VkMemoryRequirements mem_Requ;
+	vkGetBufferMemoryRequirements(renderContext.m_LogicDevice, buffer_, &mem_Requ);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = mem_Requ.size;
+	allocInfo.memoryTypeIndex = renderContext.m_GpuInfo.FindMemoryType(mem_Requ.memoryTypeBits, _memFlags);
+	if (vkAllocateMemory(renderContext.m_LogicDevice, &allocInfo, nullptr, &bufferMem_) != VK_SUCCESS)
+		exit(-8);
+
+	vkBindBufferMemory(renderContext.m_LogicDevice, buffer_, bufferMem_, 0);
+}
+
+inline 
+void CreateSSBOBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode, VkMemoryPropertyFlags _memFlags, VkBuffer& buffer_,
 	VkDeviceMemory& bufferMem_)
 {
 	auto renderContext = VKR::render::GetVKContext();

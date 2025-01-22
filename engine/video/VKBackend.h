@@ -18,6 +18,7 @@ namespace VKR
 #define MAX_MESHES 1024
 #define WIN_HEIGHT 720
 #define WIN_WIDTH 1280
+
         enum G_PIPELINE_STATUS
         {
 	        INVALID,
@@ -27,7 +28,6 @@ namespace VKR
         };
         inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
-        inline const int FRAMES_IN_FLIGHT = 2;
         inline int g_WindowWidth = WIN_WIDTH;
         inline int g_WindowHeight = WIN_HEIGHT;
 		inline int g_ToneMapping = 0;
@@ -56,8 +56,8 @@ namespace VKR
         inline double g_FrameTime;
         inline long long g_CurrentFrame = 0;
         inline double g_ElapsedTime;
-		inline char* g_commandLine;
-		inline char* g_commandLineHistory;
+		inline char* g_CommandLine;
+		inline char* g_CommandLineHistory;
 
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;
@@ -175,6 +175,11 @@ namespace VKR
             VkDeviceMemory m_DepthImageMemory;
             VkImageView m_DepthImageView;
 
+            // Gbuffer
+            VkImage m_GBufferImage;
+            VkDeviceMemory m_GBufferImageMemory;
+            VkImageView m_GBufferImageView;
+
             VkClearColorValue defaultClearColor = { { 1.f, 0.f, 0.f, 1.0f } };
 
             // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
@@ -218,6 +223,7 @@ namespace VKR
             void CreateImageViews();
             void CreateShadowResources();
             void CreateDepthTestingResources();
+            void CreateGBufferImage();
             void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
                                      Renderer* _renderer);
             /* Un Frame en Vulkan

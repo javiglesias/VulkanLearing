@@ -160,8 +160,8 @@ vec3 DirectionalLight(vec3 _color)
 	// ambient  *= reinhard;
 	// diffuse  *= reinhard;
 	// specular *= reinhard;
-	return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	// return (ambient + diffuse + specular) * _color;
+	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
+	return (ambient + specular) * _color;
 	// return norm;
 
 }

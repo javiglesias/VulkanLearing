@@ -24,8 +24,7 @@ namespace VKR
 
 		int ConsoleInputTextCallback(ImGuiInputTextCallbackData* data)
 		{
-			g_commandLineHistory = new char[data->BufSize];
-			g_commandLineHistory = data->Buf;
+			g_ConsoleMSG += std::string(data->Buf);
 			return 0;
 		}
 
@@ -71,7 +70,7 @@ namespace VKR
 			init_info.MinImageCount = _MinImageCount;
 			init_info.ImageCount = _ImageCount;
 			init_info.CheckVkResultFn = nullptr;
-			init_info.RenderPass = renderContext.m_RenderPass->m_Pass;
+			init_info.RenderPass = renderContext.m_RenderPass->pass;
 			// Imgui commit: f80e65a406885beedf68856057b278343d5c1407 -> Backends:,Examples: Vulkan: moved RenderPass parameter from ImGui_ImplVulkan_Init() function to ImGui_ImplVulkan_InitInfo structure. (#7308)
 			ImGui_ImplVulkan_Init(&init_info);
 			// ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);
@@ -112,14 +111,16 @@ namespace VKR
 			ImGui_ImplVulkan_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
-			/*ImGui::Begin("console");
+			
+			ImGui::Begin("console");
 			{
-				ImGui::Text("%s", g_commandLineHistory);
-				g_commandLine = new char[128];
-				memset(g_commandLine, '/0', 128);
-				ImGui::InputText("ConsoleInput", g_commandLine, 128, 0, ConsoleInputTextCallback);
+				ImGui::Text("%s", g_ConsoleMSG.c_str());
+				// ImGui::Text("%s", g_commandLineHistory);
+				g_CommandLine = new char[256];
+				memset(g_CommandLine, 0, 256);
+				// ImGui::InputText("ConsoleInput", g_CommandLine, 128, 0, ConsoleInputTextCallback);
 				ImGui::End();
-			}*/
+			}
 
 			ImGui::Begin("Tools");
 			{

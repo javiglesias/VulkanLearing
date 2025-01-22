@@ -23,6 +23,6 @@ inline void _initPerf(const char* _name)
 inline void _endPerf(const char* _name)
 {
 	end = permonBackend->GetTime();
-	printf("PM_%s : %.3f\n", _name, (end - PerfList[std::string(_name)]));
+	// printf("PM_%s : %.3f\n", _name, (end - PerfList[std::string(_name)]));
 }
 #endif

@@ -97,17 +97,16 @@ namespace VKR
 					lightDynamicOffset0,
 					lightDynamicOffset1,
 					lightDynamicOffset2,
-					lightDynamicOffset3
-				};
-				VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer };
-				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, material->material.pipeline.pipeline);
-				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, material->material.pipeline.layout, 0, 1,
-					&m_Materials[mesh->m_Material]->material.materialSets[_CurrentFrame], dynOffsets.size(), dynOffsets.data());
+					lightDynamicOffset3				};
+				VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer[_CurrentFrame] };
+				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, material->material->pipeline.pipeline);
+				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, material->material->pipeline.layout, 0, 1,
+					&m_Materials[mesh->m_Material]->material->materialSets[_CurrentFrame], dynOffsets.size(), dynOffsets.data());
 				vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
 				// Draw Loop
 				if (mesh->m_Indices.size() > 0)
 				{
-					vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+					vkCmdBindIndexBuffer(_backend->m_CommandBuffer[_CurrentFrame], mesh->m_IndexBuffer[_CurrentFrame], 0, VK_INDEX_TYPE_UINT16);
 					vkCmdDrawIndexed(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(mesh->m_Indices.size()), 1, 0, 0, 0);
 				}
 				// Flush to make changes visible to the host
@@ -121,6 +120,7 @@ namespace VKR
 				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
 				lightsMappedMemoryRange.size = sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
+				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
 			}
 			if (g_GPUTimestamp)
 				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 1);

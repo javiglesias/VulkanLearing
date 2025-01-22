@@ -13,6 +13,7 @@ namespace VKR
 #else
 			m_Filename += ".spv";
 #endif
+			LoadShader();
 		}
 
 		void Shader::ReadFile()
@@ -57,6 +58,31 @@ namespace VKR
 			#else
 			return m_CompiledSource;
 			#endif
+		}
+
+		void Shader::ConfigureShader(VkDevice m_LogicDevice, VkShaderStageFlagBits _type,  VkPipelineShaderStageCreateInfo* shaderStageInfo_)
+		{
+			VkShaderModule shaderModule;
+			VkShaderModuleCreateInfo shaderModuleCreateInfo{};
+			shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+#ifdef WIN32
+			shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
+			shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
+#else
+			shaderModuleCreateInfo.codeSize = m_CompiledSource.size();
+			shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(m_CompiledSource.data());
+#endif
+			if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, &shaderModule)
+				!= VK_SUCCESS)
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
+			shaderStageInfo_->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shaderStageInfo_->stage = _type;
+			shaderStageInfo_->module = shaderModule;
+			shaderStageInfo_->pName = "main";
 		}
 
 		void Shader::ToSPVShader()
