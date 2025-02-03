@@ -1,6 +1,22 @@
 #version 460
 
+struct particle
+{
+    vec2 v;
+    vec2 p;
+    vec2 c;
+};
+
+layout(binding=1) readonly buffer particle_ssbbo_in
+{
+    particle particles_in[];   
+};
+
+layout(binding=2) readonly buffer particle_ssbbo_out
+{
+    particle particles_out[];   
+};
+
 void main() 
 {
-
 }

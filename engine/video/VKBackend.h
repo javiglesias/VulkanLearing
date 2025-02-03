@@ -123,6 +123,9 @@ namespace VKR
 
             VkDescriptorPool m_DescriptorPool;
             VkCommandPool m_CommandPool;
+
+            VkCommandPool m_compute_command_pool;
+
 			VkQueryPool m_PerformanceQuery[FRAMES_IN_FLIGHT];
 
             VkDescriptorSet m_ShadowVisualizer;
@@ -167,6 +170,11 @@ namespace VKR
             std::vector<VkDeviceMemory> m_GridUniformBuffersMemory;
             std::vector<void*> m_GridUniformBuffersMapped;
 
+            // COMPUTE BUFFERS
+            std::vector<VkBuffer> m_ComputeUniformBuffers;
+            std::vector<VkDeviceMemory> m_ComputeUniformBuffersMemory;
+            std::vector<void*> m_ComputeUniformBuffersMapped;
+            
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;
 
@@ -184,6 +192,7 @@ namespace VKR
 
             // Para tener mas de un Frame, cada frame debe tener su pack de semaforos y Fencesnot
             VkCommandBuffer m_CommandBuffer[FRAMES_IN_FLIGHT];
+            VkCommandBuffer m_compute_command_buffer[FRAMES_IN_FLIGHT];
             VkSemaphore m_ImageAvailable[FRAMES_IN_FLIGHT];
             VkSemaphore m_RenderFinish[FRAMES_IN_FLIGHT];
             VkFence		m_InFlight[FRAMES_IN_FLIGHT];

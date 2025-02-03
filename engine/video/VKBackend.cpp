@@ -494,117 +494,131 @@ namespace VKR
 
 		void VKBackend::GenerateBuffers()
 		{
-			VkDeviceSize bufferSize = MAX_MODELS * sizeof(UniformBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			#pragma region RENDER_BUFFERS
 			{
-				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
-					bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
-			}
-			VkDeviceSize cubemapBufferSize = sizeof(CubemapUniformBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(cubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_CubemapUniformBuffers[i], m_CubemapUniformBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], 0,
-					cubemapBufferSize, 0, &m_CubemapUniformBuffersMapped[i]);
-			}
-			auto DynAlign =  sizeof(DynamicBufferObject);
-			DynAlign = (DynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			VkDeviceSize checkBufferSize = MAX_MODELS *  DynAlign;
-			VkDeviceSize dynBufferSize = MAX_MODELS *  sizeof(DynamicBufferObject);
-			if(dynBufferSize != checkBufferSize )
-			#ifdef WIN32
-				__debugbreak();
-			#else
-				raise(SIGTRAP);
-			#endif
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
-					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
-			}
 
-			auto lightDynAlign = sizeof(LightBufferObject);
-			lightDynAlign = (lightDynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			checkBufferSize = (4 * lightDynAlign);
-			VkDeviceSize lightsBufferSize = (4 * sizeof(LightBufferObject));
-			if(lightsBufferSize != checkBufferSize )
-			#ifdef WIN32
-				__debugbreak();
-			#else
-				raise(SIGTRAP);
-			#endif
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(lightsBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_LightsBuffers[i], m_LightsBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_LightsBuffersMemory[i], 0,
-					lightsBufferSize, 0, &m_LightsBuffersMapped[i]);
+				VkDeviceSize bufferSize = MAX_MODELS * sizeof(UniformBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_UniformBuffers[i], m_UniformBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
+						bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
+				}
+				auto DynAlign =  sizeof(DynamicBufferObject);
+				DynAlign = (DynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+					& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+				VkDeviceSize checkBufferSize = MAX_MODELS *  DynAlign;
+				VkDeviceSize dynBufferSize = MAX_MODELS *  sizeof(DynamicBufferObject);
+				if(dynBufferSize != checkBufferSize )
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
+						dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
+				}
 			}
-
-			constexpr VkDeviceSize dynCubemapBufferSize = sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			#pragma endregion
+			#pragma region LIGHTS_BUFFER
 			{
-				CreateBuffer(dynCubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_CubemapDynamicBuffers[i], m_CubemapDynamicBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], 0,
-					dynCubemapBufferSize, 0, &m_CubemapDynamicBuffersMapped[i]);
+				auto lightDynAlign = sizeof(LightBufferObject);
+				lightDynAlign = (lightDynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+					& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+				VkDeviceSize checkBufferSize = (4 * lightDynAlign);
+				VkDeviceSize lightsBufferSize = (4 * sizeof(LightBufferObject));
+				if(lightsBufferSize != checkBufferSize )
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(lightsBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_LightsBuffers[i], m_LightsBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_LightsBuffersMemory[i], 0,
+						lightsBufferSize, 0, &m_LightsBuffersMapped[i]);
+				}
 			}
-
-			// SHADOW UNIFORM BUFFERS
-			m_ShadowUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_ShadowUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_ShadowUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			bufferSize = sizeof(ShadowUniformBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			#pragma endregion
+			#pragma region CUBEMAP_BUFFERS
 			{
-				CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_ShadowUniformBuffers[i], m_ShadowUniformBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], 0,
-					bufferSize, 0, &m_ShadowUniformBuffersMapped[i]);
+				VkDeviceSize cubemapBufferSize = sizeof(CubemapUniformBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(cubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_CubemapUniformBuffers[i], m_CubemapUniformBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], 0,
+						cubemapBufferSize, 0, &m_CubemapUniformBuffersMapped[i]);
+				}
+				constexpr VkDeviceSize dynCubemapBufferSize = sizeof(DynamicBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(dynCubemapBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_CubemapDynamicBuffers[i], m_CubemapDynamicBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], 0,
+						dynCubemapBufferSize, 0, &m_CubemapDynamicBuffersMapped[i]);
+				}
 			}
-			// Dynamic buffers
-			m_ShadowDynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_ShadowDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_ShadowDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			dynBufferSize = MAX_MODELS * sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			#pragma endregion
+			#pragma region SHADOW_BUFFERS
 			{
-				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_ShadowDynamicBuffers[i], m_ShadowDynamicBuffersMemory[i]);
-				vkMapMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], 0,
-					dynBufferSize, 0, &m_ShadowDynamicBuffersMapped[i]);
+				// SHADOW UNIFORM BUFFERS
+				m_ShadowUniformBuffers.resize(FRAMES_IN_FLIGHT);
+				m_ShadowUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+				m_ShadowUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+				VkDeviceSize bufferSize = sizeof(ShadowUniformBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_ShadowUniformBuffers[i], m_ShadowUniformBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], 0,
+						bufferSize, 0, &m_ShadowUniformBuffersMapped[i]);
+				}
+				// Dynamic buffers
+				m_ShadowDynamicBuffers.resize(FRAMES_IN_FLIGHT);
+				m_ShadowDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+				m_ShadowDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+				VkDeviceSize dynBufferSize = MAX_MODELS * sizeof(DynamicBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_ShadowDynamicBuffers[i], m_ShadowDynamicBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], 0,
+						dynBufferSize, 0, &m_ShadowDynamicBuffersMapped[i]);
+				}
+				// Shadow DescriptorSet
+				m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
 			}
-			// Shadow DescriptorSet
-			m_ShadowMat->UpdateDescriptorSet(g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
-			
+			#pragma endregion
+			#pragma region GRID_BUFFERS
 			//// GRID UNIFORM BUFFERS
 			//m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
 			//m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -620,6 +634,29 @@ namespace VKR
 			//	vkMapMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], 0,
 			//		bufferSize, 0, &m_GridUniformBuffersMapped[i]);
 			//}
+			#pragma endregion
+			#pragma region COMPUTE_BUFFERS
+			{
+				// COMPUTE BUFFERS
+				m_ComputeUniformBuffers.resize(FRAMES_IN_FLIGHT);
+				m_ComputeUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+				m_ComputeUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+				VkDeviceSize bufferSize = sizeof(ComputeBufferObject);
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					CreateBuffer(bufferSize, 
+						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT 
+							| VK_BUFFER_USAGE_STORAGE_BUFFER_BIT 
+							| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						m_ComputeUniformBuffers[i], m_ComputeUniformBuffersMemory[i]);
+					vkMapMemory(g_context.m_LogicDevice, m_ComputeUniformBuffersMemory[i], 0,
+						bufferSize, 0, &m_ComputeUniformBuffersMapped[i]);
+				}
+			}
+			#pragma endregion
 		}
 
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
@@ -764,6 +801,24 @@ namespace VKR
 			mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			mAllocInfo.commandBufferCount = 2;
 			if (vkAllocateCommandBuffers(g_context.m_LogicDevice, &mAllocInfo, m_CommandBuffer) != VK_SUCCESS)
+				exit(-12);
+
+			// COMPUTE COMMAND POOL
+			VkCommandPoolCreateInfo compute_pool_info{};
+			m_PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			m_PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+			m_PoolInfo.queueFamilyIndex = g_context.m_ComputeQueueFamilyIndex;
+			if (vkCreateCommandPool(g_context.m_LogicDevice, &compute_pool_info
+				, nullptr, &m_compute_command_pool) != VK_SUCCESS)
+				exit(-11);
+			VkCommandBufferAllocateInfo compute_alloc_info{};
+			compute_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			compute_alloc_info.commandPool = m_compute_command_pool;
+			compute_alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			compute_alloc_info.commandBufferCount = 2;
+			if (vkAllocateCommandBuffers(g_context.m_LogicDevice
+				, &compute_alloc_info
+				, m_compute_command_buffer) != VK_SUCCESS)
 				exit(-12);
 		}
 

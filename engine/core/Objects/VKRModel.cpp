@@ -120,7 +120,16 @@ namespace VKR
 				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
 				lightsMappedMemoryRange.size = sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
-				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
+				VkCommandBuffer compute_command_buffer = BeginSingleTimeCommandBuffer(_backend->m_compute_command_pool);
+				vkCmdBindPipeline(compute_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
+				vkCmdBindDescriptorSets(compute_command_buffer
+					, VK_PIPELINE_BIND_POINT_COMPUTE
+					, m_Materials[mesh->m_Material]->material->pipeline.compute_layout
+					, 0, 1
+					, &m_Materials[mesh->m_Material]->material->compute_descriptors_sets[_CurrentFrame]
+					, 0, 0);
+				vkCmdDispatch(compute_command_buffer, 1, 1, 1);
+				EndSingleTimeCommandBuffer(compute_command_buffer, _backend->m_compute_command_pool);
 			}
 			if (g_GPUTimestamp)
 				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 1);

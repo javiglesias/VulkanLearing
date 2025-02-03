@@ -8,6 +8,7 @@
 #include "../filesystem/ResourceManager.h"
 #include "../editor/Editor.h"
 #include "Materials/VKRTexture.h"
+#include "../video/GPUParticle.h"
 
 namespace VKR
 {
@@ -340,69 +341,91 @@ namespace VKR
 				{
 					PERF_INIT("PREPARE_MESH")
 					/// 5 - Crear buffers de vertices
-					void* data;
-					if (mesh->m_Vertices.size() <= 0)
+					#pragma region BUFFER_VERTICES
 					{
-						fprintf(stderr, "There is no Triangles to inser on the buffer");
-						exit(-57);
-					}
-					VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
-					// Stagin buffer
-					CreateBuffer(bufferSize,
-						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
-					vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-					memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
-					vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-					for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
-					{
-						CreateBuffer(bufferSize,
-							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-							VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-							VK_SHARING_MODE_CONCURRENT,
-							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-							mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
-						CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
-					}
-					// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-					// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
-					if (mesh->m_Indices.size() > 0)
-					{
-						bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
-						/// 6 - Crear Buffers de Indices
+						void* data;
+						if (mesh->m_Vertices.size() <= 0)
+						{
+							fprintf(stderr, "There is no Triangles to inser on the buffer");
+							exit(-57);
+						}
+						VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
+						// Stagin buffer
 						CreateBuffer(bufferSize,
 							VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 							VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 							_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
 						vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-						memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
+						memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
 						vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
 						for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
 						{
-							// Index buffer
 							CreateBuffer(bufferSize,
 								VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-								VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+								VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 								VK_SHARING_MODE_CONCURRENT,
 								VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-								mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
-							CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+								mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
+							CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
 						}
-						// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-						// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 					}
-					for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
+					#pragma endregion
+					// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+					// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
+					#pragma region INDEX_BUFFER
 					{
-						// Compute Shader buffer
-						CreateBuffer(bufferSize,
-								VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-								VK_SHARING_MODE_CONCURRENT,
-								VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-								mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
+						VkDeviceSize bufferSize;
+						void* data;
+						if (mesh->m_Indices.size() > 0)
+						{
+							bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
+							/// 6 - Crear Buffers de Indices
+							CreateBuffer(bufferSize,
+								VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+								VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+								VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+								_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
+							vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+							memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
+							vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+							for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
+							{
+								// Index buffer
+								CreateBuffer(bufferSize,
+									VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+									VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+									VK_SHARING_MODE_CONCURRENT,
+									VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+									mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
+								CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+							}
+							// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+							// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
+						}
 					}
+					#pragma endregion
+					#pragma region GPU_PARTICLE
+					{
+						VkDeviceSize bufferSize = sizeof(GPU::Particle);
+						GPU::Particle p;
+						void* dataParticle;
+						// Init info for Compute buffer
+						vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &dataParticle);
+						memcpy(dataParticle, &p, (size_t)bufferSize);
+						vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+						for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
+						{
+							// Compute Shader buffer
+							CreateBuffer(bufferSize,
+									VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+									VK_SHARING_MODE_CONCURRENT,
+									VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+									mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
+							CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+						}
+					}
+					#pragma endregion
 					PERF_END("PREPARE_MESH")
 					PERF_INIT("PREPARE_MATERIAL")
 					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
@@ -413,8 +436,9 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;*/
 					PERF_INIT("UPDATE_DESCRIPTORS")
+					printf("|%d|\n", mesh->m_Material);
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
+						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);
 					PERF_END("UPDATE_DESCRIPTORS")
 				}
 			}

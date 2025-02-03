@@ -39,7 +39,9 @@ namespace VKR
 		{
 			sMaterialPipeline pipeline;
 			std::vector<VkDescriptorSet> materialSets;
+			std::vector<VkDescriptorSet> compute_descriptors_sets;
 			VkDescriptorPool descriptorPool = nullptr;
+			VkDescriptorPool compute_descriptor_pool = nullptr;
 			void Cleanup(VkDevice _LogicDevice);
 		};
 
@@ -62,8 +64,16 @@ namespace VKR
 
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptor(VkDevice _LogicDevice);
-			void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, 
-									 std::vector<VkBuffer> _DynamicBuffers, std::vector<VkBuffer> _LightsBuffers);
+			void UpdateDescriptorSet(VkDevice _LogicDevice
+				, std::vector<VkBuffer> _UniformBuffers
+				, std::vector<VkBuffer> _DynamicBuffers
+				, std::vector<VkBuffer> _LightsBuffers
+				, std::vector<VkBuffer> _ComputeBuffers);
+			void CreateDescriptorPool( VkDevice _LogicDevice
+				, std::vector<VkDescriptorPoolSize> _desc_pool_size
+				, VkDescriptorPool _desc_pool
+				, VkDescriptorSetLayout _desc_set_layout
+				, VkDescriptorSet* _desc_sets);
 			void Cleanup(VkDevice _LogicDevice);
 		};
 

@@ -1,6 +1,7 @@
 #include "VKRMaterial.h"
 #include "VKRTexture.h"
 #include "../../perfmon/Custom.h"
+#include "../../video/GPUParticle.h"
 #ifndef WIN32
 #include <signal.h>
 #endif
@@ -185,13 +186,21 @@ namespace VKR
 			linOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 			linOLayoutBinding.pImmutableSamplers = nullptr;
 
-			std::array<VkDescriptorSetLayoutBinding, 6> ShaderBindings = {
+			VkDescriptorSetLayoutBinding computeUBOLayoutBinding{};
+			computeUBOLayoutBinding.binding = 6;
+			computeUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			computeUBOLayoutBinding.descriptorCount = 1;
+			computeUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			computeUBOLayoutBinding.pImmutableSamplers = nullptr;
+
+			std::array<VkDescriptorSetLayoutBinding, 7> ShaderBindings = {
 				uboLayoutBinding,
 				texturesLayoutBinding,
 				dynOLayoutBinding,
 				dirLightLayoutBinding,
 				pointLightLayoutBinding,
-				linOLayoutBinding
+				linOLayoutBinding,
+				computeUBOLayoutBinding
 			};
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -241,23 +250,35 @@ namespace VKR
 				#endif
 
 			// COMPUTE PIPELINE
-			VkComputePipelineCreateInfo compute_pipeInfo {};
-			compute_pipeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-			compute_pipeInfo.layout = compute_layout;
-			compute_pipeInfo.stage = computeShaderStageInfo;
-			if (vkCreateComputePipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &compute_pipeInfo, 
-					nullptr, &compute)  != VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
+			VkDescriptorSetLayoutBinding computeLayoutBinding{};
+			computeLayoutBinding.binding = 0;
+			computeLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			computeLayoutBinding.descriptorCount = 1;
+			computeLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			computeLayoutBinding.pImmutableSamplers = nullptr;
+			VkDescriptorSetLayoutCreateInfo computeLayoutInfo{};
+			computeLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			computeLayoutInfo.bindingCount = 1;
+			computeLayoutInfo.pBindings = &computeLayoutBinding;
+			if (vkCreateDescriptorSetLayout(m_LogicDevice, &computeLayoutInfo, nullptr, &compute_descriptorSetLayout) != VK_SUCCESS)
+				exit(-99);
 			VkPipelineLayoutCreateInfo compute_pipelineLayout{};
 			compute_pipelineLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			compute_pipelineLayout.setLayoutCount = 1;
 			compute_pipelineLayout.pSetLayouts = &compute_descriptorSetLayout;
 			if (vkCreatePipelineLayout(m_LogicDevice, &compute_pipelineLayout, nullptr, &compute_layout) 
 					!= VK_SUCCESS)
+				#ifdef WIN32
+					__debugbreak();
+				#else
+					raise(SIGTRAP);
+				#endif
+			VkComputePipelineCreateInfo compute_pipeInfo {};
+			compute_pipeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+			compute_pipeInfo.layout = compute_layout;
+			compute_pipeInfo.stage = computeShaderStageInfo;
+			if (vkCreateComputePipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &compute_pipeInfo, 
+					nullptr, &compute)  != VK_SUCCESS)
 				#ifdef WIN32
 					__debugbreak();
 				#else
@@ -301,28 +322,33 @@ namespace VKR
 		
 		void R_Material::CreateDescriptor(VkDevice _LogicDevice)
 		{
-			VkDescriptorSetLayout descriptorLayouts[2];
-			std::array<VkDescriptorPoolSize, 4> descPoolSize{};
+			std::vector<VkDescriptorPoolSize> descPoolSize;
 			// UBO
-			descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			VkDescriptorPoolSize temp;
+			temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			descPoolSize.push_back(temp);
 			// Textura BaseColor
 			/*for (int i = 0; i < 8; i++)
 			{*/
-				descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+				temp.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+				descPoolSize.push_back(temp);
 			//}
 
 			// Model Matrix
-			descPoolSize[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			descPoolSize[2].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			descPoolSize.push_back(temp);
 			/*for (int i = 0; i < 4; i ++)
 			{*/
-				descPoolSize[3].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descPoolSize[3].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+				temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+				descPoolSize.push_back(temp);
 			//}
 
 			VkDescriptorPoolCreateInfo descPoolInfo{};
+			VkDescriptorSetLayout descriptorLayouts[2];
 			descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
 			descPoolInfo.pPoolSizes = descPoolSize.data();
@@ -339,10 +365,70 @@ namespace VKR
 			material->materialSets.resize(FRAMES_IN_FLIGHT);
 			if (vkAllocateDescriptorSets(_LogicDevice, &descAllocInfo, material->materialSets.data()) != VK_SUCCESS)
 				exit(-67);
+
+
+			#pragma region COMPUTE_DESC
+			VkDescriptorSetLayout compute_descriptor_layouts[2];
+			VkDescriptorPoolSize compute_descriptor_poolSize;
+			compute_descriptor_poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			compute_descriptor_poolSize.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			std::vector<VkDescriptorPoolSize> compute_descPoolSize;
+			// UBO
+			VkDescriptorPoolSize c_temp;
+			c_temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			c_temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			compute_descPoolSize.push_back(c_temp);
+
+			VkDescriptorPoolCreateInfo compute_descPoolInfo{};
+			VkDescriptorSetLayout compute_descriptorLayouts[2];
+			compute_descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			compute_descPoolInfo.poolSizeCount = static_cast<uint32_t>(compute_descPoolSize.size());
+			compute_descPoolInfo.pPoolSizes = compute_descPoolSize.data();
+			compute_descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
+			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &material->compute_descriptor_pool) != VK_SUCCESS)
+				exit(-66);
+			compute_descriptorLayouts[0] = material->pipeline.compute_descriptorSetLayout;
+			compute_descriptorLayouts[1] = material->pipeline.compute_descriptorSetLayout;
+			VkDescriptorSetAllocateInfo compute_descAllocInfo{};
+			compute_descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			compute_descAllocInfo.descriptorPool = material->compute_descriptor_pool;
+			compute_descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
+			compute_descAllocInfo.pSetLayouts = compute_descriptorLayouts;
+			material->compute_descriptors_sets.resize(FRAMES_IN_FLIGHT);
+			if (vkAllocateDescriptorSets(_LogicDevice, &compute_descAllocInfo, material->compute_descriptors_sets.data()) != VK_SUCCESS)
+				exit(-67);
+			#pragma endregion
+		}
+
+		void R_Material::CreateDescriptorPool(
+				VkDevice _LogicDevice
+				, std::vector<VkDescriptorPoolSize> _desc_pool_size
+				, VkDescriptorPool _desc_pool
+				, VkDescriptorSetLayout _desc_set_layout
+				, VkDescriptorSet* _desc_sets)
+		{
+			VkDescriptorPoolCreateInfo descPoolInfo{};
+			VkDescriptorSetLayout descriptorLayouts[2];
+			descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			descPoolInfo.poolSizeCount = static_cast<uint32_t>(_desc_pool_size.size());
+			descPoolInfo.pPoolSizes = _desc_pool_size.data();
+			descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
+			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &_desc_pool) != VK_SUCCESS)
+				exit(-66);
+			descriptorLayouts[0] = _desc_set_layout;
+			descriptorLayouts[1] = _desc_set_layout;
+			VkDescriptorSetAllocateInfo descAllocInfo{};
+			descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descAllocInfo.descriptorPool = _desc_pool;
+			descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
+			descAllocInfo.pSetLayouts = descriptorLayouts;
+			_desc_sets = (VkDescriptorSet*)malloc(FRAMES_IN_FLIGHT * sizeof(VkDescriptorSet));
+			if (vkAllocateDescriptorSets(_LogicDevice, &descAllocInfo, _desc_sets) != VK_SUCCESS)
+				exit(-67);
 		}
 
 		void R_Material::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers,
-															std::vector<VkBuffer> _LightsBuffers)
+															std::vector<VkBuffer> _LightsBuffers, std::vector<VkBuffer> _ComputeBuffers)
 		{
 			// Escribimos la info de los descriptors
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -352,7 +438,7 @@ namespace VKR
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
 
-				std::array<VkWriteDescriptorSet, 14> descriptorsWrite{};
+				std::array<VkWriteDescriptorSet, 15> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[0].dstSet = material->materialSets[i];
 				descriptorsWrite[0].dstBinding = 0;
@@ -452,6 +538,20 @@ namespace VKR
 					descriptorsWrite[j].pImageInfo = nullptr;
 					descriptorsWrite[j].pTexelBufferView = nullptr;
 				}
+
+				VkDescriptorBufferInfo particleBufferInfo{};
+				particleBufferInfo.buffer = _ComputeBuffers[i];
+				particleBufferInfo.offset = 0;
+				particleBufferInfo.range = sizeof(GPU::Particle); // VK_WHOLE
+				descriptorsWrite[14].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite[14].dstSet = material->materialSets[i];
+				descriptorsWrite[14].dstBinding = 6;
+				descriptorsWrite[14].dstArrayElement = 0;
+				descriptorsWrite[14].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorsWrite[14].descriptorCount = 1;
+				descriptorsWrite[14].pBufferInfo = &particleBufferInfo;
+				descriptorsWrite[14].pImageInfo = nullptr;
+				descriptorsWrite[14].pTexelBufferView = nullptr;
 				vkUpdateDescriptorSets(_LogicDevice, (uint32_t)descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
 			}
 		}
