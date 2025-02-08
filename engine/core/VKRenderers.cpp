@@ -21,7 +21,9 @@ namespace VKR
 				return true;
 
 			m_VertShader = new Shader(_vertShader, 0);
+            m_VertShader->LoadShader();
 			m_FragShader = new Shader(_fragShader, 4);
+            m_FragShader->LoadShader();
 			if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
 				CreateShaderModule(m_FragShader, &m_FragShaderModule))
 			{
@@ -176,12 +178,12 @@ namespace VKR
         }
         bool Renderer::CreateShaderModule(Shader* _shader, VkShaderModule* _shaderModule) // 0: vert, 4:frag
         {
-            auto spvCompiled = _shader->LoadShader();
+            _shader->LoadShader();
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             #ifdef WIN32
-            shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
-            shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
+            shaderModuleCreateInfo.codeSize = 4 * _shader->m_SpirvSrc.size();
+            shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(_shader->m_SpirvSrc.data());
             #else
                 shaderModuleCreateInfo.codeSize = spvCompiled.size();
                 shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());

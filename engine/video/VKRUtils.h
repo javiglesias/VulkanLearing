@@ -430,7 +430,7 @@ VkCommandBuffer BeginSingleTimeCommandBuffer(VkCommandPool _CommandPool)
 }
 
 inline
-void EndSingleTimeCommandBuffer(VkCommandBuffer _commandBuffer, VkCommandPool _CommandPool)
+void EndSingleTimeCommandBuffer(VkCommandBuffer _commandBuffer, VkCommandPool _CommandPool, VkQueue _queue)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VK_ASSERT(vkEndCommandBuffer(_commandBuffer));
@@ -439,21 +439,20 @@ void EndSingleTimeCommandBuffer(VkCommandBuffer _commandBuffer, VkCommandPool _C
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &_commandBuffer;
 
-	vkQueueSubmit(renderContext.m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(renderContext.m_GraphicsQueue);
+	vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(_queue);
 	vkFreeCommandBuffers(renderContext.m_LogicDevice, _CommandPool, 1, &_commandBuffer);
-
 }
 
 inline
-void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size, VkCommandPool _CommandPool)
+void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size, VkCommandPool _CommandPool, VkQueue _queue)
 {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
 	// Copiar desde el Stagging buffer al buffer
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _size;
 	vkCmdCopyBuffer(commandBuffer, _src, dst_, 1, &copyRegion);
-	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
+	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, _queue);
 }
 inline
 void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool, 
@@ -511,13 +510,14 @@ void GenerateMipmap(VkImage _image, VkCommandPool _CommandPool,
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0,nullptr, 0, nullptr,
 							1, &iBarrier);
-	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
+	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, renderContext.m_GraphicsQueue);
 }
 
 inline
-void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old, 
-						   VkImageLayout _new, VkCommandPool _CommandPool, 
-						   uint32_t _layerCount, uint8_t _levelCount = 1)
+void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old
+							, VkImageLayout _new, VkCommandPool _CommandPool
+							, uint32_t _layerCount, VkQueue* _queue
+							, uint8_t _levelCount = 1)
 {
 	auto renderContext = VKR::render::GetVKContext();
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
@@ -575,12 +575,13 @@ void TransitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _old,
 		exit(-96);
 	}
 	vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &iBarrier);
-	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
+	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, *_queue);
 }
 
 inline 
-void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h, 
-	VkDeviceSize _bufferOffset, VkCommandPool _CommandPool, uint32_t _layer = 0)
+void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _h
+						, VkDeviceSize _bufferOffset, VkCommandPool _CommandPool
+						, VkQueue* _queue, uint32_t _layer = 0)
 {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
 	VkBufferImageCopy region{};
@@ -594,7 +595,7 @@ void CopyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _w, uint32_t _
 	region.imageOffset = { 0, 0, 0 };
 	region.imageExtent = { _w, _h, 1 };
 	vkCmdCopyBufferToImage(commandBuffer, _buffer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool);
+	EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, *_queue);
 }
 
 inline 

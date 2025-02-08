@@ -1,18 +1,10 @@
 #ifndef _C_SHADER
 #define _C_SHADER
 
-#include "glslang/Public/ShaderLang.h"
-#include "glslang/Public/ResourceLimits.h"
-#include "glslang/SPIRV/GlslangToSpv.h"
-#ifndef WIN32
- #include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
- #include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
-#endif
-#include <fstream>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-#define GLSL_VERSION 460
 
 namespace VKR
 {
@@ -20,33 +12,12 @@ namespace VKR
 	{
 		struct Shader
 		{
+			int m_Stage;
 			std::string m_Filename;
-#ifdef WIN32
-			std::string m_RawSource;
-			EShLanguage m_Stage;
-			glslang::TShader* m_TShader;
-		public: // variables
 			std::vector<uint32_t> m_SpirvSrc;
-			std::vector<uint32_t> spirvCode;
-#else
-		private:
-			std::vector<char> m_CompiledSource;
-		public:
-			std::vector<char> m_CompiledSpv;
-#endif
-		public: // functions
 			Shader(const std::string& _filename, int _shaderStage);
-			#ifdef WIN32
-			std::vector<uint32_t>
-			#else
-			std::vector<char>
-			#endif 
-			LoadShader();
+			void LoadShader();
 			void ConfigureShader(VkDevice m_LogicDevice,VkShaderStageFlagBits _type, VkPipelineShaderStageCreateInfo* shaderStageInfo_);
-			bool GLSLCompile(bool _recompile = false);
-		private: // Functions
-			void ToSPVShader();
-			void ReadFile();
 		};
 		struct ShaderItem
 		{
@@ -72,7 +43,7 @@ namespace VKR
 			
 			return 0;
 		}
-		static Shader* find_shader(char* _filename)
+		static Shader* find_shader(const char* _filename)
 		{
 			for (size_t i = 0; i < currentShaders; i++)
 			{

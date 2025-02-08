@@ -136,6 +136,7 @@ namespace VKR
 					//m_StaticModels[m]->m_Materials[mi]->PrepareMaterialToDraw(_backend);
 				}
 			}
+#if 0
 			if (m_ShadowRender->m_VertShader->GLSLCompile(true))
 			{
 				vkDestroyPipeline(renderContext.m_LogicDevice, m_ShadowRender->m_Pipeline, nullptr);
@@ -146,6 +147,7 @@ namespace VKR
 				m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->pass);
 				m_ShadowRender->CleanShaderModules();
 			}
+#endif
 			PERF_END("RELOAD_SHADERS")
 		}
 
@@ -271,7 +273,7 @@ namespace VKR
 				VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
-			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
@@ -367,7 +369,8 @@ namespace VKR
 								VK_SHARING_MODE_CONCURRENT,
 								VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 								mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
-							CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+							CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize
+								, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
 						}
 					}
 					#pragma endregion
@@ -398,7 +401,8 @@ namespace VKR
 									VK_SHARING_MODE_CONCURRENT,
 									VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 									mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
-								CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+								CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize
+									, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
 							}
 							// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 							// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
@@ -422,7 +426,8 @@ namespace VKR
 									VK_SHARING_MODE_CONCURRENT,
 									VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 									mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
-							CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+							CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize
+								, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
 						}
 					}
 					#pragma endregion
@@ -436,7 +441,6 @@ namespace VKR
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
 					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;*/
 					PERF_INIT("UPDATE_DESCRIPTORS")
-					printf("|%d|\n", mesh->m_Material);
 					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);
 					PERF_END("UPDATE_DESCRIPTORS")

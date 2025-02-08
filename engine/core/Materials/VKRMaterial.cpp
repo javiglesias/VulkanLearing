@@ -11,6 +11,18 @@ namespace VKR
 	{
 		extern std::string g_ConsoleMSG;
 
+		void sMaterialPipeline::_addBind(uint8_t _nbind, VkDescriptorType _type,
+			VkShaderStageFlags _stage, uint8_t _ndescriptors)
+		{
+			VkDescriptorSetLayoutBinding binding{};
+			binding.binding = _nbind;
+			binding.descriptorType = _type;
+			binding.descriptorCount = _ndescriptors;
+			binding.stageFlags = _stage;
+			binding.pImmutableSamplers = nullptr;
+			ShaderBindings.push_back(binding);
+		}
+
 		void sMaterialPipeline::_buildPipeline()
 		{
 			VkDevice m_LogicDevice = GetVKContext().m_LogicDevice;
@@ -52,22 +64,25 @@ namespace VKR
 			{
 				vertShader = vert_finded; 
 			}
+			vertShader->LoadShader();
 			vertShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_VERTEX_BIT, &vertShaderStageInfo);
 			shaderStages[0] = vertShaderStageInfo;
 			
 			Shader* frag_finded = find_shader("engine/shaders/Standard.frag");
 			if(!frag_finded)
 			{
-				fragShader = new Shader("engine/shaders/Standard.frag", 0);
+				fragShader = new Shader("engine/shaders/Standard.frag", 4);
 				add_shader_to_list(fragShader);
 			}
 			else
 			{
 				fragShader = frag_finded; 
 			}
+			fragShader->LoadShader();
 			fragShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_FRAGMENT_BIT, &fragShaderStageInfo);
 			shaderStages[1] = fragShaderStageInfo;
 
+			computeShader->LoadShader();
 			computeShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_COMPUTE_BIT, &computeShaderStageInfo);
 
 			/// Color Blending
@@ -142,66 +157,18 @@ namespace VKR
 			depthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
 			// estructura UBO
-			VkDescriptorSetLayoutBinding uboLayoutBinding{};
-			uboLayoutBinding.binding = 0;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-			uboLayoutBinding.pImmutableSamplers = nullptr;
+			_addBind(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 			// Texturas
-			VkDescriptorSetLayoutBinding texturesLayoutBinding{};
-			texturesLayoutBinding.binding = 1;
-			texturesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			texturesLayoutBinding.descriptorCount = 8;
-			texturesLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			texturesLayoutBinding.pImmutableSamplers = nullptr;
-
+			_addBind(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8);
 			// estructura Dynamic Uniforms
-			VkDescriptorSetLayoutBinding dynOLayoutBinding{};
-			dynOLayoutBinding.binding = 2;
-			dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			dynOLayoutBinding.descriptorCount = 1;
-			dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-			dynOLayoutBinding.pImmutableSamplers = nullptr;
-
+			_addBind(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT);
 			// estructura Directional Light
-			VkDescriptorSetLayoutBinding dirLightLayoutBinding{};
-			dirLightLayoutBinding.binding = 3;
-			dirLightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			dirLightLayoutBinding.descriptorCount = 1;
-			dirLightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			dirLightLayoutBinding.pImmutableSamplers = nullptr;
+			_addBind(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
 			// estructura Dynamic Uniforms
-			VkDescriptorSetLayoutBinding pointLightLayoutBinding{};
-			pointLightLayoutBinding.binding = 4;
-			pointLightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			pointLightLayoutBinding.descriptorCount = 1;
-			pointLightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			pointLightLayoutBinding.pImmutableSamplers = nullptr;
+			_addBind(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
 			// estructura Light Uniforms
-			VkDescriptorSetLayoutBinding linOLayoutBinding{};
-			linOLayoutBinding.binding = 5;
-			linOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			linOLayoutBinding.descriptorCount = 2;
-			linOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			linOLayoutBinding.pImmutableSamplers = nullptr;
+			_addBind(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
 
-			VkDescriptorSetLayoutBinding computeUBOLayoutBinding{};
-			computeUBOLayoutBinding.binding = 6;
-			computeUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			computeUBOLayoutBinding.descriptorCount = 1;
-			computeUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-			computeUBOLayoutBinding.pImmutableSamplers = nullptr;
-
-			std::array<VkDescriptorSetLayoutBinding, 7> ShaderBindings = {
-				uboLayoutBinding,
-				texturesLayoutBinding,
-				dynOLayoutBinding,
-				dirLightLayoutBinding,
-				pointLightLayoutBinding,
-				linOLayoutBinding,
-				computeUBOLayoutBinding
-			};
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
@@ -252,7 +219,7 @@ namespace VKR
 			// COMPUTE PIPELINE
 			VkDescriptorSetLayoutBinding computeLayoutBinding{};
 			computeLayoutBinding.binding = 0;
-			computeLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			computeLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			computeLayoutBinding.descriptorCount = 1;
 			computeLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 			computeLayoutBinding.pImmutableSamplers = nullptr;
@@ -277,6 +244,7 @@ namespace VKR
 			compute_pipeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 			compute_pipeInfo.layout = compute_layout;
 			compute_pipeInfo.stage = computeShaderStageInfo;
+			compute_pipeInfo.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 			if (vkCreateComputePipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &compute_pipeInfo, 
 					nullptr, &compute)  != VK_SUCCESS)
 				#ifdef WIN32
@@ -368,16 +336,11 @@ namespace VKR
 
 
 			#pragma region COMPUTE_DESC
-			VkDescriptorSetLayout compute_descriptor_layouts[2];
-			VkDescriptorPoolSize compute_descriptor_poolSize;
-			compute_descriptor_poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			compute_descriptor_poolSize.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 			std::vector<VkDescriptorPoolSize> compute_descPoolSize;
-			// UBO
-			VkDescriptorPoolSize c_temp;
-			c_temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			c_temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-			compute_descPoolSize.push_back(c_temp);
+			VkDescriptorPoolSize compute_descriptor_poolSize;
+			compute_descriptor_poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			compute_descriptor_poolSize.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			compute_descPoolSize.push_back(compute_descriptor_poolSize);
 
 			VkDescriptorPoolCreateInfo compute_descPoolInfo{};
 			VkDescriptorSetLayout compute_descriptorLayouts[2];
@@ -385,7 +348,7 @@ namespace VKR
 			compute_descPoolInfo.poolSizeCount = static_cast<uint32_t>(compute_descPoolSize.size());
 			compute_descPoolInfo.pPoolSizes = compute_descPoolSize.data();
 			compute_descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
-			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &material->compute_descriptor_pool) != VK_SUCCESS)
+			if (vkCreateDescriptorPool(_LogicDevice, &compute_descPoolInfo, nullptr, &material->compute_descriptor_pool) != VK_SUCCESS)
 				exit(-66);
 			compute_descriptorLayouts[0] = material->pipeline.compute_descriptorSetLayout;
 			compute_descriptorLayouts[1] = material->pipeline.compute_descriptorSetLayout;
@@ -398,6 +361,50 @@ namespace VKR
 			if (vkAllocateDescriptorSets(_LogicDevice, &compute_descAllocInfo, material->compute_descriptors_sets.data()) != VK_SUCCESS)
 				exit(-67);
 			#pragma endregion
+		}
+
+		void R_Material::PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind,
+			VkDescriptorType _type, VkBuffer _buffer, VkDeviceSize _range, uint32_t _arrayElement,
+			VkDeviceSize _offset, uint32_t _count)
+		{
+			VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();;
+			bufferInfo->buffer = _buffer;
+			bufferInfo->offset = _offset;
+			bufferInfo->range = _range; // VK_WHOLE
+
+			VkWriteDescriptorSet descriptorsWrite{};
+			descriptorsWrite.pBufferInfo = bufferInfo;
+			descriptorsWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorsWrite.dstSet = material->materialSets[_setDst];
+			descriptorsWrite.dstBinding = _bind;
+			descriptorsWrite.dstArrayElement = _arrayElement;
+			descriptorsWrite.descriptorType = _type;
+			descriptorsWrite.descriptorCount = _count;
+			descriptorsWrite.pTexelBufferView = nullptr;
+			m_DescriptorsWrite.push_back(descriptorsWrite);
+		}
+
+		void R_Material::PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind, VkDescriptorType _type,
+			VkImageView _imageView, VkSampler _sampler, uint32_t _arrayElement, uint32_t _count)
+		{
+			VkDescriptorImageInfo* Textureimage = new VkDescriptorImageInfo();
+			Textureimage->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			Textureimage->imageView = _imageView;
+			if (_sampler != nullptr)
+				Textureimage->sampler = _sampler;
+			else
+				printf("Invalid Sampler for frame\n");
+
+			VkWriteDescriptorSet descriptorsWrite{};
+			descriptorsWrite.pImageInfo = Textureimage;
+			descriptorsWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorsWrite.dstSet = material->materialSets[_setDst];
+			descriptorsWrite.dstBinding = _bind;
+			descriptorsWrite.dstArrayElement = _arrayElement;
+			descriptorsWrite.descriptorType = _type;
+			descriptorsWrite.descriptorCount = _count;
+			descriptorsWrite.pTexelBufferView = nullptr;
+			m_DescriptorsWrite.push_back(descriptorsWrite);
 		}
 
 		void R_Material::CreateDescriptorPool(
@@ -428,131 +435,50 @@ namespace VKR
 		}
 
 		void R_Material::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers,
-															std::vector<VkBuffer> _LightsBuffers, std::vector<VkBuffer> _ComputeBuffers)
+		                                     std::vector<VkBuffer> _LightsBuffers, std::vector<VkBuffer> _ComputeBuffers)
 		{
 			// Escribimos la info de los descriptors
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			for (int8_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = _UniformBuffers[i];
-				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(UniformBufferObject); // VK_WHOLE
-
-				std::array<VkWriteDescriptorSet, 15> descriptorsWrite{};
-				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[0].dstSet = material->materialSets[i];
-				descriptorsWrite[0].dstBinding = 0;
-				descriptorsWrite[0].dstArrayElement = 0;
-				descriptorsWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorsWrite[0].descriptorCount = 1;
-				descriptorsWrite[0].pBufferInfo = &bufferInfo;
-				descriptorsWrite[0].pImageInfo = nullptr;
-				descriptorsWrite[0].pTexelBufferView = nullptr;
+				PrepareDescriptorWrite(i, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _UniformBuffers[i], sizeof(UniformBufferObject));
 				// Texturas
-				VkDescriptorImageInfo Textureimage[8] {};
-				for (int t = 0; t < 8; t++ )
+				for (int8_t t = 0; t < 8; t++ )
 				{
-					// BaseColor
-					Textureimage[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					Textureimage[t].imageView = textures[t]->tImageView;
-					if (textures[t]->m_Sampler != nullptr)
-					{
-						Textureimage[t].sampler = textures[t]->m_Sampler;
-					}
-					else
-					{
-						printf("Invalid Sampler for frame\n");
-					}
-					descriptorsWrite[1 + t].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[1 + t].dstSet = material->materialSets[i];
-					descriptorsWrite[1 + t].dstBinding = 1;
-					descriptorsWrite[1 + t].dstArrayElement = t;
-					descriptorsWrite[1 + t].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					descriptorsWrite[1 + t].descriptorCount = 1;
-					descriptorsWrite[1 + t].pBufferInfo = nullptr;
-					descriptorsWrite[1 + t].pImageInfo = &Textureimage[t];
-					descriptorsWrite[1 + t].pTexelBufferView = nullptr;
+					PrepareDescriptorWrite(i, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+							, textures[t]->tImageView, textures[t]->m_Sampler, t);
 				}
-
 				// Dynamic
-				VkDescriptorBufferInfo dynBufferInfo{};
-				dynBufferInfo.buffer = _DynamicBuffers[i];
-				dynBufferInfo.offset = 0;
-				dynBufferInfo.range = sizeof(DynamicBufferObject); // VK_WHOLE
-
-				descriptorsWrite[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[9].dstSet = material->materialSets[i];
-				descriptorsWrite[9].dstBinding = 2;
-				descriptorsWrite[9].dstArrayElement = 0;
-				descriptorsWrite[9].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[9].descriptorCount = 1;
-				descriptorsWrite[9].pBufferInfo = &dynBufferInfo;
-				descriptorsWrite[9].pImageInfo = nullptr;
-				descriptorsWrite[9].pTexelBufferView = nullptr;
-
+				PrepareDescriptorWrite(i, 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _DynamicBuffers[i], sizeof(DynamicBufferObject));
 				// Directional Light
-				VkDescriptorBufferInfo dirLightBufferInfo{};
-				dirLightBufferInfo.buffer = _LightsBuffers[i];
-				dirLightBufferInfo.offset = 0;
-				dirLightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
-				descriptorsWrite[10].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[10].dstSet = material->materialSets[i];
-				descriptorsWrite[10].dstBinding = 3;
-				descriptorsWrite[10].dstArrayElement = 0;
-				descriptorsWrite[10].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[10].descriptorCount = 1;
-				descriptorsWrite[10].pBufferInfo = &dirLightBufferInfo;
-				descriptorsWrite[10].pImageInfo = nullptr;
-				descriptorsWrite[10].pTexelBufferView = nullptr;
-
+				PrepareDescriptorWrite(i, 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _LightsBuffers[i], sizeof(LightBufferObject));
 				// Point Light
-				VkDescriptorBufferInfo pointtLightBufferInfo{};
-				pointtLightBufferInfo.buffer = _LightsBuffers[i];
-				pointtLightBufferInfo.offset = 0;
-				pointtLightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
-				descriptorsWrite[11].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[11].dstSet = material->materialSets[i];
-				descriptorsWrite[11].dstBinding = 4;
-				descriptorsWrite[11].dstArrayElement = 0;
-				descriptorsWrite[11].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[11].descriptorCount = 1;
-				descriptorsWrite[11].pBufferInfo = &pointtLightBufferInfo;
-				descriptorsWrite[11].pImageInfo = nullptr;
-				descriptorsWrite[11].pTexelBufferView = nullptr;
-
+				PrepareDescriptorWrite(i, 4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _LightsBuffers[i], sizeof(LightBufferObject));
 				// Dynamic
-				VkDescriptorBufferInfo lightBufferInfo{};
-				lightBufferInfo.buffer = _LightsBuffers[i];
-				lightBufferInfo.offset = 0;
-				lightBufferInfo.range = sizeof(LightBufferObject); // VK_WHOLE
 				int start = 12;
 				for(int j = start; j < 14; j++) // 4 lights
 				{
-					descriptorsWrite[j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorsWrite[j].dstSet = material->materialSets[i];
-					descriptorsWrite[j].dstBinding = 5;
-					descriptorsWrite[j].dstArrayElement = j - start;
-					descriptorsWrite[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-					descriptorsWrite[j].descriptorCount = 1;
-					descriptorsWrite[j].pBufferInfo = &lightBufferInfo;
-					descriptorsWrite[j].pImageInfo = nullptr;
-					descriptorsWrite[j].pTexelBufferView = nullptr;
+					PrepareDescriptorWrite(i, 5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _LightsBuffers[i], sizeof(LightBufferObject), j - start);
 				}
 
-				VkDescriptorBufferInfo particleBufferInfo{};
-				particleBufferInfo.buffer = _ComputeBuffers[i];
-				particleBufferInfo.offset = 0;
-				particleBufferInfo.range = sizeof(GPU::Particle); // VK_WHOLE
-				descriptorsWrite[14].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[14].dstSet = material->materialSets[i];
-				descriptorsWrite[14].dstBinding = 6;
-				descriptorsWrite[14].dstArrayElement = 0;
-				descriptorsWrite[14].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorsWrite[14].descriptorCount = 1;
-				descriptorsWrite[14].pBufferInfo = &particleBufferInfo;
-				descriptorsWrite[14].pImageInfo = nullptr;
-				descriptorsWrite[14].pTexelBufferView = nullptr;
-				vkUpdateDescriptorSets(_LogicDevice, (uint32_t)descriptorsWrite.size(), descriptorsWrite.data(), 0, nullptr);
+				// Compute
+				VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();
+				bufferInfo->buffer = _ComputeBuffers[i];
+				bufferInfo->offset = 0;
+				bufferInfo->range = sizeof(GPU::Particle); // VK_WHOLE
+
+				VkWriteDescriptorSet descriptorsWrite{};
+				descriptorsWrite.pBufferInfo = bufferInfo;
+				descriptorsWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite.dstSet = material->compute_descriptors_sets[i];
+				descriptorsWrite.dstBinding = 0;
+				descriptorsWrite.dstArrayElement = 0;
+				descriptorsWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+				descriptorsWrite.descriptorCount = 1;
+				descriptorsWrite.pTexelBufferView = nullptr;
+				m_DescriptorsWrite.push_back(descriptorsWrite);
+				/*PrepareDescriptorWrite(i, 6, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _ComputeBuffers[i], sizeof(GPU::Particle));*/
+
+				vkUpdateDescriptorSets(_LogicDevice, m_DescriptorsWrite.size(), m_DescriptorsWrite.data(), 0, nullptr);
 			}
 		}
 

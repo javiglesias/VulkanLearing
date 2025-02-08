@@ -31,6 +31,10 @@ namespace VKR
 			VkPipelineLayout compute_layout;
 			VkDescriptorSetLayout descriptorSetLayout;
 			VkDescriptorSetLayout compute_descriptorSetLayout;
+			std::vector< VkDescriptorSetLayoutBinding> ShaderBindings;
+			void _addBind(uint8_t _nbind
+						, VkDescriptorType _type, VkShaderStageFlags _stage
+						, uint8_t _ndescriptors = 1);
 			void _buildPipeline();
 			void Cleanup(VkDevice _LogicDevice);
 		};
@@ -57,13 +61,19 @@ namespace VKR
 			VkShaderModule m_VertShaderModule;
 			VkShaderModule m_FragShaderModule;
 			MaterialInstance* material;
-
+			std::vector<VkWriteDescriptorSet> m_DescriptorsWrite;
 			char _vertPath[64];
 			char _fragPath[64];
 			Texture* textures[8];
 
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptor(VkDevice _LogicDevice);
+			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind
+							, VkDescriptorType _descType , VkBuffer _buffer, VkDeviceSize _range
+							, uint32_t _arrayElement = 0, VkDeviceSize _offset = 0, uint32_t _count = 1);
+			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind, VkDescriptorType _descType
+						, VkImageView _imageView, VkSampler _sampler
+						, uint32_t _arrayElement = 0, uint32_t _count = 1);
 			void UpdateDescriptorSet(VkDevice _LogicDevice
 				, std::vector<VkBuffer> _UniformBuffers
 				, std::vector<VkBuffer> _DynamicBuffers

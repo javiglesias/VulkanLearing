@@ -2,21 +2,28 @@
 
 struct particle
 {
-    vec2 v;
-    vec2 p;
-    vec2 c;
+    vec4 p_v;
+    vec4 c;
 };
 
-layout(binding=1) readonly buffer particle_ssbbo_in
+layout(binding=6) readonly buffer particle_ssbbo_in
 {
     particle particles_in[];   
 };
 
-layout(binding=2) readonly buffer particle_ssbbo_out
+layout(binding=7) buffer particle_ssbbo_out
 {
     particle particles_out[];   
 };
 
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
 void main() 
 {
+	uint index = gl_GlobalInvocationID.x; 
+	vec2 pos = particles_in[index].p_v.xy;
+	vec2 vel = particles_in[index].p_v.zw;
+	vec3 color = particles_in[index ].c.xyz;
+	particles_out[index].p_v = particles_in[index].p_v;
+	particles_out[index].c = particles_in[index].c;	
 }

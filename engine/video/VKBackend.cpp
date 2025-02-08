@@ -1,6 +1,7 @@
 #include "VKBackend.h"
 #include "../filesystem/ResourceManager.h"
 #include "../filesystem/gltfReader.h"
+#include "glslang/Public/ShaderLang.h"
 
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
@@ -644,8 +645,7 @@ namespace VKR
 				VkDeviceSize bufferSize = sizeof(ComputeBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
-					CreateBuffer(bufferSize, 
-						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT 
+					CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT 
 							| VK_BUFFER_USAGE_STORAGE_BUFFER_BIT 
 							| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 						VK_SHARING_MODE_CONCURRENT,
@@ -871,7 +871,7 @@ namespace VKR
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowTexture->tImage, m_ShadowTexture->tImageMem, 0);
 			TransitionImageLayout(m_ShadowTexture->tImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsQueue);
 			m_ShadowTexture->tImageView = CreateImageView(m_ShadowTexture->tImage, depthFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			m_ShadowTexture->m_Sampler = CreateShadowTextureSampler();
@@ -887,7 +887,7 @@ namespace VKR
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_DepthImage, m_DepthImageMemory, 0);
 			TransitionImageLayout(m_DepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsQueue);
 			m_DepthImageView = CreateImageView(m_DepthImage, depthFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 		}
@@ -901,7 +901,7 @@ namespace VKR
 			// Transicionamos la imagen
 			vkBindImageMemory(g_context.m_LogicDevice, m_GBufferImage, m_GBufferImageMemory, 0);
 			TransitionImageLayout(m_GBufferImage, GBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1);
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsQueue);
 			m_GBufferImageView = CreateImageView(m_GBufferImage, GBufferFormat,
 				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 		}
