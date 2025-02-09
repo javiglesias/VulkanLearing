@@ -9,12 +9,12 @@ namespace VKR
 	{
 		Light::Light()
 		{
-			/*m_LightVisual = new R_Model("resources/models/Box/glTF/", "Box.gltf");*/
+			m_visual_model = new R_Model("BoxVertexColors");
 		}
-		void Light::Cleanup(VkDevice _LogicDevice)
+
+		void Light::Draw(VKBackend* _backend, int _CurrentFrame)
 		{
-			//m_LightVisual->Cleanup(_LogicDevice);
-			//delete(m_LightVisual);
+			m_visual_model->Draw(_backend, _CurrentFrame);
 		}
 	}
 }

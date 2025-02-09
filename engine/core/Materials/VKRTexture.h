@@ -9,7 +9,7 @@ namespace VKR
 	namespace render
 	{
 		extern std::string g_ConsoleMSG;
-
+		
 		struct Texture
 		{
 		private: // Variables
