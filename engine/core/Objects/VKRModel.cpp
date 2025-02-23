@@ -3,8 +3,11 @@
 #include "../../filesystem/ResourceManager.h"
 #include "../../perfmon/Custom.h"
 #include "../../video/GPUParticle.h"
+#include "../../video/VKBackend.h"
 #include <cstddef>
 #include <cstring>
+
+#include "../../video/VKRUtils.h"
 
 
 namespace VKR
@@ -30,7 +33,7 @@ namespace VKR
 
 		void R_Model::Draw(VKBackend* _backend, int _CurrentFrame, int _countModel)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = VKR::render::GetVKContext();
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
@@ -130,8 +133,8 @@ namespace VKR
 				cubo.pos_vel = glm::vec4(0,0,0,1);
 				memcpy((char*)_backend->m_ComputeUniformBuffersMapped[_CurrentFrame]
 						, &cubo, 1 * sizeof(ComputeBufferObject));
-#if 0
-				VkCommandBuffer compute_command_buffer = BeginSingleTimeCommandBuffer(_backend->m_compute_command_pool);
+#if 1
+				VkCommandBuffer compute_command_buffer = BeginSingleTimeCommandBuffer(_backend->m_CommandPool);
 				vkCmdBindPipeline(compute_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
 				vkCmdBindDescriptorSets(compute_command_buffer
 					, VK_PIPELINE_BIND_POINT_COMPUTE
@@ -140,7 +143,7 @@ namespace VKR
 					, &m_Materials[mesh->m_Material]->material->compute_descriptors_sets[_CurrentFrame]
 					, 0, nullptr);
 				//vkCmdDispatch(compute_command_buffer, 1, 1, 1);
-				EndSingleTimeCommandBuffer(compute_command_buffer, _backend->m_compute_command_pool, renderContext.m_ComputeQueue);
+				EndSingleTimeCommandBuffer(compute_command_buffer, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 #endif
 			}
 			if (g_GPUTimestamp)
@@ -188,7 +191,7 @@ namespace VKR
 						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 						mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
 					CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize
-						, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
+						, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 				}
 
 #pragma endregion
@@ -217,7 +220,7 @@ namespace VKR
 							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 							mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
 						CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize
-							, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
+							, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 					}
 					// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 					// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
@@ -240,7 +243,7 @@ namespace VKR
 						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 						mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
 					CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize
-						, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
+						, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 				}
 #pragma endregion
 				PERF_END("PREPARE_MESH")

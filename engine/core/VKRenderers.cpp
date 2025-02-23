@@ -1,6 +1,5 @@
 #include "VKRenderers.h"
 
-#include "../video/VKBackend.h"
 
 namespace VKR
 {
@@ -8,7 +7,7 @@ namespace VKR
     {
         bool Renderer::CreateShaderStages(const char* _vertShader, const char* _fragShader, bool _force_recompile)
         {
-			if(_force_recompile)
+			/*if(_force_recompile)
 			{
 				vert_shader_modules[_vertShader] = nullptr;
 				frag_shader_modules[_fragShader] = nullptr;
@@ -18,7 +17,7 @@ namespace VKR
 			if (frag_shader_modules[_fragShader] != nullptr)
 				m_FragShaderModule = frag_shader_modules[_fragShader];
 			if (vert_shader_modules[_vertShader] && frag_shader_modules[_fragShader])
-				return true;
+				return true;*/
 
 			m_VertShader = new Shader(_vertShader, 0);
             m_VertShader->LoadShader();
@@ -27,8 +26,8 @@ namespace VKR
 			if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
 				CreateShaderModule(m_FragShader, &m_FragShaderModule))
 			{
- 				vert_shader_modules[_vertShader] = m_VertShaderModule;
-				frag_shader_modules[_fragShader] = m_FragShaderModule;
+ 				/*vert_shader_modules[_vertShader] = m_VertShaderModule;
+				frag_shader_modules[_fragShader] = m_FragShaderModule;*/
 				/// Color Blending
 				m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 				m_ColorBlendAttachment.blendEnable = VK_FALSE;

@@ -1,21 +1,16 @@
 #ifndef _C_SCENE
 #define _C_SCENE
 
-#include <thread>
+#include "../video/VKBackend.h"
 
-#include "../video/VKBufferObjects.h"
-#include "Objects/VKRModel.h"
-
-#include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <vulkan/vulkan_core.h>
 
 namespace VKR
 {
     namespace render
     {
-        class VKBackend;
         struct R_Model;
         class R_Cubemap;
 

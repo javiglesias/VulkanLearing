@@ -1,6 +1,6 @@
 #include "ResourceManager.h"
 #include "gltfReader.h"
-#include "../video/VKBackend.h"
+
 
 namespace VKR
 {
@@ -34,14 +34,14 @@ namespace VKR
 						case STATIC_MODEL:
 						{
 							filesystem::LoadModel_ALT(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName);
-							render::m_SceneDirty = true;
+							//render::m_SceneDirty = true;
 							_NumRequests--;
 							break;
 						}
 						case ASSIMP_MODEL:
 						{
 							filesystem::LoadModel(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName, static_cast<render::R_Model*>(_RMRequests[_NumRequests-1].modelPtr));
-							render::m_SceneDirty = true;
+							//render::m_SceneDirty = true;
 							_NumRequests--;
 							break;
 						}

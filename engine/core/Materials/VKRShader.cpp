@@ -1,5 +1,8 @@
 #include "VKRShader.h"
+
+#ifdef _UNIX
 #include <csignal>
+#endif
 
 std::vector<uint32_t> _read_shader(const char* _filename, int _stage);
 

@@ -12,7 +12,6 @@ namespace VKR
 	{
 		class VKBackend;
 		struct Texture;
-
 		struct PBR_material
 		{
 			char name[32];

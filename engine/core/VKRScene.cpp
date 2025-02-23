@@ -1,13 +1,12 @@
 #include "VKRScene.h"
 #include "../perfmon/Custom.h"
-#include "../video/Types.h"
+#include "../video/VKRUtils.h"
 #include "Objects/VKRCubemap.h"
 #include "Objects/VKRLight.h"
-#include "Objects/VKRModel.h"
-#include <cstddef>
 #include "../filesystem/ResourceManager.h"
 #include "../editor/Editor.h"
-#include "Materials/VKRTexture.h"
+
+#include <cstddef>
 
 namespace VKR
 {
@@ -283,7 +282,7 @@ namespace VKR
 				VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
-			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsQueue);
+			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
@@ -332,19 +331,6 @@ namespace VKR
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
-			/// 1 - Actualizar los DynamicDescriptorBuffers
-			//_backend->GenerateBuffers();
-			/*VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					_backend->m_DynamicBuffers[i], _backend->m_DynamicBuffersMemory[i]);
-				vkMapMemory(renderContext.m_LogicDevice, _backend->m_DynamicBuffersMemory[i], 0,
-					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
-			}*/
 			PERF_INIT("PREPARE_DRAW_SCENE")
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
@@ -356,26 +342,6 @@ namespace VKR
 			g_PointLights[2]->m_visual_model->Prepare(_backend);
 			g_PointLights[3]->m_visual_model->Prepare(_backend);
 			PERF_END("PREPARE_DRAW_SCENE")
-			/// 8 - (OPCIONAL)Reordenar modelos
-			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
-			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
-			/*for (int i = 0; i < m_CurrentStaticModels; i++)
-			{
-				R_Model* model = m_StaticModels[i];
-				for (int i = 0; i < model->m_Meshes.size(); i++)
-				{
-					for (int j = 1; j < model->m_Meshes.size(); j++)
-					{
-						auto& mesh = model->m_Meshes[i];
-						if (model->m_Meshes[j]->m_Material > model->m_Meshes[i]->m_Material)
-						{
-							auto tempMesh = model->m_Meshes[j];
-							model->m_Meshes[j] = model->m_Meshes[i];
-							model->m_Meshes[i] = tempMesh;
-						}
-					}
-				}
-			}*/
 		}
 
 		void Scene::Init(VKBackend* _backend)
@@ -385,14 +351,10 @@ namespace VKR
 			m_StaticModels[0] = new R_Model("Sponza");
 			m_CurrentStaticModels = 1;
 			g_DirectionalLight = new Directional();
-			//g_DirectionalLight->m_LightVisual->m_Materials[0]->CreateDescriptor(renderContext.m_LogicDevice);
 			g_PointLights[0] = new Point();
 			g_PointLights[1] = new Point();
 			g_PointLights[2] = new Point();
 			g_PointLights[3] = new Point();
-			//PrepareDebugScene(_backend);
-			//g_DirectionalLight->m_LightVisual->m_Materials[0]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-				//_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
 			PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
@@ -405,7 +367,6 @@ namespace VKR
 			{
 				m_StaticModels[i]->Update();
 			}
-			//g_DirectionalLight->m_LightVisual->Update();
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)

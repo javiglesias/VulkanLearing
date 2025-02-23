@@ -1,16 +1,18 @@
 #ifndef _C_CUBEMAP_MATERIAL
 #define _C_CUBEMAP_MATERIAL
 
-#include "../../video/VKBackend.h"
+
 #include <string>
+#include <vector>
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
-
 namespace VKR
 {
 	namespace render
 	{
+		class VKBackend;
 		struct Texture;
+
 		struct R_CubemapMaterial
 		{
 		private:

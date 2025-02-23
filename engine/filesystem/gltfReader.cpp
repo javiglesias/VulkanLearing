@@ -1,13 +1,14 @@
 #include "gltfReader.h"
 #include "../../dependencies/cgltf/cgltf.h"
 #include <cstddef>
-#include <glm/vec3.hpp>
-#include <signal.h>
-#include <string>
 #include "../core/Objects/VKRModel.h"
 #include "../core/Materials/VKRTexture.h"
 #include "../video/VKRenderable.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <string>
+#include <signal.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>

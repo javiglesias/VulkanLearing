@@ -1,8 +1,7 @@
 #include "VKRDebugMaterial.h"
-#include "VKRTexture.h"
-#include "../../video/Types.h"
 #include "../../video/VKBufferObjects.h"
 #include "../../video/VKBackend.h"
+#include "VKRTexture.h"
 #include <glm/fwd.hpp>
 
 
@@ -12,7 +11,7 @@ namespace VKR
 	{
 		void R_DbgMaterial::Cleanup(VkDevice _LogicDevice)
 		{
-			m_Texture->CleanTextureData(_LogicDevice);
+			//m_Texture->CleanTextureData(_LogicDevice);
 			// Delete Material things
 			vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
 		}
@@ -80,7 +79,7 @@ namespace VKR
 				// Textura
 				VkDescriptorImageInfo TextureDiffuseImage{};
 				TextureDiffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				TextureDiffuseImage.imageView = m_Texture->tImageView;
+				TextureDiffuseImage.imageView = m_Texture->vk_image.view;
 				if (m_Texture->m_Sampler != nullptr)
 				{
 					TextureDiffuseImage.sampler = m_Texture->m_Sampler;

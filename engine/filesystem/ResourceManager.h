@@ -1,7 +1,6 @@
 #pragma once
 #include "Resource.h"
 #include "../core/Objects/VKRModel.h"
-#include <assimp/material.h>
 #define RESOURCES_PATH "resources/"
 #define MODELS_PATH "resources/models/"
 

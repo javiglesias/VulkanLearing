@@ -1,7 +1,9 @@
 #include "VKRMaterial.h"
-#include "VKRTexture.h"
 #include "../../perfmon/Custom.h"
 #include "../../video/GPUParticle.h"
+#include "../../video/VKBackend.h"
+#include "../../video/VKRUtils.h"
+#include "VKRTexture.h"
 #ifndef WIN32
 #include <signal.h>
 #endif
@@ -51,9 +53,8 @@ namespace VKR
 			
 			VkCullModeFlagBits cullMode = VK_CULL_MODE_BACK_BIT;
 			VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
 			Shader* vertShader;
-			Shader* fragShader;
-			Shader* computeShader = new Shader("engine/shaders/Standard.comp", 5);
 			Shader* vert_finded = find_shader("engine/shaders/Standard.vert");
 			if(!vert_finded)
 			{
@@ -68,6 +69,7 @@ namespace VKR
 			vertShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_VERTEX_BIT, &vertShaderStageInfo);
 			shaderStages[0] = vertShaderStageInfo;
 			
+			Shader* fragShader;
 			Shader* frag_finded = find_shader("engine/shaders/Standard.frag");
 			if(!frag_finded)
 			{
@@ -82,6 +84,7 @@ namespace VKR
 			fragShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_FRAGMENT_BIT, &fragShaderStageInfo);
 			shaderStages[1] = fragShaderStageInfo;
 
+			Shader* computeShader = new Shader("engine/shaders/Standard.comp", 5);
 			computeShader->LoadShader();
 			computeShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_COMPUTE_BIT, &computeShaderStageInfo);
 
@@ -281,9 +284,7 @@ namespace VKR
 				}
 			}
 			// Shadow Texture
-			textures[7]->tImage = _backend->m_ShadowTexture->tImage;
-			textures[7]->tImageView = _backend->m_ShadowTexture->tImageView;
-			textures[7]->tImageMem = _backend->m_ShadowTexture->tImageMem;
+			textures[7]->vk_image = _backend->m_ShadowTexture->vk_image;
 			textures[7]->m_Sampler = _backend->m_ShadowTexture->m_Sampler;
 			PERF_END("CREATE_TEXTURES")
 		}
@@ -445,7 +446,7 @@ namespace VKR
 				for (int8_t t = 0; t < 8; t++ )
 				{
 					PrepareDescriptorWrite(i, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
-							, textures[t]->tImageView, textures[t]->m_Sampler, t);
+							, textures[t]->vk_image.view, textures[t]->m_Sampler, t);
 				}
 				// Dynamic
 				PrepareDescriptorWrite(i, 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _DynamicBuffers[i], sizeof(DynamicBufferObject));
@@ -487,17 +488,17 @@ namespace VKR
 			material->Cleanup(_LogicDevice);
 			// Delete Material things
 			textures[0]->CleanTextureData(_LogicDevice);
-			textures[0] = nullptr;
+			textures[0] = nullptr;						
 			textures[1]->CleanTextureData(_LogicDevice);
-			textures[1] = nullptr;
+			textures[1] = nullptr;						
 			textures[2]->CleanTextureData(_LogicDevice);
-			textures[2] = nullptr;
+			textures[2] = nullptr;						
 			textures[3]->CleanTextureData(_LogicDevice);
-			textures[3] = nullptr;
+			textures[3] = nullptr;						
 			textures[4]->CleanTextureData(_LogicDevice);
-			textures[4] = nullptr;
+			textures[4] = nullptr;						
 			textures[5]->CleanTextureData(_LogicDevice);
-			textures[5] = nullptr;
+			textures[5] = nullptr;						
 			textures[6]->CleanTextureData(_LogicDevice);
 			textures[6] = nullptr;
 		}

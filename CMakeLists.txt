@@ -11,6 +11,7 @@ include_directories(${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glm-0.9.9.0/glm)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/assimp/include)
+include_directories(${PROJECT_SOURCE_DIR}/dependencies/vma/include)
 endif (WIN32)
 
 if (UNIX)
@@ -53,6 +54,7 @@ add_executable(VKRenderer engine/main.cpp
         engine/editor/Editor.cpp
         engine/editor/Editor.h
         engine/perfmon/Custom.h
+        engine/filesystem/shader_compiler.cpp
         engine/filesystem/gltfReader.cpp
         engine/filesystem/gltfReader.h
         engine/filesystem/ResourceManager.cpp

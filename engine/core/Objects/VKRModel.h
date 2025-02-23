@@ -1,8 +1,7 @@
 #ifndef _C_MODEL
 #define _C_MODEL
-#include "../Materials/VKRDebugMaterial.h"
-#include "../../video/VKRenderable.h"
 
+#include "../../video/VKRenderable.h"
 #include <unordered_map>
 
 namespace VKR

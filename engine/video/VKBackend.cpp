@@ -1,21 +1,20 @@
 #include "VKBackend.h"
 #include "../filesystem/ResourceManager.h"
-#include "../filesystem/gltfReader.h"
 #include "glslang/Public/ShaderLang.h"
+#include "../core/Materials/VKRTexture.h"
+
+#include "VKRUtils.h"
 
 #include <vulkan/vulkan.h>
-#include <sys/types.h>
+
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-
-#include "../core/Materials/VKRTexture.h"
 
 
 #ifndef WIN32
 #include <signal.h>
 #endif
-
 
 namespace VKR
 {
@@ -208,19 +207,6 @@ namespace VKR
 			}
 			return VK_FALSE;
 		}
-    	// Backend
-		void VKBackend::CreateImageViews()
-		{
-			/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
-			m_SwapChainImagesViews.clear();
-			m_SwapChainImagesViews.resize(m_SwapchainImagesCount);
-			int currentSwapchaingImageView = 0;
-			for (auto& image : m_SwapChainImages)
-			{
-				m_SwapChainImagesViews[currentSwapchaingImageView] = CreateImageView(image, m_SurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
-				++currentSwapchaingImageView;
-			}
-		}
 
 		void VKBackend::Init()
 		{
@@ -265,8 +251,6 @@ namespace VKR
 			glfwSetCursorPosCallback(m_Window, MouseInputCallback);
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
-			// INICIALIZAMOS IMGUI
-			
 			/// Create the Debug Messenger
 			VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 			debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -291,10 +275,10 @@ namespace VKR
 
 			// Present support on the Physical Device
 			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(g_context.m_GpuInfo.m_Device, g_context.m_GraphicsQueueFamilyIndex, m_Surface, &presentSupport);
+			vkGetPhysicalDeviceSurfaceSupportKHR(g_context.m_GpuInfo.m_Device, g_context.m_GraphicsComputeQueueFamilyIndex, m_Surface, &presentSupport);
 			if (!presentSupport)
 				printf("CANNOT PRESENT ON THIS DEVICE: %s\n", g_context.m_GpuInfo.m_Properties.deviceName);
-			vkGetDeviceQueue(g_context.m_LogicDevice, g_context.m_GraphicsQueueFamilyIndex, 0, &g_context.m_PresentQueue);
+			vkGetDeviceQueue(g_context.m_LogicDevice, g_context.m_GraphicsComputeQueueFamilyIndex, 0, &g_context.m_PresentQueue);
 
 			/* Ahora tenemos que ver que nuestro device soporta la swapchain
 			 * y sus capacidades.
@@ -338,12 +322,8 @@ namespace VKR
 			m_CurrentExtent = m_Capabilities.currentExtent;
 			/// Ahora creamos la swapchain como tal.
 			m_SwapchainImagesCount = m_Capabilities.minImageCount;
-
+			VMA_Initialize(g_context.m_GpuInfo.m_Device, g_context.m_LogicDevice, m_Instance);
 			CreateSwapChain();
-			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
-			m_SwapChainImages.resize(m_SwapchainImagesCount);
-			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
-			CreateImageViews();
 			m_CubemapRender = new CubemapRenderer(g_context.m_LogicDevice);
 			m_ShadowRender = new ShadowRenderer(g_context.m_LogicDevice);
 			m_ShadowMat = new R_ShadowMaterial();
@@ -701,8 +681,32 @@ namespace VKR
 			auto swpResult = vkCreateSwapchainKHR(g_context.m_LogicDevice, &m_SwapChainCreateInfo, nullptr, &m_SwapChain);
 			if (swpResult != VK_SUCCESS)
 				exit(-3);
+#if 0
+			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
+			m_SwapChainImages.resize(m_SwapchainImagesCount);
+#endif
+			m_SwapchainImagesCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			VkImage tempswapchainimg[FRAMES_IN_FLIGHT];
+			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, tempswapchainimg);
+			m_SwapchainImages[0] = new Texture("");
+			m_SwapchainImages[0]->vk_image.image = tempswapchainimg[0];
+			m_SwapchainImages[0]->vk_image.extent.height = m_Capabilities.currentExtent.height;
+			m_SwapchainImages[0]->vk_image.extent.width  = m_Capabilities.currentExtent.width;
+			m_SwapchainImages[0]->vk_image.extent.depth  = 1;
+			m_SwapchainImages[0]->vk_image.format = VK_FORMAT_B8G8R8A8_SRGB;
+			m_SwapchainImages[1] = new Texture("");
+			m_SwapchainImages[1]->vk_image.image = tempswapchainimg[1];
+			m_SwapchainImages[1]->vk_image.extent.height = m_Capabilities.currentExtent.height;
+			m_SwapchainImages[1]->vk_image.extent.width = m_Capabilities.currentExtent.width;
+			m_SwapchainImages[1]->vk_image.extent.depth = 1;
+			m_SwapchainImages[1]->vk_image.format = VK_FORMAT_B8G8R8A8_SRGB;
+			/// Ahora vamos a crear las vistas a la imagenes, para poder acceder a ellas y demas
+			for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				m_SwapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
+			}
 		}
-
+#if 0
 		void VKBackend::RecreateSwapChain()
 		{
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
@@ -726,12 +730,7 @@ namespace VKR
 		void VKBackend::CreateFramebufferAndSwapchain()
 		{
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(g_context.m_GpuInfo.m_Device, m_Surface, &m_Capabilities);
-			m_CurrentExtent = m_Capabilities.currentExtent;
 			CreateSwapChain();
-			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, nullptr);
-			m_SwapChainImages.resize(m_SwapchainImagesCount);
-			vkGetSwapchainImagesKHR(g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, m_SwapChainImages.data());
-			CreateImageViews();
 			g_context.CreateRenderPass(&m_SwapChainCreateInfo);
 			m_ShadowRender->Initialize(true);
 			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
@@ -744,31 +743,17 @@ namespace VKR
 			CreateGBufferImage();
 			CreateFramebuffers();
 		}
-
-		void VKBackend::CreateShadowFramebuffer()
-		{
-			VkFramebufferCreateInfo mFramebufferInfo{};
-			mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			mFramebufferInfo.renderPass = g_context.m_ShadowPass->pass;
-			mFramebufferInfo.attachmentCount = 1;
-			mFramebufferInfo.pAttachments = &m_ShadowTexture->tImageView;
-			mFramebufferInfo.width = m_CurrentExtent.width;
-			mFramebufferInfo.height = m_CurrentExtent.height;
-			mFramebufferInfo.layers = 1;
-			if (vkCreateFramebuffer(g_context.m_LogicDevice, &mFramebufferInfo, nullptr,
-				&m_ShadowFramebuffer) != VK_SUCCESS)
-				exit(-10);
-		}
+#endif
 
 		void VKBackend::CreateFramebuffers()
 		{
 			// FRAMEBUFFERS
-			m_SwapChainFramebuffers.resize(m_SwapChainImagesViews.size());
-			for (size_t i = 0; i < m_SwapChainImagesViews.size(); i++)
+			m_SwapChainFramebuffers.resize(FRAMES_IN_FLIGHT);
+			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
 				std::array<VkImageView, 2> attachments = {
-					m_SwapChainImagesViews[i],
-					m_DepthImageView
+					m_SwapchainImages[i]->vk_image.view,
+					m_DepthTexture->vk_image.view
 				};
 				VkFramebufferCreateInfo mFramebufferInfo{};
 				mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -784,15 +769,30 @@ namespace VKR
 			}
 		}
 
+		void VKBackend::CreateShadowFramebuffer()
+		{
+			VkFramebufferCreateInfo mFramebufferInfo{};
+			mFramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			mFramebufferInfo.renderPass = g_context.m_ShadowPass->pass;
+			mFramebufferInfo.attachmentCount = 1;
+			mFramebufferInfo.pAttachments = &m_ShadowTexture->vk_image.view;
+			mFramebufferInfo.width = m_CurrentExtent.width;
+			mFramebufferInfo.height = m_CurrentExtent.height;
+			mFramebufferInfo.layers = 1;
+			if (vkCreateFramebuffer(g_context.m_LogicDevice, &mFramebufferInfo, nullptr,
+				&m_ShadowFramebuffer) != VK_SUCCESS)
+				exit(-10);
+		}
+
 		void VKBackend::CreateCommandBuffer()
 		{
 			// COMMAND BUFFERS
 			/// Command Pool
-			///	m_GraphicsQueueFamilyIndex
+			///	m_GraphicsComputeQueueFamilyIndex
 			VkCommandPoolCreateInfo m_PoolInfo{};
 			m_PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			m_PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			m_PoolInfo.queueFamilyIndex = g_context.m_GraphicsQueueFamilyIndex;
+			m_PoolInfo.queueFamilyIndex = g_context.m_GraphicsComputeQueueFamilyIndex;
 			if (vkCreateCommandPool(g_context.m_LogicDevice, &m_PoolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
 				exit(-11);
 			VkCommandBufferAllocateInfo mAllocInfo{};
@@ -801,24 +801,6 @@ namespace VKR
 			mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			mAllocInfo.commandBufferCount = 2;
 			if (vkAllocateCommandBuffers(g_context.m_LogicDevice, &mAllocInfo, m_CommandBuffer) != VK_SUCCESS)
-				exit(-12);
-
-			// COMPUTE COMMAND POOL
-			VkCommandPoolCreateInfo compute_pool_info{};
-			m_PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			m_PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			m_PoolInfo.queueFamilyIndex = g_context.m_ComputeQueueFamilyIndex;
-			if (vkCreateCommandPool(g_context.m_LogicDevice, &compute_pool_info
-				, nullptr, &m_compute_command_pool) != VK_SUCCESS)
-				exit(-11);
-			VkCommandBufferAllocateInfo compute_alloc_info{};
-			compute_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			compute_alloc_info.commandPool = m_compute_command_pool;
-			compute_alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			compute_alloc_info.commandBufferCount = 2;
-			if (vkAllocateCommandBuffers(g_context.m_LogicDevice
-				, &compute_alloc_info
-				, m_compute_command_buffer) != VK_SUCCESS)
 				exit(-12);
 		}
 
@@ -864,46 +846,41 @@ namespace VKR
 		{
 			VkFormat depthFormat = g_context.m_GpuInfo.FindDepthTestFormat();
 			m_ShadowTexture = new Texture("");
-			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
-				VK_IMAGE_TILING_OPTIMAL, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_ShadowTexture->tImage, &m_ShadowTexture->tImageMem, 1, 0, 1);
-			// Transicionamos la imagen
-			vkBindImageMemory(g_context.m_LogicDevice, m_ShadowTexture->tImage, m_ShadowTexture->tImageMem, 0);
-			TransitionImageLayout(m_ShadowTexture->tImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsQueue);
-			m_ShadowTexture->tImageView = CreateImageView(m_ShadowTexture->tImage, depthFormat,
-				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
-			m_ShadowTexture->m_Sampler = CreateShadowTextureSampler();
+			m_ShadowTexture->CreateImage(VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
+				, depthFormat, VK_IMAGE_TILING_OPTIMAL
+				, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+				, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, 0, 1);
+			m_ShadowTexture->BindTextureMemory();
+			m_ShadowTexture->TransitionImageLayout( VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+				, m_CommandPool, 1, &GetVKContext().m_GraphicsComputeQueue);
+			m_ShadowTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
+			m_ShadowTexture->CreateShadowTextureSampler();
 		}
 
 		void VKBackend::CreateDepthTestingResources()
 		{
 			VkFormat depthFormat = g_context.m_GpuInfo.FindDepthTestFormat();
-			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, depthFormat,
-				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_DepthImage, &m_DepthImageMemory, 1, 0, 1);
-			// Transicionamos la imagen
-			vkBindImageMemory(g_context.m_LogicDevice, m_DepthImage, m_DepthImageMemory, 0);
-			TransitionImageLayout(m_DepthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsQueue);
-			m_DepthImageView = CreateImageView(m_DepthImage, depthFormat,
-				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
+			m_DepthTexture = new Texture("");
+			m_DepthTexture->CreateImage( VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
+				, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, 0, 1);
+			m_DepthTexture->BindTextureMemory();
+			m_DepthTexture->TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsComputeQueue);
+			m_DepthTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
+			//m_DepthTexture->CreateTextureSampler()
 		}
 		void VKBackend::CreateGBufferImage()
 		{
 			VkFormat GBufferFormat = VK_FORMAT_R32G32B32A32_UINT;
-			CreateImage(m_CurrentExtent.width, m_CurrentExtent.height, GBufferFormat,
-				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&m_GBufferImage, &m_GBufferImageMemory, 1, 0, 1);
-			// Transicionamos la imagen
-			vkBindImageMemory(g_context.m_LogicDevice, m_GBufferImage, m_GBufferImageMemory, 0);
-			TransitionImageLayout(m_GBufferImage, GBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsQueue);
-			m_GBufferImageView = CreateImageView(m_GBufferImage, GBufferFormat,
-				VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
+			m_GBufferTexture = new Texture("");
+			m_GBufferTexture->CreateImage(VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
+				, GBufferFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, 0, 1);
+			m_GBufferTexture->BindTextureMemory();
+			m_GBufferTexture->TransitionImageLayout( VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsComputeQueue);
+			m_GBufferTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 		}
 
 		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
@@ -944,7 +921,7 @@ namespace VKR
 				VK_NULL_HANDLE, &imageIdx);
 			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
 			{
-				RecreateSwapChain();
+				//RecreateSwapChain();
 				vkAcquireNextImageKHR(g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],VK_NULL_HANDLE, &imageIdx);
 			}
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
@@ -976,7 +953,7 @@ namespace VKR
 			VkSemaphore signalSemaphores[] = { m_RenderFinish[_FrameToPresent] };
 			submitInfo.signalSemaphoreCount = 1;
 			submitInfo.pSignalSemaphores = signalSemaphores;
-			auto submit = vkQueueSubmit(g_context.m_GraphicsQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]);
+			auto submit = vkQueueSubmit(g_context.m_GraphicsComputeQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]);
 			if ( submit != VK_SUCCESS)
 			{
 				fprintf(stderr, "Error on the Submit");
@@ -1019,11 +996,11 @@ namespace VKR
 
 		void VKBackend::CleanSwapChain()
 		{
+			vkDestroySwapchainKHR(g_context.m_LogicDevice, m_SwapChain, nullptr);
 			for (auto& framebuffer : m_SwapChainFramebuffers)
 				vkDestroyFramebuffer(g_context.m_LogicDevice, framebuffer, nullptr);
-			for (auto& imageView : m_SwapChainImagesViews)
-				vkDestroyImageView(g_context.m_LogicDevice, imageView, nullptr);
-			vkDestroySwapchainKHR(g_context.m_LogicDevice, m_SwapChain, nullptr);
+			for (auto& image : m_SwapchainImages)
+				image->CleanTextureData(g_context.m_LogicDevice);
 		}
 
 		bool VKBackend::BackendShouldClose()
@@ -1045,6 +1022,7 @@ namespace VKR
 			if(g_LoadDataThread)
 				g_LoadDataThread->join();
 			printf("Cleanup\n");
+			//vmaDestroyAllocator(m_Allocator);
 			g_context.Cleanup();
 			#ifdef WIN32
 			glslang::FinalizeProcess();
@@ -1088,11 +1066,10 @@ namespace VKR
 				/*vkDestroyBuffer(g_context.m_LogicDevice, m_GridUniformBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], nullptr);*/
 			}
-			vkDestroyImageView(g_context.m_LogicDevice, m_DepthImageView, nullptr);
-			vkDestroyImage(g_context.m_LogicDevice, m_DepthImage, nullptr);
-			vkFreeMemory(g_context.m_LogicDevice, m_DepthImageMemory, nullptr);
 
+			m_DepthTexture->CleanTextureData(g_context.m_LogicDevice);
 			m_ShadowTexture->CleanTextureData(g_context.m_LogicDevice);
+			m_GBufferTexture->CleanTextureData(g_context.m_LogicDevice);
 
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[0], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[1], nullptr);
