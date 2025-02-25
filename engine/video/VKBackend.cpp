@@ -625,13 +625,10 @@ namespace VKR
 				VkDeviceSize bufferSize = sizeof(ComputeBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
-					CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT 
-							| VK_BUFFER_USAGE_STORAGE_BUFFER_BIT 
-							| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-						VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+						VK_SHARING_MODE_CONCURRENT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 						m_ComputeUniformBuffers[i], m_ComputeUniformBuffersMemory[i]);
+
 					vkMapMemory(g_context.m_LogicDevice, m_ComputeUniformBuffersMemory[i], 0,
 						bufferSize, 0, &m_ComputeUniformBuffersMapped[i]);
 				}

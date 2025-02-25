@@ -142,7 +142,7 @@ namespace VKR
 					, 0, 1
 					, &m_Materials[mesh->m_Material]->material->compute_descriptors_sets[_CurrentFrame]
 					, 0, nullptr);
-				//vkCmdDispatch(compute_command_buffer, 1, 1, 1);
+				vkCmdDispatch(compute_command_buffer, 16, 16, 1);
 				EndSingleTimeCommandBuffer(compute_command_buffer, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 #endif
 			}

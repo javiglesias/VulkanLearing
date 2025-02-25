@@ -24,6 +24,7 @@ namespace VKR
 			else
 				sprintf(m_Path, "%s", _path.c_str());
 		}
+
 		void Texture::LoadTexture()
 		{
 			PERF_INIT("LOAD_TEXTURE")
@@ -31,7 +32,7 @@ namespace VKR
 			stbi_set_flip_vertically_on_load(true);
 			int tWidth, tHeight, tChannels;
 			pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);
-			vk_image.extent = VkExtent3D(tWidth, tHeight, tChannels);
+			vk_image.extent = VkExtent3D(tWidth, tHeight, 1);
 			if (!pixels)
 			{
 				#ifdef WIN32
@@ -93,13 +94,14 @@ namespace VKR
 				, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 				, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _arrayLayers, _flags, m_Mipmaps);
 			BindTextureMemory();
+
 			TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
 			CopyBufferToImage(m_StagingBuffer, vk_image.extent, 0, _CommandPool
 				, &GetVKContext().m_GraphicsComputeQueue, 0);
 			GenerateMipmap(_CommandPool, m_Mipmaps);
-			TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
+			/*TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);*/
 			CreateImageView(_aspectMask, _viewType, _arrayLayers, m_Mipmaps);
 			m_Sampler = CreateTextureSampler(m_Mipmaps);
 			vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
@@ -182,19 +184,18 @@ namespace VKR
 			// copy/blit transactions
 			for (uint8_t i = 1; i < _mipLevels; i++)
 			{
-				{ // pre-copy transition
-					iBarrier.subresourceRange.baseMipLevel = i - 1;
-					iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-					iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-					iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-					iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
-						VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr,
-						1, &iBarrier);
-				}
+				// pre-copy transition
+				iBarrier.subresourceRange.baseMipLevel = i - 1;
+				iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				iBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+				iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr,
+					1, &iBarrier);
 				VkImageBlit blit{};
 				blit.srcOffsets[0] = { 0, 0, 0 };
-				blit.srcOffsets[1] = { (int32_t)vk_image.extent.width,  (int32_t)vk_image.extent.height, (int32_t)vk_image.extent.depth};
+				blit.srcOffsets[1] = { (int32_t)vk_image.extent.width,  (int32_t)vk_image.extent.height, 1};
 				blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				blit.srcSubresource.mipLevel = i - 1;
 				blit.srcSubresource.baseArrayLayer = 0;
@@ -203,7 +204,7 @@ namespace VKR
 				blit.dstOffsets[0] = { 0, 0, 0 };
 				blit.dstOffsets[1] = { (int32_t)(vk_image.extent.width > 1 ? vk_image.extent.width/2 : 1)
 					, (int32_t)(vk_image.extent.height > 1 ? vk_image.extent.height /2 : 1)
-					, (int32_t)vk_image.extent.depth};
+					, 1};
 				blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				blit.dstSubresource.mipLevel = i;
 				blit.dstSubresource.baseArrayLayer = 0;
@@ -213,12 +214,13 @@ namespace VKR
 					VK_FILTER_LINEAR);
 				vk_image.extent.width  = vk_image.extent.width > 1 ? vk_image.extent.width / 2 : 1;
 				vk_image.extent.height = vk_image.extent.height > 1 ? vk_image.extent.height / 2 : 1;
+				if (vk_image.extent.width == 1 || vk_image.extent.height == 1) break;
 			}
 			// Post-copy transactions
 			iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			iBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			iBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			iBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			iBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr,
 				1, &iBarrier);
@@ -289,7 +291,7 @@ namespace VKR
 
 		void Texture::CopyBufferToImage(VkBuffer _buffer, VkExtent3D _extent
 				, VkDeviceSize _bufferOffset, VkCommandPool _CommandPool
-				, VkQueue* _queue, uint32_t _layer = 0)
+				, VkQueue* _queue, uint32_t _layer)
 		{
 			VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
 			VkBufferImageCopy region{};
@@ -339,8 +341,7 @@ namespace VKR
 #endif
 		}
 
-		VkSampler Texture::CreateTextureSampler(float _Mipmaps, VkSamplerAddressMode _u
-		                                        , VkSamplerAddressMode _v, VkSamplerAddressMode _w)
+		VkSampler Texture::CreateTextureSampler(float _Mipmaps, VkSamplerAddressMode _u, VkSamplerAddressMode _v, VkSamplerAddressMode _w)
 		{
 			auto renderContext = VKR::render::GetVKContext();
 			VkPhysicalDeviceProperties deviceProp;

@@ -48,17 +48,17 @@ namespace VKR
 				, VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D
 				, uint32_t _arrayLayers=1, VkImageCreateFlags _flags=0);
 			void CreateAndTransitionImageCubemap(VkCommandPool _CommandPool
-			                                     , VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB
-			                                     , VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
-			                                     , VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D
-			                                     , uint32_t _arrayLayers = 1, VkImageCreateFlags _flags = 0);
+				, VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB
+				, VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
+				, VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D
+				, uint32_t _arrayLayers = 1, VkImageCreateFlags _flags = 0);
 
 			void GenerateMipmap(VkCommandPool _CommandPool, uint8_t _mipLevels);
 			void TransitionImageLayout(VkImageLayout _old, VkImageLayout _new,
 			                           VkCommandPool _CommandPool, uint32_t _layerCount, VkQueue* _queue,
 			                           uint8_t _levelCount = 1);
 			void CopyBufferToImage(VkBuffer _buffer,VkExtent3D _extent, VkDeviceSize _bufferOffset
-					, VkCommandPool _CommandPool, VkQueue* _queue, uint32_t _layer);
+					, VkCommandPool _CommandPool, VkQueue* _queue, uint32_t _layer = 0);
 			void CreateImageView(VkImageAspectFlags _aspectMask,VkImageViewType _viewType
 						, uint32_t _arrayLayers = 1, uint32_t _levelCount = 1);
 			void CreateTextureImageView();
