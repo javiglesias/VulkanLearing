@@ -177,19 +177,21 @@ namespace VKR
         }
         bool Renderer::CreateShaderModule(Shader* _shader, VkShaderModule* _shaderModule) // 0: vert, 4:frag
         {
-            _shader->LoadShader();
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             #ifdef WIN32
-            shaderModuleCreateInfo.codeSize = 4 * _shader->m_SpirvSrc.size();
-            shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(_shader->m_SpirvSrc.data());
+	            shaderModuleCreateInfo.codeSize = _shader->m_SpirvSrc.size();
+	            shaderModuleCreateInfo.pCode = _shader->m_SpirvSrc.data();
             #else
                 shaderModuleCreateInfo.codeSize = spvCompiled.size();
                 shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());
             #endif
             if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
                 != VK_SUCCESS)
-                return false;
+            {
+                __debugbreak();
+            	return false;
+            }
             return true;
         }
         void Renderer::Cleanup()
@@ -426,6 +428,7 @@ namespace VKR
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
             m_VertShader = new Shader("engine/shaders/Shadow.vert", 0);
+            m_VertShader->LoadShader();
             if(CreateShaderModule(m_VertShader, &m_VertShaderModule))
             {
                 CreateShaderStages("engine/shaders/Shadow.vert", "", _reload);

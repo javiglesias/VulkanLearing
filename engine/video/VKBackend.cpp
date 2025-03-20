@@ -2,7 +2,6 @@
 #include "../filesystem/ResourceManager.h"
 #include "glslang/Public/ShaderLang.h"
 #include "../core/Materials/VKRTexture.h"
-
 #include "VKRUtils.h"
 
 #include <vulkan/vulkan.h>
@@ -1063,7 +1062,10 @@ namespace VKR
 				/*vkDestroyBuffer(g_context.m_LogicDevice, m_GridUniformBuffers[i], nullptr);
 				vkFreeMemory(g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], nullptr);*/
 			}
-
+			for (auto& tex : m_TexturesCache)
+			{
+				tex->CleanTextureData(g_context.m_LogicDevice);
+			}
 			m_DepthTexture->CleanTextureData(g_context.m_LogicDevice);
 			m_ShadowTexture->CleanTextureData(g_context.m_LogicDevice);
 			m_GBufferTexture->CleanTextureData(g_context.m_LogicDevice);
@@ -1082,6 +1084,22 @@ namespace VKR
 			m_ShadowMat->Cleanup(g_context.m_LogicDevice);
 		}
 
+		Texture* VKBackend::FindTexture(const char* _path)
+		{
+			for (auto& tex : m_TexturesCache)
+			{
+				if (strcmpi(_path, tex->m_Path) == 0)
+					return tex;
+			}
+			auto tex = new Texture(_path);
+			tex->LoadTexture();
+			if(tex->m_Mipmaps > 0)
+				tex->CreateAndTransitionImage(m_CommandPool);
+			else
+				tex->CreateAndTransitionImageNoMipMaps(m_CommandPool);
+			m_TexturesCache.push_back(tex);
+			return tex;
+		}
 
 		void VKBackend::Shutdown()
 		{

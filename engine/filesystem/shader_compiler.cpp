@@ -21,8 +21,10 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 	char spv_code_file[128];
 	struct stat file_stat_raw;
 	struct stat file_stat_spv;
-	int need_compilation = 1;
+	int need_compilation = 0;
 	std::vector<uint32_t> intermediate_data;
+	memset(raw_code_file, 0, 128);
+	memset(spv_code_file, 0, 128);
 	sprintf(raw_code_file, "%s", _filename);
 	sprintf(spv_code_file, "%s.spv", raw_code_file);
 	printf("Actual time: %lld\n", _time);
@@ -31,7 +33,7 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 
 	printf("Modification %s time: %lld\n", raw_code_file, file_stat_raw.st_mtime);
 	printf("Modification %s time: %lld\n", spv_code_file, file_stat_spv.st_mtime);
-	if (need_compilation || file_stat_raw.st_mtime > file_stat_spv.st_mtime)
+	if (file_stat_raw.st_mtime > file_stat_spv.st_mtime)
 	{
 		shader_file = fopen(raw_code_file, "r");
 		need_compilation = 1;
@@ -49,6 +51,7 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 			fseek(shader_file, 0, SEEK_END);
 			int fileSize = ftell(shader_file);
 			data = static_cast<char*>(malloc(sizeof(char) * fileSize));
+			memset(data, 0, sizeof(char) * fileSize);
 			rewind(shader_file);
 			fread(data, fileSize, 1, shader_file);
 			fclose(shader_file);
@@ -99,7 +102,8 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 			data[fileSize] = 0; // clean data
 			_end_timer = time(NULL);
 			printf("Read file elapsed %lld\n", _end_timer - _start_timer);
-			intermediate_data.insert(intermediate_data.begin(), data[0], data[fileSize]);
+			for (size_t datum = 0; datum < fileSize; datum++)
+				intermediate_data.push_back(data[datum]);
 		}
 	}
 	time_t _end_time = time(NULL);

@@ -190,10 +190,10 @@ namespace VKR
 				g_Lights[l]->Draw(_backend, _CurrentFrame);
 			}
 			g_DirectionalLight->Draw(_backend, _CurrentFrame);
-			g_PointLights[0]->Draw(_backend, _CurrentFrame);
+			/*g_PointLights[0]->Draw(_backend, _CurrentFrame);
 			g_PointLights[1]->Draw(_backend, _CurrentFrame);
 			g_PointLights[2]->Draw(_backend, _CurrentFrame);
-			g_PointLights[3]->Draw(_backend, _CurrentFrame);
+			g_PointLights[3]->Draw(_backend, _CurrentFrame);*/
 #pragma endregion
 #pragma region MODELS
 			//vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_Pipeline);
@@ -246,8 +246,8 @@ namespace VKR
 		
 #pragma endregion
 #pragma region CUBEMAP
-			if(g_DrawCubemap)
-				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			/*if(g_DrawCubemap)
+				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));*/
 #pragma endregion
 			// TODO Draw quads.r
 
@@ -337,25 +337,25 @@ namespace VKR
 				m_StaticModels[i]->Prepare(_backend);
 			}
 			g_DirectionalLight->m_visual_model->Prepare(_backend);
-			g_PointLights[0]->m_visual_model->Prepare(_backend);
+			/*g_PointLights[0]->m_visual_model->Prepare(_backend);
 			g_PointLights[1]->m_visual_model->Prepare(_backend);
 			g_PointLights[2]->m_visual_model->Prepare(_backend);
-			g_PointLights[3]->m_visual_model->Prepare(_backend);
+			g_PointLights[3]->m_visual_model->Prepare(_backend);*/
 			PERF_END("PREPARE_DRAW_SCENE")
 		}
 
 		void Scene::Init(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
-			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model("Sponza");
+			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
+			m_StaticModels[0] = new R_Model("Bistro");
 			m_CurrentStaticModels = 1;
 			g_DirectionalLight = new Directional();
-			g_PointLights[0] = new Point();
+			/*g_PointLights[0] = new Point();
 			g_PointLights[1] = new Point();
 			g_PointLights[2] = new Point();
-			g_PointLights[3] = new Point();
-			PrepareCubemapScene(_backend);
+			g_PointLights[3] = new Point();*/
+			//PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
@@ -363,10 +363,10 @@ namespace VKR
 
 		void Scene::Update()
 		{
-			for (int i = 0; i < m_CurrentStaticModels; i++)
+			/*for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
 				m_StaticModels[i]->Update();
-			}
+			}*/
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)
@@ -465,7 +465,7 @@ namespace VKR
 				model->Cleanup(_LogicDevice);
 			}
 #endif
-			m_Cubemap->Cleanup(_LogicDevice);
+			//m_Cubemap->Cleanup(_LogicDevice);
 			g_editor->Cleanup();
 			g_editor->Shutdown();
 		}

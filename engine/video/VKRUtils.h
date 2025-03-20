@@ -86,7 +86,11 @@ namespace VKR
 inline 
 static void VK_ASSERT(bool _check)
 {
-	if (_check) exit(-69);
+	if (_check)
+	{
+		__debugbreak();
+		exit(-69);
+	}
 }
 
 inline 

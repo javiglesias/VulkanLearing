@@ -61,7 +61,7 @@ namespace VKR
 			temp.Color = glm::vec4(g_DirectionalLight->m_Color, 1.0);
 			m_LightsOs.push_back(temp);
 			//Point Ligts
-			for (int i = 0; i < 3; i++)
+			/*for (int i = 0; i < 3; i++)
 			{
 				Point* light = g_PointLights[i];
 				glm::mat4 lightViewMat = glm::lookAt(light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
@@ -81,7 +81,7 @@ namespace VKR
 				m_LightsOs.push_back(temp);
 			}
 			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0
-					, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
+					, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));*/
 			if (g_GPUTimestamp)
 				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 0);
 			for (auto& mesh : m_Meshes)
@@ -142,7 +142,7 @@ namespace VKR
 					, 0, 1
 					, &m_Materials[mesh->m_Material]->material->compute_descriptors_sets[_CurrentFrame]
 					, 0, nullptr);
-				vkCmdDispatch(compute_command_buffer, 16, 16, 1);
+				//vkCmdDispatch(compute_command_buffer, 16, 16, 1);
 				EndSingleTimeCommandBuffer(compute_command_buffer, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 #endif
 			}
@@ -163,6 +163,7 @@ namespace VKR
 			auto renderContext = GetVKContext();
 			PERF_INIT("PREPARE_MESH")
 				/// 5 - Crear buffers de vertices
+			int count = 0;
 			for (auto& mesh : m_Meshes)
 #pragma region BUFFER_VERTICES
 			{
@@ -260,6 +261,8 @@ namespace VKR
 				m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);
 				PERF_END("UPDATE_DESCRIPTORS")
+				fprintf(stdout, "Loading mesh %d: %s\n", count, mesh->m_Id);
+				++count;
 			}
 		}
 	}

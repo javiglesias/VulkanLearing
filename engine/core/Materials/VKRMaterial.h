@@ -6,6 +6,8 @@
 #include <glm/vec4.hpp>
 #include <vulkan/vulkan_core.h>
 
+#define MAX_TEXTURES 7
+
 namespace VKR
 {
 	namespace render
@@ -63,7 +65,7 @@ namespace VKR
 			std::vector<VkWriteDescriptorSet> m_DescriptorsWrite;
 			char _vertPath[64];
 			char _fragPath[64];
-			Texture* textures[8];
+			Texture* textures[MAX_TEXTURES];
 
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptor(VkDevice _LogicDevice);

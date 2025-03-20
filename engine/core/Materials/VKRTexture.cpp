@@ -44,14 +44,15 @@ namespace VKR
 			}
 			PERF_END("LOAD_TEXTURE")
 			m_Mipmaps = (uint8_t)std::log2(tWidth > tHeight ? tWidth : tHeight);
-			auto size = tWidth * tHeight * 4;
+			size_t size = tWidth * tHeight * 4;
+			fprintf(stderr, "\tLoading texture %s size: %llu\n", m_Path, size);
 			// Buffer transfer of pixels
 			CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 			void* data;
 			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
-			memcpy(data, pixels, static_cast<size_t>(size));
+			memcpy(data, pixels, size);
 			vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
 			stbi_image_free(pixels);
 		}
@@ -100,8 +101,8 @@ namespace VKR
 			CopyBufferToImage(m_StagingBuffer, vk_image.extent, 0, _CommandPool
 				, &GetVKContext().m_GraphicsComputeQueue, 0);
 			GenerateMipmap(_CommandPool, m_Mipmaps);
-			/*TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);*/
+			TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
 			CreateImageView(_aspectMask, _viewType, _arrayLayers, m_Mipmaps);
 			m_Sampler = CreateTextureSampler(m_Mipmaps);
 			vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
@@ -214,7 +215,8 @@ namespace VKR
 					VK_FILTER_LINEAR);
 				vk_image.extent.width  = vk_image.extent.width > 1 ? vk_image.extent.width / 2 : 1;
 				vk_image.extent.height = vk_image.extent.height > 1 ? vk_image.extent.height / 2 : 1;
-				if (vk_image.extent.width == 1 || vk_image.extent.height == 1) break;
+				if (vk_image.extent.width == 1 || vk_image.extent.height == 1) 
+					break;
 			}
 			// Post-copy transactions
 			iBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

@@ -10,6 +10,7 @@ namespace VKR
 		inline const int FRAMES_IN_FLIGHT = 2;
         struct VKRenderable
         {
+			char m_Id[256];
 			std::vector<Vertex3D> m_Vertices;
 			std::vector<uint16_t> m_Indices;
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);

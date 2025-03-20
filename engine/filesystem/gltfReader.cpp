@@ -48,7 +48,7 @@ namespace VKR
 			auto diff = _material->GetTexture(_type, _texIndex, &path);
 			if (diff == aiReturn_SUCCESS)
 			{
-				char texture[128];
+				char texture[256];
 				sprintf(texture, "%s/%s", _filepath, path.data);
 				*outTex_ = new render::Texture(texture);
 			}
@@ -69,6 +69,7 @@ namespace VKR
 			{
 				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
 				render::VKRenderable* tempMesh = new render::VKRenderable();
+				strcpy(tempMesh->m_Id, mesh->mName.C_Str());
 				//Process Mesh
 				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
 				{
@@ -111,13 +112,13 @@ namespace VKR
 					tempModel->m_Materials[mesh->mMaterialIndex]->material = new render::MaterialInstance();
 					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
 
-					for (int t = 0; t < 7; t++)
+					for (int t = 0; t < MAX_TEXTURES; t++)
 					{
 						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]),
 							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
 							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
 					}
-					tempModel->m_Materials[mesh->mMaterialIndex]->textures[7] = new render::Texture("");
+					//tempModel->m_Materials[mesh->mMaterialIndex]->textures[MAX_TEXTURES] = new render::Texture("");
 					++tempModel->nMaterials;
 				}
 
@@ -174,7 +175,7 @@ namespace VKR
 							{
 								tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
 							}*/
-							if(material.normal_texture.texture != nullptr)
+							/*if(material.normal_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.normal_texture.texture->image->uri);
 								tempModel_->m_Materials[materialID]->textures[2] = new render::Texture(pathTexture);
@@ -183,7 +184,7 @@ namespace VKR
 							{
 								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
 								tempModel_->m_Materials[materialID]->textures[3] = new render::Texture(pathTexture);
-							}
+							}*/
 
 						}
 					}
@@ -196,7 +197,7 @@ namespace VKR
 					#else
 						raise(SIGTRAP);
 					#endif
-					for (int t = 0; t < 8; t++)
+					for (int t = 0; t < MAX_TEXTURES; t++)
 					{
 						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");
 					}
@@ -208,7 +209,8 @@ namespace VKR
 					auto camera = modelData->nodes[n].camera;
 					if(mesh)
 					{
-						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();						
+						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
+						strcpy(tempMesh->m_Id, mesh->name);
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
 											modelData->nodes[n].translation[1],
 											modelData->nodes[n].translation[2]);

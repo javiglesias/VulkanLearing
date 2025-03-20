@@ -59,13 +59,13 @@ namespace VKR
 			if(!vert_finded)
 			{
 				vertShader = new Shader("engine/shaders/Standard.vert", 0);
+				vertShader->LoadShader();
 				add_shader_to_list(vertShader);
 			}
 			else
 			{
 				vertShader = vert_finded; 
 			}
-			vertShader->LoadShader();
 			vertShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_VERTEX_BIT, &vertShaderStageInfo);
 			shaderStages[0] = vertShaderStageInfo;
 			
@@ -74,13 +74,13 @@ namespace VKR
 			if(!frag_finded)
 			{
 				fragShader = new Shader("engine/shaders/Standard.frag", 4);
+				fragShader->LoadShader();
 				add_shader_to_list(fragShader);
 			}
 			else
 			{
 				fragShader = frag_finded; 
 			}
-			fragShader->LoadShader();
 			fragShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_FRAGMENT_BIT, &fragShaderStageInfo);
 			shaderStages[1] = fragShaderStageInfo;
 
@@ -162,7 +162,7 @@ namespace VKR
 			// estructura UBO
 			_addBind(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 			// Texturas
-			_addBind(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8);
+			_addBind(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, MAX_TEXTURES);
 			// estructura Dynamic Uniforms
 			_addBind(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT);
 			// estructura Directional Light
@@ -271,21 +271,12 @@ namespace VKR
 			PERF_END("CREATE_MESH_DESC")*/
 
 			PERF_INIT("CREATE_TEXTURES")
-			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-			for (int t = 0; t < 7; t++)
-			{
-				if (textures[t])
-				{
-					textures[t]->LoadTexture();
-					if(textures[t]->m_Mipmaps > 0)
-						textures[t]->CreateAndTransitionImage(_backend->m_CommandPool);
-					else
-						textures[t]->CreateAndTransitionImageNoMipMaps(_backend->m_CommandPool);
-				}
-			}
+			/// 4 - Crear y transicionar texturas(CreateAndTransImage
+			for (size_t i = 0; i < MAX_TEXTURES; i++)
+				textures[i] = _backend->FindTexture(textures[i]->m_Path);
 			// Shadow Texture
-			textures[7]->vk_image = _backend->m_ShadowTexture->vk_image;
-			textures[7]->m_Sampler = _backend->m_ShadowTexture->m_Sampler;
+			/*textures[1]->vk_image = _backend->m_ShadowTexture->vk_image;
+			textures[1]->m_Sampler = _backend->m_ShadowTexture->m_Sampler;*/
 			PERF_END("CREATE_TEXTURES")
 		}
 		
@@ -443,7 +434,7 @@ namespace VKR
 			{
 				PrepareDescriptorWrite(i, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _UniformBuffers[i], sizeof(UniformBufferObject));
 				// Texturas
-				for (int8_t t = 0; t < 8; t++ )
+				for (int8_t t = 0; t < MAX_TEXTURES; t++ )
 				{
 					PrepareDescriptorWrite(i, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
 							, textures[t]->vk_image.view, textures[t]->m_Sampler, t);
@@ -487,20 +478,11 @@ namespace VKR
 		{
 			material->Cleanup(_LogicDevice);
 			// Delete Material things
-			textures[0]->CleanTextureData(_LogicDevice);
-			textures[0] = nullptr;						
-			textures[1]->CleanTextureData(_LogicDevice);
-			textures[1] = nullptr;						
-			textures[2]->CleanTextureData(_LogicDevice);
-			textures[2] = nullptr;						
-			textures[3]->CleanTextureData(_LogicDevice);
-			textures[3] = nullptr;						
-			textures[4]->CleanTextureData(_LogicDevice);
-			textures[4] = nullptr;						
-			textures[5]->CleanTextureData(_LogicDevice);
-			textures[5] = nullptr;						
-			textures[6]->CleanTextureData(_LogicDevice);
-			textures[6] = nullptr;
+			for (int8_t t = 0; t < MAX_TEXTURES; t++)
+			{
+				textures[t]->CleanTextureData(_LogicDevice);
+				textures[t] = nullptr;
+			}
 		}
 
 		void MaterialInstance::Cleanup(VkDevice _LogicDevice)

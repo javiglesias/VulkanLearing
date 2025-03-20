@@ -6,6 +6,7 @@ namespace VKR
 	{
 		VKRenderable::VKRenderable()
 		{
+			memset(m_Id, 0, 256);
 		}
 		void VKRenderable::Cleanup(VkDevice _LogicDevice)
 		{

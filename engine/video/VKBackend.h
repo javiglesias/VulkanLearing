@@ -106,6 +106,9 @@ namespace VKR
             unsigned int m_SwapchainImagesCount;
             VkSwapchainCreateInfoKHR m_SwapChainCreateInfo{};
             Texture* m_SwapchainImages[FRAMES_IN_FLIGHT];
+
+        	std::vector<Texture*> m_TexturesCache;
+
             std::vector<VkFramebuffer> m_SwapChainFramebuffers;
             // SHADOW
             VkFramebuffer m_ShadowFramebuffer;
@@ -203,6 +206,7 @@ namespace VKR
             void CollectGPUTimestamps(unsigned int _FrameToPresent);
             void Shutdown();
             void Cleanup();
+            Texture* FindTexture(const char* _textPath);
 
             double GetTime();
 
