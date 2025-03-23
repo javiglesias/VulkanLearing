@@ -1,12 +1,11 @@
-﻿#include "perfmon/Custom.h"
-#include "core/VKRScene.h"
-#include "filesystem/ResourceManager.h"
+﻿#include "core/VKRScene.h"
+#include "video/VKRUtils.h"
 #include "memory/mem_alloc.h"
-
+#include "perfmon/Custom.h"
 //std::thread* RMThread;
 void _init_resource_manager()
 {
-	VKR::RM::_Init();
+	//VKR::RM::_Init();
 }
 
 int main(int _argc, char** _args)
@@ -23,7 +22,7 @@ int main(int _argc, char** _args)
 	mainScene.Init(&backend);
 	auto renderContext = VKR::render::GetVKContext();
 	currentFrame = backend.GetTime();
-	// _initlializePerfmon(&backend);
+	 _initlializePerfmon(&backend);
 	while (!backend.BackendShouldClose())
 	{
 		deltaTime = nextFrame - currentFrame;

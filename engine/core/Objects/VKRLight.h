@@ -2,10 +2,12 @@
 #define _C_LIGHT
 
 #include "VKRModel.h"
+
 #include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+
 namespace VKR 
 {
 	namespace render
@@ -20,20 +22,18 @@ namespace VKR
 		};
 		struct Light
 		{
-		public:
-			bool m_Editable = false;
-			float m_DebugScale = 0.1f;
-			glm::vec3 m_Pos {0.f, 0.1f, 0.f};
-			glm::vec3 m_Color {1.f, 0.f, 1.f};
-			//R_Model* m_LightVisual;
-		private: // Variables
 			LightType m_Type{LIGHT_POINT};
 			float m_ShadowCameraFOV;
 			float m_ShadowAspectRatio;
 			float m_ShadowBias = 0.0025f;
-		public: // Functions
+		public:
 			Light();
-			void Cleanup(VkDevice _LogicDevice);
+			void Draw(VKBackend* _backend, int _CurrentFrame);
+			bool m_Editable = false;
+			float m_DebugScale = 0.1f;
+			glm::vec3 m_Pos {0.f, 0.1f, 0.f};
+			glm::vec3 m_Color {1.f, 0.f, 1.f};
+			R_Model* m_visual_model;
 		};
 		
 		struct Directional : public Light

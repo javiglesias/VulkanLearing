@@ -1,21 +1,22 @@
-cmake_minimum_required(VERSION 3.5)
-project(VKRenderer
-        VERSION 0.1
-        DESCRIPTION "A Vulkan Renderer"
-        LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.3...3.5)
+set(CMAKE_CXX_COMPILER g++)
+
+project(VKRenderer VERSION 0.1 DESCRIPTION "A Vulkan Renderer" LANGUAGES CXX)
+
 if (WIN32)
 add_compile_definitions(_WIN32)
-include_directories(${PROJECT_SOURCE_DIR}/dependencies/Vulkan_1.3.268.0/Include)
+include_directories(${PROJECT_SOURCE_DIR}/dependencies/windows/Vulkan_1.3.268.0/Include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/cpptrace/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glm-0.9.9.0/glm)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/assimp/include)
+include_directories(${PROJECT_SOURCE_DIR}/dependencies/vma/include)
 endif (WIN32)
 
 if (UNIX)
 add_compile_definitions(_UNIX)
-include_directories(${PROJECT_SOURCE_DIR}/dependencies/vulkan_1.3.296.0/x86_64/include)
+include_directories(${PROJECT_SOURCE_DIR}/dependencies/linux/vulkan_1.3.296.0/x86_64/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glslang)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glm-0.9.9.0/glm)
@@ -53,6 +54,7 @@ add_executable(VKRenderer engine/main.cpp
         engine/editor/Editor.cpp
         engine/editor/Editor.h
         engine/perfmon/Custom.h
+        engine/filesystem/shader_compiler.cpp
         engine/filesystem/gltfReader.cpp
         engine/filesystem/gltfReader.h
         engine/filesystem/ResourceManager.cpp
@@ -76,7 +78,7 @@ target_compile_features(VKRenderer PRIVATE cxx_std_20)
 if (WIN32)
 add_compile_definitions(_WIN32)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/assimp/lib/Debug/assimp-vc143-mtd.lib)
-target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/Vulkan_1.3.268.0/Lib/vulkan-1.lib)
+target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/windows/Vulkan_1.3.268.0/Lib/vulkan-1.lib)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glfw/src/Debug/glfw3.lib)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang/Debug/glslangd.lib)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang/Debug/glslang-default-resource-limitsd.lib)
@@ -89,7 +91,7 @@ endif (WIN32)
 if (UNIX)
 add_compile_definitions(_UNIX)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/assimp/bin/libassimp.so)
-target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/vulkan_1.3.296.0/x86_64/lib/libvulkan.so)
+target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/linux/vulkan_1.3.296.0/x86_64/lib/libvulkan.so)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glfw/src/libglfw3.a)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang/libglslang.a)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang/libglslang-default-resource-limits.a)
@@ -99,4 +101,3 @@ target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glsl
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/libSPVRemapper.a)
 endif (UNIX)
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_COMPILER g++)

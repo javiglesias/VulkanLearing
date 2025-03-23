@@ -1,6 +1,7 @@
 #include "VKRCubemap.h"
 #include "DebugModels.h"
 #include "VKRModel.h"
+#include "../Materials/VKRTexture.h"
 
 namespace VKR
 {

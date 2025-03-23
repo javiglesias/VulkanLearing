@@ -10,7 +10,7 @@
 6: EMISSION_COLOR,
 7: LIGHTMAP
 */
-layout(set=0, binding=1) uniform sampler2D inTextures[8];
+layout(set=0, binding=1) uniform sampler2D inTextures[7];
 
 layout(set=0, binding=3) uniform DirLightBufferObject
 {
@@ -142,7 +142,7 @@ vec3 DirectionalLight(vec3 _color)
 	float ambientStrength = 0.05;
     vec3 ambient = _color * ambientStrength;
 	
-	vec3 normTex = texture(inTextures[4], texCoord).xyz;
+	vec3 normTex = texture(inTextures[0], texCoord).xyz;
 	vec3 norm = normalize(normTex * 2.0 - 1.0); // transform normal vector to range [-1,1]
 	vec3 lightDir = normalize(lightPosition - fragPosition);
 	vec3 diffuse = max(dot(normTex, lightDir), 0.0) * _color;
@@ -155,13 +155,13 @@ vec3 DirectionalLight(vec3 _color)
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
-	float shadow = ShadowCalculation(fraglight, inTextures[7]);
+	// float shadow = ShadowCalculation(fraglight, inTextures[0]);
 	
 	// ambient  *= reinhard;
 	// diffuse  *= reinhard;
 	// specular *= reinhard;
 	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	return (ambient + specular) * _color;
+	return ambient + diffuse + specular;
 	// return norm;
 
 }

@@ -6,13 +6,14 @@
 #include <glm/vec4.hpp>
 #include <vulkan/vulkan_core.h>
 
+#define MAX_TEXTURES 7
+
 namespace VKR
 {
 	namespace render
 	{
 		class VKBackend;
 		struct Texture;
-
 		struct PBR_material
 		{
 			char name[32];
@@ -31,6 +32,10 @@ namespace VKR
 			VkPipelineLayout compute_layout;
 			VkDescriptorSetLayout descriptorSetLayout;
 			VkDescriptorSetLayout compute_descriptorSetLayout;
+			std::vector< VkDescriptorSetLayoutBinding> ShaderBindings;
+			void _addBind(uint8_t _nbind
+						, VkDescriptorType _type, VkShaderStageFlags _stage
+						, uint8_t _ndescriptors = 1);
 			void _buildPipeline();
 			void Cleanup(VkDevice _LogicDevice);
 		};
@@ -39,7 +44,9 @@ namespace VKR
 		{
 			sMaterialPipeline pipeline;
 			std::vector<VkDescriptorSet> materialSets;
+			std::vector<VkDescriptorSet> compute_descriptors_sets;
 			VkDescriptorPool descriptorPool = nullptr;
+			VkDescriptorPool compute_descriptor_pool = nullptr;
 			void Cleanup(VkDevice _LogicDevice);
 		};
 
@@ -55,15 +62,29 @@ namespace VKR
 			VkShaderModule m_VertShaderModule;
 			VkShaderModule m_FragShaderModule;
 			MaterialInstance* material;
-
+			std::vector<VkWriteDescriptorSet> m_DescriptorsWrite;
 			char _vertPath[64];
 			char _fragPath[64];
-			Texture* textures[8];
+			Texture* textures[MAX_TEXTURES];
 
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptor(VkDevice _LogicDevice);
-			void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, 
-									 std::vector<VkBuffer> _DynamicBuffers, std::vector<VkBuffer> _LightsBuffers);
+			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind
+							, VkDescriptorType _descType , VkBuffer _buffer, VkDeviceSize _range
+							, uint32_t _arrayElement = 0, VkDeviceSize _offset = 0, uint32_t _count = 1);
+			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind, VkDescriptorType _descType
+						, VkImageView _imageView, VkSampler _sampler
+						, uint32_t _arrayElement = 0, uint32_t _count = 1);
+			void UpdateDescriptorSet(VkDevice _LogicDevice
+				, std::vector<VkBuffer> _UniformBuffers
+				, std::vector<VkBuffer> _DynamicBuffers
+				, std::vector<VkBuffer> _LightsBuffers
+				, std::vector<VkBuffer> _ComputeBuffers);
+			void CreateDescriptorPool( VkDevice _LogicDevice
+				, std::vector<VkDescriptorPoolSize> _desc_pool_size
+				, VkDescriptorPool _desc_pool
+				, VkDescriptorSetLayout _desc_set_layout
+				, VkDescriptorSet* _desc_sets);
 			void Cleanup(VkDevice _LogicDevice);
 		};
 

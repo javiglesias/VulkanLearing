@@ -1,11 +1,12 @@
 #ifndef _C_SHADOW_MATERIAL
 #define _C_SHADOW_MATERIAL
+
 #include "../../video/VKBufferObjects.h"
+
+#include <vulkan/vulkan_core.h>
 #include <string>
 #include <vector>
 #include <array>
-#include <glm/fwd.hpp>
-#include <vulkan/vulkan_core.h>
 
 namespace VKR
 {

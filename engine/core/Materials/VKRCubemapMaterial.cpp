@@ -1,4 +1,6 @@
 #include "VKRCubemapMaterial.h"
+#include "../../video/VKBackend.h"
+#include "../../video/VKRUtils.h"
 #include "VKRTexture.h"
 #include <array>
 
@@ -92,7 +94,7 @@ namespace VKR
 				// Diffuse
 				VkDescriptorImageInfo TextureDiffuseImage{};
 				TextureDiffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				TextureDiffuseImage.imageView = m_Texture->tImageView;
+				TextureDiffuseImage.imageView = m_Texture->vk_image.view;
 				if (m_Texture->m_Sampler != nullptr)
 				{
 					TextureDiffuseImage.sampler = m_Texture->m_Sampler;
@@ -135,8 +137,6 @@ namespace VKR
 		{
 			// Delete Material things
 			vkDestroyDescriptorPool(_LogicDevice, m_DescriptorPool, nullptr);
-			m_Texture->CleanTextureData(_LogicDevice);
-			m_Texture = nullptr;
 		}
 	}
 }

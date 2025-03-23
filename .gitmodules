@@ -16,3 +16,6 @@
 [submodule "dependencies/glslang"]
 	path = dependencies/glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "dependencies/vma"]
+	path = dependencies/vma
+	url = git@github.com:GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

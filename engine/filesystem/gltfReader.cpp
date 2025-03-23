@@ -1,17 +1,159 @@
 #include "gltfReader.h"
 #include "../../dependencies/cgltf/cgltf.h"
 #include <cstddef>
-#include <glm/vec3.hpp>
-#include <signal.h>
-#include <string>
 #include "../core/Objects/VKRModel.h"
 #include "../core/Materials/VKRTexture.h"
 #include "../video/VKRenderable.h"
+
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <string>
+#include <signal.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
 
 namespace VKR
 {
 	namespace filesystem
 	{
+		render::R_Model* tempModel;
+
+		int tex_type[8] = {
+		   aiTextureType_BASE_COLOR,
+		   aiTextureType_DIFFUSE_ROUGHNESS,
+		   aiTextureType_SPECULAR,
+		   aiTextureType_AMBIENT,
+		   aiTextureType_NORMALS,
+		   aiTextureType_AMBIENT_OCCLUSION,
+		   aiTextureType_EMISSION_COLOR,
+		   aiTextureType_LIGHTMAP
+		};
+		bool LoadModel_ALT(const char* _filepath, const char* _modelName)
+		{
+			char filename[128];
+			tempModel = new render::R_Model();
+			sprintf(filename, "%s%s", _filepath, _modelName);
+			sprintf(tempModel->m_Path, "%s", _modelName);
+			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
+			if (data == nullptr) return false;
+			/*render::m_PendingBuffersModels[render::m_CurrentPendingModels] = tempModel;
+			render::m_CurrentPendingModels++;*/
+			return true;
+		}
+
+		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
+		{
+			aiString path;
+			auto diff = _material->GetTexture(_type, _texIndex, &path);
+			if (diff == aiReturn_SUCCESS)
+			{
+				char texture[256];
+				sprintf(texture, "%s/%s", _filepath, path.data);
+				*outTex_ = new render::Texture(texture);
+			}
+			else
+				*outTex_ = new render::Texture("");
+		}
+
+		void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath)
+		{
+			// CHILDREN
+			for (unsigned int i = 0; i < _node->mNumChildren; i++)
+			{
+				ProcessModelNode(_node->mChildren[i], _scene, _filepath);
+			}
+			int lastTexIndex = 0;
+			uint32_t tempMaterial = -1;
+			for (unsigned int m = 0; m < _node->mNumMeshes; m++)
+			{
+				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
+				render::VKRenderable* tempMesh = new render::VKRenderable();
+				strcpy(tempMesh->m_Id, mesh->mName.C_Str());
+				//Process Mesh
+				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
+				{
+					const aiFace& face = mesh->mFaces[f];
+					for (unsigned int j = 0; j < face.mNumIndices; j++)
+					{
+						// m_Indices.push_back(face.mIndices[0]);
+						// m_Indices.push_back(face.mIndices[1]);
+						// m_Indices.push_back(face.mIndices[2]);
+						tempMesh->m_Indices.push_back(face.mIndices[0]);
+						tempMesh->m_Indices.push_back(face.mIndices[1]);
+						tempMesh->m_Indices.push_back(face.mIndices[2]);
+					}
+				}
+				for (unsigned int v = 0; v < mesh->mNumVertices; v++)
+				{
+					Vertex3D tempVertex;
+					tempVertex.m_Pos = { mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z };
+					if (mesh->mTextureCoords[0])
+					{
+						tempVertex.m_TexCoord = { mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y };
+					}
+					else
+					{
+						tempVertex.m_TexCoord = { 0.f, 0.f };
+					}
+					if (mesh->mNormals)
+						tempVertex.m_Normal = { mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z };
+					else
+						tempVertex.m_Normal = { 0.f, 0.f, 0.f };
+					// New New Mexico
+					tempMesh->m_Vertices.push_back(tempVertex);
+				}
+				// Textura por Mesh
+				int texIndex = 0;
+				aiString path;
+				if (tempModel->m_Materials[mesh->mMaterialIndex] == nullptr)
+				{
+					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
+					tempModel->m_Materials[mesh->mMaterialIndex]->material = new render::MaterialInstance();
+					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
+
+					for (int t = 0; t < MAX_TEXTURES; t++)
+					{
+						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]),
+							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
+							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
+					}
+					++tempModel->nMaterials;
+				}
+
+				tempMesh->m_Material = mesh->mMaterialIndex;
+				//++m_TotalTextures;
+				tempMesh->m_ModelMatrix = glm::mat4(1.f);
+				tempModel->m_Meshes.push_back(tempMesh);
+			}
+		}
+
+		void LoadModel(const char* _filepath, const char* _modelName, render::R_Model* model_)
+		{
+			//PERF_INIT()
+			char filename[128];
+			sprintf(filename, "%s/%s.gltf", _filepath, _modelName);
+			printf("\nLoading %s\n", filename);
+			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
+			if (!scene || !scene->HasMeshes())
+				exit(-225);
+			if (model_ == nullptr)
+				tempModel = new render::R_Model();
+			else
+				tempModel = model_;
+			//Process Node
+			auto node = scene->mRootNode;
+			ProcessModelNode(node, scene, _filepath);
+			sprintf(tempModel->m_Path, "%s%s", _filepath, _modelName);
+			for (size_t c = 0; c < scene->mNumCameras; c++)
+			{
+				fprintf(stdout, "Cameras %s", scene->mCameras[c]->mName);
+			}
+			for (size_t l = 0; l < scene->mNumLights; l++)
+			{
+				fprintf(stdout, "Light %s", scene->mLights[l]->mName);
+			}
+		}
 		cgltf_data* read_glTF(const char* _filepath, const char* _modelName, render::R_Model* tempModel_)
 		{
 			cgltf_options options {};
@@ -41,7 +183,7 @@ namespace VKR
 							{
 								tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
 							}*/
-							if(material.normal_texture.texture != nullptr)
+							/*if(material.normal_texture.texture != nullptr)
 							{
 								std::string pathTexture = std::string(material.normal_texture.texture->image->uri);
 								tempModel_->m_Materials[materialID]->textures[2] = new render::Texture(pathTexture);
@@ -50,7 +192,7 @@ namespace VKR
 							{
 								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
 								tempModel_->m_Materials[materialID]->textures[3] = new render::Texture(pathTexture);
-							}
+							}*/
 
 						}
 					}
@@ -63,7 +205,7 @@ namespace VKR
 					#else
 						raise(SIGTRAP);
 					#endif
-					for (int t = 0; t < 8; t++)
+					for (int t = 0; t < MAX_TEXTURES; t++)
 					{
 						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");
 					}
@@ -75,7 +217,8 @@ namespace VKR
 					auto camera = modelData->nodes[n].camera;
 					if(mesh)
 					{
-						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();						
+						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
+						strcpy(tempMesh->m_Id, mesh->name);
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
 											modelData->nodes[n].translation[1],
 											modelData->nodes[n].translation[2]);

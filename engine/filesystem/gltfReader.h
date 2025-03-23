@@ -11,6 +11,8 @@ namespace VKR
 	}
 	namespace filesystem
 	{
+		void LoadModel(const char* _filepath, const char* _modelName, render::R_Model* model_);
+		bool LoadModel_ALT(const char* _filepath, const char* _modelName);
 		cgltf_data* read_glTF(const char* _filepath, const char* _modelName, render::R_Model* tempModel_);
 		cgltf_data* read_glTF_DBG(const char* _filepath, const char* _modelName, render::R_DbgModel* tempModel_);
 	}

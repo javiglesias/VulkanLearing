@@ -1,7 +1,6 @@
 #ifndef _C_BACKEND
 #define _C_BACKEND
 
-#include "VKRUtils.h"
 #include "../core/VKRenderers.h"
 #include "../core/Materials/VKRShadowMaterial.h"
 #include "../core/Objects/VKRModel.h"
@@ -9,6 +8,7 @@
 #include <thread>
 
 struct GLFWwindow;
+class Texture;
 
 namespace VKR
 {
@@ -40,6 +40,7 @@ namespace VKR
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
         inline bool g_DrawCubemap = true;
+        inline bool g_ShadowPassEnabled = false;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline double m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
@@ -105,8 +106,10 @@ namespace VKR
             //Swapchains things
             unsigned int m_SwapchainImagesCount;
             VkSwapchainCreateInfoKHR m_SwapChainCreateInfo{};
-            std::vector<VkImage> m_SwapChainImages;
-            std::vector<VkImageView> m_SwapChainImagesViews;
+            Texture* m_SwapchainImages[FRAMES_IN_FLIGHT];
+
+        	std::vector<Texture*> m_TexturesCache;
+
             std::vector<VkFramebuffer> m_SwapChainFramebuffers;
             // SHADOW
             VkFramebuffer m_ShadowFramebuffer;
@@ -123,6 +126,7 @@ namespace VKR
 
             VkDescriptorPool m_DescriptorPool;
             VkCommandPool m_CommandPool;
+
 			VkQueryPool m_PerformanceQuery[FRAMES_IN_FLIGHT];
 
             VkDescriptorSet m_ShadowVisualizer;
@@ -167,18 +171,16 @@ namespace VKR
             std::vector<VkDeviceMemory> m_GridUniformBuffersMemory;
             std::vector<void*> m_GridUniformBuffersMapped;
 
+            // COMPUTE BUFFERS
+            std::vector<VkBuffer> m_ComputeUniformBuffers;
+            std::vector<VkDeviceMemory> m_ComputeUniformBuffersMemory;
+            std::vector<void*> m_ComputeUniformBuffersMapped;
+            
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;
 
             VkPhysicalDeviceMemoryProperties m_Mem_Props;
-            VkImage m_DepthImage;
-            VkDeviceMemory m_DepthImageMemory;
-            VkImageView m_DepthImageView;
-
-            // Gbuffer
-            VkImage m_GBufferImage;
-            VkDeviceMemory m_GBufferImageMemory;
-            VkImageView m_GBufferImageView;
+            Texture* m_DepthTexture;
 
             VkClearColorValue defaultClearColor = { { 1.f, 0.f, 0.f, 1.0f } };
 
@@ -187,7 +189,6 @@ namespace VKR
             VkSemaphore m_ImageAvailable[FRAMES_IN_FLIGHT];
             VkSemaphore m_RenderFinish[FRAMES_IN_FLIGHT];
             VkFence		m_InFlight[FRAMES_IN_FLIGHT];
-
             // Functions
         public:
             VKBackend() {}
@@ -205,6 +206,7 @@ namespace VKR
             void CollectGPUTimestamps(unsigned int _FrameToPresent);
             void Shutdown();
             void Cleanup();
+            Texture* FindTexture(const char* _textPath);
 
             double GetTime();
 
@@ -213,19 +215,18 @@ namespace VKR
                                 const char** m_Extensions,
                                 uint32_t m_extensionCount);
             void CreateSwapChain();
-            void RecreateSwapChain();
-            void CreateFramebufferAndSwapchain();
-            void CreateShadowFramebuffer();
+            //void RecreateSwapChain();
+            //void CreateFramebufferAndSwapchain();
             void CreateFramebuffers();
+            void CreateShadowFramebuffer();
             void CreateCommandBuffer();
             void CreateSyncObjects(unsigned _frameIdx);
             void CreatePerformanceQueries();
-            void CreateImageViews();
             void CreateShadowResources();
             void CreateDepthTestingResources();
-            void CreateGBufferImage();
             void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
                                      Renderer* _renderer);
+
             /* Un Frame en Vulkan
 			 *  1. esperar a que el frame anterior acabe
 			 *	2. obtener la imagen de la swap chain

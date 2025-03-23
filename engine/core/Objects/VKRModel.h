@@ -1,8 +1,7 @@
 #ifndef _C_MODEL
 #define _C_MODEL
-#include "../Materials/VKRDebugMaterial.h"
-#include "../../video/VKRenderable.h"
 
+#include "../../video/VKRenderable.h"
 #include <unordered_map>
 
 namespace VKR
@@ -15,12 +14,14 @@ namespace VKR
 			~R_Model();
 			void Draw(VKBackend* _backend, int _CurrentFrame, int _countModel = 0);
 			void Update();
-			R_Model(const char* _filepath, const char* _modelName);
+			void Prepare(VKBackend* _backend);
+			R_Model(const char* _modelName);
 			
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 			std::vector<VKRenderable*> m_Meshes;
 			std::unordered_map<uint32_t, R_Material*> m_Materials;
 			char m_Path[64];
+			char m_Name[64];
 			bool m_Editable = false;
 			bool m_Hidden = false;
 			float m_RotGRAD = 0.f;

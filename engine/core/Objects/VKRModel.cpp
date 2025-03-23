@@ -2,8 +2,12 @@
 #include "DebugModels.h"
 #include "../../filesystem/ResourceManager.h"
 #include "../../perfmon/Custom.h"
+#include "../../video/GPUParticle.h"
+#include "../../video/VKBackend.h"
 #include <cstddef>
 #include <cstring>
+
+#include "../../video/VKRUtils.h"
 
 
 namespace VKR
@@ -20,15 +24,16 @@ namespace VKR
 
 		}
 
-		R_Model::R_Model(const char* _filepath, const char* _modelName)
+		R_Model::R_Model(const char* _modelName)
 		{
-			strcpy(m_Path, _filepath);
-			RM::_AddRequest(TYPE::STATIC_MODEL, _filepath,_modelName, this);
+			sprintf(m_Path, "%s%s", MODELS_PATH, _modelName);
+			strcpy(m_Name, _modelName);
+			RM::_AddRequest(TYPE::STATIC_MODEL, m_Path, _modelName, this);
 		}
 
 		void R_Model::Draw(VKBackend* _backend, int _CurrentFrame, int _countModel)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = VKR::render::GetVKContext();
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
@@ -56,7 +61,7 @@ namespace VKR
 			temp.Color = glm::vec4(g_DirectionalLight->m_Color, 1.0);
 			m_LightsOs.push_back(temp);
 			//Point Ligts
-			for (int i = 0; i < 3; i++)
+			/*for (int i = 0; i < 3; i++)
 			{
 				Point* light = g_PointLights[i];
 				glm::mat4 lightViewMat = glm::lookAt(light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
@@ -75,8 +80,8 @@ namespace VKR
 				temp.Color = glm::vec4(light->m_Color, 1.0);
 				m_LightsOs.push_back(temp);
 			}
-			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
-			if (m_Hidden) return;
+			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0
+					, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));*/
 			if (g_GPUTimestamp)
 				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 0);
 			for (auto& mesh : m_Meshes)
@@ -100,8 +105,10 @@ namespace VKR
 					lightDynamicOffset3				};
 				VkBuffer vertesBuffers[] = { mesh->m_VertexBuffer[_CurrentFrame] };
 				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, material->material->pipeline.pipeline);
-				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, material->material->pipeline.layout, 0, 1,
-					&m_Materials[mesh->m_Material]->material->materialSets[_CurrentFrame], dynOffsets.size(), dynOffsets.data());
+				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS
+					, material->material->pipeline.layout, 0, 1
+					, &m_Materials[mesh->m_Material]->material->materialSets[_CurrentFrame]
+					, dynOffsets.size(), dynOffsets.data());
 				vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
 				// Draw Loop
 				if (mesh->m_Indices.size() > 0)
@@ -120,7 +127,24 @@ namespace VKR
 				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
 				lightsMappedMemoryRange.size = sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
-				vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
+
+#if 0
+				ComputeBufferObject cubo;
+				cubo.color = glm::vec4(1.0);
+				cubo.pos_vel = glm::vec4(0,0,0,1);
+				memcpy((char*)_backend->m_ComputeUniformBuffersMapped[_CurrentFrame]
+						, &cubo, 1 * sizeof(ComputeBufferObject));
+				VkCommandBuffer compute_command_buffer = BeginSingleTimeCommandBuffer(_backend->m_CommandPool);
+				vkCmdBindPipeline(compute_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
+				vkCmdBindDescriptorSets(compute_command_buffer
+					, VK_PIPELINE_BIND_POINT_COMPUTE
+					, m_Materials[mesh->m_Material]->material->pipeline.compute_layout
+					, 0, 1
+					, &m_Materials[mesh->m_Material]->material->compute_descriptors_sets[_CurrentFrame]
+					, 0, nullptr);
+				//vkCmdDispatch(compute_command_buffer, 16, 16, 1);
+				EndSingleTimeCommandBuffer(compute_command_buffer, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
+#endif
 			}
 			if (g_GPUTimestamp)
 				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 1);
@@ -128,9 +152,113 @@ namespace VKR
 
 		void R_Model::Update()
 		{
+		}
+
+		void R_Model::Prepare(VKBackend* _backend)
+		{
+			auto renderContext = GetVKContext();
+			PERF_INIT("PREPARE_MESH")
+				/// 5 - Crear buffers de vertices
+			int count = 0;
 			for (auto& mesh : m_Meshes)
+#pragma region BUFFER_VERTICES
 			{
-				mesh->m_ModelMatrix = m_ModelMatrix;
+				void* data;
+				if (mesh->m_Vertices.size() <= 0)
+				{
+					fprintf(stderr, "There is no Triangles to inser on the buffer");
+					exit(-57);
+				}
+				VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
+				// Stagin buffer
+				CreateBuffer(bufferSize,
+					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
+				vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+				memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
+				vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+				for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
+				{
+					CreateBuffer(bufferSize,
+						VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+						mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
+					CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize
+						, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
+				}
+
+#pragma endregion
+				// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+				// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
+#pragma region INDEX_BUFFER
+				if (mesh->m_Indices.size() > 0)
+				{
+					bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
+					/// 6 - Crear Buffers de Indices
+					CreateBuffer(bufferSize,
+						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
+					vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
+					memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
+					vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+					for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
+					{
+						// Index buffer
+						CreateBuffer(bufferSize,
+							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+							VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+							VK_SHARING_MODE_CONCURRENT,
+							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+							mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
+						CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize
+							, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
+					}
+					// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
+					// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
+				}
+#pragma endregion
+#pragma region GPU_PARTICLE
+				bufferSize = sizeof(GPU::Particle);
+				GPU::Particle p;
+				void* dataParticle;
+				// Init info for Compute buffer
+				vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &dataParticle);
+				memcpy(dataParticle, &p, (size_t)bufferSize);
+				vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
+				for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
+				{
+					// Compute Shader buffer
+					CreateBuffer(bufferSize,
+						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+						mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
+					CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize
+						, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
+				}
+#pragma endregion
+				PERF_END("PREPARE_MESH")
+				PERF_END("PREPARE_MESH")
+				PERF_INIT("PREPARE_MATERIAL")
+				m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
+				PERF_END("PREPARE_MATERIAL")
+				/// 8 - Actualizar Descrip Sets(UpdateDescriptorSet)
+				/*model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = _backend->m_ShadowImageView;
+				model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = _backend->m_ShadowImage;
+				model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
+				model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;*/
+				PERF_INIT("UPDATE_DESCRIPTORS")
+				m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
+						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);
+				PERF_END("UPDATE_DESCRIPTORS")
+				fprintf(stdout, "Loading mesh %d: %s\n", count, mesh->m_Id);
+				++count;
 			}
 		}
 	}

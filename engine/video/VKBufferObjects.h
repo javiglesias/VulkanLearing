@@ -51,4 +51,10 @@ struct LightBufferObject
 	alignas(16) glm::vec4 addOpts; // Kc, Kl, Kq
 	alignas(16) glm::vec4 aligned[4]; //16
 };
+
+struct ComputeBufferObject
+{
+	alignas(16) glm::vec4 pos_vel; // xy pos, zw vel
+    alignas(16) glm::vec4 color; // zw unused
+};
 #endif

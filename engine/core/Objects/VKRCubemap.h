@@ -2,7 +2,9 @@
 #define _C_CUBEMAP
 
 #include "../Materials/VKRCubemapMaterial.h"
-
+#include "../../video/Types.h"
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 namespace VKR
 {
 	namespace render

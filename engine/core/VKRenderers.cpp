@@ -1,6 +1,5 @@
 #include "VKRenderers.h"
 
-#include "../video/VKBackend.h"
 
 namespace VKR
 {
@@ -8,7 +7,7 @@ namespace VKR
     {
         bool Renderer::CreateShaderStages(const char* _vertShader, const char* _fragShader, bool _force_recompile)
         {
-			if(_force_recompile)
+			/*if(_force_recompile)
 			{
 				vert_shader_modules[_vertShader] = nullptr;
 				frag_shader_modules[_fragShader] = nullptr;
@@ -18,15 +17,17 @@ namespace VKR
 			if (frag_shader_modules[_fragShader] != nullptr)
 				m_FragShaderModule = frag_shader_modules[_fragShader];
 			if (vert_shader_modules[_vertShader] && frag_shader_modules[_fragShader])
-				return true;
+				return true;*/
 
 			m_VertShader = new Shader(_vertShader, 0);
+            m_VertShader->LoadShader();
 			m_FragShader = new Shader(_fragShader, 4);
+            m_FragShader->LoadShader();
 			if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
 				CreateShaderModule(m_FragShader, &m_FragShaderModule))
 			{
- 				vert_shader_modules[_vertShader] = m_VertShaderModule;
-				frag_shader_modules[_fragShader] = m_FragShaderModule;
+ 				/*vert_shader_modules[_vertShader] = m_VertShaderModule;
+				frag_shader_modules[_fragShader] = m_FragShaderModule;*/
 				/// Color Blending
 				m_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 				m_ColorBlendAttachment.blendEnable = VK_FALSE;
@@ -176,19 +177,21 @@ namespace VKR
         }
         bool Renderer::CreateShaderModule(Shader* _shader, VkShaderModule* _shaderModule) // 0: vert, 4:frag
         {
-            auto spvCompiled = _shader->LoadShader();
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             #ifdef WIN32
-            shaderModuleCreateInfo.codeSize = 4 * spvCompiled.size();
-            shaderModuleCreateInfo.pCode = static_cast<uint32_t*>(spvCompiled.data());
+	            shaderModuleCreateInfo.codeSize = _shader->m_SpirvSrc.size();
+	            shaderModuleCreateInfo.pCode = _shader->m_SpirvSrc.data();
             #else
                 shaderModuleCreateInfo.codeSize = spvCompiled.size();
                 shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());
             #endif
             if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
                 != VK_SUCCESS)
-                return false;
+            {
+                __debugbreak();
+            	return false;
+            }
             return true;
         }
         void Renderer::Cleanup()
@@ -425,6 +428,7 @@ namespace VKR
         {
             /// Vamos a crear los shader module para cargar el bytecode de los shaders
             m_VertShader = new Shader("engine/shaders/Shadow.vert", 0);
+            m_VertShader->LoadShader();
             if(CreateShaderModule(m_VertShader, &m_VertShaderModule))
             {
                 CreateShaderStages("engine/shaders/Shadow.vert", "", _reload);

@@ -1,5 +1,6 @@
 #include "Editor.h"
 #include "EditorModels.h"
+#include "../video/VKRUtils.h"
 #include "../filesystem/ResourceManager.h"
 #include "../video/VKBackend.h"
 #include "../core/VKRScene.h"
@@ -30,7 +31,7 @@ namespace VKR
 
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
 		{
-			auto renderContext = VKR::render::GetVKContext();
+			auto renderContext = GetVKContext();
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGui_ImplGlfw_InitForVulkan(_Window, true);
@@ -62,8 +63,8 @@ namespace VKR
 			init_info.Instance = _Instance;
 			init_info.PhysicalDevice = renderContext.m_GpuInfo.m_Device;
 			init_info.Device = renderContext.m_LogicDevice;
-			init_info.QueueFamily = renderContext.m_GraphicsQueueFamilyIndex;
-			init_info.Queue = renderContext.m_GraphicsQueue;
+			init_info.QueueFamily = renderContext.m_GraphicsComputeQueueFamilyIndex;
+			init_info.Queue = renderContext.m_GraphicsComputeQueue;
 			init_info.PipelineCache = VK_NULL_HANDLE;
 			init_info.DescriptorPool = m_UIDescriptorPool;
 			init_info.Allocator = nullptr;

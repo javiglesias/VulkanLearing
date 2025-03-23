@@ -1,13 +1,12 @@
 #include "VKRScene.h"
 #include "../perfmon/Custom.h"
-#include "../video/Types.h"
+#include "../video/VKRUtils.h"
 #include "Objects/VKRCubemap.h"
 #include "Objects/VKRLight.h"
-#include "Objects/VKRModel.h"
-#include <cstddef>
 #include "../filesystem/ResourceManager.h"
 #include "../editor/Editor.h"
-#include "Materials/VKRTexture.h"
+
+#include <cstddef>
 
 namespace VKR
 {
@@ -60,8 +59,6 @@ namespace VKR
 			vkCmdBeginRenderPass(_backend->m_CommandBuffer[_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_Pipeline);
-			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
@@ -135,6 +132,7 @@ namespace VKR
 					//m_StaticModels[m]->m_Materials[mi]->PrepareMaterialToDraw(_backend);
 				}
 			}
+#if 0
 			if (m_ShadowRender->m_VertShader->GLSLCompile(true))
 			{
 				vkDestroyPipeline(renderContext.m_LogicDevice, m_ShadowRender->m_Pipeline, nullptr);
@@ -145,6 +143,7 @@ namespace VKR
 				m_ShadowRender->CreatePipeline(g_context.m_ShadowPass->pass);
 				m_ShadowRender->CleanShaderModules();
 			}
+#endif
 			PERF_END("RELOAD_SHADERS")
 		}
 
@@ -153,8 +152,17 @@ namespace VKR
 			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
 			g_editor->Loop(this, _backend);
 			auto renderContext = GetVKContext();
+			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			// GeometryPass(_backend, _CurrentFrame);
-			ShadowPass(_backend, _CurrentFrame);
+			if (g_ShadowPassEnabled)
+				ShadowPass(_backend, _CurrentFrame);
+			else
+				if (m_SceneDirty)
+				{
+					PrepareScene(_backend);
+					m_SceneDirty = false;
+				}
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
@@ -182,6 +190,17 @@ namespace VKR
 			gubo.projection = projMat;
 			memcpy(_backend->m_GridUniformBuffersMapped[_CurrentFrame], &gubo, sizeof(gubo));
 #endif
+#pragma endregion
+#pragma region LIGHTS
+			for (int l = 0; l < g_Lights.size(); l++)
+			{
+				g_Lights[l]->Draw(_backend, _CurrentFrame);
+			}
+			g_DirectionalLight->Draw(_backend, _CurrentFrame);
+			/*g_PointLights[0]->Draw(_backend, _CurrentFrame);
+			g_PointLights[1]->Draw(_backend, _CurrentFrame);
+			g_PointLights[2]->Draw(_backend, _CurrentFrame);
+			g_PointLights[3]->Draw(_backend, _CurrentFrame);*/
 #pragma endregion
 #pragma region MODELS
 			//vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_Pipeline);
@@ -234,8 +253,8 @@ namespace VKR
 		
 #pragma endregion
 #pragma region CUBEMAP
-			if(g_DrawCubemap)
-				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));
+			/*if(g_DrawCubemap)
+				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));*/
 #pragma endregion
 			// TODO Draw quads.r
 
@@ -270,7 +289,7 @@ namespace VKR
 				VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
-			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
+			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
@@ -319,144 +338,31 @@ namespace VKR
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
-			/// 1 - Actualizar los DynamicDescriptorBuffers
-			//_backend->GenerateBuffers();
-			/*VkDeviceSize dynBufferSize = m_StaticModels.size() * sizeof(DynamicBufferObject);
-			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-			{
-				CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_SHARING_MODE_CONCURRENT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					_backend->m_DynamicBuffers[i], _backend->m_DynamicBuffersMemory[i]);
-				vkMapMemory(renderContext.m_LogicDevice, _backend->m_DynamicBuffersMemory[i], 0,
-					dynBufferSize, 0, &_backend->m_DynamicBuffersMapped[i]);
-			}*/
 			PERF_INIT("PREPARE_DRAW_SCENE")
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
-				R_Model* model = m_StaticModels[i];
-				for (auto& mesh : model->m_Meshes)
-				{
-					PERF_INIT("PREPARE_MESH")
-					/// 5 - Crear buffers de vertices
-					void* data;
-					if (mesh->m_Vertices.size() <= 0)
-					{
-						fprintf(stderr, "There is no Triangles to inser on the buffer");
-						exit(-57);
-					}
-					VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
-					// Stagin buffer
-					CreateBuffer(bufferSize,
-						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
-					vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-					memcpy(data, mesh->m_Vertices.data(), (size_t)bufferSize);
-					vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-					for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
-					{
-						CreateBuffer(bufferSize,
-							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-							VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-							VK_SHARING_MODE_CONCURRENT,
-							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-							mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
-						CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
-					}
-					// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-					// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
-					if (mesh->m_Indices.size() > 0)
-					{
-						bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
-						/// 6 - Crear Buffers de Indices
-						CreateBuffer(bufferSize,
-							VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-							VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-							_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
-						vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-						memcpy(data, mesh->m_Indices.data(), (size_t)bufferSize);
-						vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-						for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
-						{
-							// Index buffer
-							CreateBuffer(bufferSize,
-								VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-								VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-								VK_SHARING_MODE_CONCURRENT,
-								VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-								mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
-							CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool);
-						}
-						// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-						// vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
-					}
-					for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
-					{
-						// Compute Shader buffer
-						CreateBuffer(bufferSize,
-								VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-								VK_SHARING_MODE_CONCURRENT,
-								VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-								mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
-					}
-					PERF_END("PREPARE_MESH")
-					PERF_INIT("PREPARE_MATERIAL")
-					model->m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
-					PERF_END("PREPARE_MATERIAL")
-					/// 8 - Actualizar Descrip Sets(UpdateDescriptorSet)
-					/*model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = _backend->m_ShadowImageView;
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = _backend->m_ShadowImage;
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
-					model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;*/
-					PERF_INIT("UPDATE_DESCRIPTORS")
-					model->m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-						_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
-					PERF_END("UPDATE_DESCRIPTORS")
-				}
+				m_StaticModels[i]->Prepare(_backend);
 			}
+			g_DirectionalLight->m_visual_model->Prepare(_backend);
+			/*g_PointLights[0]->m_visual_model->Prepare(_backend);
+			g_PointLights[1]->m_visual_model->Prepare(_backend);
+			g_PointLights[2]->m_visual_model->Prepare(_backend);
+			g_PointLights[3]->m_visual_model->Prepare(_backend);*/
 			PERF_END("PREPARE_DRAW_SCENE")
-			/// 8 - (OPCIONAL)Reordenar modelos
-			// Vamos a pre-ordenar los modelos para pintarlos segun el material.
-			// BUBBLESORT de primeras, luego ya veremos, al ser tiempo pre-frameloop, no deberia importar.
-			for (int i = 0; i < m_CurrentStaticModels; i++)
-			{
-				R_Model* model = m_StaticModels[i];
-				for (int i = 0; i < model->m_Meshes.size(); i++)
-				{
-					for (int j = 1; j < model->m_Meshes.size(); j++)
-					{
-						auto& mesh = model->m_Meshes[i];
-						if (model->m_Meshes[j]->m_Material > model->m_Meshes[i]->m_Material)
-						{
-							auto tempMesh = model->m_Meshes[j];
-							model->m_Meshes[j] = model->m_Meshes[i];
-							model->m_Meshes[i] = tempMesh;
-						}
-					}
-				}
-			}
 		}
 
 		void Scene::Init(VKBackend* _backend)
 		{
 			auto renderContext = GetVKContext();
-			m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model("resources/models/Sponza/glTF/", "Sponza.gltf");
+			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
+			m_StaticModels[0] = new R_Model("Bistro");
 			m_CurrentStaticModels = 1;
 			g_DirectionalLight = new Directional();
-			//g_DirectionalLight->m_LightVisual->m_Materials[0]->CreateDescriptor(renderContext.m_LogicDevice);
-			g_PointLights[0] = new Point();
+			/*g_PointLights[0] = new Point();
 			g_PointLights[1] = new Point();
 			g_PointLights[2] = new Point();
-			g_PointLights[3] = new Point();
-			//PrepareDebugScene(_backend);
-			//g_DirectionalLight->m_LightVisual->m_Materials[0]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-				//_backend->m_UniformBuffers, _backend->m_DynamicBuffers, _backend->m_LightsBuffers);
-			PrepareCubemapScene(_backend);
+			g_PointLights[3] = new Point();*/
+			//PrepareCubemapScene(_backend);
 			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
@@ -464,11 +370,10 @@ namespace VKR
 
 		void Scene::Update()
 		{
-			for (int i = 0; i < m_CurrentStaticModels; i++)
+			/*for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
 				m_StaticModels[i]->Update();
-			}
-			//g_DirectionalLight->m_LightVisual->Update();
+			}*/
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)
@@ -567,8 +472,7 @@ namespace VKR
 				model->Cleanup(_LogicDevice);
 			}
 #endif
-			g_DirectionalLight->Cleanup(_LogicDevice);
-			m_Cubemap->Cleanup(_LogicDevice);
+			//m_Cubemap->Cleanup(_LogicDevice);
 			g_editor->Cleanup();
 			g_editor->Shutdown();
 		}
