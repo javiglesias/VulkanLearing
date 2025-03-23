@@ -59,8 +59,6 @@ namespace VKR
 			vkCmdBeginRenderPass(_backend->m_CommandBuffer[_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_Pipeline);
-			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
@@ -154,8 +152,17 @@ namespace VKR
 			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
 			g_editor->Loop(this, _backend);
 			auto renderContext = GetVKContext();
+			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			// GeometryPass(_backend, _CurrentFrame);
-			ShadowPass(_backend, _CurrentFrame);
+			if (g_ShadowPassEnabled)
+				ShadowPass(_backend, _CurrentFrame);
+			else
+				if (m_SceneDirty)
+				{
+					PrepareScene(_backend);
+					m_SceneDirty = false;
+				}
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)

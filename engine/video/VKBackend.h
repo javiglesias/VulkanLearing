@@ -40,6 +40,7 @@ namespace VKR
         inline bool m_CreateTestModel = false;
         inline bool m_SceneDirty = false;
         inline bool g_DrawCubemap = true;
+        inline bool g_ShadowPassEnabled = false;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline double m_CameraYaw = 0.f, m_CameraPitch = 0.f;
         inline float m_CameraSpeed = 0.6f;
@@ -180,7 +181,6 @@ namespace VKR
 
             VkPhysicalDeviceMemoryProperties m_Mem_Props;
             Texture* m_DepthTexture;
-            Texture* m_GBufferTexture;
 
             VkClearColorValue defaultClearColor = { { 1.f, 0.f, 0.f, 1.0f } };
 
@@ -224,7 +224,6 @@ namespace VKR
             void CreatePerformanceQueries();
             void CreateShadowResources();
             void CreateDepthTestingResources();
-            void CreateGBufferImage();
             void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
                                      Renderer* _renderer);
 

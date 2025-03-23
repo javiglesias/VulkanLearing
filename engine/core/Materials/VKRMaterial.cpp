@@ -84,8 +84,16 @@ namespace VKR
 			fragShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_FRAGMENT_BIT, &fragShaderStageInfo);
 			shaderStages[1] = fragShaderStageInfo;
 
-			Shader* computeShader = new Shader("engine/shaders/Standard.comp", 5);
-			computeShader->LoadShader();
+			Shader* computeShader;
+			Shader* comp_finded = find_shader("engine/shaders/Standard.comp");
+			if (!comp_finded)
+			{
+				computeShader = new Shader("engine/shaders/Standard.comp", 5);
+				computeShader->LoadShader();
+				add_shader_to_list(computeShader);
+			}
+			else
+				computeShader = comp_finded;
 			computeShader->ConfigureShader(m_LogicDevice, VK_SHADER_STAGE_COMPUTE_BIT, &computeShaderStageInfo);
 
 			/// Color Blending
@@ -488,14 +496,18 @@ namespace VKR
 		void MaterialInstance::Cleanup(VkDevice _LogicDevice)
 		{
 			vkDestroyDescriptorPool(_LogicDevice, descriptorPool, nullptr);
+			vkDestroyDescriptorPool(_LogicDevice, compute_descriptor_pool, nullptr);
 			pipeline.Cleanup(_LogicDevice);
 		}
 
 		void sMaterialPipeline::Cleanup(VkDevice _LogicDevice)
 		{
 			vkDestroyDescriptorSetLayout(_LogicDevice, descriptorSetLayout, nullptr);
+			vkDestroyDescriptorSetLayout(_LogicDevice, compute_descriptorSetLayout, nullptr);
 			vkDestroyPipelineLayout(_LogicDevice, layout, nullptr);
+			vkDestroyPipelineLayout(_LogicDevice, compute_layout, nullptr);
 			vkDestroyPipeline(_LogicDevice, pipeline, nullptr);
+			vkDestroyPipeline(_LogicDevice, compute, nullptr);
 		}
 	}
 }

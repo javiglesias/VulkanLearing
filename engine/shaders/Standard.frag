@@ -155,7 +155,7 @@ vec3 DirectionalLight(vec3 _color)
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
-	float shadow = ShadowCalculation(fraglight, inTextures[1]);
+	// float shadow = ShadowCalculation(fraglight, inTextures[0]);
 	
 	// ambient  *= reinhard;
 	// diffuse  *= reinhard;

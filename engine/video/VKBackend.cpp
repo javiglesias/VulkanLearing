@@ -390,7 +390,7 @@ namespace VKR
 			// Creamos los recursos para el Depth testing
 			CreateDepthTestingResources();
 			CreateFramebuffers();
-			CreateGBufferImage();
+			//CreateGBufferImage();
 			// Uniform buffers
 			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
 			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -866,18 +866,6 @@ namespace VKR
 			m_DepthTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			//m_DepthTexture->CreateTextureSampler()
 		}
-		void VKBackend::CreateGBufferImage()
-		{
-			VkFormat GBufferFormat = VK_FORMAT_R32G32B32A32_UINT;
-			m_GBufferTexture = new Texture("");
-			m_GBufferTexture->CreateImage(VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
-				, GBufferFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, 0, 1);
-			m_GBufferTexture->BindTextureMemory();
-			m_GBufferTexture->TransitionImageLayout( VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &GetVKContext().m_GraphicsComputeQueue);
-			m_GBufferTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
-		}
 
 		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
 		{
@@ -1068,7 +1056,6 @@ namespace VKR
 			}
 			m_DepthTexture->CleanTextureData(g_context.m_LogicDevice);
 			m_ShadowTexture->CleanTextureData(g_context.m_LogicDevice);
-			m_GBufferTexture->CleanTextureData(g_context.m_LogicDevice);
 
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[0], nullptr);
 			vkDestroySemaphore(g_context.m_LogicDevice, m_ImageAvailable[1], nullptr);

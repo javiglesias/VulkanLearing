@@ -27,16 +27,14 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 	memset(spv_code_file, 0, 128);
 	sprintf(raw_code_file, "%s", _filename);
 	sprintf(spv_code_file, "%s.spv", raw_code_file);
-	printf("Actual time: %lld\n", _time);
 	stat(raw_code_file, &file_stat_raw);
 	stat(spv_code_file, &file_stat_spv);
 
-	printf("Modification %s time: %lld\n", raw_code_file, file_stat_raw.st_mtime);
-	printf("Modification %s time: %lld\n", spv_code_file, file_stat_spv.st_mtime);
 	if (file_stat_raw.st_mtime > file_stat_spv.st_mtime)
 	{
 		shader_file = fopen(raw_code_file, "r");
 		need_compilation = 1;
+		fprintf(stdout, "Compilation shader %s", raw_code_file);
 	}
 	else
 		shader_file = fopen(spv_code_file, "rb");
@@ -101,7 +99,7 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 			fclose(shader_file);
 			data[fileSize] = 0; // clean data
 			_end_timer = time(NULL);
-			printf("Read file elapsed %lld\n", _end_timer - _start_timer);
+			printf("Read file %s elapsed %lld\n", spv_code_file, _end_timer - _start_timer);
 			for (size_t datum = 0; datum < fileSize; datum++)
 				intermediate_data.push_back(data[datum]);
 		}

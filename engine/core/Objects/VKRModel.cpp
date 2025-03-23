@@ -128,12 +128,12 @@ namespace VKR
 				lightsMappedMemoryRange.size = sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 
+#if 0
 				ComputeBufferObject cubo;
 				cubo.color = glm::vec4(1.0);
 				cubo.pos_vel = glm::vec4(0,0,0,1);
 				memcpy((char*)_backend->m_ComputeUniformBuffersMapped[_CurrentFrame]
 						, &cubo, 1 * sizeof(ComputeBufferObject));
-#if 1
 				VkCommandBuffer compute_command_buffer = BeginSingleTimeCommandBuffer(_backend->m_CommandPool);
 				vkCmdBindPipeline(compute_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, material->material->pipeline.compute);
 				vkCmdBindDescriptorSets(compute_command_buffer
@@ -152,10 +152,6 @@ namespace VKR
 
 		void R_Model::Update()
 		{
-			for (auto& mesh : m_Meshes)
-			{
-				mesh->m_ModelMatrix = m_ModelMatrix;
-			}
 		}
 
 		void R_Model::Prepare(VKBackend* _backend)

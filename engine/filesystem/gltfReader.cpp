@@ -99,7 +99,7 @@ namespace VKR
 					if (mesh->mNormals)
 						tempVertex.m_Normal = { mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z };
 					else
-						tempVertex.m_Normal = { 0.f, 1.f, 0.f };
+						tempVertex.m_Normal = { 0.f, 0.f, 0.f };
 					// New New Mexico
 					tempMesh->m_Vertices.push_back(tempVertex);
 				}
@@ -118,12 +118,12 @@ namespace VKR
 							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
 							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
 					}
-					//tempModel->m_Materials[mesh->mMaterialIndex]->textures[MAX_TEXTURES] = new render::Texture("");
 					++tempModel->nMaterials;
 				}
 
 				tempMesh->m_Material = mesh->mMaterialIndex;
 				//++m_TotalTextures;
+				tempMesh->m_ModelMatrix = glm::mat4(1.f);
 				tempModel->m_Meshes.push_back(tempMesh);
 			}
 		}
@@ -145,6 +145,14 @@ namespace VKR
 			auto node = scene->mRootNode;
 			ProcessModelNode(node, scene, _filepath);
 			sprintf(tempModel->m_Path, "%s%s", _filepath, _modelName);
+			for (size_t c = 0; c < scene->mNumCameras; c++)
+			{
+				fprintf(stdout, "Cameras %s", scene->mCameras[c]->mName);
+			}
+			for (size_t l = 0; l < scene->mNumLights; l++)
+			{
+				fprintf(stdout, "Light %s", scene->mLights[l]->mName);
+			}
 		}
 		cgltf_data* read_glTF(const char* _filepath, const char* _modelName, render::R_Model* tempModel_)
 		{
