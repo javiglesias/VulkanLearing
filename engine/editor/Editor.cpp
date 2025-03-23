@@ -31,7 +31,7 @@ namespace VKR
 
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGui_ImplGlfw_InitForVulkan(_Window, true);
@@ -90,7 +90,7 @@ namespace VKR
 		void Editor::Cleanup()
 		{
 			printf("Editor Cleanup\n");
-			auto renderContext = VKR::render::GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			ImGui_ImplVulkan_Shutdown();
 			ImGui_ImplGlfw_Shutdown();

@@ -23,6 +23,7 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 	struct stat file_stat_spv;
 	int need_compilation = 0;
 	std::vector<uint32_t> intermediate_data;
+	intermediate_data.clear();
 	memset(raw_code_file, 0, 128);
 	memset(spv_code_file, 0, 128);
 	sprintf(raw_code_file, "%s", _filename);

@@ -1,12 +1,8 @@
 #include "VKRScene.h"
-#include "../perfmon/Custom.h"
 #include "../video/VKRUtils.h"
-#include "Objects/VKRCubemap.h"
-#include "Objects/VKRLight.h"
-#include "../filesystem/ResourceManager.h"
+#include "../perfmon/Custom.h"
 #include "../editor/Editor.h"
-
-#include <cstddef>
+#include "../core/Objects/VKRCubemap.h"
 
 namespace VKR
 {
@@ -37,7 +33,7 @@ namespace VKR
 			orthogonalProjMat[1][1] *= -1;
 			glm::mat4 lightViewMat = glm::lookAt( g_DirectionalLight->m_Pos, g_DirectionalLight->m_Pos + g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
 			glm::mat4 lightProjMat = orthogonalProjMat * lightViewMat;
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			// Clear Color
 			VkClearValue clearValue;
 			clearValue.depthStencil = { 1.0f, 0 };
@@ -112,7 +108,7 @@ namespace VKR
 
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			vkDestroyPipeline(renderContext.m_LogicDevice, m_CubemapRender->m_Pipeline, nullptr);
 			vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_CubemapRender->m_PipelineLayout, nullptr);
@@ -151,7 +147,7 @@ namespace VKR
 		{
 			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
 			g_editor->Loop(this, _backend);
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
 			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			// GeometryPass(_backend, _CurrentFrame);
@@ -268,14 +264,14 @@ namespace VKR
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
 		{
 			PERF_INIT("PREPARE_CUBEMAP")
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
 			m_Cubemap->m_Material->PrepareMaterialToDraw(_backend);
 			/// 5 - Crear buffers de vertices
 			void* data;
 			VkDeviceSize bufferSize = sizeof(m_Cubemap->m_Vertices[0]) * m_Cubemap->m_Vertices.size();
 			// Stagin buffer
-			CreateBuffer(bufferSize,
+			utils::CreateBuffer(bufferSize,
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -283,13 +279,13 @@ namespace VKR
 			vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 			memcpy(data, m_Cubemap->m_Vertices.data(), (size_t)bufferSize);
 			vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-			CreateBuffer(bufferSize,
+			utils::CreateBuffer(bufferSize,
 				VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
-			CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
+			utils::CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
@@ -301,7 +297,7 @@ namespace VKR
 		{
 			// Cubemap draw
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
@@ -337,7 +333,7 @@ namespace VKR
 
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			PERF_INIT("PREPARE_DRAW_SCENE")
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
@@ -353,7 +349,7 @@ namespace VKR
 
 		void Scene::Init(VKBackend* _backend)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
 			m_StaticModels[0] = new R_Model("Bistro");
 			m_CurrentStaticModels = 1;
@@ -378,7 +374,7 @@ namespace VKR
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
             _backend->m_CurrentDebugModelsToDraw = static_cast<uint32_t>(m_DbgModels.size());
 			if(m_DbgModels.size() > 0)
 				_backend->GenerateDBGBuffers();

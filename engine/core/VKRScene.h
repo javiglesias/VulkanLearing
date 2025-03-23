@@ -3,10 +3,6 @@
 
 #include "../video/VKBackend.h"
 
-#include <glm/mat4x4.hpp>
-#include <glm/glm.hpp>
-#include <vulkan/vulkan_core.h>
-
 namespace VKR
 {
     namespace render
