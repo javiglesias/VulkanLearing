@@ -33,6 +33,7 @@ add_executable(VKRenderer engine/main.cpp
         engine/core/VKRRenderPass.h
         engine/core/VKRScene.cpp
         engine/core/VKRScene.h
+        engine/core/CVarSystem
         engine/core/Materials/VKRDebugMaterial.cpp
         engine/core/Materials/VKRDebugMaterial.h
         engine/core/Materials/VKRCubemapMaterial.cpp
@@ -65,7 +66,10 @@ add_executable(VKRenderer engine/main.cpp
         engine/video/VKRenderable.h
         engine/video/VKBufferObjects.h
         engine/video/VKRUtils.h
+        engine/video/VKRUtils.cpp
         engine/video/Types.h
+        engine/video/GPUParticle.h
+        engine/video/VKRenderCommon.h
         engine/memory/mem_alloc.h
         dependencies/imgui/imgui.cpp
         dependencies/imgui/imgui_draw.cpp

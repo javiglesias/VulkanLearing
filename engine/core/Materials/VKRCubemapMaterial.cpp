@@ -16,7 +16,7 @@ namespace VKR
 		}
 		void R_CubemapMaterial::PrepareMaterialToDraw(VKBackend* _backend)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			/// 2 - Crear descriptor pool de materiales(CreateDescPool)
 			CreateDescriptorPool(renderContext.m_LogicDevice);
 

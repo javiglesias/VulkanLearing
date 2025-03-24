@@ -47,13 +47,13 @@ namespace VKR
 			size_t size = tWidth * tHeight * 4;
 			fprintf(stderr, "\tLoading texture %s size: %llu\n", m_Path, size);
 			// Buffer transfer of pixels
-			CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			utils::CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				m_StagingBuffer, m_StaggingBufferMemory);
 			void* data;
-			vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
+			vkMapMemory(utils::g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
 			memcpy(data, pixels, size);
-			vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
+			vkUnmapMemory(utils::g_context.m_LogicDevice, m_StaggingBufferMemory);
 			stbi_image_free(pixels);
 		}
 
@@ -76,13 +76,13 @@ namespace VKR
 			//tHeight=tWidth;
 			//auto size = (tWidth * tHeight * 4);
 			//// Buffer transfer of pixels
-			//CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
+			//utils::CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 			//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			//	m_StagingBuffer, m_StaggingBufferMemory);
 			//void* data;
-			//vkMapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
+			//vkMapMemory(utils::g_context.m_LogicDevice, m_StaggingBufferMemory, 0, size, 0, &data);
 			//memcpy(data, pixels, static_cast<size_t>(size));
-			//vkUnmapMemory(g_context.m_LogicDevice, m_StaggingBufferMemory);
+			//vkUnmapMemory(utils::g_context.m_LogicDevice, m_StaggingBufferMemory);
 			//stbi_image_free(pixels);
 
 		}
@@ -97,16 +97,16 @@ namespace VKR
 			BindTextureMemory();
 
 			TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
+				, _CommandPool, _arrayLayers, &utils::GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
 			CopyBufferToImage(m_StagingBuffer, vk_image.extent, 0, _CommandPool
-				, &GetVKContext().m_GraphicsComputeQueue, 0);
+				, &utils::GetVKContext().m_GraphicsComputeQueue, 0);
 			GenerateMipmap(_CommandPool, m_Mipmaps);
 			TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
+				, _CommandPool, _arrayLayers, &utils::GetVKContext().m_GraphicsComputeQueue, m_Mipmaps);
 			CreateImageView(_aspectMask, _viewType, _arrayLayers, m_Mipmaps);
 			m_Sampler = CreateTextureSampler(m_Mipmaps);
-			vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
-			vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			vkDestroyBuffer(utils::g_context.m_LogicDevice, m_StagingBuffer, nullptr);
+			vkFreeMemory(utils::g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
 		}
 
 		void Texture::CreateAndTransitionImageNoMipMaps(VkCommandPool _CommandPool, VkFormat _format, VkImageAspectFlags _aspectMask
@@ -117,15 +117,15 @@ namespace VKR
 				, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _arrayLayers, _flags, 1);
 			BindTextureMemory();
 			TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, 1);
+				, _CommandPool, _arrayLayers, &utils::GetVKContext().m_GraphicsComputeQueue, 1);
 			CopyBufferToImage(m_StagingBuffer, vk_image.extent, 0, _CommandPool
-				, &GetVKContext().m_GraphicsComputeQueue, 0);
+				, &utils::GetVKContext().m_GraphicsComputeQueue, 0);
 			TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-				, _CommandPool, _arrayLayers, &GetVKContext().m_GraphicsComputeQueue, 1);
+				, _CommandPool, _arrayLayers, &utils::GetVKContext().m_GraphicsComputeQueue, 1);
 			CreateImageView(_aspectMask, _viewType, _arrayLayers, 1);
 			m_Sampler = CreateTextureSampler(1);
-			vkDestroyBuffer(g_context.m_LogicDevice, m_StagingBuffer, nullptr);
-			vkFreeMemory(g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
+			vkDestroyBuffer(utils::g_context.m_LogicDevice, m_StagingBuffer, nullptr);
+			vkFreeMemory(utils::g_context.m_LogicDevice, m_StaggingBufferMemory, nullptr);
 		}
 
 		void Texture::CreateAndTransitionImageCubemap(VkCommandPool _CommandPool, VkFormat _format, VkImageAspectFlags _aspectMask
@@ -138,7 +138,7 @@ namespace VKR
 				, VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties
 				, uint32_t _arrayLayers, VkImageCreateFlags _flags, uint8_t _mipmapLvls)
 		{
-			auto renderContext = VKR::render::GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			VkImageCreateInfo tImageInfo{};
 			tImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			tImageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -172,8 +172,8 @@ namespace VKR
 
 		void Texture::GenerateMipmap(VkCommandPool _CommandPool, uint8_t _mipLevels)
 		{
-			auto renderContext = GetVKContext();
-			VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
+			auto renderContext = utils::GetVKContext();
+			VkCommandBuffer commandBuffer = utils::BeginSingleTimeCommandBuffer(_CommandPool);
 			VkImageMemoryBarrier iBarrier{};
 			iBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			iBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -226,14 +226,14 @@ namespace VKR
 			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr,
 				1, &iBarrier);
-			EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, renderContext.m_GraphicsComputeQueue);
+			utils::EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, renderContext.m_GraphicsComputeQueue);
 		}
 
 		void Texture::TransitionImageLayout(VkImageLayout _old, VkImageLayout _new, VkCommandPool _CommandPool
 				, uint32_t _layerCount, VkQueue* _queue, uint8_t _levelCount)
 		{
-			auto renderContext = VKR::render::GetVKContext();
-			VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
+			auto renderContext = utils::GetVKContext();
+			VkCommandBuffer commandBuffer = utils::BeginSingleTimeCommandBuffer(_CommandPool);
 			VkImageMemoryBarrier iBarrier{};
 			iBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			iBarrier.oldLayout = _old;
@@ -288,14 +288,14 @@ namespace VKR
 				exit(-96);
 			}
 			vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &iBarrier);
-			EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, *_queue);
+			utils::EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, *_queue);
 		}
 
 		void Texture::CopyBufferToImage(VkBuffer _buffer, VkExtent3D _extent
 				, VkDeviceSize _bufferOffset, VkCommandPool _CommandPool
 				, VkQueue* _queue, uint32_t _layer)
 		{
-			VkCommandBuffer commandBuffer = BeginSingleTimeCommandBuffer(_CommandPool);
+			VkCommandBuffer commandBuffer = utils::BeginSingleTimeCommandBuffer(_CommandPool);
 			VkBufferImageCopy region{};
 			region.bufferOffset = _bufferOffset;
 			region.bufferRowLength = 0;
@@ -307,13 +307,13 @@ namespace VKR
 			region.imageOffset = { 0, 0, 0 };
 			region.imageExtent = _extent;
 			vkCmdCopyBufferToImage(commandBuffer, _buffer, vk_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-			EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, *_queue);
+			utils::EndSingleTimeCommandBuffer(commandBuffer, _CommandPool, *_queue);
 		}
 
 		void Texture::CreateImageView(VkImageAspectFlags _aspectMask, VkImageViewType _viewType
 				, uint32_t _arrayLayers, uint32_t _levelCount)
 		{
-			auto renderContext = GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			VkImageView tImageView;
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -337,7 +337,7 @@ namespace VKR
 		void Texture::BindTextureMemory()
 		{
 #if not USE_VMA
-			vkBindImageMemory(g_context.m_LogicDevice, vk_image.image, vk_image.memory, 0);
+			vkBindImageMemory(utils::g_context.m_LogicDevice, vk_image.image, vk_image.memory, 0);
 #else
 			VMA_BindTextureMemory(vk_image.image, vk_image.memory);
 #endif
@@ -345,7 +345,7 @@ namespace VKR
 
 		VkSampler Texture::CreateTextureSampler(float _Mipmaps, VkSamplerAddressMode _u, VkSamplerAddressMode _v, VkSamplerAddressMode _w)
 		{
-			auto renderContext = VKR::render::GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			VkPhysicalDeviceProperties deviceProp;
 			VkSamplerCreateInfo samplerInfo{};
 			VkSampler TextureSampler;
@@ -371,7 +371,7 @@ namespace VKR
 
 		void Texture::CreateShadowTextureSampler()
 		{
-			auto renderContext = VKR::render::GetVKContext();
+			auto renderContext = utils::GetVKContext();
 			VkPhysicalDeviceProperties deviceProp;
 			VkSamplerCreateInfo samplerInfo{};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

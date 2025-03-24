@@ -20,7 +20,7 @@ int main(int _argc, char** _args)
 	//RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
 	mainScene.Init(&backend);
-	auto renderContext = VKR::render::GetVKContext();
+	auto renderContext = VKR::utils::GetVKContext();
 	currentFrame = backend.GetTime();
 	 _initlializePerfmon(&backend);
 	while (!backend.BackendShouldClose())

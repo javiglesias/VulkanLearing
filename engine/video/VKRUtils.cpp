@@ -7,7 +7,7 @@
 
 namespace VKR
 {
-	namespace render
+	namespace utils
 	{
 		void VMA_Initialize(VkPhysicalDevice _gpu, VkDevice _LogicDevice, VkInstance _instance)
 		{
@@ -52,7 +52,7 @@ namespace VKR
 				if (_tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & _features) == _features)
 					return format;
 			}
-			g_ConsoleMSG += "No found supported format\n";
+			render::g_ConsoleMSG += "No found supported format\n";
 			printf("No found supported format\n");
 			exit(-79);
 		}
@@ -123,7 +123,7 @@ namespace VKR
 					m_GPUSelected = it;
 					char tmp[512];
 					sprintf(tmp, "\nGPU %d: %s\n", it, deviceProp[m_GPUSelected].deviceName);
-					g_ConsoleMSG += tmp;
+					render::g_ConsoleMSG += tmp;
 					g_context.m_GpuInfo.minUniformBufferOffsetAlignment = (uint32_t)deviceProp[m_GPUSelected].limits.minUniformBufferOffsetAlignment;
 				}
 				vkGetPhysicalDeviceFeatures(m_PhysicalDevices[it], &deviceFeatures[it]);
@@ -195,7 +195,7 @@ namespace VKR
 			char tmp[256];
 			sprintf(tmp, "Graphics Family: %d\n", m_GraphicsComputeQueueFamilyIndex);
 			sprintf(tmp, "Transfer Family: %d\n", m_TransferQueueFamilyIndex);
-			g_ConsoleMSG += tmp;
+			render::g_ConsoleMSG += tmp;
 			/// Ahora vamos a crear el device logico para interactuar con �l
 			float queuePriority = 1.f;
 
