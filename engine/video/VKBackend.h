@@ -59,6 +59,8 @@ namespace VKR
         inline double g_ElapsedTime;
 		inline char* g_CommandLine;
 		inline char* g_CommandLineHistory;
+		inline glm::mat4 g_ProjectionMatrix {1.f};
+		inline glm::mat4 g_ViewMatrix {1.f};
 
         inline GLFWwindow* m_Window;
         inline float m_ShadowCameraFOV = 45.f;
@@ -66,10 +68,12 @@ namespace VKR
         inline glm::vec3 m_PointLightPos = glm::vec3(0.f, 3.f, 0.f);
         inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
-        inline glm::vec3 m_CameraPos = glm::vec3(0.f);
-        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
-        inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
-        inline glm::vec3 m_Rotation = glm::vec3(0.f, 1.f, 1.f);
+
+        inline glm::vec3 m_CameraPos = glm::vec3(-781.f, -14.f, -300.f);
+        inline glm::vec3 m_CameraDefPos = glm::vec3(-781.f, -14.f, -300.f);
+        inline glm::vec3 m_CameraForward = glm::vec3(0.f, -1.f, 0.f);
+        inline glm::vec3 m_CameraUp = glm::vec3(0.f, 0.f, -1.f);
+        
 		//inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
 		inline ShaderRenderer* m_GridRender;
@@ -130,15 +134,6 @@ namespace VKR
 			VkQueryPool m_PerformanceQuery[FRAMES_IN_FLIGHT];
 
             VkDescriptorSet m_ShadowVisualizer;
-
-            // RENDER BUFFERS
-            std::vector<VkBuffer> m_UniformBuffers;
-            std::vector<VkDeviceMemory> m_UniformBuffersMemory;
-            std::vector<void*> m_Uniform_SBuffersMapped;
-
-            std::vector<VkBuffer> m_DynamicBuffers;
-            std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
-            std::vector<void*> m_DynamicBuffersMapped;
 
             std::vector<VkBuffer> m_LightsBuffers;
             std::vector<VkDeviceMemory> m_LightsBuffersMemory;

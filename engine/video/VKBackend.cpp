@@ -27,38 +27,34 @@ namespace VKR
 		// INPUT CALLBACKS
 		void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 		{
+#if 0
 			double x_offset = (_xPos - m_LastXPosition);
 			double y_offset = (m_LastYPosition - _yPos);
 			float senseo = 0.1f;
 			m_LastXPosition = _xPos;
 			m_LastYPosition = _yPos;
-			if (m_MouseCaptured)
-			{
-				x_offset *= senseo;
-				y_offset *= senseo;
-				m_CameraYaw   += x_offset;
-				m_CameraPitch += y_offset;
-				// CONSTRAINTS
-				if (m_CameraPitch > 89.f)  m_CameraPitch = 89.f;
-				if (m_CameraPitch < -89.f) m_CameraPitch = -89.f;
-				glm::vec3 camera_direction;
-				camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
-				camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
-				camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
-				m_CameraForward = glm::normalize(camera_direction);
-				m_LastXPosition = _xPos;
-				m_LastYPosition = _yPos;
-			}
+			x_offset *= senseo;
+			y_offset *= senseo;
+			m_CameraYaw   += x_offset;
+			m_CameraPitch += y_offset;
+			// CONSTRAINTS
+			if (m_CameraPitch > 89.f)  m_CameraPitch = 89.f;
+			if (m_CameraPitch < -89.f) m_CameraPitch = -89.f;
+			glm::vec3 camera_direction;
+			camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
+			camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
+			camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
+			m_CameraForward = glm::normalize(camera_direction);
+			m_LastXPosition = _xPos;
+			m_LastYPosition = _yPos;
+#endif
 		}
 
 		void MouseBPressCallback(GLFWwindow* _window, int _button, int _action, int _mods)
 		{
 			if (_button == GLFW_MOUSE_BUTTON_RIGHT && _action == GLFW_PRESS && !m_MouseCaptured)
 			{
-				m_MouseCaptured = true;
 			}
-			else
-				m_MouseCaptured = false;
 		}
 
 		void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
@@ -85,13 +81,51 @@ namespace VKR
 
 			if (_key == GLFW_KEY_R && _action == GLFW_PRESS)
 			{
-				m_CameraPos = glm::vec3(0.f);
+				m_CameraPos = m_CameraDefPos;
 			}
-
+			/*
+			 * Elemental rotations
+			 */
+			float degrees = 90.f;
+			glm::mat3 X_axis = glm::mat3 {
+				1, 0, 0,
+				0, cos(degrees), -sin(degrees),
+				0, sin(degrees), cos(degrees)
+			};
+			glm::mat3 Y_axis = glm::mat3{
+				cos(degrees), 0, sin(degrees),
+				0, 1, 0,
+				-sin(degrees),0, cos(degrees)
+			};
+			glm::mat3 Z_axis = glm::mat3{
+				cos(degrees), -sin(degrees), 0,
+				sin(degrees), cos(degrees), 0,
+				0, 0, 1
+			};
 			if (_key == GLFW_KEY_E && _action == GLFW_PRESS) // up
 			{
-				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y + m_CameraSpeed, m_CameraPos.z);
+				m_CameraPos += m_CameraUp;
 			}
+			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
+			{
+				m_CameraPos -= m_CameraUp;
+			}
+
+			if (_key == GLFW_KEY_ESCAPE && state)
+			{
+				m_CloseEngine= true;
+			}
+
+			if (_key == GLFW_KEY_X && _action == GLFW_PRESS) // rotate Right
+			{
+				m_CameraPos = m_CameraPos * Y_axis;
+			}
+
+			if (_key == GLFW_KEY_Z && _action == GLFW_PRESS) // rotate Left
+			{
+				m_CameraPos = m_CameraPos * -Z_axis;
+			}
+
 
 			//if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
 			//{
@@ -110,15 +144,6 @@ namespace VKR
 			//	RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
 			//}
 
-			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
-			{
-				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y - m_CameraSpeed, m_CameraPos.z);
-			}
-
-			if (_key == GLFW_KEY_ESCAPE && state)
-			{
-				m_CloseEngine= true;
-			}
 		}
 
 		static VKBackend g_backend;
@@ -391,14 +416,7 @@ namespace VKR
 			CreateDepthTestingResources();
 			CreateFramebuffers();
 			//CreateGBufferImage();
-			// Uniform buffers
-			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_Uniform_SBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Dynamic buffers
-			m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+
 			// Light buffers
 			m_LightsBuffers.resize(FRAMES_IN_FLIGHT);
 			m_LightsBuffersMemory.resize(FRAMES_IN_FLIGHT);
@@ -474,43 +492,6 @@ namespace VKR
 
 		void VKBackend::GenerateBuffers()
 		{
-			#pragma region RENDER_BUFFERS
-			{
-
-				VkDeviceSize bufferSize = MAX_MODELS * sizeof(UniformBufferObject);
-				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-				{
-					utils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-						VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
-						bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
-				}
-				auto DynAlign =  sizeof(DynamicBufferObject);
-				DynAlign = (DynAlign + utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-					& ~(utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-				VkDeviceSize checkBufferSize = MAX_MODELS *  DynAlign;
-				VkDeviceSize dynBufferSize = MAX_MODELS *  sizeof(DynamicBufferObject);
-				if(dynBufferSize != checkBufferSize )
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
-				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-				{
-					utils::CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-						VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
-						dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
-				}
-			}
-			#pragma endregion
 			#pragma region LIGHTS_BUFFER
 			{
 				auto lightDynAlign = sizeof(LightBufferObject);
@@ -1020,12 +1001,6 @@ namespace VKR
 
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
-
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
-
 				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_LightsBuffers[i], nullptr);
 				vkFreeMemory(utils::g_context.m_LogicDevice, m_LightsBuffersMemory[i], nullptr);
 

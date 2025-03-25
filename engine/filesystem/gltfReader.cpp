@@ -122,8 +122,12 @@ namespace VKR
 				}
 
 				tempMesh->m_Material = mesh->mMaterialIndex;
-				//++m_TotalTextures;
-				tempMesh->m_ModelMatrix = glm::mat4(1.f);
+				tempMesh->m_ModelMatrix = {
+					_node->mTransformation.a1,_node->mTransformation.b1,_node->mTransformation.c1,_node->mTransformation.d1,
+					_node->mTransformation.a2,_node->mTransformation.b2,_node->mTransformation.c2,_node->mTransformation.d2,
+					_node->mTransformation.a3,_node->mTransformation.b3,_node->mTransformation.c3,_node->mTransformation.d3,
+					_node->mTransformation.a4,_node->mTransformation.b4,_node->mTransformation.c4,_node->mTransformation.d4
+				};
 				tempModel->m_Meshes.push_back(tempMesh);
 			}
 		}
@@ -158,7 +162,7 @@ namespace VKR
 		{
 			cgltf_options options {};
 			char filename[128];
-			sprintf(filename, "%s%s", _filepath, _modelName);
+			sprintf(filename, "%s/%s.gltf", _filepath, _modelName);
 			cgltf_data* modelData = NULL;
 			cgltf_parse_file(&options, filename, &modelData);
 			if(modelData == NULL) return nullptr;
@@ -177,6 +181,7 @@ namespace VKR
 						if (tempModel_->m_Materials[materialID] == nullptr)
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
+							tempModel->m_Materials[materialID]->material = new render::MaterialInstance();
 							tempModel_->m_Materials[materialID]->material->pipeline._buildPipeline();
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
 							/*for(int t= 0; t < 8; t++)
@@ -218,7 +223,7 @@ namespace VKR
 					if(mesh)
 					{
 						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
-						strcpy(tempMesh->m_Id, mesh->name);
+						sprintf(tempMesh->m_Id, "%s_%d", mesh->name ? mesh->name : "mesh", n);
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
 											modelData->nodes[n].translation[1],
 											modelData->nodes[n].translation[2]);

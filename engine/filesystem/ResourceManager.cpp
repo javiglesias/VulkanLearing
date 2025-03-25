@@ -9,7 +9,25 @@ namespace VKR
 		void _AddRequest(TYPE _type, const char* _filepath, const char* _resourceName, render::R_Model* model_)
 		{
 			if(model_ != nullptr)
-				filesystem::LoadModel(_filepath, _resourceName, model_);
+				switch (_type)
+				{
+				case STATIC_MODEL:
+				{
+					filesystem::LoadModel_ALT(_filepath, _resourceName);
+					//render::m_SceneDirty = true;
+					_NumRequests--;
+					break;
+				}
+				case ASSIMP_MODEL:
+				{
+					filesystem::LoadModel(_filepath, _resourceName, model_);
+					//render::m_SceneDirty = true;
+					_NumRequests--;
+					break;
+				}
+				default:
+					break;
+				}
 			else
 			{
 				_RMRequests[_NumRequests].type = _type;

@@ -167,16 +167,10 @@ namespace VKR
 			lightDynAlign = (lightDynAlign + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
-			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			g_ProjectionMatrix = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
+			g_ProjectionMatrix[1][1] *= -1; // para invertir el eje Y
+			g_ViewMatrix = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
 			/// Render Pass
-			// Update Uniform buffers
-			UniformBufferObject ubo{};
-			ubo.view = viewMat;
-			ubo.projection = projMat;
-			ubo.cameraPosition = m_CameraPos;
-			memcpy(_backend->m_Uniform_SBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
 			_backend->BeginRenderPass(_CurrentFrame);
 #pragma region GRID
 #if 0
@@ -214,8 +208,8 @@ namespace VKR
 #pragma region DEBUG
 			//Debug
 			DebugUniformBufferObject dubo{};
-			dubo.view = viewMat;
-			dubo.projection = projMat;
+			dubo.view = g_ViewMatrix;
+			dubo.projection = g_ProjectionMatrix;
 			memcpy(_backend->m_DbgUniformBuffersMapped[_CurrentFrame], &dubo, sizeof(dubo));
 			
 			int debugCount = 0;
@@ -351,7 +345,7 @@ namespace VKR
 		{
 			auto renderContext = utils::GetVKContext();
 			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model("Bistro");
+			m_StaticModels[0] = new R_Model("Sponza");
 			m_CurrentStaticModels = 1;
 			g_DirectionalLight = new Directional();
 			/*g_PointLights[0] = new Point();
@@ -359,7 +353,7 @@ namespace VKR
 			g_PointLights[2] = new Point();
 			g_PointLights[3] = new Point();*/
 			//PrepareCubemapScene(_backend);
-			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
+			g_editor = new Editor(m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
 		}

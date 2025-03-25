@@ -14,7 +14,9 @@ namespace VKR
 			~R_Model();
 			void Draw(VKBackend* _backend, int _CurrentFrame, int _countModel = 0);
 			void Update();
+			void Cleanup();
 			void Prepare(VKBackend* _backend);
+			void GenerateDynamicAndUniformBuffers();
 			R_Model(const char* _modelName);
 			
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);
@@ -27,6 +29,15 @@ namespace VKR
 			float m_RotGRAD = 0.f;
 			float m_ProjectShadow = 0.f;
 			int nMaterials = 0;
+
+			// RENDER BUFFERS
+			std::vector<VkBuffer> m_UniformBuffers;
+			std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+			std::vector<void*> m_UniformsBuffersMapped;
+
+			std::vector<VkBuffer> m_DynamicBuffers;
+			std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
+			std::vector<void*> m_DynamicBuffersMapped;
 		};
 
 		/*struct R_DbgModel
