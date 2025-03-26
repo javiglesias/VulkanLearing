@@ -13,7 +13,7 @@ namespace VKR
 				{
 				case STATIC_MODEL:
 				{
-					filesystem::LoadModel_ALT(_filepath, _resourceName);
+					filesystem::LoadModel_ALT(_filepath, _resourceName, model_);
 					//render::m_SceneDirty = true;
 					_NumRequests--;
 					break;
@@ -51,7 +51,7 @@ namespace VKR
 					{
 						case STATIC_MODEL:
 						{
-							filesystem::LoadModel_ALT(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName);
+							filesystem::LoadModel_ALT(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName, static_cast<render::R_Model*>(_RMRequests[_NumRequests - 1].modelPtr));
 							//render::m_SceneDirty = true;
 							_NumRequests--;
 							break;

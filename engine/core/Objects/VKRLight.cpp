@@ -9,7 +9,7 @@ namespace VKR
 	{
 		Light::Light()
 		{
-			m_visual_model = new R_Model("BoxVertexColors");
+			m_visual_model = new R_Model("gizmo");
 		}
 
 		void Light::Draw(VKBackend* _backend, int _CurrentFrame)

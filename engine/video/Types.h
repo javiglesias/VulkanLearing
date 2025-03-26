@@ -65,6 +65,7 @@ struct Vertex3D {
 	glm::vec3 m_Pos {1.f};
 	glm::vec2 m_TexCoord;// x, y
 	glm::vec3 m_Normal;
+	glm::vec3 m_Color;
 
 	static VkVertexInputBindingDescription getBindingDescription()
 	{
@@ -74,9 +75,9 @@ struct Vertex3D {
 		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		return bindingDescription;
 	}
-	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
+	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
 
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
 		attributeDescriptions[0].binding  = 0;
 		attributeDescriptions[0].location = 0;
 		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -91,6 +92,11 @@ struct Vertex3D {
 		attributeDescriptions[2].location = 2;
 		attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[2].offset = offsetof(Vertex3D, m_Normal);
+
+		attributeDescriptions[3].binding = 0;
+		attributeDescriptions[3].location = 3;
+		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[3].offset = offsetof(Vertex3D, m_Color);
 
 		return attributeDescriptions;
 	}

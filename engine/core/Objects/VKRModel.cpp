@@ -26,9 +26,7 @@ namespace VKR
 
 		R_Model::R_Model(const char* _modelName)
 		{
-			sprintf(m_Path, "%s%s", MODELS_PATH, _modelName);
-			strcpy(m_Name, _modelName);
-			RM::_AddRequest(ASSIMP_MODEL, m_Path, _modelName, this);
+			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, _modelName, this);
 		}
 
 		void R_Model::Draw(VKBackend* _backend, int _CurrentFrame, int _countModel)
@@ -37,7 +35,7 @@ namespace VKR
 			UniformBufferObject ubo{};
 			ubo.view = g_ViewMatrix;
 			ubo.projection = g_ProjectionMatrix;
-			ubo.cameraPosition = m_CameraPos;
+			ubo.cameraPosition = g_CameraPos;
 			memcpy(m_UniformsBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
 			auto renderContext = utils::GetVKContext();
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
@@ -66,7 +64,7 @@ namespace VKR
 			temp.Color = glm::vec4(g_DirectionalLight->m_Color, 1.0);
 			m_LightsOs.push_back(temp);
 			//Point Ligts
-			/*for (int i = 0; i < 3; i++)
+			for (int i = 0; i < 3; i++)
 			{
 				Point* light = g_PointLights[i];
 				glm::mat4 lightViewMat = glm::lookAt(light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
@@ -86,7 +84,7 @@ namespace VKR
 				m_LightsOs.push_back(temp);
 			}
 			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0
-					, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));*/
+					, m_LightsOs.data(), m_LightsOs.size() * sizeof(LightBufferObject));
 			if (g_GPUTimestamp)
 				vkCmdWriteTimestamp(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, _backend->m_PerformanceQuery[_CurrentFrame], 0);
 			int n_mesh = 0;
@@ -269,7 +267,7 @@ namespace VKR
 				m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						m_UniformBuffers, m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);
 				PERF_END("UPDATE_DESCRIPTORS")
-				fprintf(stdout, "Loading mesh %d: %s\n", count, mesh->m_Id);
+
 				++count;
 			}
 		}

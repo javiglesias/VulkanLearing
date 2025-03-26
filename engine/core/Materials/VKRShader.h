@@ -25,7 +25,7 @@ namespace VKR
 			Shader* shader;
 		};
 		static ShaderItem* ShaderList[MAX_SHADER];
-		static int currentShaders = 0;
+		inline int currentShaders = 0;
 		static void clean_shader_list()
 		{
 			currentShaders = 0;

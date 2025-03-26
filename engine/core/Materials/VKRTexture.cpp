@@ -19,6 +19,7 @@ namespace VKR
 	{
 		Texture::Texture(std::string _path)
 		{
+			memset(m_Path, 0, 256);
 			if (_path.empty())
 				sprintf(m_Path, "resources/Textures/defaultMissing.png");
 			else

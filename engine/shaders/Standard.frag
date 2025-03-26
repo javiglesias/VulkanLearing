@@ -51,6 +51,7 @@ layout(location = 7) in float renderDepth;
 layout(location = 8) in float renderSpecular;
 layout(location = 9) in float renderNormals;
 layout(location = 10) in float tonemapping;
+layout(location = 11) in vec3 vertex_color;
 
 layout(location = 0) out vec4 outColor;
 
@@ -84,7 +85,7 @@ vec3 calculate_luminance(vec3 color_in, float lum_out)
 
 void main() 
 {
-	// vec4 shadowCoordFinal = shadowCoord * libO[2].lightProj * libO[0].lightView;
+	//vec4 shadowCoordFinal = shadowCoord * libO[1].lightProj * libO[0].lightView;
 	vec3 color = textureLod(inTextures[0], texCoord, mipLevel).rgb;
 	vec3 ColorIn = DirectionalLight(color);
 	vec3 result = ColorIn;
@@ -111,7 +112,7 @@ void main()
 		float lum_new = num / (1.0 + lum_old);
 		result = calculate_luminance(ColorIn, lum_new);
 	}
-	// result = rgb_to_grayscale_luminosity(result);
+	//result = rgb_to_grayscale_luminosity(result);
 	outColor = vec4(result, 1.0);
 }
 
@@ -142,7 +143,7 @@ vec3 DirectionalLight(vec3 _color)
 	float ambientStrength = 0.05;
     vec3 ambient = _color * ambientStrength;
 	
-	vec3 normTex = texture(inTextures[0], texCoord).xyz;
+	vec3 normTex = texture(inTextures[4], texCoord).xyz;
 	vec3 norm = normalize(normTex * 2.0 - 1.0); // transform normal vector to range [-1,1]
 	vec3 lightDir = normalize(lightPosition - fragPosition);
 	vec3 diffuse = max(dot(normTex, lightDir), 0.0) * _color;
@@ -155,15 +156,13 @@ vec3 DirectionalLight(vec3 _color)
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
-	// float shadow = ShadowCalculation(fraglight, inTextures[0]);
+	float shadow = ShadowCalculation(fraglight, inTextures[3]);
 	
 	// ambient  *= reinhard;
 	// diffuse  *= reinhard;
 	// specular *= reinhard;
-	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	return ambient + diffuse + specular;
-	// return norm;
-
+	//return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
+	return ambient + diffuse;
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 

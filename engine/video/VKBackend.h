@@ -69,10 +69,10 @@ namespace VKR
         inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
 
-        inline glm::vec3 m_CameraPos = glm::vec3(-781.f, -14.f, -300.f);
-        inline glm::vec3 m_CameraDefPos = glm::vec3(-781.f, -14.f, -300.f);
-        inline glm::vec3 m_CameraForward = glm::vec3(0.f, -1.f, 0.f);
-        inline glm::vec3 m_CameraUp = glm::vec3(0.f, 0.f, -1.f);
+        inline glm::vec3 g_CameraPos = glm::vec3(-781.f, -14.f, -300.f);
+        inline glm::vec3 g_CameraDefPos = glm::vec3(0.f);
+        inline glm::vec3 g_CameraForward = glm::vec3(-1.f, 0.f, 0.f);
+        inline glm::vec3 g_CameraUp = glm::vec3(0.f, 1.f, 0.f);
         
 		//inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;

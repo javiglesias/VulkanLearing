@@ -17,6 +17,7 @@ layout(set=0, binding=2) uniform DynamicBufferObject
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aNormal;
+layout (location = 3) in vec3 inVertexColor;
 
 layout(location = 0) out vec3 fragPosition;
 layout(location = 1) out vec2 texCoord;
@@ -29,6 +30,7 @@ layout(location = 7) out float renderDepth;
 layout(location = 8) out float renderSpecular;
 layout(location = 9) out float renderNormals;
 layout(location = 10) out float tonemapping;
+layout(location = 11) out vec3 vertex_color;
 
 void main() {
     gl_Position = ubo.projection * ubo.view * dynO.model * vec4(inPosition, 1.0);
@@ -37,6 +39,7 @@ void main() {
 	normal = mat3(transpose(inverse(dynO.model))) * aNormal;
     viewerPosition = ubo.viewerPosition;
 	shadowCoord = dynO.model * vec4(inPosition, 1.0);
+	vertex_color = inVertexColor;
 	//------------------
 	renderDepth = dynO.modelOpts.x;
 	mipLevel    = dynO.modelOpts.y;

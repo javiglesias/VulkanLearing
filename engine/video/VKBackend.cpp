@@ -27,26 +27,29 @@ namespace VKR
 		// INPUT CALLBACKS
 		void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 		{
-#if 0
+#if 1
 			double x_offset = (_xPos - m_LastXPosition);
 			double y_offset = (m_LastYPosition - _yPos);
-			float senseo = 0.1f;
-			m_LastXPosition = _xPos;
-			m_LastYPosition = _yPos;
-			x_offset *= senseo;
-			y_offset *= senseo;
-			m_CameraYaw   += x_offset;
-			m_CameraPitch += y_offset;
-			// CONSTRAINTS
-			if (m_CameraPitch > 89.f)  m_CameraPitch = 89.f;
-			if (m_CameraPitch < -89.f) m_CameraPitch = -89.f;
-			glm::vec3 camera_direction;
-			camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
-			camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
-			camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
-			m_CameraForward = glm::normalize(camera_direction);
-			m_LastXPosition = _xPos;
-			m_LastYPosition = _yPos;
+			float senseo = 0.01f;
+			if (m_MouseCaptured)
+			{
+				m_LastXPosition = _xPos;
+				m_LastYPosition = _yPos;
+				x_offset *= senseo;
+				y_offset *= senseo;
+				m_CameraYaw   += x_offset;
+				m_CameraPitch += y_offset;
+				// CONSTRAINTS
+				if (m_CameraPitch > 89.f)  m_CameraPitch = 89.0f;
+				if (m_CameraPitch < -89.f) m_CameraPitch = -89.0f;
+				glm::vec3 camera_direction;
+				camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
+				camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
+				camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
+				g_CameraForward = glm::normalize(camera_direction);
+				m_LastXPosition = _xPos;
+				m_LastYPosition = _yPos;
+			}
 #endif
 		}
 
@@ -54,6 +57,11 @@ namespace VKR
 		{
 			if (_button == GLFW_MOUSE_BUTTON_RIGHT && _action == GLFW_PRESS && !m_MouseCaptured)
 			{
+				m_MouseCaptured = true;
+			}
+			if (_button == GLFW_MOUSE_BUTTON_LEFT && _action == GLFW_PRESS && m_MouseCaptured)
+			{
+				m_MouseCaptured = false;
 			}
 		}
 
@@ -62,26 +70,31 @@ namespace VKR
 			auto state = glfwGetKey(_window, _key);
 			if (_key == GLFW_KEY_W && state)
 			{
-				m_CameraPos += m_CameraSpeed * m_CameraForward;
+				g_CameraPos += m_CameraSpeed * g_CameraForward;
 			}
 			if (_key == GLFW_KEY_A && state)
 			{
-				m_CameraPos += m_CameraSpeed * glm::normalize(glm::cross(
-					m_CameraUp, m_CameraForward));
+				g_CameraPos += m_CameraSpeed * glm::normalize(glm::cross(
+					g_CameraUp, g_CameraForward));
 			}
 			if (_key == GLFW_KEY_S && state)
 			{
-				m_CameraPos -= m_CameraSpeed * m_CameraForward;
+				g_CameraPos -= m_CameraSpeed * g_CameraForward;
 			}
 			if (_key == GLFW_KEY_D && state)
 			{
-				m_CameraPos -= m_CameraSpeed * glm::normalize(glm::cross(
-					m_CameraUp, m_CameraForward));
+				g_CameraPos -= m_CameraSpeed * glm::normalize(glm::cross(
+					g_CameraUp, g_CameraForward));
 			}
 
 			if (_key == GLFW_KEY_R && _action == GLFW_PRESS)
 			{
-				m_CameraPos = m_CameraDefPos;
+				g_CameraPos = g_CameraDefPos;
+			}
+
+			if (_key == GLFW_KEY_TAB && _action == GLFW_PRESS)
+			{
+				
 			}
 			/*
 			 * Elemental rotations
@@ -104,26 +117,26 @@ namespace VKR
 			};
 			if (_key == GLFW_KEY_E && _action == GLFW_PRESS) // up
 			{
-				m_CameraPos += m_CameraUp;
+				g_CameraPos += m_CameraSpeed * g_CameraUp;
 			}
 			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
 			{
-				m_CameraPos -= m_CameraUp;
+				g_CameraPos -= m_CameraSpeed * g_CameraUp;
 			}
 
 			if (_key == GLFW_KEY_ESCAPE && state)
 			{
-				m_CloseEngine= true;
+				//m_CloseEngine= true;
 			}
 
 			if (_key == GLFW_KEY_X && _action == GLFW_PRESS) // rotate Right
 			{
-				m_CameraPos = m_CameraPos * Y_axis;
+				g_CameraPos = g_CameraPos * Y_axis;
 			}
 
 			if (_key == GLFW_KEY_Z && _action == GLFW_PRESS) // rotate Left
 			{
-				m_CameraPos = m_CameraPos * -Z_axis;
+				g_CameraPos = g_CameraPos * -Z_axis;
 			}
 
 

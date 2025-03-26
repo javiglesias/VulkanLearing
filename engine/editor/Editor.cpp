@@ -128,7 +128,7 @@ namespace VKR
 				// Camera
 				ImGui::SliderFloat("cam Speed", &render::m_CameraSpeed, 0.1f, 100.f);
 				ImGui::SliderFloat("FOV", &render::m_CameraFOV, 40.f, 100.f);
-				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", render::m_CameraPos.x, render::m_CameraPos.y, render::m_CameraPos.z);
+				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", render::g_CameraPos.x, render::g_CameraPos.y, render::g_CameraPos.z);
 				ImGui::DragFloat("Rotation", &render::g_Rotation, 1.f, 0.f, 360.f);
 
 				if (ImGui::Button("Reload shaders"))

@@ -5,6 +5,7 @@
 #endif
 
 std::vector<uint32_t> _read_shader(const char* _filename, int _stage);
+void precompile_shader(const char* _filename, int _stage);
 
 namespace VKR
 {
@@ -14,6 +15,8 @@ namespace VKR
 		{
 			m_Filename = _filename;
 			m_Stage = _shaderStage;
+			m_SpirvSrc.clear();
+			precompile_shader(m_Filename.c_str(), m_Stage);
 		}
 		void Shader::LoadShader()
 		{

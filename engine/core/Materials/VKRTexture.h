@@ -26,7 +26,7 @@ namespace VKR
 			VkDeviceMemory m_StaggingBufferMemory;
 		public:
 			uint8_t m_Mipmaps = 1;
-			char m_Path[128] = "";
+			char m_Path[256];
 			vk_Allocated_Image vk_image;
 			VkSampler m_Sampler = nullptr;
 		public:

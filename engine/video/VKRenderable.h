@@ -19,7 +19,7 @@ namespace VKR
 			glm::vec3 m_Rotation { 0.0f, 1.0f, 0.0f };
 			glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
 			// Base_color, metallicRoughtness, normal Textures
-			uint32_t m_Material;
+			uint32_t m_Material = -1;
 			VkBuffer m_VertexBuffer[FRAMES_IN_FLIGHT];
 			VkDeviceMemory m_VertexBufferMemory[FRAMES_IN_FLIGHT];
 			VkBuffer m_IndexBuffer[FRAMES_IN_FLIGHT];

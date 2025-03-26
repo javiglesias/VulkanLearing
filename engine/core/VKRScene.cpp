@@ -3,6 +3,7 @@
 #include "../perfmon/Custom.h"
 #include "../editor/Editor.h"
 #include "../core/Objects/VKRCubemap.h"
+#include "../filesystem/ResourceManager.h"
 
 namespace VKR
 {
@@ -118,7 +119,8 @@ namespace VKR
 			m_CubemapRender->CreatePipeline(renderContext.m_RenderPass->pass);
 			m_CubemapRender->CleanShaderModules();
 			PERF_INIT("RELOAD_SHADERS")
-			render::clean_material_list();
+			clean_material_list();
+			clean_shader_list();
 			for(int m = 0; m < m_CurrentStaticModels; m++)
 			{
 				for(int mi = 0; mi < m_StaticModels[m]->nMaterials; mi++)
@@ -169,7 +171,7 @@ namespace VKR
 			// Matriz de proyeccion
 			g_ProjectionMatrix = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			g_ProjectionMatrix[1][1] *= -1; // para invertir el eje Y
-			g_ViewMatrix = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			g_ViewMatrix = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraForward, g_CameraUp);
 			/// Render Pass
 			_backend->BeginRenderPass(_CurrentFrame);
 #pragma region GRID
@@ -296,7 +298,7 @@ namespace VKR
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			glm::mat4 viewMat = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraForward, g_CameraUp);
 			CubemapUniformBufferObject cubo {};
 			cubo.projection = projMat;
 			cubo.view = viewMat;
@@ -345,25 +347,21 @@ namespace VKR
 		{
 			auto renderContext = utils::GetVKContext();
 			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model("Sponza");
+			m_StaticModels[0] = new R_Model("gizmo");
 			m_CurrentStaticModels = 1;
+			R_Model* gizmo = new R_Model();
+			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, "Bistro", gizmo);
+			m_StaticModels[1] = gizmo;
+			m_CurrentStaticModels = 2;
 			g_DirectionalLight = new Directional();
-			/*g_PointLights[0] = new Point();
+			g_PointLights[0] = new Point();
 			g_PointLights[1] = new Point();
 			g_PointLights[2] = new Point();
-			g_PointLights[3] = new Point();*/
+			g_PointLights[3] = new Point();
 			//PrepareCubemapScene(_backend);
 			g_editor = new Editor(m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
-		}
-
-		void Scene::Update()
-		{
-			/*for (int i = 0; i < m_CurrentStaticModels; i++)
-			{
-				m_StaticModels[i]->Update();
-			}*/
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)
