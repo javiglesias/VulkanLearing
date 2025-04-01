@@ -2,6 +2,7 @@
 #define _C_SHADER
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 

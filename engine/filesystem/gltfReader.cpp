@@ -29,6 +29,16 @@ namespace VKR
 		   aiTextureType_EMISSION_COLOR,
 		   aiTextureType_LIGHTMAP
 		};
+		char tex_type_tags[8][128] = {
+		   "BASE_COLOR",
+		   "DIFFUSE_ROUGHNESS",
+		   "SPECULAR",
+		   "AMBIENT",
+		   "NORMALS",
+		   "AMBIENT_OCCLUSION",
+		   "EMISSION_COLOR",
+		   "LIGHTMA"
+		};
 		bool LoadModel_ALT(const char* _filepath, const char* _modelName, render::R_Model* model_)
 		{
 			char filename[128];
@@ -45,7 +55,7 @@ namespace VKR
 			return true;
 		}
 
-		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
+		bool GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
 		{
 			aiString path;
 			auto diff = _material->GetTexture(_type, _texIndex, &path);
@@ -54,9 +64,11 @@ namespace VKR
 				char texture[256];
 				sprintf(texture, "%s/%s", _filepath, path.data);
 				*outTex_ = new render::Texture(texture);
+				return true;
 			}
 			else
 				*outTex_ = new render::Texture("");
+			return false;
 		}
 #pragma region ASSIMP
 		void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath)
@@ -115,14 +127,14 @@ namespace VKR
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
 					tempModel->m_Materials[mesh->mMaterialIndex]->material = new render::MaterialInstance();
-					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
-
 					for (int t = 0; t < MAX_TEXTURES; t++)
 					{
-						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]),
+						if(GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]),
 							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
+							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]))
+							sprintf(tempModel->m_Materials[mesh->mMaterialIndex]->m_Tags, "%s|%s", tempModel->m_Materials[mesh->mMaterialIndex]->m_Tags, tex_type_tags[t]);
 					}
+					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
 					++tempModel->nMaterials;
 				}
 

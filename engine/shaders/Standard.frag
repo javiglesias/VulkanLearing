@@ -10,6 +10,13 @@
 6: EMISSION_COLOR,
 7: LIGHTMAP
 */
+#ifdef BASE_COLOR
+layout(set=0, binding=1) uniform sampler2D inTextures;
+#endif
+#ifdef DIFFUSE_ROUGHNESS
+layout(set=0, binding=1) uniform sampler2D inTextures[2];
+#endif
+
 layout(set=0, binding=1) uniform sampler2D inTextures[7];
 
 layout(set=0, binding=3) uniform DirLightBufferObject
@@ -39,6 +46,8 @@ layout(set=0, binding=5) uniform LightBufferObject // 6,7,8,9
 	vec4 lightOpts; // 0: lightType, 1: shadow 
 	vec4 additionalLightOpts; // Kc, Kl, Kq
 } libO[2];
+
+layout(set=0, binding=6) uniform sampler2D shadowTexture;
 
 layout(location = 0) in vec3 fragPosition;
 layout(location = 1) in vec2 texCoord;
@@ -156,13 +165,13 @@ vec3 DirectionalLight(vec3 _color)
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
-	float shadow = ShadowCalculation(fraglight, inTextures[3]);
+	float shadow = ShadowCalculation(fraglight, shadowTexture);
 	
 	// ambient  *= reinhard;
 	// diffuse  *= reinhard;
 	// specular *= reinhard;
-	//return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	return ambient + diffuse;
+	return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
+	//return ambient + diffuse;
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 

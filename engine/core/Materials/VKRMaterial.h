@@ -65,8 +65,9 @@ namespace VKR
 			std::vector<VkWriteDescriptorSet> m_DescriptorsWrite;
 			char _vertPath[64];
 			char _fragPath[64];
+			char m_Tags[128];
 			Texture* textures[MAX_TEXTURES];
-
+			Texture* shadow_texture;
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptor(VkDevice _LogicDevice);
 			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind

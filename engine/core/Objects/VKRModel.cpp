@@ -16,7 +16,6 @@ namespace VKR
 	{
 		R_Model::R_Model()
 		{
-			memset(m_Path, (int)'F', 64);
 		}
 
 		R_Model::~R_Model()
@@ -26,6 +25,7 @@ namespace VKR
 
 		R_Model::R_Model(const char* _modelName)
 		{
+			memset(m_Path, (int)'F', 64);
 			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, _modelName, this);
 		}
 
@@ -258,11 +258,6 @@ namespace VKR
 				PERF_INIT("PREPARE_MATERIAL")
 				m_Materials[mesh->m_Material]->PrepareMaterialToDraw(_backend);
 				PERF_END("PREPARE_MATERIAL")
-				/// 8 - Actualizar Descrip Sets(UpdateDescriptorSet)
-				/*model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageView = _backend->m_ShadowImageView;
-				model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImage = _backend->m_ShadowImage;
-				model->m_Materials[mesh->m_Material]->m_TextureShadowMap->tImageMem = _backend->m_ShadowImageMemory;
-				model->m_Materials[mesh->m_Material]->m_TextureShadowMap->m_Sampler = _backend->m_ShadowImgSamp;*/
 				PERF_INIT("UPDATE_DESCRIPTORS")
 				m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
 						m_UniformBuffers, m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);

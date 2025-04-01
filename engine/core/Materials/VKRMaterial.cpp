@@ -179,6 +179,8 @@ namespace VKR
 			_addBind(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
 			// estructura Light Uniforms
 			_addBind(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
+			// Sombra
+			_addBind(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -283,8 +285,9 @@ namespace VKR
 			for (size_t i = 0; i < MAX_TEXTURES; i++)
 				textures[i] = _backend->FindTexture(textures[i]->m_Path);
 			// Shadow Texture
-			/*textures[1]->vk_image = _backend->m_ShadowTexture->vk_image;
-			textures[1]->m_Sampler = _backend->m_ShadowTexture->m_Sampler;*/
+			shadow_texture = new Texture();
+			shadow_texture->vk_image = _backend->m_ShadowTexture->vk_image;
+			shadow_texture->m_Sampler = _backend->m_ShadowTexture->m_Sampler;
 			PERF_END("CREATE_TEXTURES")
 		}
 		
@@ -459,7 +462,7 @@ namespace VKR
 				{
 					PrepareDescriptorWrite(i, 5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _LightsBuffers[i], sizeof(LightBufferObject), j - start);
 				}
-
+				PrepareDescriptorWrite(i, 6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, shadow_texture->vk_image.view, shadow_texture->m_Sampler, 0);
 				// Compute
 				VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();
 				bufferInfo->buffer = _ComputeBuffers[i];

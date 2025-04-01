@@ -343,14 +343,14 @@ namespace VKR
 			PERF_END("PREPARE_DRAW_SCENE")
 		}
 
-		void Scene::Init(VKBackend* _backend)
+		void Scene::Init(VKBackend* _backend, const char* _modelName)
 		{
 			auto renderContext = utils::GetVKContext();
 			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model("gizmo");
+			m_StaticModels[0] = new R_Model(_modelName);
 			m_CurrentStaticModels = 1;
 			R_Model* gizmo = new R_Model();
-			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, "Bistro", gizmo);
+			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, "gizmo", gizmo);
 			m_StaticModels[1] = gizmo;
 			m_CurrentStaticModels = 2;
 			g_DirectionalLight = new Directional();

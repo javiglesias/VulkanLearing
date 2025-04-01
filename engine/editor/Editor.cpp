@@ -188,6 +188,7 @@ namespace VKR
 				ImGui::DragFloat("zNear", &zNear);
 				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
 				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
+				ImGui::Checkbox("Shadows", &g_ShadowPassEnabled);
 				ImGui::Checkbox("GPU Timestamps", &g_GPUTimestamp);
 				ImGui::SliderFloat("Mip level", &g_MipLevel, 0.f, 12.f, "%1.f");
 				//ImGui::DragFloat("Debug scale", &g_debugScale);

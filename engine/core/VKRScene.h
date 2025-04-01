@@ -14,7 +14,7 @@ namespace VKR
         {
         public: // FUNCIONES
             Scene() {}
-            void Init(VKBackend* _backend);
+            void Init(VKBackend* _backend, const char* _modelName="Sponza");
             void Update();
             void ReloadShaders(VKBackend* _backend);
             void DrawScene(VKBackend* _backend, int _CurrentFrame);

@@ -19,7 +19,13 @@ int main(int _argc, char** _args)
 	auto p = NEW(float);
 	//RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
-	mainScene.Init(&backend);
+	char sceneModel[64] = {"gizmo\0"};
+	if (_argc > 1)
+	{
+		fprintf(stdout, "Initializing Scene...%s\n", _args[1]);
+		sprintf(sceneModel, "%s\0", _args[1]);
+	}
+	mainScene.Init(&backend, sceneModel);
 	auto renderContext = VKR::utils::GetVKContext();
 	currentFrame = backend.GetTime();
 	 _initlializePerfmon(&backend);

@@ -21,10 +21,10 @@ void precompile_shader(const char* _filename, int _stage)
 	memset(spv_code_file, 0, 128);
 	sprintf(raw_code_file, "%s", _filename);
 	sprintf(spv_code_file, "%s.spv", raw_code_file);
-	struct stat file_stat_raw;
-	struct stat file_stat_spv;
-	stat(raw_code_file, &file_stat_raw);
-	stat(spv_code_file, &file_stat_spv);
+	// struct stat file_stat_raw;
+	// struct stat file_stat_spv;
+	// stat(raw_code_file, &file_stat_raw);
+	// stat(spv_code_file, &file_stat_spv);
 	
 
 	char* data;
