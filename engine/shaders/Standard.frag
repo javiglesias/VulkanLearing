@@ -49,7 +49,7 @@ layout(set=0, binding=5) uniform LightBufferObject // 6,7,8,9
 
 layout(set=0, binding=6) uniform sampler2D shadowTexture;
 
-layout(location = 0) in vec3 fragPosition;
+layout(location = 0) in vec4 fragPosition;
 layout(location = 1) in vec2 texCoord;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 viewerPosition;
@@ -94,7 +94,6 @@ vec3 calculate_luminance(vec3 color_in, float lum_out)
 
 void main() 
 {
-	//vec4 shadowCoordFinal = shadowCoord * libO[1].lightProj * libO[0].lightView;
 	vec3 color = textureLod(inTextures[0], texCoord, mipLevel).rgb;
 	vec3 ColorIn = DirectionalLight(color);
 	vec3 result = ColorIn;
@@ -136,7 +135,7 @@ float PointLight()
 	att = 0.0;
 	vec3 lightPos = libO[0].lightPosition.xyz;
 	vec4 pointLightC = libO[0].additionalLightOpts;
-	vec3 dir = lightPos - fragPosition;
+	vec3 dir = lightPos - fragPosition.xyz;
 	float d = length(dir);
 	att += 1.0
 		/ (pointLightC[0]
@@ -154,35 +153,35 @@ vec3 DirectionalLight(vec3 _color)
 	
 	vec3 normTex = texture(inTextures[4], texCoord).xyz;
 	vec3 norm = normalize(normTex * 2.0 - 1.0); // transform normal vector to range [-1,1]
-	vec3 lightDir = normalize(lightPosition - fragPosition);
+	vec3 lightDir = normalize(lightPosition - fragPosition.xyz);
 	vec3 diffuse = max(dot(normTex, lightDir), 0.0) * _color;
 	
 	float specularStrength = 0.5;
-	vec3 viewDir = normalize(viewerPosition - fragPosition);
+	vec3 viewDir = normalize(viewerPosition - fragPosition.xyz);
 	vec3 reflectDir = reflect(-lightDir, normTex);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * _color;
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
-	float shadow = ShadowCalculation(fraglight, shadowTexture);
+	vec4 shadowCoordFinal = fragPosition * dirLight.lightProj * dirLight.lightView;
+	float shadow = ShadowCalculation(shadowCoordFinal, shadowTexture);
 	
-	// ambient  *= reinhard;
-	// diffuse  *= reinhard;
-	// specular *= reinhard;
-	return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	//return ambient + diffuse;
+	ambient  *= att;
+	diffuse  *= att;
+	specular *= att;
+	//return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
+	return diffuse + specular;
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 
 {
-
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     // Remap to [0.0, 1.0]
     projCoords = projCoords * 0.5 + 0.5;
 
     // Return no shadow when outside of clipping planes
-    if (projCoords.z > 1.0) { return 0.0; }
+    //if (projCoords.z > 1.0) { return 0.0; }
 
     float closestDepth = texture(uShadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;

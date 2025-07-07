@@ -589,10 +589,13 @@ namespace VKR
         bool QuadRenderer::Initialize (bool _reload)
         {
             // DEBUG SHADERS
-            //"engine/shaders/Standard.vert"
+            //"engine/shaders/Quad.vert"
             m_VertShader = new Shader("engine/shaders/Quad.vert", 0);
+            m_VertShader->LoadShader();
             m_FragShader = new Shader("engine/shaders/Quad.frag", 4);
-            if (CreateShaderStages("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", _reload))
+            m_FragShader->LoadShader();
+            if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
+                CreateShaderModule(m_FragShader, &m_FragShaderModule))
             {
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
                 m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

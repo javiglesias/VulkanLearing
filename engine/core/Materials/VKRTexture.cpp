@@ -26,6 +26,12 @@ namespace VKR
 				sprintf(m_Path, "%s", _path.c_str());
 		}
 
+		Texture::Texture(vk_Allocated_Image _image, VkSampler _sampler)
+		{
+			vk_image = _image;
+			m_Sampler = _sampler;
+		}
+
 		void Texture::LoadTexture()
 		{
 			PERF_INIT("LOAD_TEXTURE")
@@ -167,7 +173,7 @@ namespace VKR
 			tAllocInfo.memoryTypeIndex = renderContext.m_GpuInfo.FindMemoryType(memRequ.memoryTypeBits, _memProperties);
 			VK_ASSERT(vkAllocateMemory(renderContext.m_LogicDevice, &tAllocInfo, nullptr, &vk_image.memory));
 #else
-			VMA_CreateImage(_memProperties, &tImageInfo, &vk_image.image, &vk_image.memory);
+			utils::VMA_CreateImage(_memProperties, &tImageInfo, &vk_image.image, &vk_image.memory);
 #endif
 		}
 
@@ -340,7 +346,7 @@ namespace VKR
 #if not USE_VMA
 			vkBindImageMemory(utils::g_context.m_LogicDevice, vk_image.image, vk_image.memory, 0);
 #else
-			VMA_BindTextureMemory(vk_image.image, vk_image.memory);
+			utils::VMA_BindTextureMemory(vk_image.image, vk_image.memory);
 #endif
 		}
 
@@ -378,9 +384,9 @@ namespace VKR
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 			samplerInfo.magFilter = VK_FILTER_LINEAR;
 			samplerInfo.minFilter = VK_FILTER_LINEAR;
-			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			samplerInfo.anisotropyEnable = VK_TRUE;
 
 			vkGetPhysicalDeviceProperties(renderContext.m_GpuInfo.m_Device, &deviceProp);
@@ -406,9 +412,8 @@ namespace VKR
 			vkDestroyImage(_LogicDevice, vk_image.image, nullptr);
 			vkFreeMemory(_LogicDevice, vk_image.memory, nullptr);
 #else
-			VMA_DestroyImage(vk_image.image, vk_image.memory);
+			utils::VMA_DestroyImage(vk_image.image, vk_image.memory);
 #endif
-			//vkDestroyImage(_LogicDevice, vk_image.image, nullptr);
 		}
 	}
 }

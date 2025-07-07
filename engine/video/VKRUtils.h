@@ -1,6 +1,5 @@
 #ifndef _C_UTILS
 #define _C_UTILS
-#define USE_VMA 0
 #include "../core/VKRRenderPass.h"
 
 #ifdef WIN32

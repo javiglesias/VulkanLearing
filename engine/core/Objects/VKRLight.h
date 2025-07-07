@@ -26,26 +26,28 @@ namespace VKR
 			float m_ShadowCameraFOV;
 			float m_ShadowAspectRatio;
 			float m_ShadowBias = 0.0025f;
-		public:
-			Light();
-			void Draw(VKBackend* _backend, int _CurrentFrame);
 			bool m_Editable = false;
 			float m_DebugScale = 0.1f;
 			glm::vec3 m_Pos {0.f, 0.1f, 0.f};
 			glm::vec3 m_Color {1.f, 0.f, 1.f};
 			R_Model* m_visual_model;
+
+			void Draw(VKBackend* _backend, int _CurrentFrame);
+			virtual void Init();
 		};
 		
 		struct Directional : public Light
 		{
-			float m_Right 	  = 300.f;
-			float m_Depth 	= 300.f;
-			float m_Up        	= 300.f;
-			glm::vec3 m_UpVector = glm::vec3(0.f, -1.f, 0.f);
-			glm::vec3 m_Center 		= glm::vec3(0.f, 0.f, -1.f);
+			void Init() override;
+			float m_Depth 	= 10.f;
+			float m_Right 	= 10.f;
+			float m_Up      = 10.f;
+			glm::vec3 m_UpVector = glm::vec3(0.f, 1.f, 0.f);
+			glm::vec3 m_Center 		= glm::vec3(0.f, 0.f, 0.f);
 		};
 		struct Point : public Light
 		{
+			void Init() override;
 			// PointLight
 			float m_Kc = 1.0f;
 			float m_Kl = 0.7f;
@@ -53,9 +55,11 @@ namespace VKR
 		};
 		struct Spot : public Light
 		{
+			void Init() override {}
 		};
 		struct Omni : public Light
 		{
+			void Init() override {}
 		};
 	}
 }

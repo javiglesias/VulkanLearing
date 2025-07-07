@@ -696,7 +696,7 @@ namespace VKR
 				m_SwapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			}
 		}
-#if 0
+#if 1
 		void VKBackend::RecreateSwapChain()
 		{
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
@@ -730,7 +730,6 @@ namespace VKR
 			CreateShadowResources();
 			CreateShadowFramebuffer();
 			CreateDepthTestingResources();
-			CreateGBufferImage();
 			CreateFramebuffers();
 		}
 #endif
@@ -859,101 +858,6 @@ namespace VKR
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &utils::GetVKContext().m_GraphicsComputeQueue);
 			m_DepthTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			//m_DepthTexture->CreateTextureSampler()
-		}
-
-		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
-		{
-			std::array<VkClearValue, 2> clearValues;
-			clearValues[0].color = defaultClearColor;
-			clearValues[1].depthStencil = { 1.0f, 0 };
-			// Render pass
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = utils::g_context.m_RenderPass->pass;
-			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_InFlightFrame];
-			renderPassInfo.renderArea.offset = { 0,0 };
-			renderPassInfo.renderArea.extent = m_CurrentExtent;
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
-			vkCmdBeginRenderPass(m_CommandBuffer[_InFlightFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		}
-
-		void VKBackend::EndRenderPass(unsigned int _InFlightFrame)
-		{
-			vkCmdEndRenderPass(m_CommandBuffer[_InFlightFrame]);
-			if (vkEndCommandBuffer(m_CommandBuffer[_InFlightFrame]) != VK_SUCCESS)
-				exit(-17);
-		}
-
-		uint32_t VKBackend::BeginFrame(unsigned int _InFlightFrame)
-		{
-			// Ahora vamos a simular el siguiente frame
-			PollEvents();
-			uint32_t imageIdx;
-			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame], VK_TRUE, UINT64_MAX);
-			//vkGetQueryPoolResults(); frame anterior al que estamos simulando
-			vkResetFences(utils::g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame]);
-			vkResetCommandBuffer(m_CommandBuffer[_InFlightFrame], 0);
-			auto acqResult = vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],
-				VK_NULL_HANDLE, &imageIdx);
-			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
-			{
-				//RecreateSwapChain();
-				vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],VK_NULL_HANDLE, &imageIdx);
-			}
-			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
-				exit(-69);
-			// Record command buffer
-			VkCommandBufferBeginInfo mBeginInfo{};
-			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			mBeginInfo.flags = 0;
-			mBeginInfo.pInheritanceInfo = nullptr;
-			if (vkBeginCommandBuffer(m_CommandBuffer[_InFlightFrame], &mBeginInfo) != VK_SUCCESS)
-				exit(-13);
-			if(g_GPUTimestamp)
-				vkCmdResetQueryPool(m_CommandBuffer[_InFlightFrame], m_PerformanceQuery[_InFlightFrame], 0, 2);
-			m_LastImageIdx = imageIdx;
-			return imageIdx;
-		}
-
-		void VKBackend::SubmitAndPresent(unsigned int _FrameToPresent, uint32_t* _imageIdx)
-		{
-			VkSubmitInfo submitInfo{};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			VkSemaphore waitSemaphores[] = { m_ImageAvailable[_FrameToPresent] };
-			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-			submitInfo.waitSemaphoreCount = 1;
-			submitInfo.pWaitSemaphores = waitSemaphores;
-			submitInfo.pWaitDstStageMask = waitStages;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &m_CommandBuffer[_FrameToPresent];
-			VkSemaphore signalSemaphores[] = { m_RenderFinish[_FrameToPresent] };
-			submitInfo.signalSemaphoreCount = 1;
-			submitInfo.pSignalSemaphores = signalSemaphores;
-			auto submit = vkQueueSubmit(utils::g_context.m_GraphicsComputeQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]);
-			if ( submit != VK_SUCCESS)
-			{
-				fprintf(stderr, "Error on the Submit");
-				exit(-1);
-			}
-			// Presentacion: devolver el frame al swapchain para que salga por pantalla
-			VkPresentInfoKHR presentInfo{};
-			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-			presentInfo.waitSemaphoreCount = 1;
-			presentInfo.pWaitSemaphores = signalSemaphores;
-			VkSwapchainKHR swapChains[] = { m_SwapChain };
-			if(m_SwapChain) // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> VK_IMAGE_LAYOUT_UNDEFINED
-			presentInfo.swapchainCount = 1;
-			presentInfo.pSwapchains = swapChains;
-			presentInfo.pImageIndices = _imageIdx;
-			presentInfo.pResults = nullptr;
-			m_PresentResult = vkQueuePresentKHR(utils::g_context.m_PresentQueue, &presentInfo);
-			/*if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
-				&& m_NeedToRecreateSwapchain)
-				RecreateSwapChain();*/
-			/*else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
-				exit(-69);*/
 		}
 
 		void VKBackend::CollectGPUTimestamps(unsigned int _FrameToPresent)

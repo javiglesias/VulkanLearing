@@ -15,7 +15,11 @@ namespace VKR
 			VkImage image;
 			VkImageView view;
 			VmaAllocation allocation;
+#ifndef USE_VMA
 			VkDeviceMemory memory;
+#else
+			VmaAllocation memory;
+#endif
 			VkExtent3D extent;
 			VkFormat format = VK_FORMAT_B8G8R8A8_UNORM;
 		};
@@ -30,8 +34,8 @@ namespace VKR
 			vk_Allocated_Image vk_image;
 			VkSampler m_Sampler = nullptr;
 		public:
-			Texture() {}
 			Texture(std::string _path);
+			Texture(vk_Allocated_Image _image, VkSampler _sampler);
 			void LoadTexture();
 			void LoadCubemapTexture();
 

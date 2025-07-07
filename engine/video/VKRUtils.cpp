@@ -19,12 +19,18 @@ namespace VKR
 			vmaCreateAllocator(&alloc_info, &vma_allocator);
 		}
 
+		void VMA_CreateBuffer(size_t _size, VkMemoryPropertyFlags _memProperties, VmaAllocation* allocation_, VkBuffer* buffer_)
+		{
+			
+		}
+
 		void VMA_CreateImage(VkMemoryPropertyFlags _memProperties, VkImageCreateInfo* _ImageCreateInfo
 			, VkImage* Image_, VmaAllocation* Allocation_)
 		{
 			VmaAllocationCreateInfo vma_image_info{};
-			vma_image_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+			vma_image_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 			vma_image_info.requiredFlags = _memProperties;
+			vma_image_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 			VkResult result = vmaCreateImage(vma_allocator, _ImageCreateInfo, &vma_image_info, Image_, Allocation_, nullptr);
 			if (result != VK_SUCCESS)
 				__debugbreak();

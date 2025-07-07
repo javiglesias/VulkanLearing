@@ -17,6 +17,8 @@ namespace VKR
             void Init(VKBackend* _backend, const char* _modelName="Sponza");
             void Update();
             void ReloadShaders(VKBackend* _backend);
+            void PrepareQuads(VKBackend* _backend);
+            void DrawQuads(VKBackend* _backend, int _CurrentFrame);
             void DrawScene(VKBackend* _backend, int _CurrentFrame);
             void PrepareCubemapScene(VKBackend* _backend);
             void PrepareScene(VKBackend* _backend);

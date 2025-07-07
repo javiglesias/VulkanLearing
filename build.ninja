@@ -53,7 +53,7 @@ build CMakeFiles/VKRenderer.dir/engine/main.cpp.obj: CXX_COMPILER__VKRenderer_un
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\main.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -63,7 +63,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/VKRenderers.cpp.obj: CXX_COMPILER__V
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\VKRenderers.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -73,7 +73,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/VKRRenderPass.cpp.obj: CXX_COMPILER_
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\VKRRenderPass.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -83,7 +83,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/VKRScene.cpp.obj: CXX_COMPILER__VKRe
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\VKRScene.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -93,7 +93,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRDebugMaterial.cpp.obj: 
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Materials\VKRDebugMaterial.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Materials
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -103,7 +103,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRCubemapMaterial.cpp.obj
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Materials\VKRCubemapMaterial.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Materials
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -113,7 +113,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRMaterial.cpp.obj: CXX_C
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Materials\VKRMaterial.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Materials
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -123,7 +123,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRShader.cpp.obj: CXX_COM
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Materials\VKRShader.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Materials
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -133,7 +133,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRTexture.cpp.obj: CXX_CO
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Materials\VKRTexture.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Materials
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -143,7 +143,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRCubemap.cpp.obj: CXX_COMP
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Objects\VKRCubemap.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Objects
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -153,7 +153,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRLight.cpp.obj: CXX_COMPIL
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Objects\VKRLight.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Objects
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -163,7 +163,7 @@ build CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRModel.cpp.obj: CXX_COMPIL
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\core\Objects\VKRModel.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\core\Objects
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -173,9 +173,19 @@ build CMakeFiles/VKRenderer.dir/engine/editor/Editor.cpp.obj: CXX_COMPILER__VKRe
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\editor\Editor.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\editor
+  TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
+  TARGET_PDB = VKRenderer.pdb
+
+build CMakeFiles/VKRenderer.dir/engine/filesystem/shader_compiler.cpp.obj: CXX_COMPILER__VKRenderer_unscanned_Debug C$:/dev/VulkanLearing/engine/filesystem/shader_compiler.cpp || cmake_object_order_depends_target_VKRenderer
+  DEFINES = -D_WIN32
+  DEP_FILE = CMakeFiles\VKRenderer.dir\engine\filesystem\shader_compiler.cpp.obj.d
+  FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
+  OBJECT_DIR = CMakeFiles\VKRenderer.dir
+  OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\filesystem
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
   TARGET_PDB = VKRenderer.pdb
 
@@ -183,7 +193,7 @@ build CMakeFiles/VKRenderer.dir/engine/filesystem/gltfReader.cpp.obj: CXX_COMPIL
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\filesystem\gltfReader.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\filesystem
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -193,7 +203,7 @@ build CMakeFiles/VKRenderer.dir/engine/filesystem/ResourceManager.cpp.obj: CXX_C
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\filesystem\ResourceManager.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\filesystem
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -203,7 +213,7 @@ build CMakeFiles/VKRenderer.dir/engine/video/VKBackend.cpp.obj: CXX_COMPILER__VK
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\video\VKBackend.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\video
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -213,7 +223,17 @@ build CMakeFiles/VKRenderer.dir/engine/video/VKRenderable.cpp.obj: CXX_COMPILER_
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\engine\video\VKRenderable.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
+  OBJECT_DIR = CMakeFiles\VKRenderer.dir
+  OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\video
+  TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
+  TARGET_PDB = VKRenderer.pdb
+
+build CMakeFiles/VKRenderer.dir/engine/video/VKRUtils.cpp.obj: CXX_COMPILER__VKRenderer_unscanned_Debug C$:/dev/VulkanLearing/engine/video/VKRUtils.cpp || cmake_object_order_depends_target_VKRenderer
+  DEFINES = -D_WIN32
+  DEP_FILE = CMakeFiles\VKRenderer.dir\engine\video\VKRUtils.cpp.obj.d
+  FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\engine\video
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -223,7 +243,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui.cpp.obj: CXX_COMPILER__
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\dependencies\imgui\imgui.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\dependencies\imgui
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -233,7 +253,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_draw.cpp.obj: CXX_COMPI
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\dependencies\imgui\imgui_draw.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\dependencies\imgui
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -243,7 +263,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_tables.cpp.obj: CXX_COM
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\dependencies\imgui\imgui_tables.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\dependencies\imgui
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -253,7 +273,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_widgets.cpp.obj: CXX_CO
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\dependencies\imgui\imgui_widgets.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\dependencies\imgui
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -263,7 +283,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_glfw.cpp.
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\dependencies\imgui\backends\imgui_impl_glfw.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\dependencies\imgui\backends
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -273,7 +293,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_vulkan.cp
   DEFINES = -D_WIN32
   DEP_FILE = CMakeFiles\VKRenderer.dir\dependencies\imgui\backends\imgui_impl_vulkan.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include
+  INCLUDES = -IC:/dev/VulkanLearing/dependencies/windows/Vulkan_1.3.268.0/Include -IC:/dev/VulkanLearing/dependencies/cpptrace/include -IC:/dev/VulkanLearing/dependencies/glslang/glslang -IC:/dev/VulkanLearing/dependencies/glfw/include -IC:/dev/VulkanLearing/dependencies/glm-0.9.9.0/glm -IC:/dev/VulkanLearing/dependencies/assimp/include -IC:/dev/VulkanLearing/dependencies/vma/include
   OBJECT_DIR = CMakeFiles\VKRenderer.dir
   OBJECT_FILE_DIR = CMakeFiles\VKRenderer.dir\dependencies\imgui\backends
   TARGET_COMPILE_PDB = CMakeFiles\VKRenderer.dir\
@@ -287,7 +307,7 @@ build CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_vulkan.cp
 #############################################
 # Link the executable VKRenderer.exe
 
-build VKRenderer.exe: CXX_EXECUTABLE_LINKER__VKRenderer_Debug CMakeFiles/VKRenderer.dir/engine/main.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/VKRenderers.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/VKRRenderPass.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/VKRScene.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRDebugMaterial.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRCubemapMaterial.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRMaterial.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRShader.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRTexture.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRCubemap.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRLight.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRModel.cpp.obj CMakeFiles/VKRenderer.dir/engine/editor/Editor.cpp.obj CMakeFiles/VKRenderer.dir/engine/filesystem/gltfReader.cpp.obj CMakeFiles/VKRenderer.dir/engine/filesystem/ResourceManager.cpp.obj CMakeFiles/VKRenderer.dir/engine/video/VKBackend.cpp.obj CMakeFiles/VKRenderer.dir/engine/video/VKRenderable.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_draw.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_tables.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_widgets.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_glfw.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_vulkan.cpp.obj | dependencies/assimp/lib/Debug/assimp-vc143-mtd.lib dependencies/windows/Vulkan_1.3.268.0/Lib/vulkan-1.lib dependencies/glfw/src/Debug/glfw3.lib dependencies/glslang/glslang/Debug/glslangd.lib dependencies/glslang/glslang/Debug/glslang-default-resource-limitsd.lib dependencies/glslang/glslang/Debug/MachineIndependentd.lib dependencies/glslang/glslang/Debug/GenericCodeGend.lib dependencies/glslang/SPIRV/Debug/SPIRVd.lib dependencies/glslang/SPIRV/Debug/SPVRemapperd.lib
+build VKRenderer.exe: CXX_EXECUTABLE_LINKER__VKRenderer_Debug CMakeFiles/VKRenderer.dir/engine/main.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/VKRenderers.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/VKRRenderPass.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/VKRScene.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRDebugMaterial.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRCubemapMaterial.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRMaterial.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRShader.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Materials/VKRTexture.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRCubemap.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRLight.cpp.obj CMakeFiles/VKRenderer.dir/engine/core/Objects/VKRModel.cpp.obj CMakeFiles/VKRenderer.dir/engine/editor/Editor.cpp.obj CMakeFiles/VKRenderer.dir/engine/filesystem/shader_compiler.cpp.obj CMakeFiles/VKRenderer.dir/engine/filesystem/gltfReader.cpp.obj CMakeFiles/VKRenderer.dir/engine/filesystem/ResourceManager.cpp.obj CMakeFiles/VKRenderer.dir/engine/video/VKBackend.cpp.obj CMakeFiles/VKRenderer.dir/engine/video/VKRenderable.cpp.obj CMakeFiles/VKRenderer.dir/engine/video/VKRUtils.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_draw.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_tables.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/imgui_widgets.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_glfw.cpp.obj CMakeFiles/VKRenderer.dir/dependencies/imgui/backends/imgui_impl_vulkan.cpp.obj | dependencies/assimp/lib/Debug/assimp-vc143-mtd.lib dependencies/windows/Vulkan_1.3.268.0/Lib/vulkan-1.lib dependencies/glfw/src/Debug/glfw3.lib dependencies/glslang/glslang/Debug/glslangd.lib dependencies/glslang/glslang/Debug/glslang-default-resource-limitsd.lib dependencies/glslang/glslang/Debug/MachineIndependentd.lib dependencies/glslang/glslang/Debug/GenericCodeGend.lib dependencies/glslang/SPIRV/Debug/SPIRVd.lib dependencies/glslang/SPIRV/Debug/SPVRemapperd.lib
   FLAGS = -g
   LINK_LIBRARIES = dependencies/assimp/lib/Debug/assimp-vc143-mtd.lib  dependencies/windows/Vulkan_1.3.268.0/Lib/vulkan-1.lib  dependencies/glfw/src/Debug/glfw3.lib  dependencies/glslang/glslang/Debug/glslangd.lib  dependencies/glslang/glslang/Debug/glslang-default-resource-limitsd.lib  dependencies/glslang/glslang/Debug/MachineIndependentd.lib  dependencies/glslang/glslang/Debug/GenericCodeGend.lib  dependencies/glslang/SPIRV/Debug/SPIRVd.lib  dependencies/glslang/SPIRV/Debug/SPVRemapperd.lib  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\VKRenderer.dir

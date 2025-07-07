@@ -200,8 +200,8 @@ namespace VKR
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
-				ImGui::LabelText("Frame n:", "%lld", g_CurrentFrame);
-				ImGui::LabelText("Elapsed time:", "%.f", g_ElapsedTime);
+				ImGui::LabelText("Frame:", "%lld", g_Frames);
+				ImGui::LabelText("Elapsed:", "%.f", g_ElapsedTime);
 				ImGui::LabelText("CPU ms:", "%.4f", g_FrameTime);
 				ImGui::LabelText("GPU ms:", "%.4f", g_TimestampValue);
 
@@ -296,22 +296,18 @@ namespace VKR
 					sprintf(name, "Point Light %d", i);
 					if (ImGui::TreeNode(name))
 					{
-						Point* light = g_PointLights[i];
-						ImGui::Selectable("light", &light->m_Editable);
+						Point& light = g_PointLights[i];
+						ImGui::Selectable("light", &light.m_Editable);
 						float center[3];
-						center[0] = light->m_Pos.x;
-						center[1] = light->m_Pos.y;
-						center[2] = light->m_Pos.z;
+						center[0] = light.m_Pos.x;
+						center[1] = light.m_Pos.y;
+						center[2] = light.m_Pos.z;
 						ImGui::DragFloat3("Pos", center, 0.1f);
-						light->m_Pos.x = center[0];
-						light->m_Pos.y = center[1];
-						light->m_Pos.z = center[2];
+						light.m_Pos.x = center[0];
+						light.m_Pos.y = center[1];
+						light.m_Pos.z = center[2];
 						ImGui::TreePop();
 					}
-				}
-				if (ImGui::Button("Delete"))
-				{
-					g_Lights.pop_back();
 				}
 				ImGui::End();
 			}

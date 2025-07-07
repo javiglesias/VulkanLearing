@@ -18,6 +18,7 @@ namespace VKR
 #define MAX_MESHES 1024
 #define WIN_HEIGHT 720
 #define WIN_WIDTH 1280
+#define N_LIGHTS 4
 
         enum G_PIPELINE_STATUS
         {
@@ -38,7 +39,8 @@ namespace VKR
         inline bool m_IndexedRender = true;
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
-        inline bool m_SceneDirty = false;
+        inline bool m_SceneDirty = true;
+        inline bool m_UIDirty = true;
         inline bool g_DrawCubemap = true;
         inline bool g_ShadowPassEnabled = true;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
@@ -55,7 +57,7 @@ namespace VKR
         inline float g_Rotation = 0.f;
 		inline float g_TimestampValue = 0.f;
         inline double g_FrameTime;
-        inline long long g_CurrentFrame = 0;
+        inline long long g_Frames = 0;
         inline double g_ElapsedTime;
 		inline char* g_CommandLine;
 		inline char* g_CommandLineHistory;
@@ -70,7 +72,7 @@ namespace VKR
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
 
         inline glm::vec3 g_CameraPos = glm::vec3(-781.f, -14.f, -300.f);
-        inline glm::vec3 g_CameraDefPos = glm::vec3(0.f);
+        inline glm::vec3 g_CameraDefPos = glm::vec3(1.f, 0.f, 0.f);
         inline glm::vec3 g_CameraForward = glm::vec3(-1.f, 0.f, 0.f);
         inline glm::vec3 g_CameraUp = glm::vec3(0.f, 1.f, 0.f);
         
@@ -86,10 +88,9 @@ namespace VKR
 		inline std::unordered_map<const char*, VkShaderModule> frag_shader_modules;
         inline int m_CurrentStaticModels = 0;
         inline int m_CurrentPendingModels = 0;
-        inline std::vector<Light*> g_Lights;
 		inline std::vector<uint64_t> g_Timestamps{};
         inline Directional* g_DirectionalLight;
-        inline Point* g_PointLights[4];
+        inline Point g_PointLights[N_LIGHTS];
 
         class VKBackend
         {
@@ -97,7 +98,6 @@ namespace VKR
         public:
             bool m_CubemapRendering = false;
             bool m_RenderInitialized = false;
-            uint32_t m_LastImageIdx;
             uint32_t m_FrameToPresent;
             uint32_t m_CurrentDebugModelsToDraw = 1;
             int m_TotalTextures;
@@ -195,9 +195,7 @@ namespace VKR
             bool BackendShouldClose();
             void PollEvents();
             void BeginRenderPass(unsigned int _InFlightFrame);
-            uint32_t BeginFrame(unsigned int _InFlightFrame);
             void EndRenderPass(unsigned _InFlightFrame);
-            void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void CollectGPUTimestamps(unsigned int _FrameToPresent);
             void Shutdown();
             void Cleanup();
@@ -205,13 +203,12 @@ namespace VKR
 
             double GetTime();
 
-        private:
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
                                 const char** m_Extensions,
                                 uint32_t m_extensionCount);
             void CreateSwapChain();
-            //void RecreateSwapChain();
-            //void CreateFramebufferAndSwapchain();
+            void RecreateSwapChain();
+            void CreateFramebufferAndSwapchain();
             void CreateFramebuffers();
             void CreateShadowFramebuffer();
             void CreateCommandBuffer();

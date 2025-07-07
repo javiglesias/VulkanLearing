@@ -51,7 +51,8 @@ namespace VKR
 			uint32_t lightDynamicOffset3 = (3) * lightDynamicOffset1;
 
 			glm::mat4 lightViewMat = glm::lookAt(g_DirectionalLight->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
-			glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
+			//glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
+			glm::mat4 lightProjMat = glm::ortho(-g_DirectionalLight->m_Right, g_DirectionalLight->m_Right, -g_DirectionalLight->m_Up, g_DirectionalLight->m_Up, zNear, zFar);
 			std::vector<LightBufferObject> m_LightsOs;
 			LightBufferObject temp;
 			temp = {};
@@ -66,21 +67,21 @@ namespace VKR
 			//Point Ligts
 			for (int i = 0; i < 3; i++)
 			{
-				Point* light = g_PointLights[i];
-				glm::mat4 lightViewMat = glm::lookAt(light->m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
+				Point& light = g_PointLights[i];
+				glm::mat4 lightViewMat = glm::lookAt(light.m_Pos, g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
 				glm::mat4 lightProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 				LightBufferObject temp;
 				temp = {};
-				temp.addOpts = glm::vec4(light->m_Pos, 1.0);
+				temp.addOpts = glm::vec4(light.m_Pos, 1.0);
 				temp.Opts.x = g_ShadowBias;
 				temp.Opts.y = g_ShadowBias;
-				temp.addOpts.x = light->m_Kc;
-				temp.addOpts.y = light->m_Kl;
-				temp.addOpts.z = light->m_Kq;
+				temp.addOpts.x = light.m_Kc;
+				temp.addOpts.y = light.m_Kl;
+				temp.addOpts.z = light.m_Kq;
 				temp.View = lightViewMat;
 				temp.Proj = lightProjMat;
-				temp.Position = glm::vec4(light->m_Pos, 1.0);
-				temp.Color = glm::vec4(light->m_Color, 1.0);
+				temp.Position = glm::vec4(light.m_Pos, 1.0);
+				temp.Color = glm::vec4(light.m_Color, 1.0);
 				m_LightsOs.push_back(temp);
 			}
 			memcpy((char*)_backend->m_LightsBuffersMapped[_CurrentFrame] + lightDynamicOffset0
@@ -130,7 +131,7 @@ namespace VKR
 				VkMappedMemoryRange lightsMappedMemoryRange{};
 				lightsMappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 				lightsMappedMemoryRange.memory = _backend->m_LightsBuffersMemory[_CurrentFrame];
-				lightsMappedMemoryRange.size = sizeof(LightBufferObject);
+				lightsMappedMemoryRange.size = m_LightsOs.size() * sizeof(LightBufferObject);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &lightsMappedMemoryRange);
 
 #if 0

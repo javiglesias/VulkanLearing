@@ -145,10 +145,45 @@ namespace VKR
 			PERF_END("RELOAD_SHADERS")
 		}
 
+		void Scene::PrepareQuads(VKBackend* _backend)
+		{
+
+		}
+		void Scene::DrawQuads(VKBackend* _backend, int _CurrentFrame)
+		{
+
+		}
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
-			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
-			g_editor->Loop(this, _backend);
+			// Ahora vamos a simular el siguiente frame
+			_backend->PollEvents();
+			uint32_t imageIdx = -1;
+			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
+			//vkGetQueryPoolResults(); //frame anterior al que estamos simulando
+			vkResetFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame]);
+			vkResetCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame], 0);
+
+			VkResult acqResult = VkResult::VK_SUCCESS;
+			acqResult = vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
+
+			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
+			{
+				_backend->RecreateSwapChain();
+				vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
+			}
+			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
+				exit(-69);
+
+			// Record command buffer
+			VkCommandBufferBeginInfo mBeginInfo{};
+			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			mBeginInfo.flags = 0;
+			mBeginInfo.pInheritanceInfo = nullptr;
+			if (vkBeginCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame], &mBeginInfo) != VK_SUCCESS)
+				exit(-13);
+			if (g_GPUTimestamp)
+				vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, 2);
+
 			auto renderContext = utils::GetVKContext();
 			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
 			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
@@ -161,6 +196,7 @@ namespace VKR
 					PrepareScene(_backend);
 					m_SceneDirty = false;
 				}
+			g_editor->Loop(this, _backend);
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
@@ -173,7 +209,19 @@ namespace VKR
 			g_ProjectionMatrix[1][1] *= -1; // para invertir el eje Y
 			g_ViewMatrix = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraForward, g_CameraUp);
 			/// Render Pass
-			_backend->BeginRenderPass(_CurrentFrame);
+			std::array<VkClearValue, 2> clearValues;
+			clearValues[0].color = _backend->defaultClearColor;
+			clearValues[1].depthStencil = { 1.0f, 0 };
+			// Render pass
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = utils::g_context.m_RenderPass->pass;
+			renderPassInfo.framebuffer = _backend->m_SwapChainFramebuffers[imageIdx];
+			renderPassInfo.renderArea.offset = { 0,0 };
+			renderPassInfo.renderArea.extent = _backend->m_CurrentExtent;
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
+			vkCmdBeginRenderPass(_backend->m_CommandBuffer[_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 #pragma region GRID
 #if 0
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GridRender->m_Pipeline);
@@ -184,21 +232,15 @@ namespace VKR
 #endif
 #pragma endregion
 #pragma region LIGHTS
-			for (int l = 0; l < g_Lights.size(); l++)
-			{
-				g_Lights[l]->Draw(_backend, _CurrentFrame);
-			}
+#if 1
 			g_DirectionalLight->Draw(_backend, _CurrentFrame);
-			/*g_PointLights[0]->Draw(_backend, _CurrentFrame);
-			g_PointLights[1]->Draw(_backend, _CurrentFrame);
-			g_PointLights[2]->Draw(_backend, _CurrentFrame);
-			g_PointLights[3]->Draw(_backend, _CurrentFrame);*/
+			g_PointLights[0].Draw(_backend, _CurrentFrame);
+			g_PointLights[1].Draw(_backend, _CurrentFrame);
+			g_PointLights[2].Draw(_backend, _CurrentFrame);
+			g_PointLights[3].Draw(_backend, _CurrentFrame);
+#endif
 #pragma endregion
 #pragma region MODELS
-			//vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_Pipeline);
-			// REFRESH RENDER MODE FUNCTIONS
-			//vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			//vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			uint32_t count = 0;
 			// Render Pass
 			for (int i = 0; i < m_CurrentStaticModels; i++)
@@ -208,6 +250,7 @@ namespace VKR
 			}
 #pragma endregion
 #pragma region DEBUG
+#if 0
 			//Debug
 			DebugUniformBufferObject dubo{};
 			dubo.view = g_ViewMatrix;
@@ -215,7 +258,6 @@ namespace VKR
 			memcpy(_backend->m_DbgUniformBuffersMapped[_CurrentFrame], &dubo, sizeof(dubo));
 			
 			int debugCount = 0;
-#if 0
 			for (auto& model : modelsToDraw)
 			{
 				DynamicBufferObject dynO{};
@@ -248,11 +290,55 @@ namespace VKR
 			/*if(g_DrawCubemap)
 				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));*/
 #pragma endregion
-			// TODO Draw quads.r
-
+#pragma region QUADS
+			// TODO Draw quads
+			if (m_UIDirty)
+			{
+				PrepareQuads(_backend);
+				m_UIDirty = false;
+			}
+			DrawQuads(_backend, _CurrentFrame);
+#pragma endregion
 			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
-			_backend->EndRenderPass(_CurrentFrame);
-			_backend->SubmitAndPresent(_CurrentFrame, &imageIdx);
+
+			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
+			if (vkEndCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame]) != VK_SUCCESS)
+				exit(-17);
+
+			VkSubmitInfo submitInfo{};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+			submitInfo.waitSemaphoreCount = 1;
+			submitInfo.pWaitSemaphores = &_backend->m_ImageAvailable[_CurrentFrame];
+			submitInfo.pWaitDstStageMask = waitStages;
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &_backend->m_CommandBuffer[_CurrentFrame];
+			VkSemaphore signalSemaphores[] = { _backend->m_RenderFinish[imageIdx] };
+			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.pSignalSemaphores = signalSemaphores;
+			auto submit = vkQueueSubmit(utils::g_context.m_GraphicsComputeQueue, 1, &submitInfo, _backend->m_InFlight[_CurrentFrame]);
+			if (submit != VK_SUCCESS)
+			{
+				fprintf(stderr, "Error on the Submit");
+				exit(-1);
+			}
+			// Presentacion: devolver el frame al swapchain para que salga por pantalla
+			VkPresentInfoKHR presentInfo{};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.waitSemaphoreCount = 1;
+			presentInfo.pWaitSemaphores = signalSemaphores;
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = &_backend->m_SwapChain;
+			presentInfo.pImageIndices = &imageIdx;
+			presentInfo.pResults = nullptr;
+			_backend->m_PresentResult = vkQueuePresentKHR(utils::g_context.m_PresentQueue, &presentInfo);
+
+			if ((_backend->m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || _backend->m_PresentResult == VK_SUBOPTIMAL_KHR)
+				&& m_NeedToRecreateSwapchain)
+				_backend->RecreateSwapChain()
+				;
+			else if (_backend->m_PresentResult != VK_SUCCESS && _backend->m_PresentResult != VK_SUBOPTIMAL_KHR)
+					exit(-69);
 			if(g_GPUTimestamp)
 				_backend->CollectGPUTimestamps(_CurrentFrame);
 		}
@@ -335,29 +421,28 @@ namespace VKR
 			{
 				m_StaticModels[i]->Prepare(_backend);
 			}
+			g_DirectionalLight->Init();
 			g_DirectionalLight->m_visual_model->Prepare(_backend);
-			/*g_PointLights[0]->m_visual_model->Prepare(_backend);
-			g_PointLights[1]->m_visual_model->Prepare(_backend);
-			g_PointLights[2]->m_visual_model->Prepare(_backend);
-			g_PointLights[3]->m_visual_model->Prepare(_backend);*/
+			g_PointLights[0].m_visual_model->Prepare(_backend);
+			g_PointLights[1].m_visual_model->Prepare(_backend);
+			g_PointLights[2].m_visual_model->Prepare(_backend);
+			g_PointLights[3].m_visual_model->Prepare(_backend);
 			PERF_END("PREPARE_DRAW_SCENE")
 		}
 
 		void Scene::Init(VKBackend* _backend, const char* _modelName)
 		{
 			auto renderContext = utils::GetVKContext();
-			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model(_modelName);
-			m_CurrentStaticModels = 1;
 			R_Model* gizmo = new R_Model();
-			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, "gizmo", gizmo);
-			m_StaticModels[1] = gizmo;
-			m_CurrentStaticModels = 2;
+			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, _modelName, gizmo);
+			m_StaticModels[0] = gizmo;
+			++m_CurrentStaticModels;
+
 			g_DirectionalLight = new Directional();
-			g_PointLights[0] = new Point();
-			g_PointLights[1] = new Point();
-			g_PointLights[2] = new Point();
-			g_PointLights[3] = new Point();
+			g_PointLights[0].Init();
+			g_PointLights[1].Init();
+			g_PointLights[2].Init();
+			g_PointLights[3].Init();
 			//PrepareCubemapScene(_backend);
 			g_editor = new Editor(m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
 		_backend->m_SwapchainImagesCount);

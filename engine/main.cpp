@@ -19,7 +19,7 @@ int main(int _argc, char** _args)
 	auto p = NEW(float);
 	//RMThread = new std::thread(_init_resource_manager);
 	backend.Init();
-	char sceneModel[64] = {"gizmo\0"};
+	char sceneModel[64] = {"BoxVertexColors\0"};
 	if (_argc > 1)
 	{
 		fprintf(stdout, "Initializing Scene...%s\n", _args[1]);
@@ -39,7 +39,7 @@ int main(int _argc, char** _args)
 			VKR::render::g_FrameTime = deltaTime;
 			mainScene.DrawScene(&backend, currentLocalFrame);
 			currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
-			++VKR::render::g_CurrentFrame;
+			++VKR::render::g_Frames;
 		}
 		nextFrame = backend.GetTime();
 	}

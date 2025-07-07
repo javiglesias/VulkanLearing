@@ -285,9 +285,7 @@ namespace VKR
 			for (size_t i = 0; i < MAX_TEXTURES; i++)
 				textures[i] = _backend->FindTexture(textures[i]->m_Path);
 			// Shadow Texture
-			shadow_texture = new Texture();
-			shadow_texture->vk_image = _backend->m_ShadowTexture->vk_image;
-			shadow_texture->m_Sampler = _backend->m_ShadowTexture->m_Sampler;
+			shadow_texture = new Texture(_backend->m_ShadowTexture->vk_image, _backend->m_ShadowTexture->m_Sampler);
 			PERF_END("CREATE_TEXTURES")
 		}
 		

@@ -1,12 +1,14 @@
 #pragma once
 #include <malloc.h>
+#include <utility>
 /*
  TO-DO
 	alloc de memoria con un tipo concreto
 	dealloc comprobando que la memoria es del mismo tipo
 */
 void* m_alloc(const char* _file, int _line, size_t _blockSize);
-
+void m_endMem();
+void m_delete(void* _ptr);
 #define NEW(X) m_alloc(__FILE__, __LINE__, sizeof(X))
 
 struct heap_mem_track
@@ -15,37 +17,43 @@ struct heap_mem_track
 	void* mem_addr;
 };
 
-heap_mem_track heap_track[256];
-int current_track = 0;
-inline
-void* m_alloc(const char* _file, int _line, size_t _blockSize)
-{
-	sprintf(heap_track[current_track].file_line, "%s : %d", _file, _line);
-	auto p = malloc(_blockSize);
-	heap_track[current_track].mem_addr = p;
-	memset(p, 0x69, _blockSize);
-	++current_track;
-	return p;
-}
+inline heap_mem_track heap_track[256];
+inline int current_track = 0;
 
-void m_delete(void* _ptr)
+template<typename T>
+class s_alloc
 {
-	for (int i = 0; i < current_track; i++)
-	{
-		if(heap_track[i].mem_addr == _ptr)
-		{
-			delete _ptr;
-		}
-	}
-}
+public:
+	using value_type = T;
 
-void m_endMem()
-{
-	for (int i = 0; i < current_track; i++)
+	s_alloc() = default;
+
+	template<typename U>
+	constexpr s_alloc(const s_alloc<U>&){}
+
+	T* allocate(size_t _n)
 	{
-		if(heap_track[i].mem_addr != nullptr)
-		{
-			fprintf(stderr, "Memory Leak at %s -> %p", heap_track[i].file_line, heap_track[i].mem_addr);
-		}
+		return static_cast<T*>(malloc(_n));
 	}
-}
+
+	void deallocate(T* _p, size_t)
+	{
+		::operator delete(_p);
+	}
+
+	template<typename U, typename... _Args>
+	void construct(U* _p, _Args&&... _args)
+	{
+		::new (_p) U(std::forward<_Args>(_args)...);
+	}
+
+	template<typename U>
+	void destroy(U* _p)
+	{
+		_p->~U();
+	}
+
+	friend bool operator==(const s_alloc&, const s_alloc&) { return true; }
+	friend bool operator!=(const s_alloc&, const s_alloc&) { return false; }
+};
+
