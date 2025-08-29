@@ -17,7 +17,7 @@ namespace VKR
 {
 	namespace render
 	{
-		Texture::Texture(std::string _path)
+		void Texture::init(std::string _path)
 		{
 			memset(m_Path, 0, 256);
 			if (_path.empty())
@@ -35,7 +35,7 @@ namespace VKR
 		void Texture::LoadTexture()
 		{
 			PERF_INIT("LOAD_TEXTURE")
-				stbi_uc* pixels = nullptr;
+			stbi_uc* pixels = nullptr;
 			stbi_set_flip_vertically_on_load(true);
 			int tWidth, tHeight, tChannels;
 			pixels = stbi_load(m_Path, &tWidth, &tHeight, &tChannels, STBI_rgb_alpha);

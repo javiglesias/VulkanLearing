@@ -34,8 +34,9 @@ namespace VKR
 			vk_Allocated_Image vk_image;
 			VkSampler m_Sampler = nullptr;
 		public:
-			Texture(std::string _path);
+			Texture() {}
 			Texture(vk_Allocated_Image _image, VkSampler _sampler);
+			void init(std::string);
 			void LoadTexture();
 			void LoadCubemapTexture();
 

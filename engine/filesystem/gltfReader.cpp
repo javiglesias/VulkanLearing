@@ -4,6 +4,7 @@
 #include "../core/Objects/VKRModel.h"
 #include "../core/Materials/VKRTexture.h"
 #include "../video/VKRenderable.h"
+#include "../memory/mem_alloc.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -63,11 +64,12 @@ namespace VKR
 			{
 				char texture[256];
 				sprintf(texture, "%s/%s", _filepath, path.data);
-				*outTex_ = new render::Texture(texture);
+				*outTex_ = NEW(render::Texture);
+				(*outTex_)->init(texture);
 				return true;
 			}
 			else
-				*outTex_ = new render::Texture("");
+				*outTex_ = NEW(render::Texture);
 			return false;
 		}
 #pragma region ASSIMP
@@ -214,21 +216,23 @@ namespace VKR
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
 							for (int t = 0; t < MAX_TEXTURES; t++)
 							{
-								tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");
+								tempModel_->m_Materials[materialID]->textures[t] = NEW(render::Texture);
 							}
 							if(material.normal_texture.texture != nullptr)
 							{
 								char pathTexture[256];
 								memset(pathTexture, 0, 256);
 								sprintf(pathTexture, "%s%s", filepath, material.normal_texture.texture->image->uri);
-								tempModel_->m_Materials[materialID]->textures[1] = new render::Texture(pathTexture);
+								tempModel_->m_Materials[materialID]->textures[1] = NEW(render::Texture);
+								tempModel_->m_Materials[materialID]->textures[1]->init(pathTexture);
 							}
 							if(material.specular.specular_texture.texture != nullptr)
 							{
 								char pathTexture[256];
 								memset(pathTexture, 0, 256);
 								sprintf(pathTexture, "%s%s", filepath, material.specular.specular_texture.texture->image->uri);
-								tempModel_->m_Materials[materialID]->textures[2] = new render::Texture(pathTexture);
+								tempModel_->m_Materials[materialID]->textures[2] = NEW(render::Texture);
+								tempModel_->m_Materials[materialID]->textures[2]->init(pathTexture);
 							}
 
 						}
@@ -283,7 +287,7 @@ namespace VKR
 									fprintf(stderr, "Material %d: DUMMY\n", materialID);
 									for (int t = 0; t < MAX_TEXTURES; t++)
 									{
-										tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");
+										tempModel_->m_Materials[materialID]->textures[t] = NEW(render::Texture);
 									}
 								}
 #pragma region PBR_material

@@ -156,7 +156,6 @@ namespace VKR
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
 			// Ahora vamos a simular el siguiente frame
-			_backend->PollEvents();
 			uint32_t imageIdx = -1;
 			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
 			//vkGetQueryPoolResults(); //frame anterior al que estamos simulando
@@ -196,7 +195,7 @@ namespace VKR
 					PrepareScene(_backend);
 					m_SceneDirty = false;
 				}
-			g_editor->Loop(this, _backend);
+			//g_editor->Loop(this, _backend);
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
@@ -299,7 +298,7 @@ namespace VKR
 			}
 			DrawQuads(_backend, _CurrentFrame);
 #pragma endregion
-			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
+			//g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
 
 			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
 			if (vkEndCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame]) != VK_SUCCESS)
@@ -421,12 +420,11 @@ namespace VKR
 			{
 				m_StaticModels[i]->Prepare(_backend);
 			}
-			g_DirectionalLight->Init();
-			g_DirectionalLight->m_visual_model->Prepare(_backend);
-			g_PointLights[0].m_visual_model->Prepare(_backend);
-			g_PointLights[1].m_visual_model->Prepare(_backend);
-			g_PointLights[2].m_visual_model->Prepare(_backend);
-			g_PointLights[3].m_visual_model->Prepare(_backend);
+			g_DirectionalLight->Prepare(_backend);
+			g_PointLights[0].Prepare(_backend);
+			g_PointLights[1].Prepare(_backend);
+			g_PointLights[2].Prepare(_backend);
+			g_PointLights[3].Prepare(_backend);
 			PERF_END("PREPARE_DRAW_SCENE")
 		}
 
@@ -439,13 +437,13 @@ namespace VKR
 			++m_CurrentStaticModels;
 
 			g_DirectionalLight = new Directional();
+			g_DirectionalLight->Init();
 			g_PointLights[0].Init();
 			g_PointLights[1].Init();
 			g_PointLights[2].Init();
 			g_PointLights[3].Init();
 			//PrepareCubemapScene(_backend);
-			g_editor = new Editor(m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
-		_backend->m_SwapchainImagesCount);
+			//g_editor = new Editor(m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount, _backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
 		}
 #if 0
@@ -546,8 +544,8 @@ namespace VKR
 			}
 #endif
 			//m_Cubemap->Cleanup(_LogicDevice);
-			g_editor->Cleanup();
-			g_editor->Shutdown();
+			//g_editor->Cleanup();
+			//g_editor->Shutdown();
 		}
 	}
 }

@@ -6,7 +6,7 @@
 #include "../core/Objects/VKRModel.h"
 #include "../core/Objects/VKRLight.h"
 #include <thread>
-
+#include <Windows.h>
 struct GLFWwindow;
 class Texture;
 
@@ -71,7 +71,7 @@ namespace VKR
         inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
 
-        inline glm::vec3 g_CameraPos = glm::vec3(-781.f, -14.f, -300.f);
+        inline glm::vec3 g_CameraPos = glm::vec3(0.f, 1.f, 0.f);
         inline glm::vec3 g_CameraDefPos = glm::vec3(1.f, 0.f, 0.f);
         inline glm::vec3 g_CameraForward = glm::vec3(-1.f, 0.f, 0.f);
         inline glm::vec3 g_CameraUp = glm::vec3(0.f, 1.f, 0.f);
@@ -96,6 +96,7 @@ namespace VKR
         {
             //Variables
         public:
+            HWND hwnd;
             bool m_CubemapRendering = false;
             bool m_RenderInitialized = false;
             uint32_t m_FrameToPresent;
@@ -187,7 +188,11 @@ namespace VKR
             // Functions
         public:
             VKBackend() {}
-            void Init();
+            void Init(
+#ifndef USE_GLFW
+                HINSTANCE hInstance
+#endif
+            );
             void GenerateDBGBuffers();
             void GenerateBuffers();
             void InitializeVulkan(VkApplicationInfo* _appInfo);
@@ -203,9 +208,7 @@ namespace VKR
 
             double GetTime();
 
-            void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
-                                const char** m_Extensions,
-                                uint32_t m_extensionCount);
+            void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, uint32_t m_extensionCount);
             void CreateSwapChain();
             void RecreateSwapChain();
             void CreateFramebufferAndSwapchain();

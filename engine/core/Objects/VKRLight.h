@@ -23,16 +23,16 @@ namespace VKR
 		struct Light
 		{
 			LightType m_Type{LIGHT_POINT};
+			bool m_Editable = false;
 			float m_ShadowCameraFOV;
 			float m_ShadowAspectRatio;
 			float m_ShadowBias = 0.0025f;
-			bool m_Editable = false;
 			float m_DebugScale = 0.1f;
 			glm::vec3 m_Pos {0.f, 0.1f, 0.f};
 			glm::vec3 m_Color {1.f, 0.f, 1.f};
-			R_Model* m_visual_model;
 
 			void Draw(VKBackend* _backend, int _CurrentFrame);
+			void Prepare(VKBackend* _backend);
 			virtual void Init();
 		};
 		

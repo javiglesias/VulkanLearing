@@ -29,7 +29,7 @@ namespace VKR
 			void Loop(Scene* _mainScene, VKBackend* _backend);
 			void Draw(VkCommandBuffer _commandBuffer);
 		};
-		static Editor* g_editor;
+		//static Editor* g_editor;
 	}
 }
 #endif

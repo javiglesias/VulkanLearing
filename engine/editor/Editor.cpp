@@ -7,7 +7,11 @@
 #include <cstdio>
 
 #ifdef WIN32
+#ifndef USE_GLFW
+#include "../../dependencies/imgui/backends/imgui_impl_win32.h"
+#else
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
+#endif
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #else
 #include "../../dependencies/imgui/imgui.h"
@@ -34,7 +38,11 @@ namespace VKR
 			auto renderContext = utils::GetVKContext();
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
+#ifndef USE_GLFW
+			;
+#else
 			ImGui_ImplGlfw_InitForVulkan(_Window, true);
+#endif
 			// UI descriptor Pool
 			VkDescriptorPoolSize pool_sizes[] =
 			{
@@ -93,7 +101,11 @@ namespace VKR
 			auto renderContext = utils::GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			ImGui_ImplVulkan_Shutdown();
+#ifndef USE_GLFW
+			;
+#else
 			ImGui_ImplGlfw_Shutdown();
+#endif
 			ImGui::DestroyContext();
 			vkDestroyDescriptorPool(renderContext.m_LogicDevice, m_UIDescriptorPool, nullptr);
 		}
@@ -110,7 +122,11 @@ namespace VKR
 		void Editor::Loop(Scene* _mainScene ,VKBackend* _backend)
 		{
 			ImGui_ImplVulkan_NewFrame();
+#ifndef USE_GLFW
+			;
+#else
 			ImGui_ImplGlfw_NewFrame();
+#endif
 			ImGui::NewFrame();
 			
 			ImGui::Begin("console");

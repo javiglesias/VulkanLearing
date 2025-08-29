@@ -2,17 +2,37 @@
 #include "../filesystem/ResourceManager.h"
 #include "glslang/Public/ShaderLang.h"
 #include "../core/Materials/VKRTexture.h"
+#include "../memory/mem_alloc.h"
 #include "VKRUtils.h"
+#include "../input/DeviceInput.h"
 
 #include <vulkan/vulkan.h>
-
-#define GLFW_INCLUDE_NONE
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 
 
 #ifndef WIN32
 #include <signal.h>
+#endif
+#ifndef USE_GLFW
+#include <vulkan/vulkan_win32.h>
+bool should_close_window = false;
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_DESTROY)
+	{
+		DestroyWindow(hwnd);
+		PostQuitMessage(0);
+		should_close_window = true;
+	}
+	else if (uMsg == WM_PAINT)
+		ValidateRect(hwnd, NULL);
+	else
+		DefWindowProc(hwnd, uMsg, wParam, lParam);
+	return 1;
+}
+#else
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #endif
 
 namespace VKR
@@ -27,7 +47,7 @@ namespace VKR
 		// INPUT CALLBACKS
 		void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
 		{
-#if 1
+#if 0
 			double x_offset = (_xPos - m_LastXPosition);
 			double y_offset = (m_LastYPosition - _yPos);
 			float senseo = 0.01f;
@@ -55,6 +75,7 @@ namespace VKR
 
 		void MouseBPressCallback(GLFWwindow* _window, int _button, int _action, int _mods)
 		{
+#ifdef USE_GLFW
 			if (_button == GLFW_MOUSE_BUTTON_RIGHT && _action == GLFW_PRESS && !m_MouseCaptured)
 			{
 				m_MouseCaptured = true;
@@ -63,10 +84,12 @@ namespace VKR
 			{
 				m_MouseCaptured = false;
 			}
+#endif
 		}
 
 		void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
 		{
+#ifdef USE_GLFW
 			auto state = glfwGetKey(_window, _key);
 			if (_key == GLFW_KEY_W && state)
 			{
@@ -156,6 +179,7 @@ namespace VKR
 			//{
 			//	RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
 			//}
+#endif
 
 		}
 
@@ -245,21 +269,24 @@ namespace VKR
 			return VK_FALSE;
 		}
 
-		void VKBackend::Init()
+		void VKBackend::Init(
+#ifndef USE_GLFW
+			HINSTANCE hInstance
+#endif
+		)
 		{
+			init_input_devices(hInstance);
 			#ifdef WIN32
 			glslang::InitializeProcess();
 			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
 			#endif
 			m_GPipelineStatus = CREATING;
 			uint32_t mExtensionCount = 0;
-			const char** mExtensions;
-			/// VULKAN/glfw THINGS
+			/// VULKAN THINGS
 			if (!utils::g_context.m_GpuInfo.CheckValidationLayerSupport()) exit(-2);
 			VkApplicationInfo mAppInfo = {};
 			InitializeVulkan(&mAppInfo);
 			// Fill Extension supported by GPU
-			mExtensions = glfwGetRequiredInstanceExtensions(&mExtensionCount);
 			vkEnumerateInstanceExtensionProperties(nullptr, &mExtensionCount, nullptr);
 			std::vector<VkExtensionProperties> mExtensionsProps(mExtensionCount);
 			vkEnumerateInstanceExtensionProperties(nullptr, &mExtensionCount, mExtensionsProps.data());
@@ -272,7 +299,7 @@ namespace VKR
 			//m_InstanceExtensions.push_back("VK_KHR_swapchain");
 
 			VkInstanceCreateInfo m_InstanceCreateInfo = {};
-			CreateInstance(&m_InstanceCreateInfo, &mAppInfo, mExtensions, mExtensionCount);
+			CreateInstance(&m_InstanceCreateInfo, &mAppInfo, mExtensionCount);
 			VkResult m_result = vkCreateInstance(&m_InstanceCreateInfo, nullptr, &m_Instance);
 			if (m_result != VK_SUCCESS)
 			{
@@ -280,6 +307,7 @@ namespace VKR
 				exit(- 1);
 			}
 			/// NORMAL RENDER THINGS
+#ifdef USE_GLFW
 			glfwInit();
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			m_Window = glfwCreateWindow(g_WindowWidth, g_WindowHeight, "Vulkan renderer", nullptr, nullptr);
@@ -288,6 +316,36 @@ namespace VKR
 			glfwSetCursorPosCallback(m_Window, MouseInputCallback);
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
+			/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
+			// EXT: VK_KHR_surface
+			if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
+				exit(-2);
+#else
+			const wchar_t CLASS_NAME[] = L"Vulkan renderer";
+			WNDCLASS wc = {};
+			int resolution = 400;
+			wc.lpfnWndProc = WindowProc;
+			wc.hInstance = hInstance;
+			wc.lpszClassName = LPCSTR(CLASS_NAME);
+			RegisterClass(&wc);
+			hwnd = CreateWindowEx(0, LPCSTR(CLASS_NAME), LPCSTR(L"Vulkan renderer"), WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, g_WindowWidth, g_WindowHeight,
+				NULL, NULL, hInstance, NULL);
+			ShowWindow(hwnd, SW_SHOW);
+			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo;
+			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surfaceCreateInfo.pNext = NULL;
+			surfaceCreateInfo.flags = 0;
+			surfaceCreateInfo.hinstance = hInstance;
+			surfaceCreateInfo.hwnd = hwnd;
+			auto result = vkCreateWin32SurfaceKHR(m_Instance, &surfaceCreateInfo, NULL, &m_Surface);
+			if (result != VK_SUCCESS)
+			{
+				printf("Failed to create surface");
+				__debugbreak();
+				exit(-1);
+			}
+#endif
 			/// Create the Debug Messenger
 			VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 			debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -305,11 +363,6 @@ namespace VKR
 				fprintf(stderr, "ERROR CREATING DEBUG MESSENGER\n");
 			}
 			utils::g_context.CreateDevice(m_Instance);
-			/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
-			// EXT: VK_KHR_surface
-			if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
-				exit(-2);
-
 			// Present support on the Physical Device
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(utils::g_context.m_GpuInfo.m_Device, utils::g_context.m_GraphicsComputeQueueFamilyIndex, m_Surface, &presentSupport);
@@ -639,8 +692,7 @@ namespace VKR
 			_appInfo->apiVersion = VK_API_VERSION_1_3;
 		}
 
-		void VKBackend::CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, const char** m_Extensions,
-			uint32_t m_extensionCount)
+		void VKBackend::CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, uint32_t m_extensionCount)
 		{
 			_createInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 			_createInfo->pApplicationInfo = _appInfo;
@@ -678,13 +730,13 @@ namespace VKR
 			m_SwapchainImagesCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 			VkImage tempswapchainimg[FRAMES_IN_FLIGHT];
 			vkGetSwapchainImagesKHR(utils::g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, tempswapchainimg);
-			m_SwapchainImages[0] = new Texture("");
+			m_SwapchainImages[0] = NEW(Texture);
 			m_SwapchainImages[0]->vk_image.image = tempswapchainimg[0];
 			m_SwapchainImages[0]->vk_image.extent.height = m_Capabilities.currentExtent.height;
 			m_SwapchainImages[0]->vk_image.extent.width  = m_Capabilities.currentExtent.width;
 			m_SwapchainImages[0]->vk_image.extent.depth  = 1;
 			m_SwapchainImages[0]->vk_image.format = VK_FORMAT_B8G8R8A8_SRGB;
-			m_SwapchainImages[1] = new Texture("");
+			m_SwapchainImages[1] = NEW(Texture);
 			m_SwapchainImages[1]->vk_image.image = tempswapchainimg[1];
 			m_SwapchainImages[1]->vk_image.extent.height = m_Capabilities.currentExtent.height;
 			m_SwapchainImages[1]->vk_image.extent.width = m_Capabilities.currentExtent.width;
@@ -701,12 +753,14 @@ namespace VKR
 		{
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 			int width = 0, height = 0;
+#ifdef USE_GLFW
 			glfwGetFramebufferSize(m_Window, &width, &height);
 			while (width == 0 || height == 0)
 			{
 				glfwWaitEvents();
 				glfwGetFramebufferSize(m_Window, &width, &height);
 			}
+#endif
 			g_WindowHeight = height;
 			g_WindowWidth = width;
 			printf("\n-----------Re-create Swapchain %d x %d----------------\n", g_WindowWidth, g_WindowHeight);
@@ -834,7 +888,7 @@ namespace VKR
 		void VKBackend::CreateShadowResources()
 		{
 			VkFormat depthFormat = utils::g_context.m_GpuInfo.FindDepthTestFormat();
-			m_ShadowTexture = new Texture("");
+			m_ShadowTexture = NEW(Texture);
 			m_ShadowTexture->CreateImage(VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
 				, depthFormat, VK_IMAGE_TILING_OPTIMAL
 				, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
@@ -849,7 +903,7 @@ namespace VKR
 		void VKBackend::CreateDepthTestingResources()
 		{
 			VkFormat depthFormat = utils::g_context.m_GpuInfo.FindDepthTestFormat();
-			m_DepthTexture = new Texture("");
+			m_DepthTexture = NEW(Texture);
 			m_DepthTexture->CreateImage( VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
 				, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, 0, 1);
@@ -887,16 +941,36 @@ namespace VKR
 
 		bool VKBackend::BackendShouldClose()
 		{
-			return m_CloseEngine || glfwWindowShouldClose(m_Window);
+			reset_devices();
+			return m_CloseEngine ||
+#ifndef USE_GLFW
+				should_close_window;
+#else
+				glfwWindowShouldClose(m_Window);
+#endif
 		}
 
 		void VKBackend::PollEvents()
 		{
+			process_input();
+#ifndef USE_GLFW
+			MSG message;
+			while (PeekMessage(&message, hwnd, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
+#else
 			glfwPollEvents();
+#endif
 		}
 		double VKBackend::GetTime() 
 		{
+#ifndef USE_GLFW
+			return 0.016;
+#else
 			return glfwGetTime(); 
+#endif // !USE_GLFW
 		}
 
 		void VKBackend::Cleanup()
@@ -970,7 +1044,8 @@ namespace VKR
 				if (strcmpi(_path, tex->m_Path) == 0)
 					return tex;
 			}
-			auto tex = new Texture(_path);
+			auto tex = NEW(Texture);
+			tex->init(_path);
 			tex->LoadTexture();
 			if(tex->m_Mipmaps > 0)
 				tex->CreateAndTransitionImage(m_CommandPool);
@@ -988,8 +1063,10 @@ namespace VKR
 			if (m_DebugMessenger != nullptr)
 				DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 			vkDestroyInstance(m_Instance, nullptr);
+#ifdef USE_GLFW
 			glfwDestroyWindow(m_Window);
 			glfwTerminate();
+#endif
 		}
     }
 }

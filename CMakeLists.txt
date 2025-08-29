@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3...3.5)
 set(CMAKE_CXX_COMPILER g++)
 
 project(VKRenderer VERSION 0.1 DESCRIPTION "A Vulkan Renderer" LANGUAGES CXX)
-
+set(CMAKE_EXE_LINKER_FLAGS "/SUBSYSTEM:WINDOWS")
 if (WIN32)
 add_compile_definitions(_WIN32)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/windows/Vulkan_1.3.268.0/Include)

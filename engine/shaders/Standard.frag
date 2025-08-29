@@ -120,7 +120,7 @@ void main()
 		float lum_new = num / (1.0 + lum_old);
 		result = calculate_luminance(ColorIn, lum_new);
 	}
-	//result = rgb_to_grayscale_luminosity(result);
+	// result = rgb_to_grayscale_luminosity(result);
 	outColor = vec4(result, 1.0);
 }
 
@@ -133,8 +133,8 @@ float PointLight()
 	// atenuacion = 1/ (kc+ kl*d + kq*(d*d));
 	float att = 1.0;	
 	att = 0.0;
-	vec3 lightPos = libO[0].lightPosition.xyz;
-	vec4 pointLightC = libO[0].additionalLightOpts;
+	vec3 lightPos = PLight.lightPosition.xyz;
+	vec4 pointLightC = PLight.additionalLightOpts;
 	vec3 dir = lightPos - fragPosition.xyz;
 	float d = length(dir);
 	att += 1.0
@@ -142,6 +142,18 @@ float PointLight()
 			+ pointLightC[1] * d 
 			+ pointLightC[2] * (d*d)
 		);
+	for(int i=0;i<2;++i)
+	{
+		vec3 lightPos = libO[i].lightPosition.xyz;
+		vec4 pointLightC = libO[i].additionalLightOpts;
+		vec3 dir = lightPos - fragPosition.xyz;
+		float d = length(dir);
+		att += 1.0
+			/ (pointLightC[0]
+				+ pointLightC[1] * d 
+				+ pointLightC[2] * (d*d)
+			);
+	}
 	return att;
 }
 
@@ -151,27 +163,26 @@ vec3 DirectionalLight(vec3 _color)
 	float ambientStrength = 0.05;
     vec3 ambient = _color * ambientStrength;
 	
-	vec3 normTex = texture(inTextures[4], texCoord).xyz;
-	vec3 norm = normalize(normTex * 2.0 - 1.0); // transform normal vector to range [-1,1]
+	vec3 norm = normalize(normal * 2.0 - 1.0); // transform normal vector to range [-1,1]
 	vec3 lightDir = normalize(lightPosition - fragPosition.xyz);
-	vec3 diffuse = max(dot(normTex, lightDir), 0.0) * _color;
+	vec3 diffuse = max(dot(norm, lightDir), 0.0) * _color;
 	
 	float specularStrength = 0.5;
 	vec3 viewDir = normalize(viewerPosition - fragPosition.xyz);
-	vec3 reflectDir = reflect(-lightDir, normTex);
+	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	vec3 specular = specularStrength * spec * _color;
+	vec3 specular =  max(specularStrength * spec, 0.0) * _color;
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
 	vec4 shadowCoordFinal = fragPosition * dirLight.lightProj * dirLight.lightView;
 	float shadow = ShadowCalculation(shadowCoordFinal, shadowTexture);
 	
-	ambient  *= att;
-	diffuse  *= att;
-	specular *= att;
-	//return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	return diffuse + specular;
+	// ambient  *= att;
+	// diffuse  *= att;
+	// specular *= att;
+	return ((ambient + ( 1 - shadow)) * (diffuse + specular));
+	// return ambient + diffuse;
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 
