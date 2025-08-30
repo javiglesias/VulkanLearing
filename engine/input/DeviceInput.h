@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Camera.h"
 #include <Xinput.h>
 #pragma comment(lib, "Xinput.lib")
 #pragma comment(lib, "Xinput9_1_0.lib")
@@ -39,18 +40,41 @@ process_input()
     }
     if (devices_state[0].Gamepad.sThumbLY > 0)
     {
-        fprintf(stderr,"W");
+        // forward
+        camera.g_CameraPos += camera.m_CameraSpeed * camera.g_CameraForward;
     }
     if (devices_state[0].Gamepad.sThumbLY < 0)
     {
-        fprintf(stderr, "S");
+        camera.g_CameraPos -= camera.m_CameraSpeed * camera.g_CameraForward;
     }
     if (devices_state[0].Gamepad.sThumbLX > 0)
     {
-        fprintf(stderr, "A");
+        camera.g_CameraPos -= camera.m_CameraSpeed * glm::normalize(glm::cross(
+            camera.g_CameraUp, camera.g_CameraForward));
     }
     if (devices_state[0].Gamepad.sThumbLX < 0)
     {
-        fprintf(stderr, "D");
+        camera.g_CameraPos += camera.m_CameraSpeed * glm::normalize(glm::cross(
+            camera.g_CameraUp, camera.g_CameraForward));
+    }
+    if (devices_state[0].Gamepad.sThumbRY > 0)
+    {
+        camera.g_CameraPos += camera.m_CameraSpeed * camera.g_CameraUp;
+    }
+    if (devices_state[0].Gamepad.sThumbRY < 0)
+    {
+        camera.g_CameraPos -= camera.m_CameraSpeed * camera.g_CameraUp;
+    }
+    if (devices_state[0].Gamepad.wButtons == XINPUT_GAMEPAD_A)
+    {
+        camera.g_CameraPos = camera.g_CameraDefPos;
+    }
+    if (devices_state[0].Gamepad.wButtons == XINPUT_GAMEPAD_START)
+    {
+        ;
+    }
+    if (devices_state[0].Gamepad.wButtons == XINPUT_GAMEPAD_BACK)
+    {
+        ;
     }
 }

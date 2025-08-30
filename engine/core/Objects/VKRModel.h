@@ -38,6 +38,10 @@ namespace VKR
 			std::vector<VkBuffer> m_DynamicBuffers;
 			std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
 			std::vector<void*> m_DynamicBuffersMapped;
+
+			std::vector<VkBuffer> m_ComputeUniformBuffers;
+			std::vector<VkDeviceMemory> m_ComputeUniformBuffersMemory;
+			std::vector<void*> m_ComputeUniformBuffersMapped;
 		};
 
 		/*struct R_DbgModel

@@ -4,6 +4,7 @@
 #include "../../perfmon/Custom.h"
 #include "../../video/GPUParticle.h"
 #include "../../video/VKBackend.h"
+#include "../../Camera.h"
 #include <cstddef>
 #include <cstring>
 
@@ -35,7 +36,7 @@ namespace VKR
 			UniformBufferObject ubo{};
 			ubo.view = g_ViewMatrix;
 			ubo.projection = g_ProjectionMatrix;
-			ubo.cameraPosition = g_CameraPos;
+			ubo.cameraPosition = camera.g_CameraPos;
 			memcpy(m_UniformsBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
 			auto renderContext = utils::GetVKContext();
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
@@ -261,7 +262,7 @@ namespace VKR
 				PERF_END("PREPARE_MATERIAL")
 				PERF_INIT("UPDATE_DESCRIPTORS")
 				m_Materials[mesh->m_Material]->UpdateDescriptorSet(renderContext.m_LogicDevice,
-						m_UniformBuffers, m_DynamicBuffers, _backend->m_LightsBuffers, _backend->m_ComputeUniformBuffers);
+						m_UniformBuffers, m_DynamicBuffers, _backend->m_LightsBuffers, m_ComputeUniformBuffers);
 				PERF_END("UPDATE_DESCRIPTORS")
 
 				++count;

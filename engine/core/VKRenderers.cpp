@@ -5,6 +5,20 @@ namespace VKR
 {
     namespace render
     {
+        bool Renderer::Initialize(const char* _vert, const char* _frag,uint32_t _bindCount, VkVertexInputBindingDescription* _descr, uint32_t _attrCount, VkVertexInputAttributeDescription* _attr,  bool _reload )
+        {
+            if (CreateShaderStages(_vert, _frag, _reload))
+            {
+                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
+                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                m_VertexInputInfo.vertexBindingDescriptionCount = _bindCount;
+                m_VertexInputInfo.pVertexBindingDescriptions = _descr;
+                m_VertexInputInfo.vertexAttributeDescriptionCount = _attrCount;
+                m_VertexInputInfo.pVertexAttributeDescriptions = _attr;
+                return true;
+            }
+            return false;
+        }
         bool Renderer::CreateShaderStages(const char* _vertShader, const char* _fragShader, bool _force_recompile)
         {
 			/*if(_force_recompile)
@@ -107,6 +121,7 @@ namespace VKR
             m_DepthStencil.stencilTestEnable = VK_FALSE;
             m_DepthStencil.front = {};
             m_DepthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
+            CreatePipelineLayout();
         }
         void Renderer::CreatePipelineLayout()
         {
@@ -207,21 +222,6 @@ namespace VKR
             vkDestroyShaderModule(m_LogicDevice, m_FragShaderModule, nullptr);
         }
 
-        bool DebugRenderer::Initialize (bool _reload)
-        {
-        	if(CreateShaderStages("engine/shaders/Debug.vert", "engine/shaders/Debug.frag", _reload))
-        	{
-                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_DbgAttributeDescriptions.size());
-                m_VertexInputInfo.pVertexBindingDescriptions = &m_DbgBindingDescription;
-                m_VertexInputInfo.pVertexAttributeDescriptions = m_DbgAttributeDescriptions.data();
-                return true;
-            }
-            return false;
-        }
-
         void DebugRenderer::CreateDescriptorSetLayout()
         {
             // estructura UBO
@@ -257,24 +257,6 @@ namespace VKR
             layoutInfo.pBindings = ShaderBindings.data();
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
-        }
-
-        // GRAPHIC PIPELINE
-
-        bool GraphicsRenderer::Initialize (bool _reload)
-        {
-            /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            if(CreateShaderStages("engine/shaders/Standard.vert", "engine/shaders/Standard.frag", _reload))
-            {
-                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_AttributeDescriptions.size());
-                m_VertexInputInfo.pVertexBindingDescriptions = &m_BindingDescription;
-                m_VertexInputInfo.pVertexAttributeDescriptions = m_AttributeDescriptions.data();
-                return true;
-            }
-            return false;
         }
 
         bool GraphicsRenderer::CreateShaderModules()
@@ -424,27 +406,11 @@ namespace VKR
                 exit(-99);
         }
 
-        bool ShadowRenderer::Initialize (bool _reload)
-        {
-            /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            m_VertShader = new Shader("engine/shaders/Shadow.vert", 0);
-            m_VertShader->LoadShader();
-            if(CreateShaderModule(m_VertShader, &m_VertShaderModule))
-            {
-                CreateShaderStages("engine/shaders/Shadow.vert", "", _reload);
-                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_ShadowAttributeDescriptions.size());
-                m_VertexInputInfo.pVertexBindingDescriptions = &m_ShadowBindingDescription;
-                m_VertexInputInfo.pVertexAttributeDescriptions = m_ShadowAttributeDescriptions.data();
-                return true;
-            }
-            return false;
-        }
-
         bool ShadowRenderer::CreateShaderStages(const char* _vertShader, const char* _fragShader, bool _force_recompile)
         {
+            m_VertShader = new Shader(_vertShader, 0);
+            m_VertShader->LoadShader();
+            CreateShaderModule(m_VertShader, &m_VertShaderModule);
             /// Creacion de los shader stage de la Pipeline
             m_VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             m_VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -455,7 +421,7 @@ namespace VKR
             m_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             m_DynamicState.dynamicStateCount = static_cast<uint32_t>(m_DynamicStates.size());
             m_DynamicState.pDynamicStates = m_DynamicStates.data();
-			return true;
+            return true;
         }
 
         void ShadowRenderer::CreatePipeline(VkRenderPass _RenderPass)
@@ -487,25 +453,6 @@ namespace VKR
         {
             // Destruymos los ShaderModule ahora que ya no se necesitan.
             vkDestroyShaderModule(m_LogicDevice, m_VertShaderModule, nullptr);
-        }
-
-        bool CubemapRenderer::Initialize(bool _reload )
-        {
-            /// Vamos a crear los shader module para cargar el bytecode de los shaders
-            m_VertShader = new Shader("engine/shaders/Cubemap.vert", 0);
-            m_FragShader = new Shader("engine/shaders/Cubemap.frag", 4);
-            if(CreateShaderStages("engine/shaders/Cubemap.vert", "engine/shaders/Cubemap.frag", _reload))
-            {
-                
-                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_CubemapAttributeDescriptions.size());
-                m_VertexInputInfo.pVertexBindingDescriptions = &m_CubemapBindingDescription;
-                m_VertexInputInfo.pVertexAttributeDescriptions = m_CubemapAttributeDescriptions.data();
-                return true;
-            }
-            return false;
         }
 
         void CubemapRenderer::CreateDescriptorSetLayout()
@@ -546,25 +493,6 @@ namespace VKR
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
         }
-        // SHADER RENDERER
-        bool ShaderRenderer::Initialize (bool _reload)
-        {
-            // DEBUG SHADERS
-            //"engine/shaders/Standard.vert"
-            m_VertShader = new Shader("engine/shaders/Grid.vert", 0);
-            m_FragShader = new Shader("engine/shaders/Grid.frag", 4);
-            if (CreateShaderStages("engine/shaders/Grid.vert", "engine/shaders/Grid.frag", _reload))
-            {
-                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_GridAttributeDescriptions.size());
-                m_VertexInputInfo.pVertexBindingDescriptions = &m_GridBindingDescription;
-                m_VertexInputInfo.pVertexAttributeDescriptions = m_GridAttributeDescriptions.data();
-                return true;
-            }
-            return false;
-        }
 
         void ShaderRenderer::CreateDescriptorSetLayout()
         {
@@ -586,29 +514,25 @@ namespace VKR
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
         }
-        bool QuadRenderer::Initialize (bool _reload)
-        {
-            // DEBUG SHADERS
-            //"engine/shaders/Quad.vert"
-            m_VertShader = new Shader("engine/shaders/Quad.vert", 0);
-            m_VertShader->LoadShader();
-            m_FragShader = new Shader("engine/shaders/Quad.frag", 4);
-            m_FragShader->LoadShader();
-            if (CreateShaderModule(m_VertShader, &m_VertShaderModule) &&
-                CreateShaderModule(m_FragShader, &m_FragShaderModule))
-            {
-                /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
-                m_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                m_VertexInputInfo.vertexBindingDescriptionCount = 1;
-                m_VertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_GridAttributeDescriptions.size());
-                m_VertexInputInfo.pVertexBindingDescriptions = &m_GridBindingDescription;
-                m_VertexInputInfo.pVertexAttributeDescriptions = m_GridAttributeDescriptions.data();
-                return true;
-            }
-            return false;
-        }
         void QuadRenderer::CreateDescriptorSetLayout()
         {
+            // estructura UBO
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+
+            std::array<VkDescriptorSetLayoutBinding, 1> ShaderBindings = {
+                uboLayoutBinding
+            };
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
+            layoutInfo.pBindings = ShaderBindings.data();
+            if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
+                exit(-99);
         }
 }
 }

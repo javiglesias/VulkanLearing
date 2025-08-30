@@ -4,6 +4,7 @@
 #include "../editor/Editor.h"
 #include "../core/Objects/VKRCubemap.h"
 #include "../filesystem/ResourceManager.h"
+#include "../Camera.h"
 
 namespace VKR
 {
@@ -38,13 +39,14 @@ namespace VKR
 			// Clear Color
 			VkClearValue clearValue;
 			clearValue.depthStencil = { 1.0f, 0 };
+#if 0
 			// Update Uniform buffers
 			ShadowUniformBufferObject ubo{};
 			ubo.view = lightViewMat;
 			ubo.projection = lightProjMat;
 			ubo.depthMVP = lightProjMat * lightViewMat;
-			memcpy(_backend->m_ShadowUniformBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
-
+			memcpy(m_ShadowRender->m_UniformBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
+#endif
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = renderContext.m_ShadowPass->pass;
@@ -66,12 +68,14 @@ namespace VKR
 			// Sombras(Depth Pass)
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				m_StaticModels[i]->Draw(_backend, _CurrentFrame, i);
+#if 0
 				R_Model* model = m_StaticModels[i];
 				DynamicBufferObject dynO{};				
 				dynO.model = model->m_ModelMatrix;
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+				memcpy((char*)m_ShadowRender->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout,
 					0, 1, &_backend->m_ShadowMat->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
 				for (auto& mesh : model->m_Meshes)
@@ -95,9 +99,10 @@ namespace VKR
 				++count;
 				VkMappedMemoryRange mappedMemoryRange{};
 				mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-				mappedMemoryRange.memory = _backend->m_ShadowDynamicBuffersMemory[_CurrentFrame];
+				mappedMemoryRange.memory = m_ShadowRender->m_DynamicBuffersMemory[_CurrentFrame];
 				mappedMemoryRange.size = sizeof(dynO);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+#endif
 			}
 			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
 		}
@@ -113,11 +118,13 @@ namespace VKR
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			vkDestroyPipeline(renderContext.m_LogicDevice, m_CubemapRender->m_Pipeline, nullptr);
 			vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_CubemapRender->m_PipelineLayout, nullptr);
+#if 0
 			m_CubemapRender->Initialize(true);
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(renderContext.m_RenderPass->pass);
 			m_CubemapRender->CleanShaderModules();
+#endif
 			PERF_INIT("RELOAD_SHADERS")
 			clean_material_list();
 			clean_shader_list();
@@ -155,6 +162,7 @@ namespace VKR
 		}
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
+			_backend->PollEvents();
 			// Ahora vamos a simular el siguiente frame
 			uint32_t imageIdx = -1;
 			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
@@ -197,16 +205,10 @@ namespace VKR
 				}
 			//g_editor->Loop(this, _backend);
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
-			auto dynamicAlignment = sizeof(DynamicBufferObject);
-			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			auto lightDynAlign = sizeof(LightBufferObject);
-			lightDynAlign = (lightDynAlign + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			// Matriz de proyeccion
-			g_ProjectionMatrix = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
+			g_ProjectionMatrix = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			g_ProjectionMatrix[1][1] *= -1; // para invertir el eje Y
-			g_ViewMatrix = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraForward, g_CameraUp);
+			g_ViewMatrix = glm::lookAt(camera.g_CameraPos, camera.g_CameraPos + camera.g_CameraForward, camera.g_CameraUp);
 			/// Render Pass
 			std::array<VkClearValue, 2> clearValues;
 			clearValues[0].color = _backend->defaultClearColor;
@@ -344,6 +346,7 @@ namespace VKR
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
 		{
+#if 0
 			PERF_INIT("PREPARE_CUBEMAP")
 			auto renderContext = utils::GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
@@ -370,31 +373,33 @@ namespace VKR
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
-			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
+			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_UniformBuffers, m_CubemapRender->m_DynamicBuffers);
 			PERF_END("PREPARE_CUBEMAP")
+#endif
 		}
 
 		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
 		{
+#if 0
 			// Cubemap draw
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
 			auto renderContext = utils::GetVKContext();
 			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
 			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
+			glm::mat4 projMat = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 viewMat = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraForward, g_CameraUp);
+			glm::mat4 viewMat = glm::lookAt(camera.g_CameraPos, camera.g_CameraPos + camera.g_CameraForward, camera.g_CameraUp);
 			CubemapUniformBufferObject cubo {};
 			cubo.projection = projMat;
 			cubo.view = viewMat;
-			memcpy(_backend->m_CubemapUniformBuffersMapped[_CurrentFrame], &cubo, sizeof(cubo));
+			memcpy(m_CubemapRender->m_UniformBuffersMapped[_CurrentFrame], &cubo, sizeof(cubo));
 			constexpr int sizeDynO = sizeof(DynamicBufferObject);
 			DynamicBufferObject dynO{};
 			dynO.model = glm::mat4(1.f);
 			dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_cubemapDistance);
 			uint32_t dynamicOffset = 0 * static_cast<uint32_t>(_dynamicAlignment);
 			// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-			memcpy((char*)_backend->m_CubemapDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+			memcpy((char*)m_CubemapRender->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 			// Update Uniform buffers
 
 			VkBuffer vertesBuffers[] = { m_Cubemap->m_VertexBuffer };
@@ -407,9 +412,10 @@ namespace VKR
 			// Flush to make changes visible to the host
 			VkMappedMemoryRange mappedMemoryRange{};
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			mappedMemoryRange.memory = _backend->m_CubemapDynamicBuffersMemory[_CurrentFrame];
+			mappedMemoryRange.memory = m_CubemapRender->m_DynamicBuffersMemory[_CurrentFrame];
 			mappedMemoryRange.size = sizeof(dynO);
 			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+#endif
 		}
 
 		void Scene::PrepareScene(VKBackend* _backend)

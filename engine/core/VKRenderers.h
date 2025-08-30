@@ -52,11 +52,12 @@ namespace VKR
                 VK_DYNAMIC_STATE_VIEWPORT,
                 VK_DYNAMIC_STATE_SCISSOR
             };
+
             VkDevice m_LogicDevice;
             Shader* m_VertShader = nullptr;
             Shader* m_FragShader = nullptr;
         public:
-            virtual bool Initialize(bool _reload = false) {return true;}
+            virtual bool Initialize(const char* _vert, const char* _frag, uint32_t _bindCount, VkVertexInputBindingDescription* _descr, uint32_t _attrCount, VkVertexInputAttributeDescription* _attr, bool _reload = false);
             virtual void CreateDescriptorSetLayout();
             virtual void CreatePipelineLayout();
             virtual void CleanShaderModules();
@@ -79,22 +80,34 @@ namespace VKR
         public: // Functions
 
             // Creamos el layout de los Descriptor set que vamos a utlizar
-            bool Initialize(bool _reload = false) override;
+            //bool Initialize(bool _reload = false) override;
             bool CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             GraphicsRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
+                // Creamos los DescriptorsLayout
+                // Inicializar Renderer
+                // Setup de PipelineLayout
+                // Creamos la PipelileLayout
+                // Crear Renderpass
+                // Crear Pipeline
+                // Limpiar ShaderModules
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
                 m_CullMode = VK_CULL_MODE_BACK_BIT;
+                CreateDescriptorSetLayout();
+                Initialize("engine/shaders/Standard.vert", "engine/shaders/Standard.frag", 1, &m_BindingDescription,
+                    m_AttributeDescriptions.size(), m_AttributeDescriptions.data());
             }
             bool CheckCompileSPV(const char* _shaderPath, int _stage);
         };
 
         struct DebugRenderer : Renderer
         {
+        public: //variables
+            // DEBUG BUFFERS
         public: // Functions
-            bool Initialize(bool _reload = false) override;
+            //bool Initialize(bool _reload = false) override;
             void CreateDescriptorSetLayout() override;
 
             DebugRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
@@ -103,6 +116,9 @@ namespace VKR
                 m_PolygonMode = VK_POLYGON_MODE_FILL;
                 m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
                 m_CullMode = VK_CULL_MODE_NONE;
+                CreateDescriptorSetLayout();
+                Initialize("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", 1, &m_GridBindingDescription,
+                    m_GridAttributeDescriptions.size(), m_GridAttributeDescriptions.data());
             }
         };
 
@@ -110,7 +126,7 @@ namespace VKR
         {
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
-            bool Initialize(bool _reload = false) override;
+            //bool Initialize(bool _reload = false) override;
             bool CreateShaderStages(const char* _vertShader, const char* _fragShader = "", bool _force_recompile = false) override;
             void CreatePipeline(VkRenderPass _RenderPass);
             void CleanShaderModules() override;
@@ -119,6 +135,8 @@ namespace VKR
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
                 m_CullMode = VK_CULL_MODE_NONE;
+                CreateDescriptorSetLayout();
+                Initialize("engine/shaders/Shadow.vert", "", 1, &m_ShadowBindingDescription, m_ShadowAttributeDescriptions.size(), m_ShadowAttributeDescriptions.data());
             }
         };
 
@@ -126,7 +144,7 @@ namespace VKR
         {
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
-            bool Initialize(bool _reload = false) override;
+            //bool Initialize(bool _reload = false) override;
             bool CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             CubemapRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
@@ -134,30 +152,36 @@ namespace VKR
                 m_LogicDevice = _LogicalDevice;
                 m_PolygonMode = _PolygonMode;
                 m_CullMode = VK_CULL_MODE_NONE;
+                CreateDescriptorSetLayout();
+                Initialize("engine/shaders/Cubemap.vert", "engine/shaders/Cubemap.frag", 1, &m_CubemapBindingDescription, m_CubemapAttributeDescriptions.size(), m_CubemapAttributeDescriptions.data());
             }
         };
 
         struct ShaderRenderer : Renderer
         {
         public: // Functions
-            bool Initialize(bool _reload = false) override;
+            //bool Initialize(bool _reload = false) override;
             void CreateDescriptorSetLayout() override;
 
             ShaderRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
+                CreateDescriptorSetLayout();
+                Initialize("engine/shaders/Grid.vert", "engine/shaders/Grid.frag", 1, &m_GridBindingDescription, m_GridAttributeDescriptions.size(), m_GridAttributeDescriptions.data());
             }
         };
 
         struct QuadRenderer : Renderer
         {
         public: // Functions
-            bool Initialize(bool _reload = false) override;
+            //bool Initialize(bool _reload = false) override;
             void CreateDescriptorSetLayout() override;
 
             QuadRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)
             {
                 m_LogicDevice = _LogicalDevice;
+                CreateDescriptorSetLayout();
+                Initialize("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", 1, &m_GridBindingDescription,m_GridAttributeDescriptions.size(), m_GridAttributeDescriptions.data());
             }
         };
     }

@@ -7,6 +7,7 @@
 #include "../core/Objects/VKRLight.h"
 #include <thread>
 #include <Windows.h>
+#include <unordered_map>
 struct GLFWwindow;
 class Texture;
 
@@ -42,11 +43,8 @@ namespace VKR
         inline bool m_SceneDirty = true;
         inline bool m_UIDirty = true;
         inline bool g_DrawCubemap = true;
-        inline bool g_ShadowPassEnabled = true;
+        inline bool g_ShadowPassEnabled = false;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
-        inline double m_CameraYaw = 0.f, m_CameraPitch = 0.f;
-        inline float m_CameraSpeed = 0.6f;
-        inline float m_CameraFOV = 70.f;
         inline float zFar= 1000001.f;
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
@@ -70,17 +68,13 @@ namespace VKR
         inline glm::vec3 m_PointLightPos = glm::vec3(0.f, 3.f, 0.f);
         inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
-
-        inline glm::vec3 g_CameraPos = glm::vec3(0.f, 1.f, 0.f);
-        inline glm::vec3 g_CameraDefPos = glm::vec3(1.f, 0.f, 0.f);
-        inline glm::vec3 g_CameraForward = glm::vec3(-1.f, 0.f, 0.f);
-        inline glm::vec3 g_CameraUp = glm::vec3(0.f, 1.f, 0.f);
         
 		//inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
 		inline ShaderRenderer* m_GridRender;
         inline DebugRenderer* m_DbgRender;
         inline CubemapRenderer* m_CubemapRender;
+        inline QuadRenderer* m_QuadRender;
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
         inline R_Model* m_StaticModels[MAX_MODELS];
         inline R_Model* m_PendingBuffersModels[MAX_MODELS];
@@ -139,38 +133,6 @@ namespace VKR
             std::vector<VkBuffer> m_LightsBuffers;
             std::vector<VkDeviceMemory> m_LightsBuffersMemory;
             std::vector<void*> m_LightsBuffersMapped;
-            
-            // DEBUG BUFFERS
-            std::vector<VkBuffer> m_DbgUniformBuffers;
-            std::vector<VkDeviceMemory> m_DbgUniformBuffersMemory;
-            std::vector<void*> m_DbgUniformBuffersMapped;
-            std::vector<VkBuffer> m_DbgDynamicBuffers;
-            std::vector<VkDeviceMemory> m_DbgDynamicBuffersMemory;
-            std::vector<void*> m_DbgDynamicBuffersMapped;
-            // SHADOW BUFFERS
-            std::vector<VkBuffer> m_ShadowUniformBuffers;
-            std::vector<VkDeviceMemory> m_ShadowUniformBuffersMemory;
-            std::vector<VkBuffer> m_ShadowDynamicBuffers;
-            std::vector<VkDeviceMemory> m_ShadowDynamicBuffersMemory;
-            std::vector<void*> m_ShadowUniformBuffersMapped;
-            std::vector<void*> m_ShadowDynamicBuffersMapped;
-            // CUBEMAP BUFFERS
-            std::vector<VkBuffer> m_CubemapUniformBuffers;
-            std::vector<VkBuffer> m_CubemapDynamicBuffers;
-            std::vector<VkDeviceMemory> m_CubemapUniformBuffersMemory;
-            std::vector<VkDeviceMemory> m_CubemapDynamicBuffersMemory;
-            std::vector<void*> m_CubemapUniformBuffersMapped;
-            std::vector<void*> m_CubemapDynamicBuffersMapped;
-            
-            // GRID BUFFERS
-            std::vector<VkBuffer> m_GridUniformBuffers;
-            std::vector<VkDeviceMemory> m_GridUniformBuffersMemory;
-            std::vector<void*> m_GridUniformBuffersMapped;
-
-            // COMPUTE BUFFERS
-            std::vector<VkBuffer> m_ComputeUniformBuffers;
-            std::vector<VkDeviceMemory> m_ComputeUniformBuffersMemory;
-            std::vector<void*> m_ComputeUniformBuffersMapped;
             
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;

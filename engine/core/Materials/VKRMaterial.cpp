@@ -435,8 +435,7 @@ namespace VKR
 				exit(-67);
 		}
 
-		void R_Material::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers,
-		                                     std::vector<VkBuffer> _LightsBuffers, std::vector<VkBuffer> _ComputeBuffers)
+		void R_Material::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers, std::vector<VkBuffer> _LightsBuffers, std::vector<VkBuffer> _ComputeBuffers)
 		{
 			// Escribimos la info de los descriptors
 			for (int8_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -461,6 +460,7 @@ namespace VKR
 					PrepareDescriptorWrite(i, 5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _LightsBuffers[i], sizeof(LightBufferObject), j - start);
 				}
 				PrepareDescriptorWrite(i, 6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, shadow_texture->vk_image.view, shadow_texture->m_Sampler, 0);
+#if 0
 				// Compute
 				VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();
 				bufferInfo->buffer = _ComputeBuffers[i];
@@ -478,7 +478,7 @@ namespace VKR
 				descriptorsWrite.pTexelBufferView = nullptr;
 				m_DescriptorsWrite.push_back(descriptorsWrite);
 				/*PrepareDescriptorWrite(i, 6, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _ComputeBuffers[i], sizeof(GPU::Particle));*/
-
+#endif
 				vkUpdateDescriptorSets(_LogicDevice, m_DescriptorsWrite.size(), m_DescriptorsWrite.data(), 0, nullptr);
 			}
 		}
