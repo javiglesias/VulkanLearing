@@ -1,10 +1,11 @@
 #include "VKRScene.h"
 #include "../video/VKRUtils.h"
 #include "../perfmon/Custom.h"
-#include "../editor/Editor.h"
+//#include "../editor/Editor.h"
 #include "../core/Objects/VKRCubemap.h"
 #include "../filesystem/ResourceManager.h"
 #include "../Camera.h"
+#include "../editor/Editor.h"
 
 namespace VKR
 {
@@ -23,11 +24,6 @@ namespace VKR
 		/// Shadow Pass
 		void Scene::ShadowPass(VKBackend* _backend, int _CurrentFrame)
 		{
-			if(m_SceneDirty)
-			{
-				PrepareScene(_backend);
-				m_SceneDirty = false;
-			}
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 orthogonalProjMat = glm::ortho<float>(g_DirectionalLight->m_Right, -g_DirectionalLight->m_Right,
 									g_DirectionalLight->m_Up, -g_DirectionalLight->m_Up, 
@@ -195,15 +191,14 @@ namespace VKR
 			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
 			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			// GeometryPass(_backend, _CurrentFrame);
+			if (m_SceneDirty)
+			{
+				PrepareScene(_backend);
+				m_SceneDirty = false;
+			}
 			if (g_ShadowPassEnabled)
 				ShadowPass(_backend, _CurrentFrame);
-			else
-				if (m_SceneDirty)
-				{
-					PrepareScene(_backend);
-					m_SceneDirty = false;
-				}
-			//g_editor->Loop(this, _backend);
+			g_editor->Loop(this, _backend);
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
 			// Matriz de proyeccion
 			g_ProjectionMatrix = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
@@ -300,7 +295,7 @@ namespace VKR
 			}
 			DrawQuads(_backend, _CurrentFrame);
 #pragma endregion
-			//g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
+			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
 
 			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
 			if (vkEndCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame]) != VK_SUCCESS)
@@ -441,7 +436,6 @@ namespace VKR
 			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, _modelName, gizmo);
 			m_StaticModels[0] = gizmo;
 			++m_CurrentStaticModels;
-
 			g_DirectionalLight = new Directional();
 			g_DirectionalLight->Init();
 			g_PointLights[0].Init();
@@ -449,8 +443,14 @@ namespace VKR
 			g_PointLights[2].Init();
 			g_PointLights[3].Init();
 			//PrepareCubemapScene(_backend);
-			//g_editor = new Editor(m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount, _backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
+			g_editor = new Editor(
+#ifndef USE_GLFW
+				hwnd, 
+#else
+			m_Window, 
+#endif
+				_backend->m_Instance, _backend->m_Capabilities.minImageCount, _backend->m_SwapchainImagesCount);
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)
@@ -529,6 +529,8 @@ namespace VKR
 #endif
 		void Scene::Cleanup(VkDevice _LogicDevice)
 		{
+			g_editor->Cleanup();
+			g_editor->Shutdown();
 			printf("Scene Cleanup\n");
 			vkDeviceWaitIdle(_LogicDevice);
 			for (int i = 0; i < m_CurrentStaticModels; i++)
@@ -550,8 +552,6 @@ namespace VKR
 			}
 #endif
 			//m_Cubemap->Cleanup(_LogicDevice);
-			//g_editor->Cleanup();
-			//g_editor->Shutdown();
 		}
 	}
 }

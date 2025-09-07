@@ -44,145 +44,6 @@ namespace VKR
 			m_NeedToRecreateSwapchain = true;
 		}
 
-		// INPUT CALLBACKS
-		void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
-		{
-#if 0
-			double x_offset = (_xPos - m_LastXPosition);
-			double y_offset = (m_LastYPosition - _yPos);
-			float senseo = 0.01f;
-			if (m_MouseCaptured)
-			{
-				m_LastXPosition = _xPos;
-				m_LastYPosition = _yPos;
-				x_offset *= senseo;
-				y_offset *= senseo;
-				m_CameraYaw   += x_offset;
-				m_CameraPitch += y_offset;
-				// CONSTRAINTS
-				if (m_CameraPitch > 89.f)  m_CameraPitch = 89.0f;
-				if (m_CameraPitch < -89.f) m_CameraPitch = -89.0f;
-				glm::vec3 camera_direction;
-				camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
-				camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
-				camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
-				g_CameraForward = glm::normalize(camera_direction);
-				m_LastXPosition = _xPos;
-				m_LastYPosition = _yPos;
-			}
-#endif
-		}
-
-		void MouseBPressCallback(GLFWwindow* _window, int _button, int _action, int _mods)
-		{
-#ifdef USE_GLFW
-			if (_button == GLFW_MOUSE_BUTTON_RIGHT && _action == GLFW_PRESS && !m_MouseCaptured)
-			{
-				m_MouseCaptured = true;
-			}
-			if (_button == GLFW_MOUSE_BUTTON_LEFT && _action == GLFW_PRESS && m_MouseCaptured)
-			{
-				m_MouseCaptured = false;
-			}
-#endif
-		}
-
-		void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
-		{
-#ifdef USE_GLFW
-			auto state = glfwGetKey(_window, _key);
-			if (_key == GLFW_KEY_W && state)
-			{
-				g_CameraPos += m_CameraSpeed * g_CameraForward;
-			}
-			if (_key == GLFW_KEY_A && state)
-			{
-				g_CameraPos += m_CameraSpeed * glm::normalize(glm::cross(
-					g_CameraUp, g_CameraForward));
-			}
-			if (_key == GLFW_KEY_S && state)
-			{
-				g_CameraPos -= m_CameraSpeed * g_CameraForward;
-			}
-			if (_key == GLFW_KEY_D && state)
-			{
-				g_CameraPos -= m_CameraSpeed * glm::normalize(glm::cross(
-					g_CameraUp, g_CameraForward));
-			}
-
-			if (_key == GLFW_KEY_R && _action == GLFW_PRESS)
-			{
-				g_CameraPos = g_CameraDefPos;
-			}
-
-			if (_key == GLFW_KEY_TAB && _action == GLFW_PRESS)
-			{
-				
-			}
-			/*
-			 * Elemental rotations
-			 */
-			float degrees = 90.f;
-			glm::mat3 X_axis = glm::mat3 {
-				1, 0, 0,
-				0, cos(degrees), -sin(degrees),
-				0, sin(degrees), cos(degrees)
-			};
-			glm::mat3 Y_axis = glm::mat3{
-				cos(degrees), 0, sin(degrees),
-				0, 1, 0,
-				-sin(degrees),0, cos(degrees)
-			};
-			glm::mat3 Z_axis = glm::mat3{
-				cos(degrees), -sin(degrees), 0,
-				sin(degrees), cos(degrees), 0,
-				0, 0, 1
-			};
-			if (_key == GLFW_KEY_E && _action == GLFW_PRESS) // up
-			{
-				g_CameraPos += m_CameraSpeed * g_CameraUp;
-			}
-			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
-			{
-				g_CameraPos -= m_CameraSpeed * g_CameraUp;
-			}
-
-			if (_key == GLFW_KEY_ESCAPE && state)
-			{
-				//m_CloseEngine= true;
-			}
-
-			if (_key == GLFW_KEY_X && _action == GLFW_PRESS) // rotate Right
-			{
-				g_CameraPos = g_CameraPos * Y_axis;
-			}
-
-			if (_key == GLFW_KEY_Z && _action == GLFW_PRESS) // rotate Left
-			{
-				g_CameraPos = g_CameraPos * -Z_axis;
-			}
-
-
-			//if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
-			//{
-			//	RM::_AddRequest(ASSIMP_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
-			//}
-			//if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
-			//{
-			//	//RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
-			//	auto tempModel = new render::R_Model();
-			//	auto data = filesystem::read_glTF("resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf", tempModel);
-			//	render::m_SceneDirty = true;
-			//}
-
-			//if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
-			//{
-			//	RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
-			//}
-#endif
-
-		}
-
 		static VKBackend g_backend;
 		VKBackend& GetVKBackend()
 		{
@@ -275,7 +136,12 @@ namespace VKR
 #endif
 		)
 		{
-			init_input_devices(hInstance);
+			init_input_devices(
+#ifndef USE_GLFW
+				hInstance
+#endif
+			);
+
 			#ifdef WIN32
 			glslang::InitializeProcess();
 			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
@@ -323,7 +189,6 @@ namespace VKR
 #else
 			const wchar_t CLASS_NAME[] = L"Vulkan renderer";
 			WNDCLASS wc = {};
-			int resolution = 400;
 			wc.lpfnWndProc = WindowProc;
 			wc.hInstance = hInstance;
 			wc.lpszClassName = LPCSTR(CLASS_NAME);
@@ -454,7 +319,9 @@ namespace VKR
 			m_GridRender->CleanShaderModules();
 
 			// Quad Renderer
-			//...
+			m_QuadRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			m_QuadRender->CreatePipeline(utils::g_context.m_RenderPass->pass);
+			m_QuadRender->CleanShaderModules();
 
 			vkGetPhysicalDeviceMemoryProperties(utils::g_context.m_GpuInfo.m_Device, &m_Mem_Props);
 			CreateCommandBuffer();
@@ -470,30 +337,10 @@ namespace VKR
 			m_LightsBuffers.resize(FRAMES_IN_FLIGHT);
 			m_LightsBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_LightsBuffersMapped.resize(FRAMES_IN_FLIGHT);
-#if 0
-			// Uniform buffers
-			m_DbgRender->m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DbgRender->m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DbgRender->m_UniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Dynamic buffers
-			m_DbgRender->m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DbgRender->m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DbgRender->m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			//
-			// Uniform buffers
-			m_CubemapRender->m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_CubemapRender->m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_CubemapRender->m_UniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Dynamic buffers
-			m_CubemapRender->m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_CubemapRender->m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_CubemapRender->m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-#endif
-			// Grid buffers
-			// Uniform buffers
-			/*m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);*/
+
+			m_QuadBuffers.resize(FRAMES_IN_FLIGHT);
+			m_QuadBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_QuadBuffersMapped.resize(FRAMES_IN_FLIGHT);
 
 			GenerateBuffers();
 			GenerateDBGBuffers();
@@ -501,6 +348,7 @@ namespace VKR
 			CreateSyncObjects(1);
 			CreatePerformanceQueries();
 			m_GPipelineStatus = READY;
+
 		}
 
 		void VKBackend::GenerateDBGBuffers()
@@ -541,9 +389,38 @@ namespace VKR
 			}
 #endif
 		}
-
+		void VKBackend::GenerateBuffer(size_t _sizeDynAl, VkBuffer* _buffers, 
+			VkDeviceMemory* _buffsMemory, void** _mapped)
+		{
+#pragma region BUFFER
+				auto DynAlign = _sizeDynAl;
+				DynAlign = (DynAlign + utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+					& ~(utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+				VkDeviceSize checkBufferSize = (4 * DynAlign);
+				VkDeviceSize bufferSize = (4 * _sizeDynAl);
+				if (bufferSize != checkBufferSize)
+#ifdef WIN32
+					__debugbreak();
+#else
+					raise(SIGTRAP);
+#endif
+				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+				{
+					utils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+						VK_SHARING_MODE_CONCURRENT,
+						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+						_buffers[i], _buffsMemory[i]);
+					vkMapMemory(utils::g_context.m_LogicDevice, _buffsMemory[i], 0,
+						bufferSize, 0, &_mapped[i]);
+				}
+#pragma endregion
+		}
 		void VKBackend::GenerateBuffers()
 		{
+			GenerateBuffer(sizeof(LightBufferObject), m_LightsBuffers.data(),
+				m_LightsBuffersMemory.data(), m_LightsBuffersMapped.data());
+#if 0
 			#pragma region LIGHTS_BUFFER
 			{
 				auto lightDynAlign = sizeof(LightBufferObject);
@@ -569,6 +446,7 @@ namespace VKR
 				}
 			}
 			#pragma endregion
+#endif
 #if 0
 			#pragma region CUBEMAP_BUFFERS
 			{
@@ -931,12 +809,7 @@ namespace VKR
 		bool VKBackend::BackendShouldClose()
 		{
 			reset_devices();
-			return m_CloseEngine ||
-#ifndef USE_GLFW
-				should_close_window;
-#else
-				glfwWindowShouldClose(m_Window);
-#endif
+			return m_CloseEngine;
 		}
 
 		void VKBackend::PollEvents()
@@ -948,10 +821,10 @@ namespace VKR
 				TranslateMessage(&message);
 				DispatchMessage(&message);
 			}
+				process_input();
 #else
 			glfwPollEvents();
 #endif
-			process_input();
 		}
 		double VKBackend::GetTime() 
 		{
@@ -1052,10 +925,6 @@ namespace VKR
 			if (m_DebugMessenger != nullptr)
 				DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 			vkDestroyInstance(m_Instance, nullptr);
-#ifdef USE_GLFW
-			glfwDestroyWindow(m_Window);
-			glfwTerminate();
-#endif
 		}
     }
 }

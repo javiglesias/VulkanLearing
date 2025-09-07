@@ -1,7 +1,7 @@
 #version 450
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inColor;
+layout (location = 1) in vec2 aTexCoord;
 
 layout(set=0, binding=0) uniform UniformBufferObject
 {
@@ -9,7 +9,7 @@ layout(set=0, binding=0) uniform UniformBufferObject
     mat4 projection;
 } ubo;
 
-layout(set=0, binding=2) uniform DynamicBufferObject
+layout(set=0, binding=1) uniform DynamicBufferObject
 {
     mat4 model;
 	vec4 lightOpt; // 0: Bias
@@ -19,6 +19,7 @@ layout (location = 0) out vec3 outUVW;
 
 void main() 
 {
+	vec4 aaa = vec4(aTexCoord, 0.0, 0.0);
 	outUVW = inPos;
 	// Convert cubemap coordinates into Vulkan coordinate space
 	outUVW.xy *= -1.0;

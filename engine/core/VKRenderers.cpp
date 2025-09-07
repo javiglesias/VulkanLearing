@@ -5,8 +5,9 @@ namespace VKR
 {
     namespace render
     {
-        bool Renderer::Initialize(const char* _vert, const char* _frag,uint32_t _bindCount, VkVertexInputBindingDescription* _descr, uint32_t _attrCount, VkVertexInputAttributeDescription* _attr,  bool _reload )
+        bool Renderer::Initialize(const char* _vert, const char* _frag, uint32_t _bindCount, VkVertexInputBindingDescription* _descr, uint32_t _attrCount, VkVertexInputAttributeDescription* _attr,  bool _reload )
         {
+            fprintf(stderr, "Creating %s renderer\n", _vert);
             if (CreateShaderStages(_vert, _frag, _reload))
             {
                 /// Vertex Input (los datos que l epasamos al shader per-vertex o per-instance)
@@ -523,9 +524,27 @@ namespace VKR
             uboLayoutBinding.descriptorCount = 1;
             uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
             uboLayoutBinding.pImmutableSamplers = nullptr;
-
-            std::array<VkDescriptorSetLayoutBinding, 1> ShaderBindings = {
-                uboLayoutBinding
+            
+            // estructura Dynamic Uniforms
+            VkDescriptorSetLayoutBinding dynOLayoutBinding{};
+            dynOLayoutBinding.binding = 1;
+            dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            dynOLayoutBinding.descriptorCount = 1;
+            dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            dynOLayoutBinding.pImmutableSamplers = nullptr;
+            
+            // Textura Diffuse
+            VkDescriptorSetLayoutBinding sampler2DLayoutBinding{};
+            sampler2DLayoutBinding.binding = 2;
+            sampler2DLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            sampler2DLayoutBinding.descriptorCount = 1;
+            sampler2DLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            sampler2DLayoutBinding.pImmutableSamplers = nullptr;
+            
+            std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {
+                uboLayoutBinding,
+                dynOLayoutBinding,
+                sampler2DLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

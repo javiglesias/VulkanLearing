@@ -33,17 +33,20 @@ int main(int _argc, char** _args)
 		hInstance
 #endif
 	);
-	char sceneModel[64] = {"Sponza\0"};
-	/*if (_argc > 1)
+	char sceneModel[64] = {"BoxVertexColors\0"};
+#ifdef USE_GLFW
+	if (_argc > 1)
 	{
-		fprintf(stdout, "Initializing Scene...%s\n", _args[1]);
+		fprintf(stdout, "Initializing Scene with model -> %s\n", _args[1]);
 		sprintf(sceneModel, "%s\0", _args[1]);
-	}*/
+	}
+#endif
 	mainScene.Init(&backend, sceneModel);
 	auto renderContext = VKR::utils::GetVKContext();
 	currentFrame = backend.GetTime();
 	 _initlializePerfmon(&backend);
-	while (!backend.BackendShouldClose())
+	 bool not_close = true;
+	while (not_close = !backend.BackendShouldClose())
 	{
 		deltaTime = nextFrame - currentFrame;
 		VKR::render::g_ElapsedTime += backend.GetTime();

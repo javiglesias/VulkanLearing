@@ -9,19 +9,19 @@ namespace VKR
     namespace render
     {
         extern std::string g_ConsoleMSG;
-
-		inline auto m_BindingDescription = Vertex3D::getBindingDescription();
-		inline auto m_AttributeDescriptions = Vertex3D::getAttributeDescriptions();
-		inline auto m_DbgBindingDescription = DBG_Vertex3D::getBindingDescription();
-		inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
-		inline auto m_GridBindingDescription = Grid_Vertex3D::getBindingDescription();
-		inline auto m_GridAttributeDescriptions = Grid_Vertex3D::getAttributeDescriptions();
+        
+        inline auto m_BindingDescription = Vertex3D::getBindingDescription();
+        inline auto m_AttributeDescriptions = Vertex3D::getAttributeDescriptions();
+        inline auto m_DbgBindingDescription = DBG_Vertex3D::getBindingDescription();
+        inline auto m_DbgAttributeDescriptions = DBG_Vertex3D::getAttributeDescriptions();
+        inline auto m_GridBindingDescription = Grid_Vertex3D::getBindingDescription();
+        inline auto m_GridAttributeDescriptions = Grid_Vertex3D::getAttributeDescriptions();
         inline auto m_QuadBindingDescription = Vertex2D::getBindingDescription();
         inline auto m_QuadAttributeDescriptions = Vertex2D::getAttributeDescriptions();
-		inline auto m_ShadowBindingDescription = m_BindingDescription;
-		inline auto m_ShadowAttributeDescriptions = m_AttributeDescriptions;
-        inline auto m_CubemapBindingDescription = m_DbgBindingDescription    ;
-        inline auto m_CubemapAttributeDescriptions= m_DbgAttributeDescriptions ;
+        inline auto m_ShadowBindingDescription = m_BindingDescription;
+        inline auto m_ShadowAttributeDescriptions = m_AttributeDescriptions;
+        inline auto m_CubemapBindingDescription = m_DbgBindingDescription;
+        inline auto m_CubemapAttributeDescriptions= m_DbgAttributeDescriptions;
 
         struct Renderer
         {
@@ -61,14 +61,14 @@ namespace VKR
             virtual void CreateDescriptorSetLayout();
             virtual void CreatePipelineLayout();
             virtual void CleanShaderModules();
-			virtual bool CreateShaderStages(const char* _vertShader, const char* _fragShader = "", bool _force_recompile = false);
+            virtual bool CreateShaderStages(const char* _vertShader, const char* _fragShader = "", bool _force_recompile = false);
 
             void CreatePipelineLayoutSetup(VkExtent2D* _CurrentExtent, VkViewport* _Viewport, VkRect2D* _Scissor);
             void CreatePipeline(VkRenderPass _RenderPass);
             bool CreateShaderModule(Shader* _shader, VkShaderModule* _shaderModule);
             void Cleanup();
             Renderer() {}
-        	~Renderer()
+            ~Renderer()
             {
                 Cleanup();
             }
@@ -117,8 +117,8 @@ namespace VKR
                 m_FrontFace = VK_FRONT_FACE_CLOCKWISE;
                 m_CullMode = VK_CULL_MODE_NONE;
                 CreateDescriptorSetLayout();
-                Initialize("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", 1, &m_GridBindingDescription,
-                    m_GridAttributeDescriptions.size(), m_GridAttributeDescriptions.data());
+                Initialize("engine/shaders/Debug.vert", "engine/shaders/Debug.frag", 1, &m_DbgBindingDescription,
+                    m_DbgAttributeDescriptions.size(), m_DbgAttributeDescriptions.data());
             }
         };
 
@@ -181,7 +181,8 @@ namespace VKR
             {
                 m_LogicDevice = _LogicalDevice;
                 CreateDescriptorSetLayout();
-                Initialize("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", 1, &m_GridBindingDescription,m_GridAttributeDescriptions.size(), m_GridAttributeDescriptions.data());
+                Initialize("engine/shaders/Quad.vert", "engine/shaders/Quad.frag", 1, &m_QuadBindingDescription,
+                    m_QuadAttributeDescriptions.size(), m_QuadAttributeDescriptions.data());
             }
         };
     }

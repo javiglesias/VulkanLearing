@@ -4,6 +4,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
+#include <Windows.h>
 
 struct GLFWwindow;
 
@@ -22,14 +23,20 @@ namespace VKR
 			VkDescriptorPool m_UIDescriptorPool;
 			std::vector<char*> m_Models;
 		public:
-			Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
+			Editor(
+#ifndef USE_GLFW
+				HWND _Window,
+#else
+			GLFWwindow* _Window,
+#endif
+				VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount);
 			void Cleanup();
 			void Shutdown();
 			~Editor();
 			void Loop(Scene* _mainScene, VKBackend* _backend);
 			void Draw(VkCommandBuffer _commandBuffer);
 		};
-		//static Editor* g_editor;
+		static Editor* g_editor;
 	}
 }
 #endif

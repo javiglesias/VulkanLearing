@@ -43,7 +43,7 @@ namespace VKR
         inline bool m_SceneDirty = true;
         inline bool m_UIDirty = true;
         inline bool g_DrawCubemap = true;
-        inline bool g_ShadowPassEnabled = false;
+        inline bool g_ShadowPassEnabled = true;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
         inline float zFar= 1000001.f;
         inline float zNear = 0.1f;
@@ -61,8 +61,11 @@ namespace VKR
 		inline char* g_CommandLineHistory;
 		inline glm::mat4 g_ProjectionMatrix {1.f};
 		inline glm::mat4 g_ViewMatrix {1.f};
-
+#ifdef USE_GLFW
         inline GLFWwindow* m_Window;
+#else
+        inline HWND hwnd;
+#endif
         inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
         inline glm::vec3 m_PointLightPos = glm::vec3(0.f, 3.f, 0.f);
@@ -90,7 +93,6 @@ namespace VKR
         {
             //Variables
         public:
-            HWND hwnd;
             bool m_CubemapRendering = false;
             bool m_RenderInitialized = false;
             uint32_t m_FrameToPresent;
@@ -133,6 +135,10 @@ namespace VKR
             std::vector<VkBuffer> m_LightsBuffers;
             std::vector<VkDeviceMemory> m_LightsBuffersMemory;
             std::vector<void*> m_LightsBuffersMapped;
+
+            std::vector<VkBuffer> m_QuadBuffers;
+            std::vector<VkDeviceMemory> m_QuadBuffersMemory;
+            std::vector<void*> m_QuadBuffersMapped;
             
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;
@@ -156,6 +162,7 @@ namespace VKR
 #endif
             );
             void GenerateDBGBuffers();
+            void GenerateBuffer(size_t _sizeDynAl, VkBuffer* _buffers, VkDeviceMemory* _buffsMemory, void** _mapped);
             void GenerateBuffers();
             void InitializeVulkan(VkApplicationInfo* _appInfo);
             void Loop();

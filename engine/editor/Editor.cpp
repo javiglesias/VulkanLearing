@@ -1,8 +1,8 @@
 #include "Editor.h"
+#include "Editor.h"
 #include "EditorModels.h"
 #include "../video/VKRUtils.h"
 #include "../filesystem/ResourceManager.h"
-#include "../video/VKBackend.h"
 #include "../core/VKRScene.h"
 #include <cstdio>
 
@@ -33,13 +33,17 @@ namespace VKR
 			return 0;
 		}
 
+#ifndef USE_GLFW
+		Editor::Editor(HWND _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
+#else
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
+#endif
 		{
 			auto renderContext = utils::GetVKContext();
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 #ifndef USE_GLFW
-			;
+			ImGui_ImplWin32_Init(_Window);
 #else
 			ImGui_ImplGlfw_InitForVulkan(_Window, true);
 #endif
@@ -95,6 +99,7 @@ namespace VKR
 			// }
 			// closedir(directory);
 		}
+
 		void Editor::Cleanup()
 		{
 			printf("Editor Cleanup\n");
@@ -102,7 +107,7 @@ namespace VKR
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			ImGui_ImplVulkan_Shutdown();
 #ifndef USE_GLFW
-			;
+			ImGui_ImplWin32_Shutdown();
 #else
 			ImGui_ImplGlfw_Shutdown();
 #endif
@@ -114,6 +119,7 @@ namespace VKR
 		{
 			printf("Editor shutdown\n");
 		}
+
 		Editor::~Editor()
 		{
 		}
@@ -123,7 +129,7 @@ namespace VKR
 		{
 			ImGui_ImplVulkan_NewFrame();
 #ifndef USE_GLFW
-			;
+			ImGui_ImplWin32_NewFrame();
 #else
 			ImGui_ImplGlfw_NewFrame();
 #endif
@@ -142,10 +148,10 @@ namespace VKR
 			ImGui::Begin("Tools");
 			{
 				// Camera
-				ImGui::SliderFloat("cam Speed", &render::m_CameraSpeed, 0.1f, 100.f);
+				/*ImGui::SliderFloat("cam Speed", &render::m_CameraSpeed, 0.1f, 100.f);
 				ImGui::SliderFloat("FOV", &render::m_CameraFOV, 40.f, 100.f);
 				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", render::g_CameraPos.x, render::g_CameraPos.y, render::g_CameraPos.z);
-				ImGui::DragFloat("Rotation", &render::g_Rotation, 1.f, 0.f, 360.f);
+				ImGui::DragFloat("Rotation", &render::g_Rotation, 1.f, 0.f, 360.f);*/
 
 				if (ImGui::Button("Reload shaders"))
 				{
