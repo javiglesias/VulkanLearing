@@ -7,6 +7,7 @@
 #include <Windows.h>
 #else
 #include <cstring>
+#include <signal.h>
 #endif
 #include <string>
 #include <cstdio>
@@ -20,7 +21,11 @@ static void VK_ASSERT(bool _check)
 {
 	if (_check)
 	{
+		#ifdef _WIN32
 		__debugbreak();
+		#else
+		raise(SIGTRAP);
+		#endif
 		exit(-69);
 	}
 }

@@ -27,7 +27,11 @@ namespace VKR
 			vma_image_info.requiredFlags = _memProperties;
 			VkResult result = vmaCreateImage(vma_allocator, _ImageCreateInfo, &vma_image_info, Image_, Allocation_, nullptr);
 			if (result != VK_SUCCESS)
+				#ifdef _WIN32
 				__debugbreak();
+                #else
+                raise(SIGTRAP);
+                #endif
 		}
 
 		void VMA_BindTextureMemory(VkImage _image, VmaAllocation _allocation)

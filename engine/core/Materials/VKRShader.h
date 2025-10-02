@@ -2,8 +2,12 @@
 #define _C_SHADER
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <vulkan/vulkan_core.h>
+#ifdef _UNIX
+	#include <signal.h>
+#endif
 
 #define MAX_SHADER 12
 namespace VKR
@@ -38,7 +42,11 @@ namespace VKR
 			ShaderList[currentShaders] = nouvo;
 			++currentShaders;
 			if (currentShaders >= MAX_SHADER)
+			#ifdef _WIN32
 				__debugbreak();
+			#else
+				raise(SIGTRAP);
+			#endif
 		}
 		static uint8_t ShaderHashId(VKR::render::Shader* _shader)
 		{

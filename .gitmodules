@@ -9,13 +9,19 @@
 	url = https://github.com/nothings/stb
 [submodule "dependencies/imgui"]
 	path = dependencies/imgui
-	url = https://github.com/ocornut/imgui
+	url = git@github.com:ocornut/imgui.git
 [submodule "dependencies/cgltf"]
 	path = dependencies/cgltf
-	url = https://github.com/jkuhlmann/cgltf
+	url = git@github.com:jkuhlmann/cgltf.git
 [submodule "dependencies/glslang"]
 	path = dependencies/glslang
-	url = https://github.com/KhronosGroup/glslang
+	url = git@github.com:KhronosGroup/glslang.git
 [submodule "dependencies/vma"]
 	path = dependencies/vma
 	url = git@github.com:GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "dependencies/glm"]
+	path = dependencies/glm
+	url = git@github.com:g-truc/glm.git
+[submodule "dependencies/--force"]
+	path = dependencies/--force
+	url = git@github.com:KhronosGroup/glslang.git

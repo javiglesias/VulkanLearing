@@ -2,6 +2,7 @@
 #include "DebugModels.h"
 #include "VKRModel.h"
 #include "../Materials/VKRTexture.h"
+#include <cstring>
 
 namespace VKR
 {

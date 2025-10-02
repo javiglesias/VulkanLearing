@@ -25,13 +25,13 @@ namespace VKR
 			VkShaderModule shaderModule;
 			VkShaderModuleCreateInfo shaderModuleCreateInfo{};
 			shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-#ifdef WIN32
+// #ifdef WIN32
 			shaderModuleCreateInfo.codeSize = m_SpirvSrc.size();
 			shaderModuleCreateInfo.pCode = m_SpirvSrc.data();
-#else
-			shaderModuleCreateInfo.codeSize = m_CompiledSource.size();
-			shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(m_CompiledSource.data());
-#endif
+// #else
+// 			shaderModuleCreateInfo.codeSize = m_CompiledSource.size();
+// 			shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(m_CompiledSource.data());
+// #endif
 			if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, &shaderModule)
 				!= VK_SUCCESS)
 				#ifdef WIN32

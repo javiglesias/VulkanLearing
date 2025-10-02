@@ -1,5 +1,6 @@
 #include "VKRenderable.h"
 #include "../core/Materials/VKRTexture.h"
+#include <cstring>
 namespace VKR
 {
 	namespace render

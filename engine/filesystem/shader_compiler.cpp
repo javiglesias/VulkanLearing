@@ -4,8 +4,8 @@
 #include "glslang/Public/ResourceLimits.h"
 #include "glslang/SPIRV/GlslangToSpv.h"
 #ifndef WIN32
-#include "../../../dependencies/glslang/glslang/Public/ResourceLimits.h"
-#include "../../../dependencies/glslang/glslang/Public/ShaderLang.h"
+#include <glslang/Public/ResourceLimits.h>
+#include <glslang/Public/ShaderLang.h>
 #endif
 #include <fstream>
 #include <vector>
@@ -19,15 +19,18 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 	time_t _time = time(NULL);
 	char raw_code_file[128];
 	char spv_code_file[128];
+	#if 0
 	struct stat file_stat_raw;
 	struct stat file_stat_spv;
-	int need_compilation = 0;
+	#endif
+	int need_compilation = 1;
 	std::vector<uint32_t> intermediate_data;
 	intermediate_data.clear();
 	memset(raw_code_file, 0, 128);
 	memset(spv_code_file, 0, 128);
 	sprintf(raw_code_file, "%s", _filename);
 	sprintf(spv_code_file, "%s.spv", raw_code_file);
+	#if 0
 	stat(raw_code_file, &file_stat_raw);
 	stat(spv_code_file, &file_stat_spv);
 
@@ -39,6 +42,7 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 	}
 	else
 		shader_file = fopen(spv_code_file, "rb");
+	#endif
 	time_t _start_timer;
 	time_t _end_timer;
 	if (shader_file)

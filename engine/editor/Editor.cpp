@@ -71,7 +71,7 @@ namespace VKR
 			init_info.MinImageCount = _MinImageCount;
 			init_info.ImageCount = _ImageCount;
 			init_info.CheckVkResultFn = nullptr;
-			init_info.RenderPass = renderContext.m_RenderPass->pass;
+			// init_info.RenderPass = renderContext.m_RenderPass->pass;
 			// Imgui commit: f80e65a406885beedf68856057b278343d5c1407 -> Backends:,Examples: Vulkan: moved RenderPass parameter from ImGui_ImplVulkan_Init() function to ImGui_ImplVulkan_InitInfo structure. (#7308)
 			ImGui_ImplVulkan_Init(&init_info);
 			// ImGui_ImplVulkan_Init(&init_info, renderContext.m_RenderPass->m_Pass);

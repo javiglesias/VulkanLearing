@@ -3,7 +3,7 @@
 #include "glslang/Public/ShaderLang.h"
 #include "../core/Materials/VKRTexture.h"
 #include "VKRUtils.h"
-
+#include <cstring>
 #include <vulkan/vulkan.h>
 
 #define GLFW_INCLUDE_NONE
@@ -1075,7 +1075,7 @@ namespace VKR
 		{
 			for (auto& tex : m_TexturesCache)
 			{
-				if (strcmpi(_path, tex->m_Path) == 0)
+				if (strcmp(_path, tex->m_Path) == 0)
 					return tex;
 			}
 			auto tex = new Texture(_path);
