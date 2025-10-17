@@ -20,7 +20,7 @@ namespace VKR
 			R_Model(const char* _modelName);
 			
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);
-			std::vector<VKRenderable*> m_Meshes;
+			std::vector<VKRenderable3D*> m_Meshes;
 			std::unordered_map<uint32_t, R_Material*> m_Materials;
 			char m_Path[64];
 			char m_Name[64];

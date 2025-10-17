@@ -105,7 +105,7 @@ static region* alloc_region_on_mem(arena* _ar, size_t _capacity)
     auto mem_end = ((size_t)_ar->mem_begin + _ar->capacity);
     auto mem_max = ((size_t)_ar->mem_current) + sizeof(region) + _capacity;
     if (mem_end < mem_max)
-        __debugbreak();
+        exit(999);
     _ar->mem_current = (char*)_ar->mem_current + sizeof(region) + _capacity;
     region* new_region = static_cast<region*>(mem);
     new_region->capacity = _capacity;
@@ -153,7 +153,7 @@ m_delete(void* _ptr)
 	{
 		if (heap_track[i].mem_addr == _ptr)
 		{
-			delete _ptr;
+			_ptr = nullptr;
 		}
 	}
 }

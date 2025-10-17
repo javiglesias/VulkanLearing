@@ -1,10 +1,7 @@
 #include "VKRTexture.h"
 #include "../../video/VKRUtils.h"
 #include "../../perfmon/Custom.h"
-
-#ifndef WIN32
 #include <signal.h>
-#endif
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../../dependencies/stb/stb_image.h"
@@ -42,11 +39,11 @@ namespace VKR
 			vk_image.extent = VkExtent3D(tWidth, tHeight, 1);
 			if (!pixels)
 			{
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
+#ifdef _MSVC
+				__debugbreak();
+#else
+				raise(SIGTRAP);
+#endif
 				exit(-666);
 			}
 			PERF_END("LOAD_TEXTURE")

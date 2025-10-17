@@ -19,7 +19,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 int main(int _argc, char** _args)
 {
 #endif
-	init_arena(&generic_arena, 2000000000);
+	init_arena(&generic_arena, 20000000);
 	auto backend = VKR::render::GetVKBackend();
 	auto mainScene = VKR::render::GetVKMainScene();
 	int currentLocalFrame = 0;
@@ -53,7 +53,7 @@ int main(int _argc, char** _args)
 		currentFrame = nextFrame;
 		VKR::render::g_FrameTime = deltaTime;
 		mainScene.DrawScene(&backend, currentLocalFrame);
-		currentLocalFrame = (currentLocalFrame + 1) % VKR::render::FRAMES_IN_FLIGHT;
+		currentLocalFrame = (currentLocalFrame + 1) % FRAMES_IN_FLIGHT;
 		++VKR::render::g_Frames;
 		nextFrame = backend.GetTime();
 	}

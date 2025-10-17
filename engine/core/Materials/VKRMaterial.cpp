@@ -4,9 +4,8 @@
 #include "../../video/VKBackend.h"
 #include "../../video/VKRUtils.h"
 #include "VKRTexture.h"
-#ifndef WIN32
 #include <signal.h>
-#endif
+
 namespace VKR
 {
 	namespace render
@@ -25,7 +24,7 @@ namespace VKR
 			ShaderBindings.push_back(binding);
 		}
 
-		void sMaterialPipeline::_buildPipeline()
+		void sMaterialPipeline::_buildPipeline(bool _Two_D)
 		{
 			VkDevice m_LogicDevice = utils::GetVKContext().m_LogicDevice;
 			VkPipelineShaderStageCreateInfo shaderStages[2] = {};
@@ -55,10 +54,10 @@ namespace VKR
 			VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
 			Shader* vertShader;
-			Shader* vert_finded = find_shader("engine/shaders/Standard.vert");
+			Shader* vert_finded = find_shader(vert_shader);
 			if(!vert_finded)
 			{
-				vertShader = new Shader("engine/shaders/Standard.vert", 0);
+				vertShader = new Shader(vert_shader, 0);
 				vertShader->LoadShader();
 				add_shader_to_list(vertShader);
 			}
@@ -70,10 +69,10 @@ namespace VKR
 			shaderStages[0] = vertShaderStageInfo;
 			
 			Shader* fragShader;
-			Shader* frag_finded = find_shader("engine/shaders/Standard.frag");
+			Shader* frag_finded = find_shader(frag_shader);
 			if(!frag_finded)
 			{
-				fragShader = new Shader("engine/shaders/Standard.frag", 4);
+				fragShader = new Shader(frag_shader, 4);
 				fragShader->LoadShader();
 				add_shader_to_list(fragShader);
 			}
@@ -85,10 +84,10 @@ namespace VKR
 			shaderStages[1] = fragShaderStageInfo;
 
 			Shader* computeShader;
-			Shader* comp_finded = find_shader("engine/shaders/Standard.comp");
+			Shader* comp_finded = find_shader(comp_shader);
 			if (!comp_finded)
 			{
-				computeShader = new Shader("engine/shaders/Standard.comp", 5);
+				computeShader = new Shader(comp_shader, 5);
 				computeShader->LoadShader();
 				add_shader_to_list(computeShader);
 			}
@@ -110,10 +109,20 @@ namespace VKR
 
 			/// Vertex Input (los datos que le pasamos al shader per-vertex o per-instance)
 			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vertexInputInfo.vertexBindingDescriptionCount = 1;
-			vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_AttributeDescriptions.size());
-			vertexInputInfo.pVertexBindingDescriptions = &m_BindingDescription;
-			vertexInputInfo.pVertexAttributeDescriptions = m_AttributeDescriptions.data();
+			if (!_Two_D)
+			{
+				vertexInputInfo.vertexBindingDescriptionCount = 1;
+				vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_AttributeDescriptions.size());
+				vertexInputInfo.pVertexBindingDescriptions = &m_BindingDescription;
+				vertexInputInfo.pVertexAttributeDescriptions = m_AttributeDescriptions.data();
+			}
+			else
+			{
+				vertexInputInfo.vertexBindingDescriptionCount = 1;
+				vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(m_QuadAttributeDescriptions.size());
+				vertexInputInfo.pVertexBindingDescriptions = &m_QuadBindingDescription;
+				vertexInputInfo.pVertexAttributeDescriptions = m_QuadAttributeDescriptions.data();
+			}
 
 			/// Definimos la geometria que vamos a pintar
 			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -166,22 +175,28 @@ namespace VKR
 			depthStencil.stencilTestEnable = VK_FALSE;
 			depthStencil.front = {};
 			depthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
-
-			// estructura UBO
-			_addBind(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-			// Texturas
-			_addBind(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, MAX_TEXTURES);
-			// estructura Dynamic Uniforms
-			_addBind(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT);
-			// estructura Directional Light
-			_addBind(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
-			// estructura Dynamic Uniforms
-			_addBind(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
-			// estructura Light Uniforms
-			_addBind(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
-			// Sombra
-			_addBind(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-
+			if (!_Two_D)
+			{
+				// estructura UBO
+				_addBind(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+				// Texturas
+				_addBind(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, MAX_TEXTURES);
+				// estructura Dynamic Uniforms
+				_addBind(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT);
+				// estructura Directional Light
+				_addBind(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
+				// estructura Dynamic Uniforms
+				_addBind(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT);
+				// estructura Light Uniforms
+				_addBind(5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
+				// Sombra
+				_addBind(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+			}
+			else
+			{
+				_addBind(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+				_addBind(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT);\
+			}
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layoutInfo.bindingCount = static_cast<uint32_t>(ShaderBindings.size());
@@ -197,11 +212,11 @@ namespace VKR
 			pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 			pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 			if (vkCreatePipelineLayout(m_LogicDevice, &pipelineLayoutCreateInfo, nullptr, &layout) != VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
+#ifdef _MSVC
+				__debugbreak();
+#else
 					raise(SIGTRAP);
-				#endif
+#endif
 			// Creamos la Pipeline para pintar objs
 			VkGraphicsPipelineCreateInfo pipelineInfoCreateInfo{};
 			pipelineInfoCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -223,11 +238,11 @@ namespace VKR
 
 			if (vkCreateGraphicsPipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &pipelineInfoCreateInfo,
 				nullptr, &pipeline) != VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
+#ifdef _MSVC
+				__debugbreak();
+#else
 					raise(SIGTRAP);
-				#endif
+#endif
 
 			// COMPUTE PIPELINE
 			VkDescriptorSetLayoutBinding computeLayoutBinding{};
@@ -248,11 +263,11 @@ namespace VKR
 			compute_pipelineLayout.pSetLayouts = &compute_descriptorSetLayout;
 			if (vkCreatePipelineLayout(m_LogicDevice, &compute_pipelineLayout, nullptr, &compute_layout) 
 					!= VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
+#ifdef _MSVC
+				__debugbreak();
+#else
 					raise(SIGTRAP);
-				#endif
+#endif
 			VkComputePipelineCreateInfo compute_pipeInfo {};
 			compute_pipeInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 			compute_pipeInfo.layout = compute_layout;
@@ -260,11 +275,11 @@ namespace VKR
 			compute_pipeInfo.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 			if (vkCreateComputePipelines(m_LogicDevice, VK_NULL_HANDLE, 1, &compute_pipeInfo, 
 					nullptr, &compute)  != VK_SUCCESS)
-				#ifdef WIN32
-					__debugbreak();
-				#else
+#ifdef _MSVC
+				__debugbreak();
+#else
 					raise(SIGTRAP);
-				#endif
+#endif
 		}
 
 		void R_Material::PrepareMaterialToDraw(VKBackend* _backend)
@@ -492,6 +507,169 @@ namespace VKR
 				textures[t]->CleanTextureData(_LogicDevice);
 				textures[t] = nullptr;
 			}
+		}
+
+		R_Material2D::R_Material2D()
+		{
+			fprintf(stderr, "Material DUMMY\n");
+			material = new render::MaterialInstance();
+			strcpy(material->pipeline.vert_shader, "engine/shaders/Quad.vert");
+			strcpy(material->pipeline.frag_shader, "engine/shaders/Quad.frag");
+			material->pipeline._buildPipeline(true);
+			texture = new Texture();
+			texture->init("");
+		}
+		void R_Material2D::CreateDescriptor(VkDevice _LogicDevice)
+		{
+			std::vector<VkDescriptorPoolSize> descPoolSize;
+			// UBO
+			VkDescriptorPoolSize temp;
+			temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			descPoolSize.push_back(temp);
+			temp.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			descPoolSize.push_back(temp);
+			// Textura
+			temp.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			temp.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			descPoolSize.push_back(temp);
+
+
+			VkDescriptorPoolCreateInfo descPoolInfo{};
+			VkDescriptorSetLayout descriptorLayouts[2];
+			descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			descPoolInfo.poolSizeCount = static_cast<uint32_t>(descPoolSize.size());
+			descPoolInfo.pPoolSizes = descPoolSize.data();
+			descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
+			if (vkCreateDescriptorPool(_LogicDevice, &descPoolInfo, nullptr, &material->descriptorPool) != VK_SUCCESS)
+				exit(-66);
+			descriptorLayouts[0] = material->pipeline.descriptorSetLayout;
+			descriptorLayouts[1] = material->pipeline.descriptorSetLayout;
+			VkDescriptorSetAllocateInfo descAllocInfo{};
+			descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descAllocInfo.descriptorPool = material->descriptorPool;
+			descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
+			descAllocInfo.pSetLayouts = descriptorLayouts;
+			material->materialSets.resize(FRAMES_IN_FLIGHT);
+			if (vkAllocateDescriptorSets(_LogicDevice, &descAllocInfo, material->materialSets.data()) != VK_SUCCESS)
+				exit(-67);
+
+
+#pragma region COMPUTE_DESC
+			std::vector<VkDescriptorPoolSize> compute_descPoolSize;
+			VkDescriptorPoolSize compute_descriptor_poolSize;
+			compute_descriptor_poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			compute_descriptor_poolSize.descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
+			compute_descPoolSize.push_back(compute_descriptor_poolSize);
+
+			VkDescriptorPoolCreateInfo compute_descPoolInfo{};
+			VkDescriptorSetLayout compute_descriptorLayouts[2];
+			compute_descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			compute_descPoolInfo.poolSizeCount = static_cast<uint32_t>(compute_descPoolSize.size());
+			compute_descPoolInfo.pPoolSizes = compute_descPoolSize.data();
+			compute_descPoolInfo.maxSets = FRAMES_IN_FLIGHT;
+			if (vkCreateDescriptorPool(_LogicDevice, &compute_descPoolInfo, nullptr, &material->compute_descriptor_pool) != VK_SUCCESS)
+				exit(-66);
+			compute_descriptorLayouts[0] = material->pipeline.compute_descriptorSetLayout;
+			compute_descriptorLayouts[1] = material->pipeline.compute_descriptorSetLayout;
+			VkDescriptorSetAllocateInfo compute_descAllocInfo{};
+			compute_descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			compute_descAllocInfo.descriptorPool = material->compute_descriptor_pool;
+			compute_descAllocInfo.descriptorSetCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT); // SwapchainImages.size()
+			compute_descAllocInfo.pSetLayouts = compute_descriptorLayouts;
+			material->compute_descriptors_sets.resize(FRAMES_IN_FLIGHT);
+			if (vkAllocateDescriptorSets(_LogicDevice, &compute_descAllocInfo, material->compute_descriptors_sets.data()) != VK_SUCCESS)
+				exit(-67);
+#pragma endregion
+		}
+
+		void R_Material2D::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers,
+			std::vector<VkBuffer> _ComputeBuffers)
+		{
+			// Escribimos la info de los descriptors
+			for (int8_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				PrepareDescriptorWrite(i, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _UniformBuffers[i], sizeof(DebugUniformBufferObject));
+				PrepareDescriptorWrite(i, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _UniformBuffers[i], sizeof(DebugUniformBufferObject));
+				// Textura
+				/*PrepareDescriptorTexture(i, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+					, texture->vk_image.view, texture->m_Sampler);*/
+				// Dynamic
+				PrepareDescriptorWrite(i, 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, _DynamicBuffers[i], sizeof(DebugUniformBufferObject));
+#if 0
+				// Compute
+				VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();
+				bufferInfo->buffer = _ComputeBuffers[i];
+				bufferInfo->offset = 0;
+				bufferInfo->range = sizeof(GPU::Particle); // VK_WHOLE
+
+				VkWriteDescriptorSet descriptorsWrite{};
+				descriptorsWrite.pBufferInfo = bufferInfo;
+				descriptorsWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorsWrite.dstSet = material->compute_descriptors_sets[i];
+				descriptorsWrite.dstBinding = 0;
+				descriptorsWrite.dstArrayElement = 0;
+				descriptorsWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+				descriptorsWrite.descriptorCount = 1;
+				descriptorsWrite.pTexelBufferView = nullptr;
+				m_DescriptorsWrite.push_back(descriptorsWrite);
+				/*PrepareDescriptorWrite(i, 6, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, _ComputeBuffers[i], sizeof(GPU::Particle));*/
+#endif
+				vkUpdateDescriptorSets(_LogicDevice, m_DescriptorsWrite.size(), m_DescriptorsWrite.data(), 0, nullptr);
+			}
+		}
+
+		void R_Material2D::Cleanup(VkDevice _LogicDevice)
+		{
+			material->Cleanup(_LogicDevice);
+			// Delete Material things
+			texture->CleanTextureData(_LogicDevice);
+			texture = nullptr;
+		}
+
+		void R_Material2D::PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind,
+			VkDescriptorType _type, VkBuffer _buffer, VkDeviceSize _range, uint32_t _arrayElement,
+			VkDeviceSize _offset, uint32_t _count)
+		{
+			VkDescriptorBufferInfo* bufferInfo = new VkDescriptorBufferInfo();;
+			bufferInfo->buffer = _buffer;
+			bufferInfo->offset = _offset;
+			bufferInfo->range = _range; // VK_WHOLE
+
+			VkWriteDescriptorSet descriptorsWrite{};
+			descriptorsWrite.pBufferInfo = bufferInfo;
+			descriptorsWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorsWrite.dstSet = material->materialSets[_setDst];
+			descriptorsWrite.dstBinding = _bind;
+			descriptorsWrite.dstArrayElement = _arrayElement;
+			descriptorsWrite.descriptorType = _type;
+			descriptorsWrite.descriptorCount = _count;
+			descriptorsWrite.pTexelBufferView = nullptr;
+			m_DescriptorsWrite.push_back(descriptorsWrite);
+		}
+
+		void R_Material2D::PrepareDescriptorTexture(int16_t _setDst, uint32_t _bind, VkDescriptorType _type,
+			VkImageView _imageView, VkSampler _sampler, uint32_t _arrayElement, uint32_t _count)
+		{
+			VkDescriptorImageInfo* Textureimage = new VkDescriptorImageInfo();
+			Textureimage->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			Textureimage->imageView = _imageView;
+			if (_sampler != nullptr)
+				Textureimage->sampler = _sampler;
+			else
+				printf("Invalid Sampler for frame\n");
+
+			VkWriteDescriptorSet descriptorsWrite{};
+			descriptorsWrite.pImageInfo = Textureimage;
+			descriptorsWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorsWrite.dstSet = material->materialSets[_setDst];
+			descriptorsWrite.dstBinding = _bind;
+			descriptorsWrite.dstArrayElement = _arrayElement;
+			descriptorsWrite.descriptorType = _type;
+			descriptorsWrite.descriptorCount = _count;
+			descriptorsWrite.pTexelBufferView = nullptr;
+			m_DescriptorsWrite.push_back(descriptorsWrite);
 		}
 
 		void MaterialInstance::Cleanup(VkDevice _LogicDevice)

@@ -1,6 +1,6 @@
-#version 450
+#version 460
 
-layout (location = 0) in vec3 inPos;
+layout (location = 0) in vec2 inPos;
 layout (location = 1) in vec2 aTexCoord;
 
 layout(set=0, binding=0) uniform UniformBufferObject
@@ -15,16 +15,7 @@ layout(set=0, binding=1) uniform DynamicBufferObject
 	vec4 lightOpt; // 0: Bias
 } dynO;
 
-layout (location = 0) out vec3 outUVW;
-
 void main() 
 {
-	vec4 aaa = vec4(aTexCoord, 0.0, 0.0);
-	outUVW = inPos;
-	// Convert cubemap coordinates into Vulkan coordinate space
-	outUVW.xy *= -1.0;
-	// Remove translation from view matrix
-	mat4 viewMat = mat4(mat3(dynO.model));
-	gl_Position = ubo.projection * viewMat * vec4(inPos.xyz, 1.0);
-	 //gl_Position = ubo.projection * ubo.view * dynO.model * vec4(inPos, 1.0);
+	gl_Position = vec4(inPos.xy, 0.0, 1.0);
 }

@@ -8,6 +8,7 @@
 #include <thread>
 #include <Windows.h>
 #include <unordered_map>
+#define FRAMES_IN_FLIGHT 2
 struct GLFWwindow;
 class Texture;
 
@@ -139,6 +140,10 @@ namespace VKR
             std::vector<VkBuffer> m_QuadBuffers;
             std::vector<VkDeviceMemory> m_QuadBuffersMemory;
             std::vector<void*> m_QuadBuffersMapped;
+
+            std::vector<VkBuffer> m_QuadDynBuffers;
+            std::vector<VkDeviceMemory> m_QuadDynBuffersMemory;
+            std::vector<void*> m_QuadDynBuffersMapped;
             
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;

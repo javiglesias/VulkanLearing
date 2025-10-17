@@ -154,7 +154,30 @@ namespace VKR
 		}
 		void Scene::DrawQuads(VKBackend* _backend, int _CurrentFrame)
 		{
-
+			VKRenderable2D quad;
+			Vertex2D v = { .m_Pos = glm::vec2{0,1}, .m_TexCoord = glm::vec2{1,1} };
+			quad.m_Vertices = { v };
+			auto renderContext = utils::GetVKContext();
+			auto dynamicAlignment = sizeof(DynamicBufferObject);
+			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
+			{
+				dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			}
+			std::array<uint32_t, 5> dynamicOffset = { 0 * static_cast<uint32_t>(dynamicAlignment) };
+			DebugUniformBufferObject dubo{};
+			dubo.view = dubo.projection = glm::mat4{ 1.f };
+			quad.material->CreateDescriptor(renderContext.m_LogicDevice);
+			memcpy(_backend->m_QuadBuffersMapped[_CurrentFrame], &dubo, sizeof(dubo));
+			quad.material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_QuadBuffers, _backend->m_QuadBuffers, _backend->m_QuadBuffers);
+			vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_QuadRender->m_PipelineLayout,
+				0, 1, &quad.material->material->materialSets[_CurrentFrame], 1, nullptr);
+			vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], (uint32_t)quad.m_Vertices.size(), 1, 0, 0);
+			/*VkMappedMemoryRange mappedMemoryRange{};
+			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			mappedMemoryRange.memory = m_QuadRender->m_DynamicBuffersMemory[_CurrentFrame];
+			mappedMemoryRange.size = sizeof(dynO);
+			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);*/
+			// draw todos los vertices
 		}
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
@@ -188,8 +211,8 @@ namespace VKR
 				vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, 2);
 
 			auto renderContext = utils::GetVKContext();
-			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
+			/*vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);*/
 			// GeometryPass(_backend, _CurrentFrame);
 			if (m_SceneDirty)
 			{
@@ -293,7 +316,7 @@ namespace VKR
 				PrepareQuads(_backend);
 				m_UIDirty = false;
 			}
-			DrawQuads(_backend, _CurrentFrame);
+			//DrawQuads(_backend, _CurrentFrame);
 #pragma endregion
 			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
 

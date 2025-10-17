@@ -2,7 +2,7 @@
 #define _C_UTILS
 #include "../core/VKRRenderPass.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #else
 #include <cstring>
@@ -19,7 +19,6 @@ static void VK_ASSERT(bool _check)
 {
 	if (_check)
 	{
-		__debugbreak();
 		exit(-69);
 	}
 }

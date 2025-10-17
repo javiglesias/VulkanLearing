@@ -3,7 +3,7 @@
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 #endif
-
+#include <signal.h>
 
 namespace VKR
 {
@@ -33,7 +33,11 @@ namespace VKR
 			vma_image_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 			VkResult result = vmaCreateImage(vma_allocator, _ImageCreateInfo, &vma_image_info, Image_, Allocation_, nullptr);
 			if (result != VK_SUCCESS)
+#ifdef _MSVC
 				__debugbreak();
+#else
+					raise(SIGTRAP);
+#endif
 		}
 
 		void VMA_BindTextureMemory(VkImage _image, VmaAllocation _allocation)

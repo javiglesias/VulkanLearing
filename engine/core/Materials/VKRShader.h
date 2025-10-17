@@ -5,6 +5,7 @@
 #include <cstring>
 #include <vector>
 #include <vulkan/vulkan_core.h>
+#include <signal.h>
 
 #define MAX_SHADER 12
 namespace VKR
@@ -25,7 +26,7 @@ namespace VKR
 			uint8_t id;
 			Shader* shader;
 		};
-		static ShaderItem* ShaderList[MAX_SHADER];
+		inline ShaderItem* ShaderList[MAX_SHADER];
 		inline int currentShaders = 0;
 		static void clean_shader_list()
 		{
@@ -33,13 +34,15 @@ namespace VKR
 		}
 		static void add_shader_to_list(Shader* _shader)
 		{
+			return;
 			ShaderItem* nouvo = new ShaderItem();
 			nouvo->id = (uint8_t)currentShaders;
 			nouvo->shader = _shader;
 			ShaderList[currentShaders] = nouvo;
 			++currentShaders;
 			if (currentShaders >= MAX_SHADER)
-				__debugbreak();
+				exit(-10);
+
 		}
 		static uint8_t ShaderHashId(VKR::render::Shader* _shader)
 		{
@@ -47,6 +50,7 @@ namespace VKR
 		}
 		static Shader* find_shader(const char* _filename)
 		{
+			return nullptr;
 			for (size_t i = 0; i < currentShaders; i++)
 			{
 				if (strcmp(ShaderList[i]->shader->m_Filename.c_str(), _filename) == 0)

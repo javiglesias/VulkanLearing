@@ -1,5 +1,5 @@
 #include "VKRenderers.h"
-
+#include <signal.h>
 
 namespace VKR
 {
@@ -195,17 +195,16 @@ namespace VKR
         {
             VkShaderModuleCreateInfo shaderModuleCreateInfo{};
             shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            #ifdef WIN32
-	            shaderModuleCreateInfo.codeSize = _shader->m_SpirvSrc.size();
-	            shaderModuleCreateInfo.pCode = _shader->m_SpirvSrc.data();
-            #else
-                shaderModuleCreateInfo.codeSize = spvCompiled.size();
-                shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvCompiled.data());
-            #endif
+	        shaderModuleCreateInfo.codeSize = _shader->m_SpirvSrc.size();
+	        shaderModuleCreateInfo.pCode = _shader->m_SpirvSrc.data();
             if (vkCreateShaderModule(m_LogicDevice, &shaderModuleCreateInfo, nullptr, _shaderModule)
                 != VK_SUCCESS)
             {
-                __debugbreak();
+#ifdef _MSVC
+            	__debugbreak();
+#else
+            	raise(SIGTRAP);
+#endif
             	return false;
             }
             return true;
@@ -553,5 +552,5 @@ namespace VKR
             if (vkCreateDescriptorSetLayout(m_LogicDevice, &layoutInfo, nullptr, &m_DescSetLayout) != VK_SUCCESS)
                 exit(-99);
         }
-}
+    }
 }

@@ -7,7 +7,7 @@
 #include "../../Camera.h"
 #include <cstddef>
 #include <cstring>
-
+#include <signal.h>
 #include "../../video/VKRUtils.h"
 
 
@@ -288,10 +288,10 @@ namespace VKR
 			VkDeviceSize checkBufferSize = m_Meshes.size() * DynAlign;
 			VkDeviceSize dynBufferSize = m_Meshes.size() * sizeof(DynamicBufferObject);
 			if (dynBufferSize != checkBufferSize)
-#ifdef WIN32
+#ifdef _MSVC
 				__debugbreak();
 #else
-				raise(SIGTRAP);
+					raise(SIGTRAP);
 #endif
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{

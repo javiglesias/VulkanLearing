@@ -85,7 +85,7 @@ namespace VKR
 			for (unsigned int m = 0; m < _node->mNumMeshes; m++)
 			{
 				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
-				render::VKRenderable* tempMesh = new render::VKRenderable();
+				render::VKRenderable3D* tempMesh = new render::VKRenderable3D();
 				strcpy(tempMesh->m_Id, mesh->mName.C_Str());
 				//Process Mesh
 				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
@@ -196,7 +196,11 @@ namespace VKR
 			cgltf_parse_file(&options, filename, &modelData);
 			if(modelData == NULL) return nullptr;
 			if (cgltf_load_buffers(&options, modelData, filepath) != cgltf_result_success)
+#ifdef _MSVC
 				__debugbreak();
+#else
+					raise(SIGTRAP);
+#endif
 			if(cgltf_validate(modelData) == cgltf_result_success)
 			{
 				printf("\nModel file validated (nodes %d)\n", static_cast<int>(modelData->nodes_count));
@@ -241,7 +245,11 @@ namespace VKR
 				else
 				{
 					fprintf(stderr, "No Material.\n");
+#ifdef _MSVC
 					__debugbreak();
+#else
+					raise(SIGTRAP);
+#endif
 				}
 
 				for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
@@ -250,7 +258,7 @@ namespace VKR
 					auto camera = modelData->nodes[n].camera;
 					if(mesh)
 					{
-						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
+						VKR::render::VKRenderable3D* tempMesh = new VKR::render::VKRenderable3D();
 						sprintf(tempMesh->m_Id, "%s_%d", mesh->name ? mesh->name : "mesh", n);
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
 											modelData->nodes[n].translation[1],
@@ -469,10 +477,10 @@ namespace VKR
 				}
 			}
 			else
-#ifdef WIN32
+#ifdef _MSVC
 				__debugbreak();
 #else
-				raise(SIGTRAP);
+					raise(SIGTRAP);
 #endif
 			return modelData;
 		}

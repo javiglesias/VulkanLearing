@@ -3,6 +3,7 @@
 
 #include "Materials/VKRShader.h"
 #include "../video/Types.h"
+#include "Materials/VKRShadowMaterial.h"
 
 namespace VKR
 {
@@ -173,7 +174,7 @@ namespace VKR
 
         struct QuadRenderer : Renderer
         {
-        public: // Functions
+            // Functions
             //bool Initialize(bool _reload = false) override;
             void CreateDescriptorSetLayout() override;
 

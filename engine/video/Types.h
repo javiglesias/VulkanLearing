@@ -5,7 +5,6 @@
 #include <glm/vec4.hpp>
 #include <glm/glm.hpp>
 #include <vulkan/vulkan_core.h>
-
 #include <array>
 
 struct Grid_Vertex3D

@@ -207,7 +207,6 @@ namespace VKR
 			if (result != VK_SUCCESS)
 			{
 				printf("Failed to create surface");
-				__debugbreak();
 				exit(-1);
 			}
 #endif
@@ -399,10 +398,10 @@ namespace VKR
 				VkDeviceSize checkBufferSize = (4 * DynAlign);
 				VkDeviceSize bufferSize = (4 * _sizeDynAl);
 				if (bufferSize != checkBufferSize)
-#ifdef WIN32
+#ifdef _MSVC
 					__debugbreak();
 #else
-					raise(SIGTRAP);
+						raise(SIGTRAP);
 #endif
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
@@ -420,6 +419,8 @@ namespace VKR
 		{
 			GenerateBuffer(sizeof(LightBufferObject), m_LightsBuffers.data(),
 				m_LightsBuffersMemory.data(), m_LightsBuffersMapped.data());
+			GenerateBuffer(sizeof(DebugUniformBufferObject), m_QuadBuffers.data(),
+				m_QuadBuffersMemory.data(), m_QuadBuffersMapped.data());
 #if 0
 			#pragma region LIGHTS_BUFFER
 			{
@@ -733,11 +734,11 @@ namespace VKR
 		{
 			// VkQueryPoolCreateInfo
 			if (utils::g_context.m_GpuInfo.m_Properties.limits.timestampPeriod <= 0 && utils::g_context.m_GpuInfo.m_Properties.limits.timestampComputeAndGraphics != VK_TRUE)
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
+#ifdef _MSVC
+	__debugbreak();
+#else
+				raise(SIGTRAP);
+#endif
 			g_Timestamps.resize(2);
 			VkBool32 presentSupport = false;
 			VkQueryPoolCreateInfo timestampQuery{};
@@ -903,7 +904,7 @@ namespace VKR
 		{
 			for (auto& tex : m_TexturesCache)
 			{
-				if (strcmpi(_path, tex->m_Path) == 0)
+				if (strcmp(_path, tex->m_Path) == 0)
 					return tex;
 			}
 			auto tex = NEW(Texture);
