@@ -10,6 +10,13 @@
 6: EMISSION_COLOR,
 7: LIGHTMAP
 */
+#ifdef BASE_COLOR
+layout(set=0, binding=1) uniform sampler2D inTextures;
+#endif
+#ifdef DIFFUSE_ROUGHNESS
+layout(set=0, binding=1) uniform sampler2D inTextures[2];
+#endif
+
 layout(set=0, binding=1) uniform sampler2D inTextures[7];
 
 layout(set=0, binding=3) uniform DirLightBufferObject
@@ -40,7 +47,9 @@ layout(set=0, binding=5) uniform LightBufferObject // 6,7,8,9
 	vec4 additionalLightOpts; // Kc, Kl, Kq
 } libO[2];
 
-layout(location = 0) in vec3 fragPosition;
+layout(set=0, binding=6) uniform sampler2D shadowTexture;
+
+layout(location = 0) in vec4 fragPosition;
 layout(location = 1) in vec2 texCoord;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 viewerPosition;
@@ -51,6 +60,7 @@ layout(location = 7) in float renderDepth;
 layout(location = 8) in float renderSpecular;
 layout(location = 9) in float renderNormals;
 layout(location = 10) in float tonemapping;
+layout(location = 11) in vec3 vertex_color;
 
 layout(location = 0) out vec4 outColor;
 
@@ -84,7 +94,6 @@ vec3 calculate_luminance(vec3 color_in, float lum_out)
 
 void main() 
 {
-	// vec4 shadowCoordFinal = shadowCoord * libO[2].lightProj * libO[0].lightView;
 	vec3 color = textureLod(inTextures[0], texCoord, mipLevel).rgb;
 	vec3 ColorIn = DirectionalLight(color);
 	vec3 result = ColorIn;
@@ -124,15 +133,27 @@ float PointLight()
 	// atenuacion = 1/ (kc+ kl*d + kq*(d*d));
 	float att = 1.0;	
 	att = 0.0;
-	vec3 lightPos = libO[0].lightPosition.xyz;
-	vec4 pointLightC = libO[0].additionalLightOpts;
-	vec3 dir = lightPos - fragPosition;
+	vec3 lightPos = PLight.lightPosition.xyz;
+	vec4 pointLightC = PLight.additionalLightOpts;
+	vec3 dir = lightPos - fragPosition.xyz;
 	float d = length(dir);
 	att += 1.0
 		/ (pointLightC[0]
 			+ pointLightC[1] * d 
 			+ pointLightC[2] * (d*d)
 		);
+	for(int i=0;i<2;++i)
+	{
+		vec3 lightPos = libO[i].lightPosition.xyz;
+		vec4 pointLightC = libO[i].additionalLightOpts;
+		vec3 dir = lightPos - fragPosition.xyz;
+		float d = length(dir);
+		att += 1.0
+			/ (pointLightC[0]
+				+ pointLightC[1] * d 
+				+ pointLightC[2] * (d*d)
+			);
+	}
 	return att;
 }
 
@@ -142,39 +163,36 @@ vec3 DirectionalLight(vec3 _color)
 	float ambientStrength = 0.05;
     vec3 ambient = _color * ambientStrength;
 	
-	vec3 normTex = texture(inTextures[0], texCoord).xyz;
-	vec3 norm = normalize(normTex * 2.0 - 1.0); // transform normal vector to range [-1,1]
-	vec3 lightDir = normalize(lightPosition - fragPosition);
-	vec3 diffuse = max(dot(normTex, lightDir), 0.0) * _color;
+	vec3 norm = normalize(normal * 2.0 - 1.0); // transform normal vector to range [-1,1]
+	vec3 lightDir = normalize(lightPosition - fragPosition.xyz);
+	vec3 diffuse = max(dot(norm, lightDir), 0.0) * _color;
 	
 	float specularStrength = 0.5;
-	vec3 viewDir = normalize(viewerPosition - fragPosition);
-	vec3 reflectDir = reflect(-lightDir, normTex);
+	vec3 viewDir = normalize(viewerPosition - fragPosition.xyz);
+	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	vec3 specular = specularStrength * spec * _color;
+	vec3 specular =  max(specularStrength * spec, 0.0) * _color;
 	
 	// Caulculate shadows
 	vec4 fraglight = dirLight.lightProj * vec4(shadowCoord);
-	// float shadow = ShadowCalculation(fraglight, inTextures[0]);
+	vec4 shadowCoordFinal = fragPosition * dirLight.lightProj * dirLight.lightView;
+	float shadow = ShadowCalculation(shadowCoordFinal, shadowTexture);
 	
-	// ambient  *= reinhard;
-	// diffuse  *= reinhard;
-	// specular *= reinhard;
-	// return ((ambient + ( 1 - shadow)) * diffuse + specular) * _color;
-	return ambient + diffuse + specular;
-	// return norm;
-
+	// ambient  *= att;
+	// diffuse  *= att;
+	// specular *= att;
+	return ((ambient + ( 1 - shadow)) * (diffuse + specular));
+	// return ambient + diffuse;
 }
 const float bias = 0.005;
 float ShadowCalculation(vec4 fragPosLightSpace, sampler2D uShadowMap) 
 {
-
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     // Remap to [0.0, 1.0]
     projCoords = projCoords * 0.5 + 0.5;
 
     // Return no shadow when outside of clipping planes
-    if (projCoords.z > 1.0) { return 0.0; }
+    //if (projCoords.z > 1.0) { return 0.0; }
 
     float closestDepth = texture(uShadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;

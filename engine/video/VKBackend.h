@@ -6,7 +6,9 @@
 #include "../core/Objects/VKRModel.h"
 #include "../core/Objects/VKRLight.h"
 #include <thread>
-
+#include <Windows.h>
+#include <unordered_map>
+#define FRAMES_IN_FLIGHT 2
 struct GLFWwindow;
 class Texture;
 
@@ -18,6 +20,7 @@ namespace VKR
 #define MAX_MESHES 1024
 #define WIN_HEIGHT 720
 #define WIN_WIDTH 1280
+#define N_LIGHTS 4
 
         enum G_PIPELINE_STATUS
         {
@@ -38,13 +41,11 @@ namespace VKR
         inline bool m_IndexedRender = true;
         inline bool m_DebugRendering = false;
         inline bool m_CreateTestModel = false;
-        inline bool m_SceneDirty = false;
+        inline bool m_SceneDirty = true;
+        inline bool m_UIDirty = true;
         inline bool g_DrawCubemap = true;
-        inline bool g_ShadowPassEnabled = false;
+        inline bool g_ShadowPassEnabled = true;
         inline double m_LastYPosition = 0.f, m_LastXPosition = 0.f;
-        inline double m_CameraYaw = 0.f, m_CameraPitch = 0.f;
-        inline float m_CameraSpeed = 0.6f;
-        inline float m_CameraFOV = 70.f;
         inline float zFar= 1000001.f;
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
@@ -55,26 +56,29 @@ namespace VKR
         inline float g_Rotation = 0.f;
 		inline float g_TimestampValue = 0.f;
         inline double g_FrameTime;
-        inline long long g_CurrentFrame = 0;
+        inline long long g_Frames = 0;
         inline double g_ElapsedTime;
 		inline char* g_CommandLine;
 		inline char* g_CommandLineHistory;
-
+		inline glm::mat4 g_ProjectionMatrix {1.f};
+		inline glm::mat4 g_ViewMatrix {1.f};
+#ifdef USE_GLFW
         inline GLFWwindow* m_Window;
+#else
+        inline HWND hwnd;
+#endif
         inline float m_ShadowCameraFOV = 45.f;
         inline std::string g_ConsoleMSG;
         inline glm::vec3 m_PointLightPos = glm::vec3(0.f, 3.f, 0.f);
         inline glm::vec3 m_PointOpts = glm::vec3(1.f, 3.f, 0.f);
         inline glm::vec3 m_LightColor = glm::vec3(1.f, 1.f, 0.f);
-        inline glm::vec3 m_CameraPos = glm::vec3(0.f);
-        inline glm::vec3 m_CameraForward = glm::vec3(0.f, 0.f, 1.f);
-        inline glm::vec3 m_CameraUp = glm::vec3(0.f, 1.f, 0.f);
-        inline glm::vec3 m_Rotation = glm::vec3(0.f, 1.f, 1.f);
+        
 		//inline GraphicsRenderer* m_GraphicsRender;
 		inline ShadowRenderer* m_ShadowRender;
 		inline ShaderRenderer* m_GridRender;
         inline DebugRenderer* m_DbgRender;
         inline CubemapRenderer* m_CubemapRender;
+        inline QuadRenderer* m_QuadRender;
         inline std::vector<R_DbgModel*> m_DbgModels; // lights
         inline R_Model* m_StaticModels[MAX_MODELS];
         inline R_Model* m_PendingBuffersModels[MAX_MODELS];
@@ -82,10 +86,9 @@ namespace VKR
 		inline std::unordered_map<const char*, VkShaderModule> frag_shader_modules;
         inline int m_CurrentStaticModels = 0;
         inline int m_CurrentPendingModels = 0;
-        inline std::vector<Light*> g_Lights;
 		inline std::vector<uint64_t> g_Timestamps{};
         inline Directional* g_DirectionalLight;
-        inline Point* g_PointLights[4];
+        inline Point g_PointLights[N_LIGHTS];
 
         class VKBackend
         {
@@ -93,7 +96,6 @@ namespace VKR
         public:
             bool m_CubemapRendering = false;
             bool m_RenderInitialized = false;
-            uint32_t m_LastImageIdx;
             uint32_t m_FrameToPresent;
             uint32_t m_CurrentDebugModelsToDraw = 1;
             int m_TotalTextures;
@@ -131,50 +133,17 @@ namespace VKR
 
             VkDescriptorSet m_ShadowVisualizer;
 
-            // RENDER BUFFERS
-            std::vector<VkBuffer> m_UniformBuffers;
-            std::vector<VkDeviceMemory> m_UniformBuffersMemory;
-            std::vector<void*> m_Uniform_SBuffersMapped;
-
-            std::vector<VkBuffer> m_DynamicBuffers;
-            std::vector<VkDeviceMemory> m_DynamicBuffersMemory;
-            std::vector<void*> m_DynamicBuffersMapped;
-
             std::vector<VkBuffer> m_LightsBuffers;
             std::vector<VkDeviceMemory> m_LightsBuffersMemory;
             std::vector<void*> m_LightsBuffersMapped;
-            
-            // DEBUG BUFFERS
-            std::vector<VkBuffer> m_DbgUniformBuffers;
-            std::vector<VkDeviceMemory> m_DbgUniformBuffersMemory;
-            std::vector<void*> m_DbgUniformBuffersMapped;
-            std::vector<VkBuffer> m_DbgDynamicBuffers;
-            std::vector<VkDeviceMemory> m_DbgDynamicBuffersMemory;
-            std::vector<void*> m_DbgDynamicBuffersMapped;
-            // SHADOW BUFFERS
-            std::vector<VkBuffer> m_ShadowUniformBuffers;
-            std::vector<VkDeviceMemory> m_ShadowUniformBuffersMemory;
-            std::vector<VkBuffer> m_ShadowDynamicBuffers;
-            std::vector<VkDeviceMemory> m_ShadowDynamicBuffersMemory;
-            std::vector<void*> m_ShadowUniformBuffersMapped;
-            std::vector<void*> m_ShadowDynamicBuffersMapped;
-            // CUBEMAP BUFFERS
-            std::vector<VkBuffer> m_CubemapUniformBuffers;
-            std::vector<VkBuffer> m_CubemapDynamicBuffers;
-            std::vector<VkDeviceMemory> m_CubemapUniformBuffersMemory;
-            std::vector<VkDeviceMemory> m_CubemapDynamicBuffersMemory;
-            std::vector<void*> m_CubemapUniformBuffersMapped;
-            std::vector<void*> m_CubemapDynamicBuffersMapped;
-            
-            // GRID BUFFERS
-            std::vector<VkBuffer> m_GridUniformBuffers;
-            std::vector<VkDeviceMemory> m_GridUniformBuffersMemory;
-            std::vector<void*> m_GridUniformBuffersMapped;
 
-            // COMPUTE BUFFERS
-            std::vector<VkBuffer> m_ComputeUniformBuffers;
-            std::vector<VkDeviceMemory> m_ComputeUniformBuffersMemory;
-            std::vector<void*> m_ComputeUniformBuffersMapped;
+            std::vector<VkBuffer> m_QuadBuffers;
+            std::vector<VkDeviceMemory> m_QuadBuffersMemory;
+            std::vector<void*> m_QuadBuffersMapped;
+
+            std::vector<VkBuffer> m_QuadDynBuffers;
+            std::vector<VkDeviceMemory> m_QuadDynBuffersMemory;
+            std::vector<void*> m_QuadDynBuffersMapped;
             
             VkBuffer m_StagingBuffer;
             VkDeviceMemory m_StaggingBufferMemory;
@@ -192,17 +161,20 @@ namespace VKR
             // Functions
         public:
             VKBackend() {}
-            void Init();
+            void Init(
+#ifndef USE_GLFW
+                HINSTANCE hInstance
+#endif
+            );
             void GenerateDBGBuffers();
+            void GenerateBuffer(size_t _sizeDynAl, VkBuffer* _buffers, VkDeviceMemory* _buffsMemory, void** _mapped);
             void GenerateBuffers();
             void InitializeVulkan(VkApplicationInfo* _appInfo);
             void Loop();
             bool BackendShouldClose();
             void PollEvents();
             void BeginRenderPass(unsigned int _InFlightFrame);
-            uint32_t BeginFrame(unsigned int _InFlightFrame);
             void EndRenderPass(unsigned _InFlightFrame);
-            void SubmitAndPresent(unsigned _FrameToPresent, uint32_t* _imageIdx);
             void CollectGPUTimestamps(unsigned int _FrameToPresent);
             void Shutdown();
             void Cleanup();
@@ -210,13 +182,10 @@ namespace VKR
 
             double GetTime();
 
-        private:
-            void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo,
-                                const char** m_Extensions,
-                                uint32_t m_extensionCount);
+            void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, uint32_t m_extensionCount);
             void CreateSwapChain();
-            //void RecreateSwapChain();
-            //void CreateFramebufferAndSwapchain();
+            void RecreateSwapChain();
+            void CreateFramebufferAndSwapchain();
             void CreateFramebuffers();
             void CreateShadowFramebuffer();
             void CreateCommandBuffer();

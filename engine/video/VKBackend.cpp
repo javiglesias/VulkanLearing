@@ -2,17 +2,43 @@
 #include "../filesystem/ResourceManager.h"
 #include "glslang/Public/ShaderLang.h"
 #include "../core/Materials/VKRTexture.h"
+#include "../memory/mem_alloc.h"
 #include "VKRUtils.h"
-#include <cstring>
-#include <vulkan/vulkan.h>
+#include "../input/DeviceInput.h"
 
-#define GLFW_INCLUDE_NONE
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 
 
 #ifndef WIN32
 #include <signal.h>
+#endif
+#ifndef USE_GLFW
+#include <vulkan/vulkan_win32.h>
+bool should_close_window = false;
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg) {
+	case WM_CLOSE:
+		PostQuitMessage(0);
+		return 0;
+	case WM_KEYDOWN:
+		if (wParam == VK_ESCAPE) {
+			PostQuitMessage(0);
+		}
+		return 0;
+	case WM_LBUTTONDOWN:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	case WM_MOUSEMOVE:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	default:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	}
+	return 1;
+}
+#else
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #endif
 
 namespace VKR
@@ -22,103 +48,6 @@ namespace VKR
 		void FramebufferResizeCallback(GLFWwindow* _window, int _newW, int _newH)
 		{
 			m_NeedToRecreateSwapchain = true;
-		}
-
-		// INPUT CALLBACKS
-		void MouseInputCallback(GLFWwindow* _window, double _xPos, double _yPos)
-		{
-			double x_offset = (_xPos - m_LastXPosition);
-			double y_offset = (m_LastYPosition - _yPos);
-			float senseo = 0.1f;
-			m_LastXPosition = _xPos;
-			m_LastYPosition = _yPos;
-			if (m_MouseCaptured)
-			{
-				x_offset *= senseo;
-				y_offset *= senseo;
-				m_CameraYaw   += x_offset;
-				m_CameraPitch += y_offset;
-				// CONSTRAINTS
-				if (m_CameraPitch > 89.f)  m_CameraPitch = 89.f;
-				if (m_CameraPitch < -89.f) m_CameraPitch = -89.f;
-				glm::vec3 camera_direction;
-				camera_direction.x = static_cast<float>(cos(glm::radians(m_CameraYaw) * cos(glm::radians(m_CameraPitch))));
-				camera_direction.y = static_cast<float>(sin(glm::radians(m_CameraPitch)));
-				camera_direction.z = static_cast<float>(sin(glm::radians(m_CameraYaw)) * cos(glm::radians(m_CameraPitch)));
-				m_CameraForward = glm::normalize(camera_direction);
-				m_LastXPosition = _xPos;
-				m_LastYPosition = _yPos;
-			}
-		}
-
-		void MouseBPressCallback(GLFWwindow* _window, int _button, int _action, int _mods)
-		{
-			if (_button == GLFW_MOUSE_BUTTON_RIGHT && _action == GLFW_PRESS && !m_MouseCaptured)
-			{
-				m_MouseCaptured = true;
-			}
-			else
-				m_MouseCaptured = false;
-		}
-
-		void KeyboardInputCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
-		{
-			auto state = glfwGetKey(_window, _key);
-			if (_key == GLFW_KEY_W && state)
-			{
-				m_CameraPos += m_CameraSpeed * m_CameraForward;
-			}
-			if (_key == GLFW_KEY_A && state)
-			{
-				m_CameraPos += m_CameraSpeed * glm::normalize(glm::cross(
-					m_CameraUp, m_CameraForward));
-			}
-			if (_key == GLFW_KEY_S && state)
-			{
-				m_CameraPos -= m_CameraSpeed * m_CameraForward;
-			}
-			if (_key == GLFW_KEY_D && state)
-			{
-				m_CameraPos -= m_CameraSpeed * glm::normalize(glm::cross(
-					m_CameraUp, m_CameraForward));
-			}
-
-			if (_key == GLFW_KEY_R && _action == GLFW_PRESS)
-			{
-				m_CameraPos = glm::vec3(0.f);
-			}
-
-			if (_key == GLFW_KEY_E && _action == GLFW_PRESS) // up
-			{
-				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y + m_CameraSpeed, m_CameraPos.z);
-			}
-
-			//if (_key == GLFW_KEY_C && _action == GLFW_PRESS) // up
-			//{
-			//	RM::_AddRequest(ASSIMP_MODEL,"resources/models/Sponza/glTF/", "Sponza.gltf");
-			//}
-			//if (_key == GLFW_KEY_V && _action == GLFW_PRESS) // up
-			//{
-			//	//RM::_AddRequest(STATIC_MODEL,"resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf");
-			//	auto tempModel = new render::R_Model();
-			//	auto data = filesystem::read_glTF("resources/models/StainedGlassLamp/glTF/", "StainedGlassLamp.gltf", tempModel);
-			//	render::m_SceneDirty = true;
-			//}
-
-			//if (_key == GLFW_KEY_P && _action == GLFW_PRESS) // up
-			//{
-			//	RM::_AddRequest(STATIC_MODEL, "resources/models/Plane/glTF/", "Plane.gltf");
-			//}
-
-			if (_key == GLFW_KEY_Q && _action == GLFW_PRESS) // down
-			{
-				m_CameraPos = glm::vec3(m_CameraPos.x, m_CameraPos.y - m_CameraSpeed, m_CameraPos.z);
-			}
-
-			if (_key == GLFW_KEY_ESCAPE && state)
-			{
-				m_CloseEngine= true;
-			}
 		}
 
 		static VKBackend g_backend;
@@ -207,21 +136,26 @@ namespace VKR
 			return VK_FALSE;
 		}
 
-		void VKBackend::Init()
+		void VKBackend::Init(
+#ifndef USE_GLFW
+			HINSTANCE hInstance
+#endif
+		)
 		{
+#ifndef USE_GLFW
+			init_input_devices();
+#endif
 			#ifdef WIN32
 			glslang::InitializeProcess();
 			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
 			#endif
 			m_GPipelineStatus = CREATING;
 			uint32_t mExtensionCount = 0;
-			const char** mExtensions;
-			/// VULKAN/glfw THINGS
+			/// VULKAN THINGS
 			if (!utils::g_context.m_GpuInfo.CheckValidationLayerSupport()) exit(-2);
 			VkApplicationInfo mAppInfo = {};
 			InitializeVulkan(&mAppInfo);
 			// Fill Extension supported by GPU
-			mExtensions = glfwGetRequiredInstanceExtensions(&mExtensionCount);
 			vkEnumerateInstanceExtensionProperties(nullptr, &mExtensionCount, nullptr);
 			std::vector<VkExtensionProperties> mExtensionsProps(mExtensionCount);
 			vkEnumerateInstanceExtensionProperties(nullptr, &mExtensionCount, mExtensionsProps.data());
@@ -234,7 +168,7 @@ namespace VKR
 			//m_InstanceExtensions.push_back("VK_KHR_swapchain");
 
 			VkInstanceCreateInfo m_InstanceCreateInfo = {};
-			CreateInstance(&m_InstanceCreateInfo, &mAppInfo, mExtensions, mExtensionCount);
+			CreateInstance(&m_InstanceCreateInfo, &mAppInfo, mExtensionCount);
 			VkResult m_result = vkCreateInstance(&m_InstanceCreateInfo, nullptr, &m_Instance);
 			if (m_result != VK_SUCCESS)
 			{
@@ -242,14 +176,46 @@ namespace VKR
 				exit(- 1);
 			}
 			/// NORMAL RENDER THINGS
+#ifdef USE_GLFW
 			glfwInit();
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			m_Window = glfwCreateWindow(g_WindowWidth, g_WindowHeight, "Vulkan renderer", nullptr, nullptr);
 			glfwSetFramebufferSizeCallback(m_Window, FramebufferResizeCallback);
 			glfwSetKeyCallback(m_Window, KeyboardInputCallback);
-			glfwSetCursorPosCallback(m_Window, MouseInputCallback);
+			glfwSetCursorPosCallback(m_Window, MouseCallback);
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
+			/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
+			// EXT: VK_KHR_surface
+			if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
+				exit(-2);
+#else
+			const wchar_t CLASS_NAME[] = L"Vulkan renderer";
+			WNDCLASS wc = {};
+			wc.lpfnWndProc = WindowProc;
+			wc.hInstance = hInstance;
+			wc.style = CS_HREDRAW | CS_VREDRAW;
+			wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wc.lpszClassName = "Vulkan renderer";
+			RegisterClass(&wc);
+
+			hwnd = CreateWindowEx(0, "Vulkan renderer", LPCSTR(L"Vulkan renderer"), WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, g_WindowWidth, g_WindowHeight,
+				NULL, NULL, hInstance, NULL);
+			ShowWindow(hwnd, SW_SHOW);
+			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo;
+			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surfaceCreateInfo.pNext = NULL;
+			surfaceCreateInfo.flags = 0;
+			surfaceCreateInfo.hinstance = hInstance;
+			surfaceCreateInfo.hwnd = hwnd;
+			auto result = vkCreateWin32SurfaceKHR(m_Instance, &surfaceCreateInfo, NULL, &m_Surface);
+			if (result != VK_SUCCESS)
+			{
+				printf("Failed to create surface");
+				exit(-1);
+			}
+#endif
 			/// Create the Debug Messenger
 			VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 			debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -267,11 +233,6 @@ namespace VKR
 				fprintf(stderr, "ERROR CREATING DEBUG MESSENGER\n");
 			}
 			utils::g_context.CreateDevice(m_Instance);
-			/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
-			// EXT: VK_KHR_surface
-			if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
-				exit(-2);
-
 			// Present support on the Physical Device
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(utils::g_context.m_GpuInfo.m_Device, utils::g_context.m_GraphicsComputeQueueFamilyIndex, m_Surface, &presentSupport);
@@ -323,64 +284,49 @@ namespace VKR
 			m_SwapchainImagesCount = m_Capabilities.minImageCount;
 			utils::VMA_Initialize(utils::g_context.m_GpuInfo.m_Device, utils::g_context.m_LogicDevice, m_Instance);
 			CreateSwapChain();
+
 			m_CubemapRender = new CubemapRenderer(utils::g_context.m_LogicDevice);
 			m_ShadowRender = new ShadowRenderer(utils::g_context.m_LogicDevice);
-			m_ShadowMat = new R_ShadowMaterial();
 			m_DbgRender = new DebugRenderer(utils::g_context.m_LogicDevice);
 			m_GridRender = new ShaderRenderer(utils::g_context.m_LogicDevice);
-			// primero creamos el layout de los descriptors
-			m_CubemapRender->CreateDescriptorSetLayout();
-
-			m_ShadowRender->CreateDescriptorSetLayout();
-			m_DbgRender->CreateDescriptorSetLayout();
-			m_GridRender->CreateDescriptorSetLayout();
-			// Shadow Descriptors
+			m_QuadRender = new QuadRenderer(utils::g_context.m_LogicDevice);
+			
+			// Creamos los DescriptorsLayout
+			// Inicializar Renderer
+			// Setup de PipelineLayout
+			// Creamos la PipelileLayout
+			// Crear Renderpass
+			// Crear Pipeline
+			// Limpiar ShaderModules
+			
+			m_ShadowMat = new R_ShadowMaterial();
 			m_ShadowMat->CreateDescriptorPool(utils::g_context.m_LogicDevice);
 			m_ShadowMat->CreateDescriptorSet(utils::g_context.m_LogicDevice, m_ShadowRender->m_DescSetLayout);
 
-			// Inicializar Renderer
-			//m_GraphicsRender->Initialize();
-			// Setup de la PipelineLayout
-			//m_GraphicsRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
-			// CreamosLaPipelileLayout
-			//m_GraphicsRender->CreatePipelineLayout();
-			// Crear Renderpass
 			utils::g_context.CreateRenderPass(&m_SwapChainCreateInfo);
 			utils::g_context.CreateGeometryPass(&m_SwapChainCreateInfo);
-			// Crear Pipeline
-			//m_GraphicsRender->CreatePipeline(utils::g_context.m_RenderPass->pass);
-			// Limpiar ShaderModules
-			//m_GraphicsRender->CleanShaderModules();
 
-			// Lo mismo para el renderer de Debug
-			m_DbgRender->Initialize();
 			m_DbgRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
-			m_DbgRender->CreatePipelineLayout();
 			m_DbgRender->CreatePipeline(utils::g_context.m_RenderPass->pass);
 			m_DbgRender->CleanShaderModules();
 
-			// Lo Mismo para Shadows
-			m_ShadowRender->Initialize();
-				m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
-				m_ShadowRender->CreatePipelineLayout();
+			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			utils::g_context.CreateShadowRenderPass();
 			m_ShadowRender->CreatePipeline(utils::g_context.m_ShadowPass->pass);
 			m_ShadowRender->CleanShaderModules();
 
-			// Pa'l cubemap
-			// Lo mismo para el renderer de Debug
-			m_CubemapRender->Initialize();
 			m_CubemapRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
-			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(utils::g_context.m_RenderPass->pass);
 			m_CubemapRender->CleanShaderModules();
 
-			//Grid vertex Render
-			m_GridRender->Initialize();
 			m_GridRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
-			m_GridRender->CreatePipelineLayout();
 			m_GridRender->CreatePipeline(utils::g_context.m_RenderPass->pass);
 			m_GridRender->CleanShaderModules();
+
+			// Quad Renderer
+			m_QuadRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
+			m_QuadRender->CreatePipeline(utils::g_context.m_RenderPass->pass);
+			m_QuadRender->CleanShaderModules();
 
 			vkGetPhysicalDeviceMemoryProperties(utils::g_context.m_GpuInfo.m_Device, &m_Mem_Props);
 			CreateCommandBuffer();
@@ -391,41 +337,15 @@ namespace VKR
 			CreateDepthTestingResources();
 			CreateFramebuffers();
 			//CreateGBufferImage();
-			// Uniform buffers
-			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_Uniform_SBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Dynamic buffers
-			m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+
 			// Light buffers
 			m_LightsBuffers.resize(FRAMES_IN_FLIGHT);
 			m_LightsBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_LightsBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Uniform buffers
-			m_DbgUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DbgUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DbgUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Dynamic buffers
-			m_DbgDynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_DbgDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_DbgDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			//
-			// Uniform buffers
-			m_CubemapUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_CubemapUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_CubemapUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			// Dynamic buffers
-			m_CubemapDynamicBuffers.resize(FRAMES_IN_FLIGHT);
-			m_CubemapDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_CubemapDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
 
-			// Grid buffers
-			// Uniform buffers
-			/*m_GridUniformBuffers.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-			m_GridUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);*/
+			m_QuadBuffers.resize(FRAMES_IN_FLIGHT);
+			m_QuadBuffersMemory.resize(FRAMES_IN_FLIGHT);
+			m_QuadBuffersMapped.resize(FRAMES_IN_FLIGHT);
 
 			GenerateBuffers();
 			GenerateDBGBuffers();
@@ -433,84 +353,81 @@ namespace VKR
 			CreateSyncObjects(1);
 			CreatePerformanceQueries();
 			m_GPipelineStatus = READY;
+
 		}
 
 		void VKBackend::GenerateDBGBuffers()
 		{
+#if 0
 			// first clean old buffers
 			VkDeviceSize dbgBufferSize = sizeof(DebugUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				if(m_DbgUniformBuffers[i])
+				if(m_DbgRender->m_UniformBuffers[i])
 				{
-					vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
-					vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
+					vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgRender->m_UniformBuffers[i], nullptr);
+					vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgRender->m_UniformBuffersMemory[i], nullptr);
 				}
 				utils::CreateBuffer(dbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_DbgUniformBuffers[i], m_DbgUniformBuffersMemory[i]);
-				vkMapMemory(utils::g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], 0,
-					dbgBufferSize, 0, &m_DbgUniformBuffersMapped[i]);
+					m_DbgRender->m_UniformBuffers[i], m_DbgRender->m_UniformBuffersMemory[i]);
+				vkMapMemory(utils::g_context.m_LogicDevice, m_DbgRender->m_UniformBuffersMemory[i], 0,
+					dbgBufferSize, 0, &m_DbgRender->m_UniformBuffersMapped[i]);
 			}
 			VkDeviceSize dynDbgBufferSize = m_CurrentDebugModelsToDraw * sizeof(DynamicBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				if(m_DbgDynamicBuffers[i])
+				if(m_DbgRender->m_DynamicBuffers[i])
 				{
-					vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
-					vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
+					vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgRender->m_DynamicBuffers[i], nullptr);
+					vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgRender->m_DynamicBuffersMemory[i], nullptr);
 				}
 				utils::CreateBuffer(dynDbgBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_DbgDynamicBuffers[i], m_DbgDynamicBuffersMemory[i]);
-				vkMapMemory(utils::g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], 0,
-					dynDbgBufferSize, 0, &m_DbgDynamicBuffersMapped[i]);
+					m_DbgRender->m_DynamicBuffers[i], m_DbgRender->m_DynamicBuffersMemory[i]);
+				vkMapMemory(utils::g_context.m_LogicDevice, m_DbgRender->m_DynamicBuffersMemory[i], 0,
+					dynDbgBufferSize, 0, &m_DbgRender->m_DynamicBuffersMapped[i]);
 			}
+#endif
 		}
-
-		void VKBackend::GenerateBuffers()
+		void VKBackend::GenerateBuffer(size_t _sizeDynAl, VkBuffer* _buffers, 
+			VkDeviceMemory* _buffsMemory, void** _mapped)
 		{
-			#pragma region RENDER_BUFFERS
-			{
-
-				VkDeviceSize bufferSize = MAX_MODELS * sizeof(UniformBufferObject);
+#pragma region BUFFER
+				auto DynAlign = _sizeDynAl;
+				DynAlign = (DynAlign + utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+					& ~(utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+				VkDeviceSize checkBufferSize = (4 * DynAlign);
+				VkDeviceSize bufferSize = (4 * _sizeDynAl);
+				if (bufferSize != checkBufferSize)
+#ifdef _MSVC
+					__debugbreak();
+#else
+						raise(SIGTRAP);
+#endif
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
 					utils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
-						bufferSize, 0, &m_Uniform_SBuffersMapped[i]);
+						_buffers[i], _buffsMemory[i]);
+					vkMapMemory(utils::g_context.m_LogicDevice, _buffsMemory[i], 0,
+						bufferSize, 0, &_mapped[i]);
 				}
-				auto DynAlign =  sizeof(DynamicBufferObject);
-				DynAlign = (DynAlign + utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-					& ~(utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-				VkDeviceSize checkBufferSize = MAX_MODELS *  DynAlign;
-				VkDeviceSize dynBufferSize = MAX_MODELS *  sizeof(DynamicBufferObject);
-				if(dynBufferSize != checkBufferSize )
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
-				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
-				{
-					utils::CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-						VK_SHARING_MODE_CONCURRENT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
-						dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
-				}
-			}
-			#pragma endregion
+#pragma endregion
+		}
+		void VKBackend::GenerateBuffers()
+		{
+			GenerateBuffer(sizeof(LightBufferObject), m_LightsBuffers.data(),
+				m_LightsBuffersMemory.data(), m_LightsBuffersMapped.data());
+			GenerateBuffer(sizeof(DebugUniformBufferObject), m_QuadBuffers.data(),
+				m_QuadBuffersMemory.data(), m_QuadBuffersMapped.data());
+#if 0
 			#pragma region LIGHTS_BUFFER
 			{
 				auto lightDynAlign = sizeof(LightBufferObject);
@@ -536,6 +453,8 @@ namespace VKR
 				}
 			}
 			#pragma endregion
+#endif
+#if 0
 			#pragma region CUBEMAP_BUFFERS
 			{
 				VkDeviceSize cubemapBufferSize = sizeof(CubemapUniformBufferObject);
@@ -545,9 +464,9 @@ namespace VKR
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_CubemapUniformBuffers[i], m_CubemapUniformBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], 0,
-						cubemapBufferSize, 0, &m_CubemapUniformBuffersMapped[i]);
+						m_CubemapRender->m_UniformBuffers[i], m_CubemapRender->m_UniformBuffersMemory[i]);
+					vkMapMemory(utils::g_context.m_LogicDevice, m_CubemapRender->m_UniformBuffersMemory[i], 0,
+						cubemapBufferSize, 0, &m_CubemapRender->m_UniformBuffersMapped[i]);
 				}
 				constexpr VkDeviceSize dynCubemapBufferSize = sizeof(DynamicBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -556,18 +475,18 @@ namespace VKR
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_CubemapDynamicBuffers[i], m_CubemapDynamicBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], 0,
-						dynCubemapBufferSize, 0, &m_CubemapDynamicBuffersMapped[i]);
+						m_CubemapRender->m_DynamicBuffers[i], m_CubemapRender->m_DynamicBuffersMemory[i]);
+					vkMapMemory(utils::g_context.m_LogicDevice, m_CubemapRender->m_DynamicBuffersMemory[i], 0,
+						dynCubemapBufferSize, 0, &m_CubemapRender->m_DynamicBuffersMapped[i]);
 				}
 			}
 			#pragma endregion
 			#pragma region SHADOW_BUFFERS
 			{
 				// SHADOW UNIFORM BUFFERS
-				m_ShadowUniformBuffers.resize(FRAMES_IN_FLIGHT);
-				m_ShadowUniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
-				m_ShadowUniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
+				m_ShadowRender->m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
+				m_ShadowRender->m_UniformBuffersMemory.resize(FRAMES_IN_FLIGHT);
+				m_ShadowRender->m_UniformBuffersMapped.resize(FRAMES_IN_FLIGHT);
 				VkDeviceSize bufferSize = sizeof(ShadowUniformBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
@@ -575,14 +494,14 @@ namespace VKR
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_ShadowUniformBuffers[i], m_ShadowUniformBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], 0,
-						bufferSize, 0, &m_ShadowUniformBuffersMapped[i]);
+						m_ShadowRender->m_UniformBuffers[i], m_ShadowRender->m_UniformBuffersMemory[i]);
+					vkMapMemory(utils::g_context.m_LogicDevice, m_ShadowRender->m_UniformBuffersMemory[i], 0,
+						bufferSize, 0, &m_ShadowRender->m_UniformBuffersMapped[i]);
 				}
 				// Dynamic buffers
-				m_ShadowDynamicBuffers.resize(FRAMES_IN_FLIGHT);
-				m_ShadowDynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
-				m_ShadowDynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
+				m_ShadowRender->m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
+				m_ShadowRender->m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
+				m_ShadowRender->m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
 				VkDeviceSize dynBufferSize = MAX_MODELS * sizeof(DynamicBufferObject);
 				for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 				{
@@ -590,12 +509,13 @@ namespace VKR
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						m_ShadowDynamicBuffers[i], m_ShadowDynamicBuffersMemory[i]);
-					vkMapMemory(utils::g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], 0,
-						dynBufferSize, 0, &m_ShadowDynamicBuffersMapped[i]);
+						m_ShadowRender->m_DynamicBuffers[i],
+						m_ShadowRender->m_DynamicBuffersMemory[i]);
+					vkMapMemory(utils::g_context.m_LogicDevice, m_ShadowRender->m_DynamicBuffersMemory[i], 0,
+						dynBufferSize, 0, &m_ShadowRender->m_DynamicBuffersMapped[i]);
 				}
 				// Shadow DescriptorSet
-				m_ShadowMat->UpdateDescriptorSet(utils::g_context.m_LogicDevice, m_ShadowUniformBuffers, m_ShadowDynamicBuffers);
+				m_ShadowMat->UpdateDescriptorSet(utils::g_context.m_LogicDevice, m_ShadowRender->m_UniformBuffers, m_ShadowRender->m_DynamicBuffers);
 			}
 			#pragma endregion
 			#pragma region GRID_BUFFERS
@@ -633,6 +553,7 @@ namespace VKR
 				}
 			}
 			#pragma endregion
+#endif
 		}
 
 		void VKBackend::InitializeVulkan(VkApplicationInfo* _appInfo)
@@ -645,8 +566,7 @@ namespace VKR
 			_appInfo->apiVersion = VK_API_VERSION_1_3;
 		}
 
-		void VKBackend::CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, const char** m_Extensions,
-			uint32_t m_extensionCount)
+		void VKBackend::CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, uint32_t m_extensionCount)
 		{
 			_createInfo->sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 			_createInfo->pApplicationInfo = _appInfo;
@@ -684,13 +604,13 @@ namespace VKR
 			m_SwapchainImagesCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 			VkImage tempswapchainimg[FRAMES_IN_FLIGHT];
 			vkGetSwapchainImagesKHR(utils::g_context.m_LogicDevice, m_SwapChain, &m_SwapchainImagesCount, tempswapchainimg);
-			m_SwapchainImages[0] = new Texture("");
+			m_SwapchainImages[0] = NEW(Texture);
 			m_SwapchainImages[0]->vk_image.image = tempswapchainimg[0];
 			m_SwapchainImages[0]->vk_image.extent.height = m_Capabilities.currentExtent.height;
 			m_SwapchainImages[0]->vk_image.extent.width  = m_Capabilities.currentExtent.width;
 			m_SwapchainImages[0]->vk_image.extent.depth  = 1;
 			m_SwapchainImages[0]->vk_image.format = VK_FORMAT_B8G8R8A8_SRGB;
-			m_SwapchainImages[1] = new Texture("");
+			m_SwapchainImages[1] = NEW(Texture);
 			m_SwapchainImages[1]->vk_image.image = tempswapchainimg[1];
 			m_SwapchainImages[1]->vk_image.extent.height = m_Capabilities.currentExtent.height;
 			m_SwapchainImages[1]->vk_image.extent.width = m_Capabilities.currentExtent.width;
@@ -702,17 +622,19 @@ namespace VKR
 				m_SwapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			}
 		}
-#if 0
+#if 1
 		void VKBackend::RecreateSwapChain()
 		{
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 			int width = 0, height = 0;
+#ifdef USE_GLFW
 			glfwGetFramebufferSize(m_Window, &width, &height);
 			while (width == 0 || height == 0)
 			{
 				glfwWaitEvents();
 				glfwGetFramebufferSize(m_Window, &width, &height);
 			}
+#endif
 			g_WindowHeight = height;
 			g_WindowWidth = width;
 			printf("\n-----------Re-create Swapchain %d x %d----------------\n", g_WindowWidth, g_WindowHeight);
@@ -728,7 +650,7 @@ namespace VKR
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(utils::g_context.m_GpuInfo.m_Device, m_Surface, &m_Capabilities);
 			CreateSwapChain();
 			utils::g_context.CreateRenderPass(&m_SwapChainCreateInfo);
-			m_ShadowRender->Initialize(true);
+			m_ShadowRender->Initialize("engine/shaders/Shadow.vert", "engine/shaders/Shadow.frag", 1, &m_ShadowBindingDescription, m_ShadowAttributeDescriptions.size(), m_ShadowAttributeDescriptions.data());
 			m_ShadowRender->CreatePipelineLayoutSetup(&m_CurrentExtent, &m_Viewport, &m_Scissor);
 			m_ShadowRender->CreatePipelineLayout();
 			utils::g_context.CreateShadowRenderPass();
@@ -736,7 +658,6 @@ namespace VKR
 			CreateShadowResources();
 			CreateShadowFramebuffer();
 			CreateDepthTestingResources();
-			CreateGBufferImage();
 			CreateFramebuffers();
 		}
 #endif
@@ -819,11 +740,11 @@ namespace VKR
 		{
 			// VkQueryPoolCreateInfo
 			if (utils::g_context.m_GpuInfo.m_Properties.limits.timestampPeriod <= 0 && utils::g_context.m_GpuInfo.m_Properties.limits.timestampComputeAndGraphics != VK_TRUE)
-				#ifdef WIN32
-					__debugbreak();
-				#else
-					raise(SIGTRAP);
-				#endif
+#ifdef _MSVC
+	__debugbreak();
+#else
+				raise(SIGTRAP);
+#endif
 			g_Timestamps.resize(2);
 			VkBool32 presentSupport = false;
 			VkQueryPoolCreateInfo timestampQuery{};
@@ -841,7 +762,7 @@ namespace VKR
 		void VKBackend::CreateShadowResources()
 		{
 			VkFormat depthFormat = utils::g_context.m_GpuInfo.FindDepthTestFormat();
-			m_ShadowTexture = new Texture("");
+			m_ShadowTexture = NEW(Texture);
 			m_ShadowTexture->CreateImage(VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
 				, depthFormat, VK_IMAGE_TILING_OPTIMAL
 				, (VkImageUsageFlagBits)(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
@@ -856,7 +777,7 @@ namespace VKR
 		void VKBackend::CreateDepthTestingResources()
 		{
 			VkFormat depthFormat = utils::g_context.m_GpuInfo.FindDepthTestFormat();
-			m_DepthTexture = new Texture("");
+			m_DepthTexture = NEW(Texture);
 			m_DepthTexture->CreateImage( VkExtent3D(m_CurrentExtent.width, m_CurrentExtent.height, 1)
 				, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, 0, 1);
@@ -865,101 +786,6 @@ namespace VKR
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, m_CommandPool, 1, &utils::GetVKContext().m_GraphicsComputeQueue);
 			m_DepthTexture->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1);
 			//m_DepthTexture->CreateTextureSampler()
-		}
-
-		void VKBackend::BeginRenderPass(unsigned int _InFlightFrame)
-		{
-			std::array<VkClearValue, 2> clearValues;
-			clearValues[0].color = defaultClearColor;
-			clearValues[1].depthStencil = { 1.0f, 0 };
-			// Render pass
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = utils::g_context.m_RenderPass->pass;
-			renderPassInfo.framebuffer = m_SwapChainFramebuffers[_InFlightFrame];
-			renderPassInfo.renderArea.offset = { 0,0 };
-			renderPassInfo.renderArea.extent = m_CurrentExtent;
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
-			vkCmdBeginRenderPass(m_CommandBuffer[_InFlightFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		}
-
-		void VKBackend::EndRenderPass(unsigned int _InFlightFrame)
-		{
-			vkCmdEndRenderPass(m_CommandBuffer[_InFlightFrame]);
-			if (vkEndCommandBuffer(m_CommandBuffer[_InFlightFrame]) != VK_SUCCESS)
-				exit(-17);
-		}
-
-		uint32_t VKBackend::BeginFrame(unsigned int _InFlightFrame)
-		{
-			// Ahora vamos a simular el siguiente frame
-			PollEvents();
-			uint32_t imageIdx;
-			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame], VK_TRUE, UINT64_MAX);
-			//vkGetQueryPoolResults(); frame anterior al que estamos simulando
-			vkResetFences(utils::g_context.m_LogicDevice, 1, &m_InFlight[_InFlightFrame]);
-			vkResetCommandBuffer(m_CommandBuffer[_InFlightFrame], 0);
-			auto acqResult = vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],
-				VK_NULL_HANDLE, &imageIdx);
-			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
-			{
-				//RecreateSwapChain();
-				vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, m_SwapChain, UINT64_MAX, m_ImageAvailable[_InFlightFrame],VK_NULL_HANDLE, &imageIdx);
-			}
-			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
-				exit(-69);
-			// Record command buffer
-			VkCommandBufferBeginInfo mBeginInfo{};
-			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			mBeginInfo.flags = 0;
-			mBeginInfo.pInheritanceInfo = nullptr;
-			if (vkBeginCommandBuffer(m_CommandBuffer[_InFlightFrame], &mBeginInfo) != VK_SUCCESS)
-				exit(-13);
-			if(g_GPUTimestamp)
-				vkCmdResetQueryPool(m_CommandBuffer[_InFlightFrame], m_PerformanceQuery[_InFlightFrame], 0, 2);
-			m_LastImageIdx = imageIdx;
-			return imageIdx;
-		}
-
-		void VKBackend::SubmitAndPresent(unsigned int _FrameToPresent, uint32_t* _imageIdx)
-		{
-			VkSubmitInfo submitInfo{};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			VkSemaphore waitSemaphores[] = { m_ImageAvailable[_FrameToPresent] };
-			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-			submitInfo.waitSemaphoreCount = 1;
-			submitInfo.pWaitSemaphores = waitSemaphores;
-			submitInfo.pWaitDstStageMask = waitStages;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &m_CommandBuffer[_FrameToPresent];
-			VkSemaphore signalSemaphores[] = { m_RenderFinish[_FrameToPresent] };
-			submitInfo.signalSemaphoreCount = 1;
-			submitInfo.pSignalSemaphores = signalSemaphores;
-			auto submit = vkQueueSubmit(utils::g_context.m_GraphicsComputeQueue, 1, &submitInfo, m_InFlight[_FrameToPresent]);
-			if ( submit != VK_SUCCESS)
-			{
-				fprintf(stderr, "Error on the Submit");
-				exit(-1);
-			}
-			// Presentacion: devolver el frame al swapchain para que salga por pantalla
-			VkPresentInfoKHR presentInfo{};
-			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-			presentInfo.waitSemaphoreCount = 1;
-			presentInfo.pWaitSemaphores = signalSemaphores;
-			VkSwapchainKHR swapChains[] = { m_SwapChain };
-			if(m_SwapChain) // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR -> VK_IMAGE_LAYOUT_UNDEFINED
-			presentInfo.swapchainCount = 1;
-			presentInfo.pSwapchains = swapChains;
-			presentInfo.pImageIndices = _imageIdx;
-			presentInfo.pResults = nullptr;
-			m_PresentResult = vkQueuePresentKHR(utils::g_context.m_PresentQueue, &presentInfo);
-			/*if ((m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || m_PresentResult == VK_SUBOPTIMAL_KHR)
-				&& m_NeedToRecreateSwapchain)
-				RecreateSwapChain();*/
-			/*else if (m_PresentResult != VK_SUCCESS && m_PresentResult != VK_SUBOPTIMAL_KHR)
-				exit(-69);*/
 		}
 
 		void VKBackend::CollectGPUTimestamps(unsigned int _FrameToPresent)
@@ -989,16 +815,36 @@ namespace VKR
 
 		bool VKBackend::BackendShouldClose()
 		{
-			return m_CloseEngine || glfwWindowShouldClose(m_Window);
+#ifndef USE_GLFW
+			reset_devices();
+#endif
+			return m_CloseEngine;
 		}
 
 		void VKBackend::PollEvents()
 		{
+#ifndef USE_GLFW
+			MSG message;
+			while (PeekMessage(&message, hwnd, 0, 0, PM_REMOVE))
+			{
+				if (message.message == WM_QUIT) {
+					m_CloseEngine = true;
+				}
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
+				process_input();
+#else
 			glfwPollEvents();
+#endif
 		}
 		double VKBackend::GetTime() 
 		{
+#ifndef USE_GLFW
+			return 0.016;
+#else
 			return glfwGetTime(); 
+#endif // !USE_GLFW
 		}
 
 		void VKBackend::Cleanup()
@@ -1020,33 +866,27 @@ namespace VKR
 
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
-
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
-
 				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_LightsBuffers[i], nullptr);
 				vkFreeMemory(utils::g_context.m_LogicDevice, m_LightsBuffersMemory[i], nullptr);
+#if 0
+				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgRender->m_UniformBuffers[i], nullptr);
+				vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgRender->m_UniformBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgUniformBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgUniformBuffersMemory[i], nullptr);
+				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgRender->m_DynamicBuffers[i], nullptr);
+				vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgRender->m_DynamicBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DbgDynamicBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_DbgDynamicBuffersMemory[i], nullptr);
+				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_ShadowRender->m_UniformBuffers[i], nullptr);
+				vkFreeMemory(utils::g_context.m_LogicDevice, m_ShadowRender->m_UniformBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_ShadowUniformBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_ShadowUniformBuffersMemory[i], nullptr);
+				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_ShadowRender->m_DynamicBuffers[i], nullptr);
+				vkFreeMemory(utils::g_context.m_LogicDevice, m_ShadowRender->m_DynamicBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_ShadowDynamicBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_ShadowDynamicBuffersMemory[i], nullptr);
+				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_CubemapRender->m_UniformBuffers[i], nullptr);
+				vkFreeMemory(utils::g_context.m_LogicDevice, m_CubemapRender->m_UniformBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_CubemapUniformBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_CubemapUniformBuffersMemory[i], nullptr);
-
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_CubemapDynamicBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_CubemapDynamicBuffersMemory[i], nullptr);
-
+				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_CubemapRender->m_DynamicBuffers[i], nullptr);
+				vkFreeMemory(utils::g_context.m_LogicDevice, m_CubemapRender->m_DynamicBuffersMemory[i], nullptr);
+#endif
 				/*vkDestroyBuffer(utils::g_context.m_LogicDevice, m_GridUniformBuffers[i], nullptr);
 				vkFreeMemory(utils::g_context.m_LogicDevice, m_GridUniformBuffersMemory[i], nullptr);*/
 			}
@@ -1069,6 +909,10 @@ namespace VKR
 			CleanSwapChain();
 			// m_Scene->Cleanup();
 			m_ShadowMat->Cleanup(utils::g_context.m_LogicDevice);
+#ifndef USE_GLFW
+			//vkDestroySurfaceKHR(instance, surface, nullptr);
+			DestroyWindow(hwnd);
+#endif
 		}
 
 		Texture* VKBackend::FindTexture(const char* _path)
@@ -1078,7 +922,8 @@ namespace VKR
 				if (strcmp(_path, tex->m_Path) == 0)
 					return tex;
 			}
-			auto tex = new Texture(_path);
+			auto tex = NEW(Texture);
+			tex->init(_path);
 			tex->LoadTexture();
 			if(tex->m_Mipmaps > 0)
 				tex->CreateAndTransitionImage(m_CommandPool);
@@ -1096,8 +941,6 @@ namespace VKR
 			if (m_DebugMessenger != nullptr)
 				DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 			vkDestroyInstance(m_Instance, nullptr);
-			glfwDestroyWindow(m_Window);
-			glfwTerminate();
 		}
     }
 }

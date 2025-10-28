@@ -2,6 +2,7 @@
 #include "../../video/VKBackend.h"
 #include "../../video/VKRUtils.h"
 #include "VKRTexture.h"
+#include "../../memory/mem_alloc.h"
 #include <array>
 
 namespace VKR
@@ -12,7 +13,8 @@ namespace VKR
 		{
 			// cubemaps_skybox
 			m_Path = std::string(_path.c_str());
-			m_Texture = new Texture(m_Path);
+			m_Texture = NEW(Texture);
+			m_Texture->init(m_Path);
 		}
 		void R_CubemapMaterial::PrepareMaterialToDraw(VKBackend* _backend)
 		{

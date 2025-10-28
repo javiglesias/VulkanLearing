@@ -24,8 +24,9 @@ namespace VKR
 
 		struct sMaterialPipeline
 		{
-			bool debugMaterial;
-
+			char vert_shader[128] = { "engine/shaders/Standard.vert" };
+			char frag_shader[128] = { "engine/shaders/Standard.frag" };
+			char comp_shader[128] = { "engine/shaders/Standard.comp" };
 			VkPipeline pipeline;
 			VkPipeline compute;
 			VkPipelineLayout layout;
@@ -36,7 +37,7 @@ namespace VKR
 			void _addBind(uint8_t _nbind
 						, VkDescriptorType _type, VkShaderStageFlags _stage
 						, uint8_t _ndescriptors = 1);
-			void _buildPipeline();
+			void _buildPipeline(bool _Two_D = false);
 			void Cleanup(VkDevice _LogicDevice);
 		};
 
@@ -65,8 +66,9 @@ namespace VKR
 			std::vector<VkWriteDescriptorSet> m_DescriptorsWrite;
 			char _vertPath[64];
 			char _fragPath[64];
+			char m_Tags[128];
 			Texture* textures[MAX_TEXTURES];
-
+			Texture* shadow_texture;
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptor(VkDevice _LogicDevice);
 			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind
@@ -85,6 +87,36 @@ namespace VKR
 				, VkDescriptorPool _desc_pool
 				, VkDescriptorSetLayout _desc_set_layout
 				, VkDescriptorSet* _desc_sets);
+			void Cleanup(VkDevice _LogicDevice);
+		};
+
+		struct R_Material2D
+		{
+			VkShaderModule m_VertShaderModule;
+			VkShaderModule m_FragShaderModule;
+			MaterialInstance* material;
+			std::vector<VkWriteDescriptorSet> m_DescriptorsWrite;
+			char _vertPath[64];
+			char _fragPath[64];
+			char m_Tags[128];
+			Texture* texture;
+			
+			R_Material2D();
+			void PrepareMaterialToDraw(VKBackend* _backend);
+			void CreateDescriptor(VkDevice _LogicDevice);
+			void PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind
+				, VkDescriptorType _descType, VkBuffer _buffer, VkDeviceSize _range
+				, uint32_t _arrayElement = 0, VkDeviceSize _offset = 0, uint32_t _count = 1);
+
+			void PrepareDescriptorTexture(int16_t _setDst, uint32_t _bind, VkDescriptorType _type
+				, VkImageView _imageView, VkSampler _sampler
+				, uint32_t _arrayElement = 0, uint32_t _count = 1);
+
+			void UpdateDescriptorSet(VkDevice _LogicDevice
+				, std::vector<VkBuffer> _UniformBuffers
+				, std::vector<VkBuffer> _DynamicBuffers
+				, std::vector<VkBuffer> _ComputeBuffers);
+		
 			void Cleanup(VkDevice _LogicDevice);
 		};
 

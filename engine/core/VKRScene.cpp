@@ -1,8 +1,11 @@
 #include "VKRScene.h"
 #include "../video/VKRUtils.h"
 #include "../perfmon/Custom.h"
-#include "../editor/Editor.h"
+//#include "../editor/Editor.h"
 #include "../core/Objects/VKRCubemap.h"
+#include "../filesystem/ResourceManager.h"
+#include "../Camera.h"
+#include "../editor/Editor.h"
 
 namespace VKR
 {
@@ -21,11 +24,6 @@ namespace VKR
 		/// Shadow Pass
 		void Scene::ShadowPass(VKBackend* _backend, int _CurrentFrame)
 		{
-			if(m_SceneDirty)
-			{
-				PrepareScene(_backend);
-				m_SceneDirty = false;
-			}
 			//glm::mat4 shadowProjMat = glm::perspective(glm::radians(m_ShadowCameraFOV), g_ShadowAR, zNear, zFar);
 			glm::mat4 orthogonalProjMat = glm::ortho<float>(g_DirectionalLight->m_Right, -g_DirectionalLight->m_Right,
 									g_DirectionalLight->m_Up, -g_DirectionalLight->m_Up, 
@@ -37,13 +35,14 @@ namespace VKR
 			// Clear Color
 			VkClearValue clearValue;
 			clearValue.depthStencil = { 1.0f, 0 };
+#if 0
 			// Update Uniform buffers
 			ShadowUniformBufferObject ubo{};
 			ubo.view = lightViewMat;
 			ubo.projection = lightProjMat;
 			ubo.depthMVP = lightProjMat * lightViewMat;
-			memcpy(_backend->m_ShadowUniformBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
-
+			memcpy(m_ShadowRender->m_UniformBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
+#endif
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = renderContext.m_ShadowPass->pass;
@@ -65,12 +64,14 @@ namespace VKR
 			// Sombras(Depth Pass)
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
+				m_StaticModels[i]->Draw(_backend, _CurrentFrame, i);
+#if 0
 				R_Model* model = m_StaticModels[i];
 				DynamicBufferObject dynO{};				
 				dynO.model = model->m_ModelMatrix;
 				uint32_t dynamicOffset = count * static_cast<uint32_t>(dynamicAlignment);
 				// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-				memcpy((char*)_backend->m_ShadowDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+				memcpy((char*)m_ShadowRender->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 				vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowRender->m_PipelineLayout,
 					0, 1, &_backend->m_ShadowMat->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
 				for (auto& mesh : model->m_Meshes)
@@ -94,9 +95,10 @@ namespace VKR
 				++count;
 				VkMappedMemoryRange mappedMemoryRange{};
 				mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-				mappedMemoryRange.memory = _backend->m_ShadowDynamicBuffersMemory[_CurrentFrame];
+				mappedMemoryRange.memory = m_ShadowRender->m_DynamicBuffersMemory[_CurrentFrame];
 				mappedMemoryRange.size = sizeof(dynO);
 				vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+#endif
 			}
 			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
 		}
@@ -112,13 +114,16 @@ namespace VKR
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			vkDestroyPipeline(renderContext.m_LogicDevice, m_CubemapRender->m_Pipeline, nullptr);
 			vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_CubemapRender->m_PipelineLayout, nullptr);
+#if 0
 			m_CubemapRender->Initialize(true);
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
 			m_CubemapRender->CreatePipelineLayout();
 			m_CubemapRender->CreatePipeline(renderContext.m_RenderPass->pass);
 			m_CubemapRender->CleanShaderModules();
+#endif
 			PERF_INIT("RELOAD_SHADERS")
-			render::clean_material_list();
+			clean_material_list();
+			clean_shader_list();
 			for(int m = 0; m < m_CurrentStaticModels; m++)
 			{
 				for(int mi = 0; mi < m_StaticModels[m]->nMaterials; mi++)
@@ -143,41 +148,99 @@ namespace VKR
 			PERF_END("RELOAD_SHADERS")
 		}
 
+		void Scene::PrepareQuads(VKBackend* _backend)
+		{
+
+		}
+		void Scene::DrawQuads(VKBackend* _backend, int _CurrentFrame)
+		{
+			VKRenderable2D quad;
+			Vertex2D v = { .m_Pos = glm::vec2{0,1}, .m_TexCoord = glm::vec2{1,1} };
+			quad.m_Vertices = { v };
+			auto renderContext = utils::GetVKContext();
+			auto dynamicAlignment = sizeof(DynamicBufferObject);
+			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
+			{
+				dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1) & ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			}
+			std::array<uint32_t, 5> dynamicOffset = { 0 * static_cast<uint32_t>(dynamicAlignment) };
+			DebugUniformBufferObject dubo{};
+			dubo.view = dubo.projection = glm::mat4{ 1.f };
+			quad.material->CreateDescriptor(renderContext.m_LogicDevice);
+			memcpy(_backend->m_QuadBuffersMapped[_CurrentFrame], &dubo, sizeof(dubo));
+			quad.material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_QuadBuffers, _backend->m_QuadBuffers, _backend->m_QuadBuffers);
+			vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_QuadRender->m_PipelineLayout,
+				0, 1, &quad.material->material->materialSets[_CurrentFrame], 1, nullptr);
+			vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], (uint32_t)quad.m_Vertices.size(), 1, 0, 0);
+			/*VkMappedMemoryRange mappedMemoryRange{};
+			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			mappedMemoryRange.memory = m_QuadRender->m_DynamicBuffersMemory[_CurrentFrame];
+			mappedMemoryRange.size = sizeof(dynO);
+			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);*/
+			// draw todos los vertices
+		}
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
-			auto imageIdx = _backend->BeginFrame(_CurrentFrame);
-			g_editor->Loop(this, _backend);
+			_backend->PollEvents();
+			// Ahora vamos a simular el siguiente frame
+			uint32_t imageIdx = -1;
+			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
+			//vkGetQueryPoolResults(); //frame anterior al que estamos simulando
+			vkResetFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame]);
+			vkResetCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame], 0);
+
+			VkResult acqResult = VkResult::VK_SUCCESS;
+			acqResult = vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
+
+			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
+			{
+				_backend->RecreateSwapChain();
+				vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
+			}
+			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
+				exit(-69);
+
+			// Record command buffer
+			VkCommandBufferBeginInfo mBeginInfo{};
+			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			mBeginInfo.flags = 0;
+			mBeginInfo.pInheritanceInfo = nullptr;
+			if (vkBeginCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame], &mBeginInfo) != VK_SUCCESS)
+				exit(-13);
+			if (g_GPUTimestamp)
+				vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, 2);
+
 			auto renderContext = utils::GetVKContext();
-			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
+			/*vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);*/
 			// GeometryPass(_backend, _CurrentFrame);
+			if (m_SceneDirty)
+			{
+				PrepareScene(_backend);
+				m_SceneDirty = false;
+			}
 			if (g_ShadowPassEnabled)
 				ShadowPass(_backend, _CurrentFrame);
-			else
-				if (m_SceneDirty)
-				{
-					PrepareScene(_backend);
-					m_SceneDirty = false;
-				}
+			g_editor->Loop(this, _backend);
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
-			auto dynamicAlignment = sizeof(DynamicBufferObject);
-			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
-			auto lightDynAlign = sizeof(LightBufferObject);
-			lightDynAlign = (lightDynAlign + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
-			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			g_ProjectionMatrix = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
+			g_ProjectionMatrix[1][1] *= -1; // para invertir el eje Y
+			g_ViewMatrix = glm::lookAt(camera.g_CameraPos, camera.g_CameraPos + camera.g_CameraForward, camera.g_CameraUp);
 			/// Render Pass
-			// Update Uniform buffers
-			UniformBufferObject ubo{};
-			ubo.view = viewMat;
-			ubo.projection = projMat;
-			ubo.cameraPosition = m_CameraPos;
-			memcpy(_backend->m_Uniform_SBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
-			_backend->BeginRenderPass(_CurrentFrame);
+			std::array<VkClearValue, 2> clearValues;
+			clearValues[0].color = _backend->defaultClearColor;
+			clearValues[1].depthStencil = { 1.0f, 0 };
+			// Render pass
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = utils::g_context.m_RenderPass->pass;
+			renderPassInfo.framebuffer = _backend->m_SwapChainFramebuffers[imageIdx];
+			renderPassInfo.renderArea.offset = { 0,0 };
+			renderPassInfo.renderArea.extent = _backend->m_CurrentExtent;
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
+			vkCmdBeginRenderPass(_backend->m_CommandBuffer[_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 #pragma region GRID
 #if 0
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GridRender->m_Pipeline);
@@ -188,21 +251,15 @@ namespace VKR
 #endif
 #pragma endregion
 #pragma region LIGHTS
-			for (int l = 0; l < g_Lights.size(); l++)
-			{
-				g_Lights[l]->Draw(_backend, _CurrentFrame);
-			}
+#if 1
 			g_DirectionalLight->Draw(_backend, _CurrentFrame);
-			/*g_PointLights[0]->Draw(_backend, _CurrentFrame);
-			g_PointLights[1]->Draw(_backend, _CurrentFrame);
-			g_PointLights[2]->Draw(_backend, _CurrentFrame);
-			g_PointLights[3]->Draw(_backend, _CurrentFrame);*/
+			g_PointLights[0].Draw(_backend, _CurrentFrame);
+			g_PointLights[1].Draw(_backend, _CurrentFrame);
+			g_PointLights[2].Draw(_backend, _CurrentFrame);
+			g_PointLights[3].Draw(_backend, _CurrentFrame);
+#endif
 #pragma endregion
 #pragma region MODELS
-			//vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsRender->m_Pipeline);
-			// REFRESH RENDER MODE FUNCTIONS
-			//vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			//vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			uint32_t count = 0;
 			// Render Pass
 			for (int i = 0; i < m_CurrentStaticModels; i++)
@@ -212,14 +269,14 @@ namespace VKR
 			}
 #pragma endregion
 #pragma region DEBUG
+#if 0
 			//Debug
 			DebugUniformBufferObject dubo{};
-			dubo.view = viewMat;
-			dubo.projection = projMat;
+			dubo.view = g_ViewMatrix;
+			dubo.projection = g_ProjectionMatrix;
 			memcpy(_backend->m_DbgUniformBuffersMapped[_CurrentFrame], &dubo, sizeof(dubo));
 			
 			int debugCount = 0;
-#if 0
 			for (auto& model : modelsToDraw)
 			{
 				DynamicBufferObject dynO{};
@@ -252,17 +309,62 @@ namespace VKR
 			/*if(g_DrawCubemap)
 				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));*/
 #pragma endregion
-			// TODO Draw quads.r
-
+#pragma region QUADS
+			// TODO Draw quads
+			if (m_UIDirty)
+			{
+				PrepareQuads(_backend);
+				m_UIDirty = false;
+			}
+			//DrawQuads(_backend, _CurrentFrame);
+#pragma endregion
 			g_editor->Draw(_backend->m_CommandBuffer[_CurrentFrame]);
-			_backend->EndRenderPass(_CurrentFrame);
-			_backend->SubmitAndPresent(_CurrentFrame, &imageIdx);
+
+			vkCmdEndRenderPass(_backend->m_CommandBuffer[_CurrentFrame]);
+			if (vkEndCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame]) != VK_SUCCESS)
+				exit(-17);
+
+			VkSubmitInfo submitInfo{};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+			submitInfo.waitSemaphoreCount = 1;
+			submitInfo.pWaitSemaphores = &_backend->m_ImageAvailable[_CurrentFrame];
+			submitInfo.pWaitDstStageMask = waitStages;
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &_backend->m_CommandBuffer[_CurrentFrame];
+			VkSemaphore signalSemaphores[] = { _backend->m_RenderFinish[imageIdx] };
+			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.pSignalSemaphores = signalSemaphores;
+			auto submit = vkQueueSubmit(utils::g_context.m_GraphicsComputeQueue, 1, &submitInfo, _backend->m_InFlight[_CurrentFrame]);
+			if (submit != VK_SUCCESS)
+			{
+				fprintf(stderr, "Error on the Submit");
+				exit(-1);
+			}
+			// Presentacion: devolver el frame al swapchain para que salga por pantalla
+			VkPresentInfoKHR presentInfo{};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.waitSemaphoreCount = 1;
+			presentInfo.pWaitSemaphores = signalSemaphores;
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = &_backend->m_SwapChain;
+			presentInfo.pImageIndices = &imageIdx;
+			presentInfo.pResults = nullptr;
+			_backend->m_PresentResult = vkQueuePresentKHR(utils::g_context.m_PresentQueue, &presentInfo);
+
+			if ((_backend->m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || _backend->m_PresentResult == VK_SUBOPTIMAL_KHR)
+				&& m_NeedToRecreateSwapchain)
+				_backend->RecreateSwapChain()
+				;
+			else if (_backend->m_PresentResult != VK_SUCCESS && _backend->m_PresentResult != VK_SUBOPTIMAL_KHR)
+					exit(-69);
 			if(g_GPUTimestamp)
 				_backend->CollectGPUTimestamps(_CurrentFrame);
 		}
 
 		void Scene::PrepareCubemapScene(VKBackend* _backend)
 		{
+#if 0
 			PERF_INIT("PREPARE_CUBEMAP")
 			auto renderContext = utils::GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
@@ -289,31 +391,33 @@ namespace VKR
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
-			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, _backend->m_CubemapUniformBuffers, _backend->m_CubemapDynamicBuffers);
+			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_UniformBuffers, m_CubemapRender->m_DynamicBuffers);
 			PERF_END("PREPARE_CUBEMAP")
+#endif
 		}
 
 		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
 		{
+#if 0
 			// Cubemap draw
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
 			auto renderContext = utils::GetVKContext();
 			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
 			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
+			glm::mat4 projMat = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
 			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 viewMat = glm::lookAt(m_CameraPos, m_CameraPos + m_CameraForward, m_CameraUp);
+			glm::mat4 viewMat = glm::lookAt(camera.g_CameraPos, camera.g_CameraPos + camera.g_CameraForward, camera.g_CameraUp);
 			CubemapUniformBufferObject cubo {};
 			cubo.projection = projMat;
 			cubo.view = viewMat;
-			memcpy(_backend->m_CubemapUniformBuffersMapped[_CurrentFrame], &cubo, sizeof(cubo));
+			memcpy(m_CubemapRender->m_UniformBuffersMapped[_CurrentFrame], &cubo, sizeof(cubo));
 			constexpr int sizeDynO = sizeof(DynamicBufferObject);
 			DynamicBufferObject dynO{};
 			dynO.model = glm::mat4(1.f);
 			dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_cubemapDistance);
 			uint32_t dynamicOffset = 0 * static_cast<uint32_t>(_dynamicAlignment);
 			// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-			memcpy((char*)_backend->m_CubemapDynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
+			memcpy((char*)m_CubemapRender->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
 			// Update Uniform buffers
 
 			VkBuffer vertesBuffers[] = { m_Cubemap->m_VertexBuffer };
@@ -326,9 +430,10 @@ namespace VKR
 			// Flush to make changes visible to the host
 			VkMappedMemoryRange mappedMemoryRange{};
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			mappedMemoryRange.memory = _backend->m_CubemapDynamicBuffersMemory[_CurrentFrame];
+			mappedMemoryRange.memory = m_CubemapRender->m_DynamicBuffersMemory[_CurrentFrame];
 			mappedMemoryRange.size = sizeof(dynO);
 			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
+#endif
 		}
 
 		void Scene::PrepareScene(VKBackend* _backend)
@@ -339,37 +444,36 @@ namespace VKR
 			{
 				m_StaticModels[i]->Prepare(_backend);
 			}
-			g_DirectionalLight->m_visual_model->Prepare(_backend);
-			/*g_PointLights[0]->m_visual_model->Prepare(_backend);
-			g_PointLights[1]->m_visual_model->Prepare(_backend);
-			g_PointLights[2]->m_visual_model->Prepare(_backend);
-			g_PointLights[3]->m_visual_model->Prepare(_backend);*/
+			g_DirectionalLight->Prepare(_backend);
+			g_PointLights[0].Prepare(_backend);
+			g_PointLights[1].Prepare(_backend);
+			g_PointLights[2].Prepare(_backend);
+			g_PointLights[3].Prepare(_backend);
 			PERF_END("PREPARE_DRAW_SCENE")
 		}
 
-		void Scene::Init(VKBackend* _backend)
+		void Scene::Init(VKBackend* _backend, const char* _modelName)
 		{
 			auto renderContext = utils::GetVKContext();
-			//m_Cubemap = new R_Cubemap("resources/Textures/cubemaps/cubemaps_skybox_3.png");
-			m_StaticModels[0] = new R_Model("Bistro");
-			m_CurrentStaticModels = 1;
+			R_Model* gizmo = new R_Model();
+			RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, MODELS_PATH, _modelName, gizmo);
+			m_StaticModels[0] = gizmo;
+			++m_CurrentStaticModels;
 			g_DirectionalLight = new Directional();
-			/*g_PointLights[0] = new Point();
-			g_PointLights[1] = new Point();
-			g_PointLights[2] = new Point();
-			g_PointLights[3] = new Point();*/
+			g_DirectionalLight->Init();
+			g_PointLights[0].Init();
+			g_PointLights[1].Init();
+			g_PointLights[2].Init();
+			g_PointLights[3].Init();
 			//PrepareCubemapScene(_backend);
-			g_editor = new Editor(VKR::render::m_Window, _backend->m_Instance, _backend->m_Capabilities.minImageCount,
-		_backend->m_SwapchainImagesCount);
 			m_SceneDirty = true;
-		}
-
-		void Scene::Update()
-		{
-			/*for (int i = 0; i < m_CurrentStaticModels; i++)
-			{
-				m_StaticModels[i]->Update();
-			}*/
+			g_editor = new Editor(
+#ifndef USE_GLFW
+				hwnd, 
+#else
+			m_Window, 
+#endif
+				_backend->m_Instance, _backend->m_Capabilities.minImageCount, _backend->m_SwapchainImagesCount);
 		}
 #if 0
 		void Scene::PrepareDebugScene(VKBackend* _backend)
@@ -448,6 +552,8 @@ namespace VKR
 #endif
 		void Scene::Cleanup(VkDevice _LogicDevice)
 		{
+			g_editor->Cleanup();
+			g_editor->Shutdown();
 			printf("Scene Cleanup\n");
 			vkDeviceWaitIdle(_LogicDevice);
 			for (int i = 0; i < m_CurrentStaticModels; i++)
@@ -469,8 +575,6 @@ namespace VKR
 			}
 #endif
 			//m_Cubemap->Cleanup(_LogicDevice);
-			g_editor->Cleanup();
-			g_editor->Shutdown();
 		}
 	}
 }

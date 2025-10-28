@@ -1,6 +1,6 @@
 #include "VKRCubemap.h"
 #include "DebugModels.h"
-#include "VKRModel.h"
+#include <cstring>
 #include "../Materials/VKRTexture.h"
 #include <cstring>
 

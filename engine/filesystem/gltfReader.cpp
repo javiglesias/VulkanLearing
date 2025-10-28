@@ -4,6 +4,7 @@
 #include "../core/Objects/VKRModel.h"
 #include "../core/Materials/VKRTexture.h"
 #include "../video/VKRenderable.h"
+#include "../memory/mem_alloc.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -29,10 +30,23 @@ namespace VKR
 		   aiTextureType_EMISSION_COLOR,
 		   aiTextureType_LIGHTMAP
 		};
-		bool LoadModel_ALT(const char* _filepath, const char* _modelName)
+		char tex_type_tags[8][128] = {
+		   "BASE_COLOR",
+		   "DIFFUSE_ROUGHNESS",
+		   "SPECULAR",
+		   "AMBIENT",
+		   "NORMALS",
+		   "AMBIENT_OCCLUSION",
+		   "EMISSION_COLOR",
+		   "LIGHTMA"
+		};
+		bool LoadModel_ALT(const char* _filepath, const char* _modelName, render::R_Model* model_)
 		{
 			char filename[128];
-			tempModel = new render::R_Model();
+			if (model_ == nullptr)
+				tempModel = new render::R_Model();
+			else
+				tempModel = model_;
 			sprintf(filename, "%s%s", _filepath, _modelName);
 			sprintf(tempModel->m_Path, "%s", _modelName);
 			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
@@ -42,7 +56,7 @@ namespace VKR
 			return true;
 		}
 
-		void GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
+		bool GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
 		{
 			aiString path;
 			auto diff = _material->GetTexture(_type, _texIndex, &path);
@@ -50,12 +64,15 @@ namespace VKR
 			{
 				char texture[256];
 				sprintf(texture, "%s/%s", _filepath, path.data);
-				*outTex_ = new render::Texture(texture);
+				*outTex_ = NEW(render::Texture);
+				(*outTex_)->init(texture);
+				return true;
 			}
 			else
-				*outTex_ = new render::Texture("");
+				*outTex_ = NEW(render::Texture);
+			return false;
 		}
-
+#pragma region ASSIMP
 		void ProcessModelNode(aiNode* _node, const aiScene* _scene, const char* _filepath)
 		{
 			// CHILDREN
@@ -68,7 +85,7 @@ namespace VKR
 			for (unsigned int m = 0; m < _node->mNumMeshes; m++)
 			{
 				const aiMesh* mesh = _scene->mMeshes[_node->mMeshes[m]];
-				render::VKRenderable* tempMesh = new render::VKRenderable();
+				render::VKRenderable3D* tempMesh = new render::VKRenderable3D();
 				strcpy(tempMesh->m_Id, mesh->mName.C_Str());
 				//Process Mesh
 				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
@@ -88,6 +105,8 @@ namespace VKR
 				{
 					Vertex3D tempVertex;
 					tempVertex.m_Pos = { mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z };
+					if (mesh->HasVertexColors(0))
+						tempVertex.m_Color = { mesh->mColors[0]->r, mesh->mColors[0]->g , mesh->mColors[0]->b };
 					if (mesh->mTextureCoords[0])
 					{
 						tempVertex.m_TexCoord = { mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y };
@@ -110,20 +129,24 @@ namespace VKR
 				{
 					tempModel->m_Materials[mesh->mMaterialIndex] = new render::R_Material();
 					tempModel->m_Materials[mesh->mMaterialIndex]->material = new render::MaterialInstance();
-					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
-
 					for (int t = 0; t < MAX_TEXTURES; t++)
 					{
-						GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]),
+						if(GenerateTextureMesh(_filepath, static_cast<aiTextureType>(tex_type[t]),
 							texIndex, _scene->mMaterials[mesh->mMaterialIndex], mesh->mMaterialIndex,
-							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]);
+							&tempModel->m_Materials[mesh->mMaterialIndex]->textures[t]))
+							sprintf(tempModel->m_Materials[mesh->mMaterialIndex]->m_Tags, "%s|%s", tempModel->m_Materials[mesh->mMaterialIndex]->m_Tags, tex_type_tags[t]);
 					}
+					tempModel->m_Materials[mesh->mMaterialIndex]->material->pipeline._buildPipeline();
 					++tempModel->nMaterials;
 				}
 
 				tempMesh->m_Material = mesh->mMaterialIndex;
-				//++m_TotalTextures;
-				tempMesh->m_ModelMatrix = glm::mat4(1.f);
+				tempMesh->m_ModelMatrix = {
+					_node->mTransformation.a1,_node->mTransformation.b1,_node->mTransformation.c1,_node->mTransformation.d1,
+					_node->mTransformation.a2,_node->mTransformation.b2,_node->mTransformation.c2,_node->mTransformation.d2,
+					_node->mTransformation.a3,_node->mTransformation.b3,_node->mTransformation.c3,_node->mTransformation.d3,
+					_node->mTransformation.a4,_node->mTransformation.b4,_node->mTransformation.c4,_node->mTransformation.d4
+				};
 				tempModel->m_Meshes.push_back(tempMesh);
 			}
 		}
@@ -131,10 +154,14 @@ namespace VKR
 		void LoadModel(const char* _filepath, const char* _modelName, render::R_Model* model_)
 		{
 			//PERF_INIT()
-			char filename[128];
-			sprintf(filename, "%s/%s.gltf", _filepath, _modelName);
-			printf("\nLoading %s\n", filename);
-			const aiScene* scene = aiImportFile(filename, aiProcess_Triangulate);
+			char filename_path[128];
+			char filepath[128];
+			memset(filename_path, 0, 128);
+			memset(filepath, 0, 128);
+			sprintf(filepath, "%s/%s", _filepath, _modelName);
+			sprintf(filename_path, "%s/%s.gltf", filepath, _modelName);
+			printf("\nLoading %s\n", filename_path);
+			const aiScene* scene = aiImportFile(filename_path, aiProcess_Triangulate);
 			if (!scene || !scene->HasMeshes())
 				exit(-225);
 			if (model_ == nullptr)
@@ -143,8 +170,8 @@ namespace VKR
 				tempModel = model_;
 			//Process Node
 			auto node = scene->mRootNode;
-			ProcessModelNode(node, scene, _filepath);
-			sprintf(tempModel->m_Path, "%s%s", _filepath, _modelName);
+			ProcessModelNode(node, scene, filepath);
+			sprintf(tempModel->m_Path, "%s", filename_path);
 			for (size_t c = 0; c < scene->mNumCameras; c++)
 			{
 				fprintf(stdout, "Cameras %s", scene->mCameras[c]->mName);
@@ -154,15 +181,26 @@ namespace VKR
 				fprintf(stdout, "Light %s", scene->mLights[l]->mName);
 			}
 		}
+#pragma endregion
+#pragma region CGLTF
 		cgltf_data* read_glTF(const char* _filepath, const char* _modelName, render::R_Model* tempModel_)
 		{
 			cgltf_options options {};
 			char filename[128];
-			sprintf(filename, "%s%s", _filepath, _modelName);
+			char filepath[128];
+			memset(filename, 0, 128);
+			memset(filepath, 0, 128);
+			sprintf(filepath, "%s%s/", _filepath, _modelName);
+			sprintf(filename, "%s%s.gltf", filepath, _modelName);
 			cgltf_data* modelData = NULL;
 			cgltf_parse_file(&options, filename, &modelData);
 			if(modelData == NULL) return nullptr;
-			cgltf_load_buffers(&options, modelData, _filepath);
+			if (cgltf_load_buffers(&options, modelData, filepath) != cgltf_result_success)
+#ifdef _MSVC
+				__debugbreak();
+#else
+					raise(SIGTRAP);
+#endif
 			if(cgltf_validate(modelData) == cgltf_result_success)
 			{
 				printf("\nModel file validated (nodes %d)\n", static_cast<int>(modelData->nodes_count));
@@ -177,38 +215,41 @@ namespace VKR
 						if (tempModel_->m_Materials[materialID] == nullptr)
 						{
 							tempModel_->m_Materials[materialID] = new render::R_Material();
+							tempModel->m_Materials[materialID]->material = new render::MaterialInstance();
 							tempModel_->m_Materials[materialID]->material->pipeline._buildPipeline();
 							fprintf(stderr, "Material %d: %s\n", materialID, material.name);
-							/*for(int t= 0; t < 8; t++)
+							for (int t = 0; t < MAX_TEXTURES; t++)
 							{
-								tempModel_->m_Materials[materialID]->textures[t] = new render::Texture();
-							}*/
-							/*if(material.normal_texture.texture != nullptr)
+								tempModel_->m_Materials[materialID]->textures[t] = NEW(render::Texture);
+							}
+							if(material.normal_texture.texture != nullptr)
 							{
-								std::string pathTexture = std::string(material.normal_texture.texture->image->uri);
-								tempModel_->m_Materials[materialID]->textures[2] = new render::Texture(pathTexture);
+								char pathTexture[256];
+								memset(pathTexture, 0, 256);
+								sprintf(pathTexture, "%s%s", filepath, material.normal_texture.texture->image->uri);
+								tempModel_->m_Materials[materialID]->textures[1] = NEW(render::Texture);
+								tempModel_->m_Materials[materialID]->textures[1]->init(pathTexture);
 							}
 							if(material.specular.specular_texture.texture != nullptr)
 							{
-								std::string pathTexture = std::string(material.specular.specular_texture.texture->image->uri);
-								tempModel_->m_Materials[materialID]->textures[3] = new render::Texture(pathTexture);
-							}*/
+								char pathTexture[256];
+								memset(pathTexture, 0, 256);
+								sprintf(pathTexture, "%s%s", filepath, material.specular.specular_texture.texture->image->uri);
+								tempModel_->m_Materials[materialID]->textures[2] = NEW(render::Texture);
+								tempModel_->m_Materials[materialID]->textures[2]->init(pathTexture);
+							}
 
 						}
 					}
 				}
 				else
 				{
-					tempModel_->m_Materials[materialID] = new render::R_Material();
-					#ifdef WIN32
+					fprintf(stderr, "No Material.\n");
+#ifdef _MSVC
 					__debugbreak();
-					#else
-						raise(SIGTRAP);
-					#endif
-					for (int t = 0; t < MAX_TEXTURES; t++)
-					{
-						tempModel_->m_Materials[materialID]->textures[t] = new render::Texture("");
-					}
+#else
+					raise(SIGTRAP);
+#endif
 				}
 
 				for (cgltf_size n = 0; n < modelData->nodes_count; ++n)
@@ -217,8 +258,8 @@ namespace VKR
 					auto camera = modelData->nodes[n].camera;
 					if(mesh)
 					{
-						VKR::render::VKRenderable* tempMesh = new VKR::render::VKRenderable();
-						strcpy(tempMesh->m_Id, mesh->name);
+						VKR::render::VKRenderable3D* tempMesh = new VKR::render::VKRenderable3D();
+						sprintf(tempMesh->m_Id, "%s_%d", mesh->name ? mesh->name : "mesh", n);
 						tempMesh->m_Pos = glm::vec3(modelData->nodes[n].translation[0],
 											modelData->nodes[n].translation[1],
 											modelData->nodes[n].translation[2]);
@@ -244,8 +285,21 @@ namespace VKR
 							printf("\tPrimitive %zd\n", p);
 							for(cgltf_size a = 0; a < mesh->primitives[p].attributes_count; a++)
 							{
+								tempMesh->m_Material = mesh->primitives[p].material ? static_cast<uint32_t>(cgltf_material_index(modelData, mesh->primitives[p].material)) : 0;
+								// TODO chuches: No material? The first mesh with no material enters here and create a DUMMY material for the rest
+								if (tempModel_->m_Materials.size() <= 0)
+								{
+									tempModel_->m_Materials[materialID] = new render::R_Material();
+									tempModel->m_Materials[materialID]->material = new render::MaterialInstance();
+									tempModel_->m_Materials[materialID]->material->pipeline._buildPipeline();
+									fprintf(stderr, "Material %d: DUMMY\n", materialID);
+									for (int t = 0; t < MAX_TEXTURES; t++)
+									{
+										tempModel_->m_Materials[materialID]->textures[t] = NEW(render::Texture);
+									}
+								}
 #pragma region PBR_material
-								auto meshMaterial = mesh->primitives[p].material;
+#if 0
 								/*
 								 *BASE_COLOR
 								 *DIFFUSE_ROUGHNESS,
@@ -257,7 +311,6 @@ namespace VKR
 								 *LIGHTMAP
 								 *
 								 */
-								tempMesh->m_Material = static_cast<uint32_t>(cgltf_material_index(modelData, meshMaterial));
 								if (meshMaterial->pbr_metallic_roughness.base_color_texture.texture != nullptr)
 								{
 									std::string pathTexture = std::string(meshMaterial->pbr_metallic_roughness.base_color_texture.texture->image->uri);
@@ -284,6 +337,8 @@ namespace VKR
 
 									}
 								}
+#endif
+
 #pragma endregion
 								auto accessor = mesh->primitives[p].attributes[a].data;
 								Vertex3D tempVertex;
@@ -318,28 +373,59 @@ namespace VKR
 									{
 										fprintf(stderr, "normal count %llu\n", accessor->count);
 										float* values = new float[3*accessor->count];
-										int n = 0; 
-										float *buffer = (float *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset/sizeof(float) + accessor->offset/sizeof(float); 
-										for (unsigned int k = 0; k < accessor->count; k++) 
+										int n = 0;
+										if (accessor->buffer_view->buffer->data)
 										{
-											float tempNormal[3];
-											for (int l = 0; l < 3; l++) 
+											float *buffer = (float *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset/sizeof(float) + accessor->offset/sizeof(float); 
+											for (unsigned int k = 0; k < accessor->count; k++) 
 											{
-												values[3*k + l] = buffer[n + l];
-												tempNormal[l] = buffer[n + l];
+												float tempNormal[3];
+												for (int l = 0; l < 3; l++) 
+												{
+													values[3*k + l] = buffer[n + l];
+													tempNormal[l] = buffer[n + l];
+												}
+												tempVertex.m_Normal = glm::vec3(tempNormal[0], tempNormal[1], tempNormal[2]);
+												if(tempMesh->m_Vertices.size() <= k)
+													tempMesh->m_Vertices.push_back(tempVertex);
+												else
+													tempMesh->m_Vertices[k].m_Normal = tempVertex.m_Normal;
+												n += (int)(accessor->stride/sizeof(float));
 											}
-											tempVertex.m_Normal = glm::vec3(tempNormal[0], tempNormal[1], tempNormal[2]);
-											if(tempMesh->m_Vertices.size() <= k)
-												tempMesh->m_Vertices.push_back(tempVertex);
-											else
-												tempMesh->m_Vertices[k].m_Normal = tempVertex.m_Normal;
-											n += (int)(accessor->stride/sizeof(float));
 										}
 									}
 								}
 								else if(cgltf_attribute_type_tangent == mesh->primitives[p].attributes[a].type)
 								{
 
+								}
+								else if (cgltf_attribute_type_color == mesh->primitives[p].attributes[a].type)
+								{
+									if (accessor->type == cgltf_type_vec3)
+									{
+										fprintf(stderr, "color count %llu\n", accessor->count);
+										float* values = new float[3 * accessor->count];
+										int n = 0;
+										if (accessor->buffer_view->buffer->data)
+										{
+											float* buffer = (float*)accessor->buffer_view->buffer->data + accessor->buffer_view->offset / sizeof(float) + accessor->offset / sizeof(float);
+											for (unsigned int k = 0; k < accessor->count; k++)
+											{
+												float tempColor[3];
+												for (int l = 0; l < 3; l++)
+												{
+													values[3 * k + l] = buffer[n + l];
+													tempColor[l] = buffer[n + l];
+												}
+												tempVertex.m_Color = glm::vec3(tempColor[0], tempColor[1], tempColor[2]);
+												if (tempMesh->m_Vertices.size() <= k)
+													tempMesh->m_Vertices.push_back(tempVertex);
+												else
+													tempMesh->m_Vertices[k].m_Color = tempVertex.m_Color;
+												n += (int)(accessor->stride / sizeof(float));
+											}
+										}
+									}
 								}
 								else if(cgltf_attribute_type_texcoord == mesh->primitives[p].attributes[a].type)
 								{
@@ -391,10 +477,10 @@ namespace VKR
 				}
 			}
 			else
-#ifdef WIN32
+#ifdef _MSVC
 				__debugbreak();
 #else
-				raise(SIGTRAP);
+					raise(SIGTRAP);
 #endif
 			return modelData;
 		}
@@ -418,6 +504,7 @@ namespace VKR
 			}
 			return result;
 		}
+#pragma endregion
 #endif
 	}
 }

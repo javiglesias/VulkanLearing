@@ -7,14 +7,25 @@ namespace VKR
 {
 	namespace render
 	{
-		Light::Light()
+		void Light::Init()
 		{
-			m_visual_model = new R_Model("BoxVertexColors");
+		}
+
+		void Directional::Init()
+		{
+			Light::Init();
 		}
 
 		void Light::Draw(VKBackend* _backend, int _CurrentFrame)
 		{
-			m_visual_model->Draw(_backend, _CurrentFrame);
+		}
+		void Light::Prepare(VKBackend* _backend)
+		{
+		}
+
+		void Point::Init()
+		{
+			Light::Init();
 		}
 	}
 }

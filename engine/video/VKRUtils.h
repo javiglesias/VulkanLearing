@@ -1,13 +1,11 @@
 #ifndef _C_UTILS
 #define _C_UTILS
-#define USE_VMA 0
 #include "../core/VKRRenderPass.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #else
 #include <cstring>
-#include <signal.h>
 #endif
 #include <string>
 #include <cstdio>
@@ -21,11 +19,6 @@ static void VK_ASSERT(bool _check)
 {
 	if (_check)
 	{
-		#ifdef _WIN32
-		__debugbreak();
-		#else
-		raise(SIGTRAP);
-		#endif
 		exit(-69);
 	}
 }

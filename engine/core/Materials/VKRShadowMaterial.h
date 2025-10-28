@@ -7,13 +7,12 @@
 #include <string>
 #include <vector>
 #include <array>
-
+#define FRAMES_IN_FLIGHT 2
 namespace VKR
 {
 	namespace render
 	{
 		extern std::string g_ConsoleMSG;
-		extern const int FRAMES_IN_FLIGHT;
 
 		struct R_ShadowMaterial
 		{

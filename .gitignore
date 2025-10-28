@@ -50,6 +50,8 @@ bld/
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 !.vscode/launch.json
+*.vcxproj.filters
+*.vcxproj
 
 # Local History for Visual Studio Code
 .history/
@@ -423,7 +425,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-
+*.sln
 
 # Cmake
 CMakeLists.txt.user
@@ -438,10 +440,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
-
+.ninja_deps
+.ninja_log
+build.ninja
 ALL_BUILD.*
 ZERO_CHECK.*
-VKRenderer.*
-VKRenderer*
 *.spv
-
+CMakeSettings.json

@@ -1,13 +1,17 @@
 #include "Editor.h"
+#include "Editor.h"
 #include "EditorModels.h"
 #include "../video/VKRUtils.h"
 #include "../filesystem/ResourceManager.h"
-#include "../video/VKBackend.h"
 #include "../core/VKRScene.h"
 #include <cstdio>
 
 #ifdef WIN32
+#ifndef USE_GLFW
+#include "../../dependencies/imgui/backends/imgui_impl_win32.h"
+#else
 #include "../../dependencies/imgui/backends/imgui_impl_glfw.h"
+#endif
 #include "../../dependencies/imgui/backends/imgui_impl_vulkan.h"
 #else
 #include "../../dependencies/imgui/imgui.h"
@@ -29,12 +33,20 @@ namespace VKR
 			return 0;
 		}
 
+#ifndef USE_GLFW
+		Editor::Editor(HWND _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
+#else
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
+#endif
 		{
 			auto renderContext = utils::GetVKContext();
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
+#ifndef USE_GLFW
+			ImGui_ImplWin32_Init(_Window);
+#else
 			ImGui_ImplGlfw_InitForVulkan(_Window, true);
+#endif
 			// UI descriptor Pool
 			VkDescriptorPoolSize pool_sizes[] =
 			{
@@ -87,13 +99,18 @@ namespace VKR
 			// }
 			// closedir(directory);
 		}
+
 		void Editor::Cleanup()
 		{
 			printf("Editor Cleanup\n");
 			auto renderContext = utils::GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			ImGui_ImplVulkan_Shutdown();
+#ifndef USE_GLFW
+			ImGui_ImplWin32_Shutdown();
+#else
 			ImGui_ImplGlfw_Shutdown();
+#endif
 			ImGui::DestroyContext();
 			vkDestroyDescriptorPool(renderContext.m_LogicDevice, m_UIDescriptorPool, nullptr);
 		}
@@ -102,6 +119,7 @@ namespace VKR
 		{
 			printf("Editor shutdown\n");
 		}
+
 		Editor::~Editor()
 		{
 		}
@@ -110,7 +128,11 @@ namespace VKR
 		void Editor::Loop(Scene* _mainScene ,VKBackend* _backend)
 		{
 			ImGui_ImplVulkan_NewFrame();
+#ifndef USE_GLFW
+			ImGui_ImplWin32_NewFrame();
+#else
 			ImGui_ImplGlfw_NewFrame();
+#endif
 			ImGui::NewFrame();
 			
 			ImGui::Begin("console");
@@ -126,18 +148,10 @@ namespace VKR
 			ImGui::Begin("Tools");
 			{
 				// Camera
-				ImGui::SliderFloat("cam Speed", &render::m_CameraSpeed, 0.1f, 100.f);
+				/*ImGui::SliderFloat("cam Speed", &render::m_CameraSpeed, 0.1f, 100.f);
 				ImGui::SliderFloat("FOV", &render::m_CameraFOV, 40.f, 100.f);
-				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", render::m_CameraPos.x, render::m_CameraPos.y, render::m_CameraPos.z);
-				ImGui::DragFloat("Rotation", &render::g_Rotation, 1.f, 0.f, 360.f);
-				float rotation[3];
-				rotation[0] = render::m_Rotation.x;
-				rotation[1] = render::m_Rotation.y;
-				rotation[2] = render::m_Rotation.z;
-				ImGui::InputFloat3("Rotation", rotation);
-				render::m_Rotation.x = rotation[0];
-				render::m_Rotation.y = rotation[1];
-				render::m_Rotation.z = rotation[2];
+				ImGui::LabelText("Cam Pos", "Cam Pos(%.2f, %.2f, %.2f)", render::g_CameraPos.x, render::g_CameraPos.y, render::g_CameraPos.z);
+				ImGui::DragFloat("Rotation", &render::g_Rotation, 1.f, 0.f, 360.f);*/
 
 				if (ImGui::Button("Reload shaders"))
 				{
@@ -165,37 +179,42 @@ namespace VKR
 				}
 				ImGui::EndGroup();
 
-				// static ImGuiComboFlags flags = 0;
-				// static int item_current_idx = 0;
-				//  const char* combo_preview_value = ModelList[item_current_idx];
-				//if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
-				//{
-				//	for (int n = 1; n < MODELS_SIZE; n++)
-				//	{
-				//		const bool is_selected = (item_current_idx == n);
-				//		if (ImGui::Selectable(ModelList[n], is_selected))
-				//			item_current_idx = n;
+				 static ImGuiComboFlags flags = 0;
+				 static int item_current_idx = 0;
+				  const char* combo_preview_value = ModelList[item_current_idx];
+				if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
+				{
+					for (int n = 1; n < MODELS_SIZE; n++)
+					{
+						const bool is_selected = (item_current_idx == n);
+						if (ImGui::Selectable(ModelList[n], is_selected))
+							item_current_idx = n;
 
-				//		// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				//		if (is_selected)
-				//			ImGui::SetItemDefaultFocus();
-				//	}
-				//	ImGui::EndCombo();
-				//}
-				//ImGui::SameLine();
-				/*if (ImGui::Button("Load"))
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Load"))
 				{
 					char path[128];
 					sprintf(path, "resources/models/%s/glTF/", ModelList[item_current_idx]);
 					char name[64];
 					sprintf(name, "%s.gltf", ModelList[item_current_idx]);
-					RM::_AddRequest(STATIC_MODEL, path, name);
-				}*/
+					RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, path, name);
+				}
+				if (ImGui::Button("Save"))
+				{
+					RM::_AddRequest(VKR::RM::SAVE, MAP_FILE);
+				}
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
 				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
 				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
+				ImGui::Checkbox("Shadows", &g_ShadowPassEnabled);
 				ImGui::Checkbox("GPU Timestamps", &g_GPUTimestamp);
 				ImGui::SliderFloat("Mip level", &g_MipLevel, 0.f, 12.f, "%1.f");
 				//ImGui::DragFloat("Debug scale", &g_debugScale);
@@ -207,8 +226,8 @@ namespace VKR
 					_backend->m_ShadowVisualizer = ImGui_ImplVulkan_AddTexture(_backend->m_ShadowImgSamp, _backend->m_ShadowImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 				ImGui::Image(_backend->m_ShadowVisualizer, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });*/
-				ImGui::LabelText("Frame n:", "%lld", g_CurrentFrame);
-				ImGui::LabelText("Elapsed time:", "%.f", g_ElapsedTime);
+				ImGui::LabelText("Frame:", "%lld", g_Frames);
+				ImGui::LabelText("Elapsed:", "%.f", g_ElapsedTime);
 				ImGui::LabelText("CPU ms:", "%.4f", g_FrameTime);
 				ImGui::LabelText("GPU ms:", "%.4f", g_TimestampValue);
 
@@ -303,22 +322,18 @@ namespace VKR
 					sprintf(name, "Point Light %d", i);
 					if (ImGui::TreeNode(name))
 					{
-						Point* light = g_PointLights[i];
-						ImGui::Selectable("light", &light->m_Editable);
+						Point& light = g_PointLights[i];
+						ImGui::Selectable("light", &light.m_Editable);
 						float center[3];
-						center[0] = light->m_Pos.x;
-						center[1] = light->m_Pos.y;
-						center[2] = light->m_Pos.z;
+						center[0] = light.m_Pos.x;
+						center[1] = light.m_Pos.y;
+						center[2] = light.m_Pos.z;
 						ImGui::DragFloat3("Pos", center, 0.1f);
-						light->m_Pos.x = center[0];
-						light->m_Pos.y = center[1];
-						light->m_Pos.z = center[2];
+						light.m_Pos.x = center[0];
+						light.m_Pos.y = center[1];
+						light.m_Pos.z = center[2];
 						ImGui::TreePop();
 					}
-				}
-				if (ImGui::Button("Delete"))
-				{
-					g_Lights.pop_back();
 				}
 				ImGui::End();
 			}
