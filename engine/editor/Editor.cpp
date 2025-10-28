@@ -179,32 +179,36 @@ namespace VKR
 				}
 				ImGui::EndGroup();
 
-				// static ImGuiComboFlags flags = 0;
-				// static int item_current_idx = 0;
-				//  const char* combo_preview_value = ModelList[item_current_idx];
-				//if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
-				//{
-				//	for (int n = 1; n < MODELS_SIZE; n++)
-				//	{
-				//		const bool is_selected = (item_current_idx == n);
-				//		if (ImGui::Selectable(ModelList[n], is_selected))
-				//			item_current_idx = n;
+				 static ImGuiComboFlags flags = 0;
+				 static int item_current_idx = 0;
+				  const char* combo_preview_value = ModelList[item_current_idx];
+				if (ImGui::BeginCombo("Load model", combo_preview_value, flags))
+				{
+					for (int n = 1; n < MODELS_SIZE; n++)
+					{
+						const bool is_selected = (item_current_idx == n);
+						if (ImGui::Selectable(ModelList[n], is_selected))
+							item_current_idx = n;
 
-				//		// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				//		if (is_selected)
-				//			ImGui::SetItemDefaultFocus();
-				//	}
-				//	ImGui::EndCombo();
-				//}
-				//ImGui::SameLine();
-				/*if (ImGui::Button("Load"))
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Load"))
 				{
 					char path[128];
 					sprintf(path, "resources/models/%s/glTF/", ModelList[item_current_idx]);
 					char name[64];
 					sprintf(name, "%s.gltf", ModelList[item_current_idx]);
-					RM::_AddRequest(STATIC_MODEL, path, name);
-				}*/
+					RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, path, name);
+				}
+				if (ImGui::Button("Save"))
+				{
+					RM::_AddRequest(VKR::RM::SAVE, MAP_FILE);
+				}
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);

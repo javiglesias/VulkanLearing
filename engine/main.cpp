@@ -2,6 +2,7 @@
 #include "video/VKRUtils.h"
 #include "memory/mem_alloc.h"
 #include "perfmon/Custom.h"
+#include "filesystem/ResourceManager.h"
 //std::thread* RMThread;
 void _init_resource_manager()
 {
@@ -33,7 +34,7 @@ int main(int _argc, char** _args)
 		hInstance
 #endif
 	);
-	char sceneModel[64] = {"BoxVertexColors\0"};
+	char sceneModel[64] = {"Sponza\0"};
 #ifdef USE_GLFW
 	if (_argc > 1)
 	{
@@ -56,6 +57,7 @@ int main(int _argc, char** _args)
 		currentLocalFrame = (currentLocalFrame + 1) % FRAMES_IN_FLIGHT;
 		++VKR::render::g_Frames;
 		nextFrame = backend.GetTime();
+		VKR::RM::_Loop();
 	}
 	mainScene.Cleanup(renderContext.m_LogicDevice);
 	backend.Cleanup();

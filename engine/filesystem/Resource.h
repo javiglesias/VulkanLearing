@@ -3,32 +3,30 @@
 #include <cstring>
 namespace VKR
 {
-	enum STATE
+	// resource requested state
+	enum RES_STATE
 	{
 		LOADING,
-		READY,
-		COUNT
+		READY
 	};
-	enum TYPE
+
+	// resource type to manage
+	enum RES_TYPE
 	{
 		UNDEFINED=-1,
 		STATIC_MODEL,
 		ASSIMP_MODEL,
 		DBG_MODEL,
 		TEXTURE,
-		SOUND
+		SOUND,
+		MAP_FILE
 	};
+
 	struct sResource
 	{
-		STATE m_State{LOADING};
-		TYPE m_Type{UNDEFINED};
+		RES_STATE m_State{LOADING};
+		RES_TYPE m_Type{UNDEFINED};
 		char m_PathFromLoad[256];
-		void (*m_LoadFunc)(const char*);
-		sResource() {}
-		sResource(const char* _PathFromLoad)
-		{
-			memcpy(m_PathFromLoad, _PathFromLoad, sizeof(m_PathFromLoad));
-		}
 	};
 }
 #endif

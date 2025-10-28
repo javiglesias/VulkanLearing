@@ -17,16 +17,22 @@
 bool should_close_window = false;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (uMsg == WM_DESTROY)
-	{
-		DestroyWindow(hwnd);
+	switch (uMsg) {
+	case WM_CLOSE:
 		PostQuitMessage(0);
-		should_close_window = true;
+		return 0;
+	case WM_KEYDOWN:
+		if (wParam == VK_ESCAPE) {
+			PostQuitMessage(0);
+		}
+		return 0;
+	case WM_LBUTTONDOWN:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	case WM_MOUSEMOVE:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	default:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
 	}
-	else if (uMsg == WM_PAINT)
-		ValidateRect(hwnd, NULL);
-	else
-		DefWindowProc(hwnd, uMsg, wParam, lParam);
 	return 1;
 }
 #else
@@ -136,12 +142,9 @@ namespace VKR
 #endif
 		)
 		{
-			init_input_devices(
 #ifndef USE_GLFW
-				hInstance
+			init_input_devices();
 #endif
-			);
-
 			#ifdef WIN32
 			glslang::InitializeProcess();
 			printf("glslang GLSL version: %s\n", glslang::GetGlslVersionString());
@@ -179,7 +182,7 @@ namespace VKR
 			m_Window = glfwCreateWindow(g_WindowWidth, g_WindowHeight, "Vulkan renderer", nullptr, nullptr);
 			glfwSetFramebufferSizeCallback(m_Window, FramebufferResizeCallback);
 			glfwSetKeyCallback(m_Window, KeyboardInputCallback);
-			glfwSetCursorPosCallback(m_Window, MouseInputCallback);
+			glfwSetCursorPosCallback(m_Window, MouseCallback);
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			glfwSetMouseButtonCallback(m_Window, MouseBPressCallback);
 			/// Vamos a crear la integracion del sistema de ventanas (WSI) para vulkan
@@ -191,9 +194,12 @@ namespace VKR
 			WNDCLASS wc = {};
 			wc.lpfnWndProc = WindowProc;
 			wc.hInstance = hInstance;
-			wc.lpszClassName = LPCSTR(CLASS_NAME);
+			wc.style = CS_HREDRAW | CS_VREDRAW;
+			wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wc.lpszClassName = "Vulkan renderer";
 			RegisterClass(&wc);
-			hwnd = CreateWindowEx(0, LPCSTR(CLASS_NAME), LPCSTR(L"Vulkan renderer"), WS_OVERLAPPEDWINDOW,
+
+			hwnd = CreateWindowEx(0, "Vulkan renderer", LPCSTR(L"Vulkan renderer"), WS_OVERLAPPEDWINDOW,
 				CW_USEDEFAULT, CW_USEDEFAULT, g_WindowWidth, g_WindowHeight,
 				NULL, NULL, hInstance, NULL);
 			ShowWindow(hwnd, SW_SHOW);
@@ -809,7 +815,9 @@ namespace VKR
 
 		bool VKBackend::BackendShouldClose()
 		{
+#ifndef USE_GLFW
 			reset_devices();
+#endif
 			return m_CloseEngine;
 		}
 
@@ -819,6 +827,9 @@ namespace VKR
 			MSG message;
 			while (PeekMessage(&message, hwnd, 0, 0, PM_REMOVE))
 			{
+				if (message.message == WM_QUIT) {
+					m_CloseEngine = true;
+				}
 				TranslateMessage(&message);
 				DispatchMessage(&message);
 			}
@@ -898,6 +909,10 @@ namespace VKR
 			CleanSwapChain();
 			// m_Scene->Cleanup();
 			m_ShadowMat->Cleanup(utils::g_context.m_LogicDevice);
+#ifndef USE_GLFW
+			//vkDestroySurfaceKHR(instance, surface, nullptr);
+			DestroyWindow(hwnd);
+#endif
 		}
 
 		Texture* VKBackend::FindTexture(const char* _path)

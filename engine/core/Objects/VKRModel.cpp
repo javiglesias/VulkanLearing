@@ -27,7 +27,7 @@ namespace VKR
 		R_Model::R_Model(const char* _modelName)
 		{
 			memset(m_Path, (int)'F', 64);
-			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, _modelName, this);
+			RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, MODELS_PATH, _modelName, this);
 		}
 
 		void R_Model::Draw(VKBackend* _backend, int _CurrentFrame, int _countModel)

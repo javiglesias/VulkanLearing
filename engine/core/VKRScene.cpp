@@ -456,7 +456,7 @@ namespace VKR
 		{
 			auto renderContext = utils::GetVKContext();
 			R_Model* gizmo = new R_Model();
-			RM::_AddRequest(ASSIMP_MODEL, MODELS_PATH, _modelName, gizmo);
+			RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, MODELS_PATH, _modelName, gizmo);
 			m_StaticModels[0] = gizmo;
 			++m_CurrentStaticModels;
 			g_DirectionalLight = new Directional();
