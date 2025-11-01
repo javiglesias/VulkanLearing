@@ -112,8 +112,6 @@ namespace VKR
 		{
 			auto renderContext = utils::GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
-			vkDestroyPipeline(renderContext.m_LogicDevice, m_CubemapRender->m_Pipeline, nullptr);
-			vkDestroyPipelineLayout(renderContext.m_LogicDevice, m_CubemapRender->m_PipelineLayout, nullptr);
 #if 0
 			m_CubemapRender->Initialize(true);
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
@@ -211,8 +209,8 @@ namespace VKR
 				vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, 2);
 
 			auto renderContext = utils::GetVKContext();
-			/*vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
-			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);*/
+			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
+			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			// GeometryPass(_backend, _CurrentFrame);
 			if (m_SceneDirty)
 			{
@@ -306,8 +304,8 @@ namespace VKR
 		
 #pragma endregion
 #pragma region CUBEMAP
-			/*if(g_DrawCubemap)
-				DrawCubemapScene(_backend, _CurrentFrame, projMat, viewMat, static_cast<uint32_t>(dynamicAlignment));*/
+			if(g_DrawCubemap)
+				m_Cubemap->Draw(_backend, _CurrentFrame);
 #pragma endregion
 #pragma region QUADS
 			// TODO Draw quads
@@ -362,80 +360,6 @@ namespace VKR
 				_backend->CollectGPUTimestamps(_CurrentFrame);
 		}
 
-		void Scene::PrepareCubemapScene(VKBackend* _backend)
-		{
-#if 0
-			PERF_INIT("PREPARE_CUBEMAP")
-			auto renderContext = utils::GetVKContext();
-			/// N - Actualizar los DynamicDescriptorBuffers
-			m_Cubemap->m_Material->PrepareMaterialToDraw(_backend);
-			/// 5 - Crear buffers de vertices
-			void* data;
-			VkDeviceSize bufferSize = sizeof(m_Cubemap->m_Vertices[0]) * m_Cubemap->m_Vertices.size();
-			// Stagin buffer
-			utils::CreateBuffer(bufferSize,
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				_backend->m_StagingBuffer, _backend->m_StaggingBufferMemory);
-			vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
-			memcpy(data, m_Cubemap->m_Vertices.data(), (size_t)bufferSize);
-			vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-			utils::CreateBuffer(bufferSize,
-				VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-				VK_SHARING_MODE_CONCURRENT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				m_Cubemap->m_VertexBuffer, m_Cubemap->m_VertexBufferMemory);
-			utils::CopyBuffer(m_Cubemap->m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
-			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
-			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
-
-			m_Cubemap->m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_UniformBuffers, m_CubemapRender->m_DynamicBuffers);
-			PERF_END("PREPARE_CUBEMAP")
-#endif
-		}
-
-		void Scene::DrawCubemapScene(VKBackend* _backend, int _CurrentFrame, glm::mat4 _projection, glm::mat4 _view, uint32_t _dynamicAlignment)
-		{
-#if 0
-			// Cubemap draw
-			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
-			auto renderContext = utils::GetVKContext();
-			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
-			// Matriz de proyeccion
-			glm::mat4 projMat = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
-			projMat[1][1] *= -1; // para invertir el eje Y
-			glm::mat4 viewMat = glm::lookAt(camera.g_CameraPos, camera.g_CameraPos + camera.g_CameraForward, camera.g_CameraUp);
-			CubemapUniformBufferObject cubo {};
-			cubo.projection = projMat;
-			cubo.view = viewMat;
-			memcpy(m_CubemapRender->m_UniformBuffersMapped[_CurrentFrame], &cubo, sizeof(cubo));
-			constexpr int sizeDynO = sizeof(DynamicBufferObject);
-			DynamicBufferObject dynO{};
-			dynO.model = glm::mat4(1.f);
-			dynO.model = glm::scale(dynO.model, glm::vec3(1.f) * g_cubemapDistance);
-			uint32_t dynamicOffset = 0 * static_cast<uint32_t>(_dynamicAlignment);
-			// OJO aqui hay que sumarle el offset para guardar donde hay que guardar
-			memcpy((char*)m_CubemapRender->m_DynamicBuffersMapped[_CurrentFrame] + dynamicOffset, &dynO, sizeof(dynO));
-			// Update Uniform buffers
-
-			VkBuffer vertesBuffers[] = { m_Cubemap->m_VertexBuffer };
-			VkDeviceSize offsets[] = { 0 };
-
-			vkCmdBindDescriptorSets(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_PipelineLayout, 0, 1,
-				&m_Cubemap->m_Material->m_DescriptorSet[_CurrentFrame], 1, &dynamicOffset);
-			vkCmdBindVertexBuffers(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, vertesBuffers, offsets);
-			vkCmdDraw(_backend->m_CommandBuffer[_CurrentFrame], static_cast<uint32_t>(m_Cubemap->m_Vertices.size()), 1, 0, 0);
-			// Flush to make changes visible to the host
-			VkMappedMemoryRange mappedMemoryRange{};
-			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			mappedMemoryRange.memory = m_CubemapRender->m_DynamicBuffersMemory[_CurrentFrame];
-			mappedMemoryRange.size = sizeof(dynO);
-			vkFlushMappedMemoryRanges(renderContext.m_LogicDevice, 1, &mappedMemoryRange);
-#endif
-		}
-
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
 			auto renderContext = utils::GetVKContext();
@@ -455,17 +379,18 @@ namespace VKR
 		void Scene::Init(VKBackend* _backend, const char* _modelName)
 		{
 			auto renderContext = utils::GetVKContext();
-			R_Model* gizmo = new R_Model();
-			RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, MODELS_PATH, _modelName, gizmo);
+			/*R_Model* gizmo = new R_Model();
+			RM::_AddRequest(VKR::RM::LOAD, STATIC_MODEL, MODELS_PATH, _modelName, gizmo);
 			m_StaticModels[0] = gizmo;
-			++m_CurrentStaticModels;
+			++m_CurrentStaticModels;*/
 			g_DirectionalLight = new Directional();
 			g_DirectionalLight->Init();
 			g_PointLights[0].Init();
 			g_PointLights[1].Init();
 			g_PointLights[2].Init();
 			g_PointLights[3].Init();
-			//PrepareCubemapScene(_backend);
+			m_Cubemap = new R_Cubemap("resources/textures/texture.png");
+			m_Cubemap->Prepare(_backend);
 			m_SceneDirty = true;
 			g_editor = new Editor(
 #ifndef USE_GLFW
@@ -574,7 +499,7 @@ namespace VKR
 				model->Cleanup(_LogicDevice);
 			}
 #endif
-			//m_Cubemap->Cleanup(_LogicDevice);
+			m_Cubemap->Cleanup(_LogicDevice);
 		}
 	}
 }

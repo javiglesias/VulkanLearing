@@ -34,10 +34,13 @@ int main(int _argc, char** _args)
 		hInstance
 #endif
 	);
-	char sceneModel[64] = {"Sponza\0"};
+	char sceneModel[64];
 #ifdef USE_GLFW
 	if (_argc > 1)
 	{
+		char pBuf[256];
+		size_t len = sizeof(pBuf);
+		int bytes = GetModuleFileName(NULL, pBuf, len);
 		fprintf(stdout, "Initializing Scene with model -> %s\n", _args[1]);
 		sprintf(sceneModel, "%s\0", _args[1]);
 	}

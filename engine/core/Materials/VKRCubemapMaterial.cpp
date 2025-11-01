@@ -9,10 +9,10 @@ namespace VKR
 {
 	namespace render
 	{
-		R_CubemapMaterial::R_CubemapMaterial(std::string _path)
+		R_CubemapMaterial::R_CubemapMaterial(const char* _texture)
 		{
 			// cubemaps_skybox
-			m_Path = std::string(_path.c_str());
+			strcpy(m_Path, _texture);
 			m_Texture = NEW(Texture);
 			m_Texture->init(m_Path);
 		}
@@ -34,17 +34,13 @@ namespace VKR
 		{
 			if (m_DescriptorPool == nullptr)
 			{
-				std::array<VkDescriptorPoolSize, 3> descPoolSize{};
+				std::array<VkDescriptorPoolSize, 2> descPoolSize{};
 				// UBO
 				descPoolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				descPoolSize[0].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 				// Textura
 				descPoolSize[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				descPoolSize[1].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
-
-				// Model Matrix
-				descPoolSize[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descPoolSize[2].descriptorCount = static_cast<uint32_t>(FRAMES_IN_FLIGHT);
 
 				VkDescriptorPoolCreateInfo descPoolInfo{};
 				descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -72,7 +68,7 @@ namespace VKR
 					exit(-67);
 			}
 		}
-		void R_CubemapMaterial::UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers)
+		void R_CubemapMaterial::UpdateDescriptorSet(VkDevice _LogicDevice, std::array<VkBuffer, 2> _UniformBuffers)
 		{
 			// Escribimos la info de los descriptors
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -82,7 +78,7 @@ namespace VKR
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(CubemapUniformBufferObject); // VK_WHOLE
 
-				std::array<VkWriteDescriptorSet, 3> descriptorsWrite{};
+				std::array<VkWriteDescriptorSet, 2> descriptorsWrite{};
 				descriptorsWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[0].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[0].dstBinding = 0;
@@ -115,22 +111,6 @@ namespace VKR
 				descriptorsWrite[1].pBufferInfo = nullptr;
 				descriptorsWrite[1].pImageInfo = &TextureDiffuseImage;
 				descriptorsWrite[1].pTexelBufferView = nullptr;
-
-				// Dynamic
-				VkDescriptorBufferInfo dynBufferInfo{};
-				dynBufferInfo.buffer = _DynamicBuffers[i];
-				dynBufferInfo.offset = 0;
-				dynBufferInfo.range = sizeof(DynamicBufferObject); // VK_WHOLE
-
-				descriptorsWrite[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorsWrite[2].dstSet = m_DescriptorSet[i];
-				descriptorsWrite[2].dstBinding = 2;
-				descriptorsWrite[2].dstArrayElement = 0;
-				descriptorsWrite[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				descriptorsWrite[2].descriptorCount = 1;
-				descriptorsWrite[2].pBufferInfo = &dynBufferInfo;
-				descriptorsWrite[2].pImageInfo = nullptr;
-				descriptorsWrite[2].pTexelBufferView = nullptr;
 
 				vkUpdateDescriptorSets(_LogicDevice, static_cast<uint32_t>(descriptorsWrite.size()), descriptorsWrite.data(), 0, nullptr);
 			}

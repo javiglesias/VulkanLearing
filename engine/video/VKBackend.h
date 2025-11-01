@@ -49,7 +49,7 @@ namespace VKR
         inline float zFar= 1000001.f;
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
-        inline float g_cubemapDistance = 1000000.f;
+        inline float g_cubemapDistance = 100.f;
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 0.f;

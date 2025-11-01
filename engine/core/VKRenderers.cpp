@@ -473,18 +473,9 @@ namespace VKR
             cubemapDiffuseLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
             cubemapDiffuseLayoutBinding.pImmutableSamplers = nullptr;
 
-            // estructura Dynamic Uniforms
-            VkDescriptorSetLayoutBinding dynOLayoutBinding{};
-            dynOLayoutBinding.binding = 2;
-            dynOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-            dynOLayoutBinding.descriptorCount = 1;
-            dynOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-            dynOLayoutBinding.pImmutableSamplers = nullptr;
-
-            std::array<VkDescriptorSetLayoutBinding, 3> ShaderBindings = {
+            std::array<VkDescriptorSetLayoutBinding, 2> ShaderBindings = {
                 uboLayoutBinding,
             	cubemapDiffuseLayoutBinding,
-                dynOLayoutBinding
             };
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

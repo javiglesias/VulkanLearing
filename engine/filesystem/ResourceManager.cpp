@@ -10,7 +10,7 @@ namespace VKR
 		void _AddRequest(REQ_TYPE _type, RES_TYPE _res_type, const char* _filepath, const char* _resourceName, render::R_Model* model_)
 		{
 			if(model_ != nullptr)
-				switch (_type)
+				switch (_res_type)
 				{
 				case STATIC_MODEL:
 				{

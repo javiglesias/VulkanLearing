@@ -5,6 +5,7 @@
 #include "../video/Types.h"
 #include "Materials/VKRShadowMaterial.h"
 
+
 namespace VKR
 {
     namespace render
@@ -146,6 +147,7 @@ namespace VKR
         public: // Functions
             // Creamos el layout de los Descriptor set que vamos a utlizar
             //bool Initialize(bool _reload = false) override;
+            // RENDER BUFFERS
             bool CreateShaderModules();
             void CreateDescriptorSetLayout() override;
             CubemapRenderer(VkDevice _LogicalDevice, int _PolygonMode = VK_POLYGON_MODE_FILL)

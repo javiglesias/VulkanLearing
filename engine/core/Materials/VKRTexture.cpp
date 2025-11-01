@@ -31,7 +31,12 @@ namespace VKR
 
 		void Texture::LoadTexture()
 		{
-			PERF_INIT("LOAD_TEXTURE")
+			PERF_INIT("LOAD_TEXTURE");
+			FILE* f = fopen(m_Path, "r");
+			if (!f)
+				sprintf(m_Path, "resources/Textures/defaultMissing.png");
+			else
+				fclose(f);
 			stbi_uc* pixels = nullptr;
 			stbi_set_flip_vertically_on_load(true);
 			int tWidth, tHeight, tChannels;

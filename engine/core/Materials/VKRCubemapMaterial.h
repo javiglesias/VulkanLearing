@@ -16,7 +16,7 @@ namespace VKR
 		struct R_CubemapMaterial
 		{
 		private:
-			std::string m_Path;
+			char m_Path[64];
 		public: // Variables
 			VkShaderModule m_VertShaderModule;
 			VkShaderModule m_FragShaderModule;
@@ -37,12 +37,12 @@ namespace VKR
 			Texture* m_Texture;
 
 		public: // Functions
-			R_CubemapMaterial(std::string _path);
+			R_CubemapMaterial(const char* _texture);
 			void PrepareMaterialToDraw(VKBackend* _backend);
 			void CreateDescriptorPool(VkDevice _LogicDevice);
 			void CreateMeshDescriptorSet(VkDevice _LogicDevice, VkDescriptorSetLayout _DescSetLayout);
 
-			void UpdateDescriptorSet(VkDevice _LogicDevice, std::vector<VkBuffer> _UniformBuffers, std::vector<VkBuffer> _DynamicBuffers);
+			void UpdateDescriptorSet(VkDevice _LogicDevice, std::array<VkBuffer, 2> _UniformBuffers);
 			void Cleanup(VkDevice _LogicDevice);
 		};
 	}

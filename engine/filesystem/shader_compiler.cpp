@@ -93,6 +93,13 @@ std::vector<uint32_t> _read_shader(const char* _filename, int _stage)
 
 	_start_timer = time(NULL);
 	shader_file = fopen(spv_code_file, "rb");
+	//compilacion y esritura del compilado
+	if (!shader_file)
+	{
+		precompile_shader(_filename, _stage);
+		shader_file = fopen(spv_code_file, "rb");
+	}
+	// compilado
 	if (shader_file)
 	{
 		fseek(shader_file, 0, SEEK_END);
