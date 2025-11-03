@@ -112,6 +112,10 @@ namespace VKR
 		{
 			auto renderContext = utils::GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
+//cubemap update
+			delete m_Cubemap;
+			m_Cubemap = new R_Cubemap(g_CubemapTexture);
+			m_Cubemap->Prepare(_backend);
 #if 0
 			m_CubemapRender->Initialize(true);
 			m_CubemapRender->CreatePipelineLayoutSetup(&_backend->m_CurrentExtent, &_backend->m_Viewport, &_backend->m_Scissor);
@@ -179,7 +183,6 @@ namespace VKR
 		}
 		void Scene::DrawScene(VKBackend* _backend, int _CurrentFrame)
 		{
-			_backend->PollEvents();
 			// Ahora vamos a simular el siguiente frame
 			uint32_t imageIdx = -1;
 			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
@@ -197,7 +200,7 @@ namespace VKR
 			}
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);
-
+			g_editor->Loop(this, _backend);
 			// Record command buffer
 			VkCommandBufferBeginInfo mBeginInfo{};
 			mBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -219,7 +222,6 @@ namespace VKR
 			}
 			if (g_ShadowPassEnabled)
 				ShadowPass(_backend, _CurrentFrame);
-			g_editor->Loop(this, _backend);
 			vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, static_cast<uint32_t>(g_Timestamps.size()));
 			// Matriz de proyeccion
 			g_ProjectionMatrix = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);
@@ -358,6 +360,7 @@ namespace VKR
 					exit(-69);
 			if(g_GPUTimestamp)
 				_backend->CollectGPUTimestamps(_CurrentFrame);
+			_backend->PollEvents();
 		}
 
 		void Scene::PrepareScene(VKBackend* _backend)
@@ -389,7 +392,7 @@ namespace VKR
 			g_PointLights[1].Init();
 			g_PointLights[2].Init();
 			g_PointLights[3].Init();
-			m_Cubemap = new R_Cubemap("resources/textures/texture.png");
+			m_Cubemap = new R_Cubemap(g_CubemapTexture);
 			m_Cubemap->Prepare(_backend);
 			m_SceneDirty = true;
 			g_editor = new Editor(

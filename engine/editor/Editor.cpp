@@ -200,10 +200,12 @@ namespace VKR
 				if (ImGui::Button("Load"))
 				{
 					char path[128];
-					sprintf(path, "resources/models/%s/glTF/", ModelList[item_current_idx]);
-					char name[64];
-					sprintf(name, "%s.gltf", ModelList[item_current_idx]);
-					RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, path, name);
+					sprintf(path, "resources/models/%s", ModelList[item_current_idx]);
+					R_Model* new_model = new R_Model();
+					RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, path, ModelList[item_current_idx], new_model);
+					m_StaticModels[m_CurrentStaticModels] = new_model;
+					m_CurrentStaticModels++;
+					m_SceneDirty = true;
 				}
 				if (ImGui::Button("Save"))
 				{
@@ -212,6 +214,7 @@ namespace VKR
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
+				ImGui::InputText("Cubemap texture", g_CubemapTexture, 256);
 				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
 				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
 				ImGui::Checkbox("Shadows", &g_ShadowPassEnabled);
@@ -233,12 +236,12 @@ namespace VKR
 
 				ImGui::End();
 			}
-//			ImGui::Begin("World");
-//			{
-//				for (int i = 0; i < m_CurrentStaticModels; i++)
-//				{
-//					R_Model* model = m_StaticModels[i];
-//					ImGui::Selectable(model->m_Path, &model->m_Editable);
+			ImGui::Begin("World");
+			{
+				for (int i = 0; i < m_CurrentStaticModels; i++)
+				{
+					R_Model* model = m_StaticModels[i];
+					ImGui::Selectable(model->m_Path, &model->m_Editable);
 //					if (model->m_Editable)
 //					{
 //						float center[3] = {0};
@@ -271,9 +274,9 @@ namespace VKR
 //						model->m_Scale.z = scale[2];
 //#endif
 //					}
-//				}
-//				ImGui::End();
-//			}
+				}
+				ImGui::End();
+			}
 			ImGui::Begin("Lights");
 			{
 #if 0

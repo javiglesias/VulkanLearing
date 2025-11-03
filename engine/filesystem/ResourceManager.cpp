@@ -44,6 +44,7 @@ namespace VKR
 					strcpy(_RMRequests[_NumRequests].filepath, _filepath);
 					strcpy(_RMRequests[_NumRequests].resourceName, _resourceName);
 				}
+				_RMRequests[_NumRequests].modelPtr = new render::R_Model();
 				_NumRequests++;
 			}
 		}
@@ -60,6 +61,7 @@ namespace VKR
 				{
 					case LOAD:
 					{
+						render::R_Model* model;
 						filesystem::LoadModel(_RMRequests[_NumRequests-1].filepath, _RMRequests[_NumRequests-1].resourceName, static_cast<render::R_Model*>(_RMRequests[_NumRequests-1].modelPtr));
 						_NumRequests--;
 						break;

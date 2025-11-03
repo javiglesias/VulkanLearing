@@ -70,9 +70,9 @@ namespace VKR
 			void CreateTextureImageView();
 			void BindTextureMemory();
 			VkSampler CreateTextureSampler(float _Mipmaps,
-				VkSamplerAddressMode _u = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-				VkSamplerAddressMode _v = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-				VkSamplerAddressMode _w = VK_SAMPLER_ADDRESS_MODE_REPEAT);
+				VkSamplerAddressMode _u = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+				VkSamplerAddressMode _v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+				VkSamplerAddressMode _w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 			void CreateShadowTextureSampler();
 			void CleanTextureData(VkDevice _LogicDevice);
 		};

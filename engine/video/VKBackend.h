@@ -50,6 +50,7 @@ namespace VKR
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
         inline float g_cubemapDistance = 100.f;
+        inline char g_CubemapTexture[256] = { "resources/textures/cubemaps/office.png" };
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 0.f;

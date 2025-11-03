@@ -17,7 +17,7 @@ namespace VKR
 			fprintf(stdout, "Loading cubemap %s\n", _texturePath);
 			strcpy(m_Path, _texturePath);	
 			m_Material = new R_CubemapMaterial(_texturePath);
-			// TODO creacion de los vertices
+			// creacion de los vertices
 			m_Vertices = m_CubeVertices;
 		}
 

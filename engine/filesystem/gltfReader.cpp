@@ -151,15 +151,13 @@ namespace VKR
 			}
 		}
 
+		// resources/models/box, box
 		void LoadModel(const char* _filepath, const char* _modelName, render::R_Model* model_)
 		{
 			//PERF_INIT()
 			char filename_path[128];
-			char filepath[128];
 			memset(filename_path, 0, 128);
-			memset(filepath, 0, 128);
-			sprintf(filepath, "%s/%s", _filepath, _modelName);
-			sprintf(filename_path, "%s/%s.gltf", filepath, _modelName);
+			sprintf(filename_path, "%s/%s.gltf", _filepath, _modelName);
 			printf("\nLoading %s\n", filename_path);
 			const aiScene* scene = aiImportFile(filename_path, aiProcess_Triangulate);
 			if (!scene || !scene->HasMeshes())
@@ -170,7 +168,7 @@ namespace VKR
 				tempModel = model_;
 			//Process Node
 			auto node = scene->mRootNode;
-			ProcessModelNode(node, scene, filepath);
+			ProcessModelNode(node, scene, _filepath);
 			sprintf(tempModel->m_Path, "%s", filename_path);
 			for (size_t c = 0; c < scene->mNumCameras; c++)
 			{
