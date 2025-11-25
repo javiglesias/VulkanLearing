@@ -11,9 +11,6 @@
 #include <cstdio>
 #include <cmath>
 
-struct VmaAllocator_T;
-typedef struct VmaAllocation_T* VmaAllocation;
-
 inline
 static void VK_ASSERT(bool _check)
 {
@@ -50,12 +47,6 @@ namespace VKR
 	namespace render { extern std::string g_ConsoleMSG; }
 	namespace utils
 	{
-		inline VmaAllocator_T* vma_allocator;
-		void VMA_Initialize(VkPhysicalDevice _gpu, VkDevice _LogicDevice, VkInstance _instance);
-		void VMA_CreateImage(VkMemoryPropertyFlags _memProperties, VkImageCreateInfo* _ImageCreateInfo
-			, VkImage* Image_, VmaAllocation* Allocation_);
-		void VMA_BindTextureMemory(VkImage _image, VmaAllocation _allocation);
-		void VMA_DestroyImage(VkImage _image, VmaAllocation _allocation);
 		struct GPUInfo
 		{
 			uint32_t minUniformBufferOffsetAlignment = 0;

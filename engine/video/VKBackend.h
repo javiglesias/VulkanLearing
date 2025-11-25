@@ -9,8 +9,11 @@
 #include <Windows.h>
 #include <unordered_map>
 #define FRAMES_IN_FLIGHT 2
+
 struct GLFWwindow;
 class Texture;
+struct VmaAllocator_T;
+typedef struct VmaAllocation_T* VmaAllocation;
 
 namespace VKR
 {
@@ -29,6 +32,7 @@ namespace VKR
             READY,
             DESTROYED
         };
+        inline VmaAllocator_T* vma_allocator;
         inline std::thread* g_LoadDataThread;
         inline G_PIPELINE_STATUS m_GPipelineStatus{ INVALID };
         inline int g_WindowWidth = WIN_WIDTH;
@@ -180,7 +184,12 @@ namespace VKR
             void Shutdown();
             void Cleanup();
             Texture* FindTexture(const char* _textPath);
-
+            void VMA_Initialize(VkPhysicalDevice _gpu, VkDevice _LogicDevice, VkInstance _instance);
+            void VMA_CreateBuffer(size_t _size, VkMemoryPropertyFlags _memProperties, VmaAllocation* allocation_, VkBuffer* buffer_);
+            void VMA_CreateImage(VkMemoryPropertyFlags _memProperties, VkImageCreateInfo* _ImageCreateInfo
+                , VkImage* Image_, VmaAllocation* Allocation_);
+            void VMA_BindTextureMemory(VkImage _image, VmaAllocation _allocation);
+            void VMA_DestroyImage(VkImage _image, VmaAllocation _allocation);
             double GetTime();
 
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, uint32_t m_extensionCount);
@@ -196,7 +205,43 @@ namespace VKR
             void CreateDepthTestingResources();
             void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
                                      Renderer* _renderer);
+            void LoadTexture(Texture*);
+            void LoadCubemapTexture(Texture* _texture);
+            void CreateImage(Texture* _texture, VkExtent3D _extent, VkFormat _format, VkImageTiling _tiling
+                , VkImageUsageFlagBits _usage, VkMemoryPropertyFlags _memProperties
+                , uint32_t _arrayLayers, VkImageCreateFlags _flags, uint8_t _mipmapLvls = 1);
+            void CreateAndTransitionImage(Texture* _texture, VkCommandPool _CommandPool
+                , VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB
+                , VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
+                , VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D
+                , uint32_t _arrayLayers = 1, VkImageCreateFlags _flags = 0);
+            void CreateAndTransitionImageNoMipMaps(Texture* _texture, VkCommandPool _CommandPool
+                , VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB
+                , VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
+                , VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D
+                , uint32_t _arrayLayers = 1, VkImageCreateFlags _flags = 0);
+            void CreateAndTransitionImageCubemap(Texture* _texture, VkCommandPool _CommandPool
+                , VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB
+                , VkImageAspectFlags _aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
+                , VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D
+                , uint32_t _arrayLayers = 1, VkImageCreateFlags _flags = 0);
 
+            void GenerateMipmap(Texture* _texture, VkCommandPool _CommandPool, uint8_t _mipLevels);
+            void TransitionImageLayout(Texture* _texture, VkImageLayout _old, VkImageLayout _new,
+                VkCommandPool _CommandPool, uint32_t _layerCount, VkQueue* _queue,
+                uint8_t _levelCount = 1);
+            void CopyBufferToImage(Texture* _texture, VkBuffer _buffer, VkExtent3D _extent, VkDeviceSize _bufferOffset
+                , VkCommandPool _CommandPool, VkQueue* _queue, uint32_t _layer = 0);
+            void CreateImageView(Texture* _texture, VkImageAspectFlags _aspectMask, VkImageViewType _viewType
+                , uint32_t _arrayLayers = 1, uint32_t _levelCount = 1);
+            void CreateTextureImageView(Texture* _texture);
+            void BindTextureMemory(Texture* _texture);
+            void CreateTextureSampler(Texture* _texture, float _Mipmaps,
+                VkSamplerAddressMode _u = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                VkSamplerAddressMode _v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                VkSamplerAddressMode _w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+            void CreateShadowTextureSampler(Texture* _texture);
+            void CleanTextureData(Texture* _texture, VkDevice _LogicDevice);
             /* Un Frame en Vulkan
 			 *  1. esperar a que el frame anterior acabe
 			 *	2. obtener la imagen de la swap chain

@@ -9,14 +9,10 @@ namespace VKR
 {
 	namespace render
 	{
-		R_CubemapMaterial::R_CubemapMaterial(const char* _texture)
+		R_CubemapMaterial::R_CubemapMaterial()
 		{
-			// cubemaps_skybox
-			strcpy(m_Path, _texture);
-			m_Texture = NEW(Texture);
-			m_Texture->init(m_Path);
 		}
-		void R_CubemapMaterial::PrepareMaterialToDraw(VKBackend* _backend)
+		void R_CubemapMaterial::PrepareMaterialToDraw(Texture* _texture, VKBackend* _backend)
 		{
 			auto renderContext = utils::GetVKContext();
 			/// 2 - Crear descriptor pool de materiales(CreateDescPool)
@@ -26,8 +22,8 @@ namespace VKR
 			CreateMeshDescriptorSet(renderContext.m_LogicDevice, m_CubemapRender->m_DescSetLayout);
 
 			/// 4 - Crear y transicionar texturas(CreateAndTransImage)
-			m_Texture->LoadCubemapTexture();
-			m_Texture->CreateAndTransitionImageCubemap(_backend->m_CommandPool);
+			_backend->LoadCubemapTexture(_texture);
+			_backend->CreateAndTransitionImageCubemap(_texture, _backend->m_CommandPool);
 			// , VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, 6,VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
 		}
 		void R_CubemapMaterial::CreateDescriptorPool(VkDevice _LogicDevice)
@@ -68,7 +64,7 @@ namespace VKR
 					exit(-67);
 			}
 		}
-		void R_CubemapMaterial::UpdateDescriptorSet(VkDevice _LogicDevice, std::array<VkBuffer, 2> _UniformBuffers)
+		void R_CubemapMaterial::UpdateDescriptorSet(Texture* _texture,VkDevice _LogicDevice, std::array<VkBuffer, 2> _UniformBuffers)
 		{
 			// Escribimos la info de los descriptors
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
@@ -92,16 +88,14 @@ namespace VKR
 				// Diffuse
 				VkDescriptorImageInfo TextureDiffuseImage{};
 				TextureDiffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				TextureDiffuseImage.imageView = m_Texture->vk_image.view;
-				if (m_Texture->m_Sampler != nullptr)
+				TextureDiffuseImage.imageView = _texture->vk_image.view;
+				if (_texture->m_Sampler != nullptr)
 				{
-					TextureDiffuseImage.sampler = m_Texture->m_Sampler;
+					TextureDiffuseImage.sampler = _texture->m_Sampler;
 				}
 				else
 					printf("Invalid Sampler for frame\n");
 
-				g_ConsoleMSG += m_Texture->m_Path;
-				g_ConsoleMSG += '\n';
 				descriptorsWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				descriptorsWrite[1].dstSet = m_DescriptorSet[i];
 				descriptorsWrite[1].dstBinding = 1;

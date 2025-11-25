@@ -16,7 +16,9 @@ namespace VKR
 		{
 			fprintf(stdout, "Loading cubemap %s\n", _texturePath);
 			strcpy(m_Path, _texturePath);	
-			m_Material = new R_CubemapMaterial(_texturePath);
+			m_Material = new R_CubemapMaterial();
+			m_Texture = new Texture();
+			m_Texture->init(_texturePath);
 			// creacion de los vertices
 			m_Vertices = m_CubeVertices;
 		}
@@ -41,7 +43,8 @@ namespace VKR
 			PERF_INIT("PREPARE_CUBEMAP");
 			auto renderContext = utils::GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
-			m_Material->PrepareMaterialToDraw(_backend);
+			m_Texture = _backend->FindTexture(m_Texture->m_Path);
+			m_Material->PrepareMaterialToDraw(m_Texture, _backend);
 			/// 5 - Crear buffers de vertices
 			GenerateBuffers();
 			void* data;
@@ -65,7 +68,7 @@ namespace VKR
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
-			m_Material->UpdateDescriptorSet(renderContext.m_LogicDevice, uniform_Buffers);
+			m_Material->UpdateDescriptorSet(m_Texture, renderContext.m_LogicDevice, uniform_Buffers);
 			PERF_END("PREPARE_CUBEMAP")
 		}
 		void R_Cubemap::Cleanup(VkDevice _LogicDevice)

@@ -500,13 +500,8 @@ namespace VKR
 
 		void R_Material::Cleanup(VkDevice _LogicDevice)
 		{
-			material->Cleanup(_LogicDevice);
 			// Delete Material things
-			for (int8_t t = 0; t < MAX_TEXTURES; t++)
-			{
-				textures[t]->CleanTextureData(_LogicDevice);
-				textures[t] = nullptr;
-			}
+			material->Cleanup(_LogicDevice);
 		}
 
 		R_Material2D::R_Material2D()
@@ -622,10 +617,8 @@ namespace VKR
 
 		void R_Material2D::Cleanup(VkDevice _LogicDevice)
 		{
-			material->Cleanup(_LogicDevice);
 			// Delete Material things
-			texture->CleanTextureData(_LogicDevice);
-			texture = nullptr;
+			material->Cleanup(_LogicDevice);
 		}
 
 		void R_Material2D::PrepareDescriptorWrite(int16_t _setDst, uint32_t _bind,

@@ -17,6 +17,7 @@ namespace VKR
 		public: // variables
 			char m_Path[64];
 			R_Model* m_gltf;
+			Texture* m_Texture;
 			R_CubemapMaterial* m_Material;
 			VkBuffer m_VertexBuffer;
 			VkDeviceMemory m_VertexBufferMemory;

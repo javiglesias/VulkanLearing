@@ -1,54 +1,11 @@
 ﻿#include "VKRUtils.h"
-#ifndef VMA_IMPLEMENTATION
-#define VMA_IMPLEMENTATION
-#include <vk_mem_alloc.h>
-#endif
+
 #include <signal.h>
 
 namespace VKR
 {
 	namespace utils
 	{
-		void VMA_Initialize(VkPhysicalDevice _gpu, VkDevice _LogicDevice, VkInstance _instance)
-		{
-			VmaAllocatorCreateInfo alloc_info{};
-			alloc_info.physicalDevice = _gpu;
-			alloc_info.device = _LogicDevice;
-			alloc_info.instance = _instance;
-			alloc_info.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-			vmaCreateAllocator(&alloc_info, &vma_allocator);
-		}
-
-		void VMA_CreateBuffer(size_t _size, VkMemoryPropertyFlags _memProperties, VmaAllocation* allocation_, VkBuffer* buffer_)
-		{
-			
-		}
-
-		void VMA_CreateImage(VkMemoryPropertyFlags _memProperties, VkImageCreateInfo* _ImageCreateInfo
-			, VkImage* Image_, VmaAllocation* Allocation_)
-		{
-			VmaAllocationCreateInfo vma_image_info{};
-			vma_image_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-			vma_image_info.requiredFlags = _memProperties;
-			vma_image_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
-			VkResult result = vmaCreateImage(vma_allocator, _ImageCreateInfo, &vma_image_info, Image_, Allocation_, nullptr);
-			if (result != VK_SUCCESS)
-#ifdef _MSVC
-				__debugbreak();
-#else
-					raise(SIGTRAP);
-#endif
-		}
-
-		void VMA_BindTextureMemory(VkImage _image, VmaAllocation _allocation)
-		{
-			vkBindImageMemory(g_context.m_LogicDevice, _image, _allocation->GetMemory(), 0);
-		}
-
-		void VMA_DestroyImage(VkImage _image, VmaAllocation _allocation)
-		{
-			vmaDestroyImage(vma_allocator, _image, _allocation);
-		}
 #if 0
 		void GenerateDynamicAndUniformBuffers()
 		{
