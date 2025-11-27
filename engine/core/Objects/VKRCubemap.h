@@ -30,8 +30,8 @@ namespace VKR
 			std::array<void*, MAX_FRAMES> uniforms_Buffers_Mapped;
 		public: // functions
 			R_Cubemap(const char* _texturePath);
+			void GenerateBuffers(VKBackend* _backend);
 			void Prepare(VKBackend* _backend);
-			void GenerateBuffers();
 			void Cleanup(VkDevice _LogicDevice);
 			void Draw(VKBackend* _backend, int _CurrentFrame);
 		};

@@ -3,6 +3,7 @@
 #include "../Materials/VKRTexture.h"
 #include "../../perfmon/Custom.h"
 #include "../../video/VKRUtils.h"
+#include "../../video/VKDevice.h"
 #include "../../Camera.h"
 
 #include <glm/glm.hpp>
@@ -23,17 +24,17 @@ namespace VKR
 			m_Vertices = m_CubeVertices;
 		}
 
-		void R_Cubemap::GenerateBuffers()
+		void R_Cubemap::GenerateBuffers(VKBackend* _backend)
 		{
 			constexpr VkDeviceSize bufferSize = sizeof(CubemapUniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				utils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				_backend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 					uniform_Buffers[i], uniform_Buffers_Memory[i]);
-				vkMapMemory(utils::g_context.m_LogicDevice, uniform_Buffers_Memory[i], 0,
+				vkMapMemory(g_context.m_LogicDevice, uniform_Buffers_Memory[i], 0,
 					bufferSize, 0, &uniforms_Buffers_Mapped[i]);
 			}
 		}
@@ -41,16 +42,16 @@ namespace VKR
 		void R_Cubemap::Prepare(VKBackend* _backend)
 		{
 			PERF_INIT("PREPARE_CUBEMAP");
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			/// N - Actualizar los DynamicDescriptorBuffers
 			m_Texture = _backend->FindTexture(m_Texture->m_Path);
 			m_Material->PrepareMaterialToDraw(m_Texture, _backend);
 			/// 5 - Crear buffers de vertices
-			GenerateBuffers();
+			GenerateBuffers(_backend);
 			void* data;
 			VkDeviceSize bufferSize = sizeof(m_Vertices[0]) * m_Vertices.size();
 			// Stagin buffer
-			utils::CreateBuffer(bufferSize,
+			_backend->CreateBuffer(bufferSize,
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -58,13 +59,13 @@ namespace VKR
 			vkMapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, 0, bufferSize, 0, &data);
 			memcpy(data, m_Vertices.data(), (size_t)bufferSize);
 			vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
-			utils::CreateBuffer(bufferSize,
+			_backend->CreateBuffer(bufferSize,
 				VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				VK_SHARING_MODE_CONCURRENT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				m_VertexBuffer, m_VertexBufferMemory);
-			utils::CopyBuffer(m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
+			_backend->CopyBuffer(m_VertexBuffer, _backend->m_StagingBuffer, bufferSize, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 			vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
 			vkFreeMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory, nullptr);
 
@@ -82,7 +83,7 @@ namespace VKR
 #if 1
 			// Cubemap draw
 			vkCmdBindPipeline(_backend->m_CommandBuffer[_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_CubemapRender->m_Pipeline);
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			constexpr int sizeCUBO = sizeof(CubemapUniformBufferObject);
 			// Matriz de proyeccion
 			glm::mat4 projMat = glm::perspective(glm::radians(camera.m_CameraFOV), static_cast<float>(g_WindowWidth / g_WindowHeight), zNear, zFar);

@@ -2,6 +2,7 @@
 #include "Editor.h"
 #include "EditorModels.h"
 #include "../video/VKRUtils.h"
+#include "../video/VKDevice.h"
 #include "../filesystem/ResourceManager.h"
 #include "../core/VKRScene.h"
 #include <cstdio>
@@ -39,7 +40,7 @@ namespace VKR
 		Editor::Editor(GLFWwindow* _Window, VkInstance _Instance, uint32_t _MinImageCount, uint32_t _ImageCount)
 #endif
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 #ifndef USE_GLFW
@@ -103,7 +104,7 @@ namespace VKR
 		void Editor::Cleanup()
 		{
 			printf("Editor Cleanup\n");
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 			ImGui_ImplVulkan_Shutdown();
 #ifndef USE_GLFW

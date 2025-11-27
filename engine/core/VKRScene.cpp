@@ -1,5 +1,6 @@
 #include "VKRScene.h"
 #include "../video/VKRUtils.h"
+#include "../video/VKDevice.h"
 #include "../perfmon/Custom.h"
 //#include "../editor/Editor.h"
 #include "../core/Objects/VKRCubemap.h"
@@ -31,7 +32,7 @@ namespace VKR
 			orthogonalProjMat[1][1] *= -1;
 			glm::mat4 lightViewMat = glm::lookAt( g_DirectionalLight->m_Pos, g_DirectionalLight->m_Pos + g_DirectionalLight->m_Center, g_DirectionalLight->m_UpVector);
 			glm::mat4 lightProjMat = orthogonalProjMat * lightViewMat;
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			// Clear Color
 			VkClearValue clearValue;
 			clearValue.depthStencil = { 1.0f, 0 };
@@ -110,7 +111,7 @@ namespace VKR
 
 		void Scene::ReloadShaders(VKBackend* _backend)
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			vkDeviceWaitIdle(renderContext.m_LogicDevice);
 //cubemap update
 			delete m_Cubemap;
@@ -159,7 +160,7 @@ namespace VKR
 			VKRenderable2D quad;
 			Vertex2D v = { .m_Pos = glm::vec2{0,1}, .m_TexCoord = glm::vec2{1,1} };
 			quad.m_Vertices = { v };
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			if (renderContext.m_GpuInfo.minUniformBufferOffsetAlignment > 0)
 			{
@@ -185,18 +186,18 @@ namespace VKR
 		{
 			// Ahora vamos a simular el siguiente frame
 			uint32_t imageIdx = -1;
-			vkWaitForFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
+			vkWaitForFences(g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame], VK_TRUE, UINT64_MAX);
 			//vkGetQueryPoolResults(); //frame anterior al que estamos simulando
-			vkResetFences(utils::g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame]);
+			vkResetFences(g_context.m_LogicDevice, 1, &_backend->m_InFlight[_CurrentFrame]);
 			vkResetCommandBuffer(_backend->m_CommandBuffer[_CurrentFrame], 0);
 
 			VkResult acqResult = VkResult::VK_SUCCESS;
-			acqResult = vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
+			acqResult = vkAcquireNextImageKHR(g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
 
 			if (acqResult == VK_ERROR_OUT_OF_DATE_KHR || acqResult == VK_SUBOPTIMAL_KHR)
 			{
 				_backend->RecreateSwapChain();
-				vkAcquireNextImageKHR(utils::g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
+				vkAcquireNextImageKHR(g_context.m_LogicDevice, _backend->m_SwapChain, UINT64_MAX, _backend->m_ImageAvailable[_CurrentFrame], VK_NULL_HANDLE, &imageIdx);
 			}
 			else if (acqResult != VK_SUCCESS && acqResult != VK_SUBOPTIMAL_KHR)
 				exit(-69);
@@ -211,7 +212,7 @@ namespace VKR
 			if (g_GPUTimestamp)
 				vkCmdResetQueryPool(_backend->m_CommandBuffer[_CurrentFrame], _backend->m_PerformanceQuery[_CurrentFrame], 0, 2);
 
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			vkCmdSetViewport(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Viewport);
 			vkCmdSetScissor(_backend->m_CommandBuffer[_CurrentFrame], 0, 1, &_backend->m_Scissor);
 			// GeometryPass(_backend, _CurrentFrame);
@@ -234,7 +235,7 @@ namespace VKR
 			// Render pass
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = utils::g_context.m_RenderPass->pass;
+			renderPassInfo.renderPass = g_context.m_RenderPass->pass;
 			renderPassInfo.framebuffer = _backend->m_SwapChainFramebuffers[imageIdx];
 			renderPassInfo.renderArea.offset = { 0,0 };
 			renderPassInfo.renderArea.extent = _backend->m_CurrentExtent;
@@ -335,7 +336,7 @@ namespace VKR
 			VkSemaphore signalSemaphores[] = { _backend->m_RenderFinish[imageIdx] };
 			submitInfo.signalSemaphoreCount = 1;
 			submitInfo.pSignalSemaphores = signalSemaphores;
-			auto submit = vkQueueSubmit(utils::g_context.m_GraphicsComputeQueue, 1, &submitInfo, _backend->m_InFlight[_CurrentFrame]);
+			auto submit = vkQueueSubmit(g_context.m_GraphicsComputeQueue, 1, &submitInfo, _backend->m_InFlight[_CurrentFrame]);
 			if (submit != VK_SUCCESS)
 			{
 				fprintf(stderr, "Error on the Submit");
@@ -350,7 +351,7 @@ namespace VKR
 			presentInfo.pSwapchains = &_backend->m_SwapChain;
 			presentInfo.pImageIndices = &imageIdx;
 			presentInfo.pResults = nullptr;
-			_backend->m_PresentResult = vkQueuePresentKHR(utils::g_context.m_PresentQueue, &presentInfo);
+			_backend->m_PresentResult = vkQueuePresentKHR(g_context.m_PresentQueue, &presentInfo);
 
 			if ((_backend->m_PresentResult == VK_ERROR_OUT_OF_DATE_KHR || _backend->m_PresentResult == VK_SUBOPTIMAL_KHR)
 				&& m_NeedToRecreateSwapchain)
@@ -365,7 +366,7 @@ namespace VKR
 
 		void Scene::PrepareScene(VKBackend* _backend)
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			PERF_INIT("PREPARE_DRAW_SCENE")
 			for (int i = 0; i < m_CurrentStaticModels; i++)
 			{
@@ -381,7 +382,7 @@ namespace VKR
 
 		void Scene::Init(VKBackend* _backend, const char* _modelName)
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			/*R_Model* gizmo = new R_Model();
 			RM::_AddRequest(VKR::RM::LOAD, STATIC_MODEL, MODELS_PATH, _modelName, gizmo);
 			m_StaticModels[0] = gizmo;

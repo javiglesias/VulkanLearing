@@ -190,6 +190,7 @@ namespace VKR
                 , VkImage* Image_, VmaAllocation* Allocation_);
             void VMA_BindTextureMemory(VkImage _image, VmaAllocation _allocation);
             void VMA_DestroyImage(VkImage _image, VmaAllocation _allocation);
+            void CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkSharingMode _shareMode, VkMemoryPropertyFlags _memFlags, VkBuffer& buffer_, VkDeviceMemory& bufferMem_);
             double GetTime();
 
             void CreateInstance(VkInstanceCreateInfo* _createInfo, VkApplicationInfo* _appInfo, uint32_t m_extensionCount);
@@ -205,6 +206,9 @@ namespace VKR
             void CreateDepthTestingResources();
             void RecordCommandBuffer(VkCommandBuffer _commandBuffer, uint32_t _imageIdx, unsigned int _frameIdx,
                                      Renderer* _renderer);
+            VkCommandBuffer BeginSingleTimeCommandBuffer(VkCommandPool _CommandPool);
+            void EndSingleTimeCommandBuffer(VkCommandBuffer _commandBuffer, VkCommandPool _CommandPool, VkQueue _queue);
+            void CopyBuffer(VkBuffer dst_, VkBuffer _src, VkDeviceSize _size, VkCommandPool _CommandPool, VkQueue _queue);
             void LoadTexture(Texture*);
             void LoadCubemapTexture(Texture* _texture);
             void CreateImage(Texture* _texture, VkExtent3D _extent, VkFormat _format, VkImageTiling _tiling

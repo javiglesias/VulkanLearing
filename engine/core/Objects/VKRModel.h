@@ -16,7 +16,7 @@ namespace VKR
 			void Update();
 			void Cleanup();
 			void Prepare(VKBackend* _backend);
-			void GenerateDynamicAndUniformBuffers();
+			void GenerateDynamicAndUniformBuffers(VKBackend* _backend);
 			R_Model(const char* _modelName);
 			
 			glm::mat4 m_ModelMatrix = glm::mat4(1.f);

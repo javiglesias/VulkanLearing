@@ -3,6 +3,7 @@
 #include "../../video/GPUParticle.h"
 #include "../../video/VKBackend.h"
 #include "../../video/VKRUtils.h"
+#include "../../video/VKDevice.h"
 #include "VKRTexture.h"
 #include <signal.h>
 
@@ -26,7 +27,7 @@ namespace VKR
 
 		void sMaterialPipeline::_buildPipeline(bool _Two_D)
 		{
-			VkDevice m_LogicDevice = utils::GetVKContext().m_LogicDevice;
+			VkDevice m_LogicDevice = GetVKContext().m_LogicDevice;
 			VkPipelineShaderStageCreateInfo shaderStages[2] = {};
 			VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 			VkPipelineDynamicStateCreateInfo dynamicState{};
@@ -231,7 +232,7 @@ namespace VKR
 			pipelineInfoCreateInfo.pColorBlendState = &colorBlending;
 			pipelineInfoCreateInfo.pDynamicState = &dynamicState;
 			pipelineInfoCreateInfo.layout = layout;
-			pipelineInfoCreateInfo.renderPass = utils::GetVKContext().m_RenderPass->pass;
+			pipelineInfoCreateInfo.renderPass = GetVKContext().m_RenderPass->pass;
 			pipelineInfoCreateInfo.subpass = 0;
 			pipelineInfoCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 			pipelineInfoCreateInfo.basePipelineIndex = -1;
@@ -284,7 +285,7 @@ namespace VKR
 
 		void R_Material::PrepareMaterialToDraw(VKBackend* _backend)
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			PERF_INIT("CREATE_DESC_POOL")
 			/// 2 - Crear descriptor pool de materiales(CreateDescPool)
 			CreateDescriptor(renderContext.m_LogicDevice);

@@ -1,5 +1,6 @@
 ﻿#include "core/VKRScene.h"
 #include "video/VKRUtils.h"
+#include "video/VKDevice.h"
 #include "memory/mem_alloc.h"
 #include "perfmon/Custom.h"
 #include "filesystem/ResourceManager.h"
@@ -46,7 +47,7 @@ int main(int _argc, char** _args)
 	}
 #endif
 	mainScene.Init(&backend, sceneModel);
-	auto renderContext = VKR::utils::GetVKContext();
+	auto renderContext = VKR::render::GetVKContext();
 	currentFrame = backend.GetTime();
 	 _initlializePerfmon(&backend);
 	 bool not_close = true;

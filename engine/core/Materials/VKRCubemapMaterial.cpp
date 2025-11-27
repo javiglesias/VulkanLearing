@@ -1,6 +1,7 @@
 #include "VKRCubemapMaterial.h"
 #include "../../video/VKBackend.h"
 #include "../../video/VKRUtils.h"
+#include "../../video/VKDevice.h"
 #include "VKRTexture.h"
 #include "../../memory/mem_alloc.h"
 #include <array>
@@ -14,7 +15,7 @@ namespace VKR
 		}
 		void R_CubemapMaterial::PrepareMaterialToDraw(Texture* _texture, VKBackend* _backend)
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			/// 2 - Crear descriptor pool de materiales(CreateDescPool)
 			CreateDescriptorPool(renderContext.m_LogicDevice);
 

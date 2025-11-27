@@ -9,6 +9,7 @@
 #include <cstring>
 #include <signal.h>
 #include "../../video/VKRUtils.h"
+#include "../../video/VKDevice.h"
 
 
 namespace VKR
@@ -38,7 +39,7 @@ namespace VKR
 			ubo.projection = g_ProjectionMatrix;
 			ubo.cameraPosition = camera.g_CameraPos;
 			memcpy(m_UniformsBuffersMapped[_CurrentFrame], &ubo, sizeof(ubo));
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			auto dynamicAlignment = sizeof(DynamicBufferObject);
 			dynamicAlignment = (dynamicAlignment + renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
 				& ~(renderContext.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
@@ -160,7 +161,7 @@ namespace VKR
 
 		void R_Model::Prepare(VKBackend* _backend)
 		{
-			auto renderContext = utils::GetVKContext();
+			auto renderContext = GetVKContext();
 			PERF_INIT("PREPARE_MESH")
 			// Uniform buffers
 			m_UniformBuffers.resize(FRAMES_IN_FLIGHT);
@@ -170,7 +171,7 @@ namespace VKR
 			m_DynamicBuffers.resize(FRAMES_IN_FLIGHT);
 			m_DynamicBuffersMemory.resize(FRAMES_IN_FLIGHT);
 			m_DynamicBuffersMapped.resize(FRAMES_IN_FLIGHT);
-			GenerateDynamicAndUniformBuffers();
+			GenerateDynamicAndUniformBuffers(_backend);
 			int count = 0;
 			for (auto& mesh : m_Meshes)
 #pragma region BUFFER_VERTICES
@@ -183,7 +184,7 @@ namespace VKR
 				}
 				VkDeviceSize bufferSize = sizeof(mesh->m_Vertices[0]) * mesh->m_Vertices.size();
 				// Stagin buffer
-				utils::CreateBuffer(bufferSize,
+				_backend->CreateBuffer(bufferSize,
 					VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -193,13 +194,13 @@ namespace VKR
 				vkUnmapMemory(renderContext.m_LogicDevice, _backend->m_StaggingBufferMemory);
 				for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
 				{
-					utils::CreateBuffer(bufferSize,
+					_backend->CreateBuffer(bufferSize,
 						VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 						mesh->m_VertexBuffer[f], mesh->m_VertexBufferMemory[f]);
-					utils::CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize
+					_backend->CopyBuffer(mesh->m_VertexBuffer[f], _backend->m_StagingBuffer, bufferSize
 						, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 				}
 
@@ -211,7 +212,7 @@ namespace VKR
 				{
 					bufferSize = sizeof(mesh->m_Indices[0]) * mesh->m_Indices.size();
 					/// 6 - Crear Buffers de Indices
-					utils::CreateBuffer(bufferSize,
+					_backend->CreateBuffer(bufferSize,
 						VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 						VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -222,13 +223,13 @@ namespace VKR
 					for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
 					{
 						// Index buffer
-						utils::CreateBuffer(bufferSize,
+						_backend->CreateBuffer(bufferSize,
 							VK_BUFFER_USAGE_TRANSFER_DST_BIT |
 							VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 							VK_SHARING_MODE_CONCURRENT,
 							VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 							mesh->m_IndexBuffer[f], mesh->m_IndexBufferMemory[f]);
-						utils::CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize
+						_backend->CopyBuffer(mesh->m_IndexBuffer[f], _backend->m_StagingBuffer, bufferSize
 							, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 					}
 					// vkDestroyBuffer(renderContext.m_LogicDevice, _backend->m_StagingBuffer, nullptr);
@@ -246,12 +247,12 @@ namespace VKR
 				for (int f = 0; f < FRAMES_IN_FLIGHT; f++)
 				{
 					// Compute Shader buffer
-					utils::CreateBuffer(bufferSize,
+					_backend->CreateBuffer(bufferSize,
 						VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 						VK_SHARING_MODE_CONCURRENT,
 						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 						mesh->m_ComputeBuffer[f], mesh->m_ComputeBufferMemory[f]);
-					utils::CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize
+					_backend->CopyBuffer(mesh->m_ComputeBuffer[f], _backend->m_StagingBuffer, bufferSize
 						, _backend->m_CommandPool, renderContext.m_GraphicsComputeQueue);
 				}
 #pragma endregion
@@ -268,23 +269,23 @@ namespace VKR
 				++count;
 			}
 		}
-		void R_Model::GenerateDynamicAndUniformBuffers()
+		void R_Model::GenerateDynamicAndUniformBuffers(VKBackend* _backend)
 		{
 #pragma region RENDER_BUFFERS
 			VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				utils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				_backend->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 					m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-				vkMapMemory(utils::g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
+				vkMapMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], 0,
 					bufferSize, 0, &m_UniformsBuffersMapped[i]);
 			}
 			auto DynAlign = sizeof(DynamicBufferObject);
-			DynAlign = (DynAlign + utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
-				& ~(utils::g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
+			DynAlign = (DynAlign + g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1)
+				& ~(g_context.m_GpuInfo.minUniformBufferOffsetAlignment - 1);
 			VkDeviceSize checkBufferSize = m_Meshes.size() * DynAlign;
 			VkDeviceSize dynBufferSize = m_Meshes.size() * sizeof(DynamicBufferObject);
 			if (dynBufferSize != checkBufferSize)
@@ -295,12 +296,12 @@ namespace VKR
 #endif
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				utils::CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				_backend->CreateBuffer(dynBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_SHARING_MODE_CONCURRENT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 					m_DynamicBuffers[i], m_DynamicBuffersMemory[i]);
-				vkMapMemory(utils::g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
+				vkMapMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], 0,
 					dynBufferSize, 0, &m_DynamicBuffersMapped[i]);
 			}
 #pragma endregion
@@ -309,11 +310,11 @@ namespace VKR
 		{
 			for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
 			{
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
+				vkDestroyBuffer(g_context.m_LogicDevice, m_UniformBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_UniformBuffersMemory[i], nullptr);
 
-				vkDestroyBuffer(utils::g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
-				vkFreeMemory(utils::g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
+				vkDestroyBuffer(g_context.m_LogicDevice, m_DynamicBuffers[i], nullptr);
+				vkFreeMemory(g_context.m_LogicDevice, m_DynamicBuffersMemory[i], nullptr);
 			}
 		}
 	}
