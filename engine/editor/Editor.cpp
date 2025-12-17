@@ -203,7 +203,7 @@ namespace VKR
 					char path[128];
 					sprintf(path, "resources/models/%s", ModelList[item_current_idx]);
 					R_Model* new_model = new R_Model();
-					RM::_AddRequest(VKR::RM::LOAD, ASSIMP_MODEL, path, ModelList[item_current_idx], new_model);
+					RM::_AddRequest(VKR::RM::LOAD, STATIC_MODEL, path, ModelList[item_current_idx], new_model);
 					m_StaticModels[m_CurrentStaticModels] = new_model;
 					m_CurrentStaticModels++;
 					m_SceneDirty = true;
@@ -215,7 +215,7 @@ namespace VKR
 
 				ImGui::DragFloat("zFar", &zFar);
 				ImGui::DragFloat("zNear", &zNear);
-				ImGui::InputText("Cubemap texture", g_CubemapTexture, 256);
+				// ImGui::InputText("Cubemap texture", g_CubemapTexture, 256);
 				ImGui::DragFloat("Cubemap distance", &g_cubemapDistance);
 				ImGui::Checkbox("Draw Cubemap", &g_DrawCubemap);
 				ImGui::Checkbox("Shadows", &g_ShadowPassEnabled);

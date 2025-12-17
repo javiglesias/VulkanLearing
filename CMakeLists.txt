@@ -17,15 +17,16 @@ include_directories(${PROJECT_SOURCE_DIR}/dependencies/assimp/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/vma/include)
 endif (WIN32)
 
-if (UNIX)
+# if (UNIX)
 add_compile_definitions(_UNIX)
-include_directories(${PROJECT_SOURCE_DIR}/dependencies/linux/vulkan/include)
+add_compile_definitions(USE_GLFW)
+include_directories(${PROJECT_SOURCE_DIR}/dependencies/linux/vulkan_1_3_296/x86_64/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glslang)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/glm)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/assimp/include)
 include_directories(${PROJECT_SOURCE_DIR}/dependencies/vma/include)
-endif (UNIX)
+# endif (UNIX)
 
 file(GLOB_RECURSE SOURCES engine/*.cpp)
 	
@@ -34,10 +35,12 @@ add_executable(VKRenderer ${SOURCES}
         dependencies/imgui/imgui_draw.cpp
         dependencies/imgui/imgui_tables.cpp
         dependencies/imgui/imgui_widgets.cpp
-		dependencies/imgui/backends/imgui_impl_win32.cpp
         dependencies/imgui/backends/imgui_impl_glfw.cpp
         dependencies/imgui/backends/imgui_impl_vulkan.cpp
 )
+if (WIN32)
+		# dependencies/imgui/backends/imgui_impl_win32.cpp
+endif (WIN32)
 target_compile_features(VKRenderer PRIVATE cxx_std_20)
 if (WIN32)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/assimp/lib/Debug/assimp-vc143-mtd.lib)
@@ -51,9 +54,9 @@ target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glsl
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/Debug/SPVRemapperd.lib)
 endif (WIN32)
 
-if (UNIX)
+# if (UNIX)
 add_compile_definitions(_UNIX)
-target_link_libraries(VKRenderer PRIVATE libassimp.so)
+target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/assimp/bin/libassimp.so)
 target_link_libraries(VKRenderer PRIVATE libvulkan.so)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glfw/src/libglfw3.a)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang/libglslang.a)
@@ -62,5 +65,5 @@ target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glsl
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/glslang/libGenericCodeGen.a)
 target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/libSPIRV.a)
 # target_link_libraries(VKRenderer PRIVATE ${PROJECT_SOURCE_DIR}/dependencies/glslang/SPIRV/libSPVRemapper.a)
-endif (UNIX)
+# endif (UNIX)
 set(CMAKE_BUILD_TYPE Debug)

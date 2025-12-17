@@ -4,7 +4,9 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <sys/types.h>
+#ifdef WIN32
 #include <Windows.h>
+#endif
 
 struct GLFWwindow;
 

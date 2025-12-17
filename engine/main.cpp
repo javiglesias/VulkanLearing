@@ -36,7 +36,7 @@ int main(int _argc, char** _args)
 #endif
 	);
 	char sceneModel[64];
-#ifdef USE_GLFW
+#ifndef USE_GLFW
 	if (_argc > 1)
 	{
 		char pBuf[256];
@@ -46,6 +46,7 @@ int main(int _argc, char** _args)
 		sprintf(sceneModel, "%s\0", _args[1]);
 	}
 #endif
+
 	mainScene.Init(&backend, sceneModel);
 	auto renderContext = VKR::render::GetVKContext();
 	currentFrame = backend.GetTime();

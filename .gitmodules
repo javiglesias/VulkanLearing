@@ -22,6 +22,3 @@
 [submodule "dependencies/glm"]
 	path = dependencies/glm
 	url = git@github.com:g-truc/glm.git
-[submodule "dependencies/--force"]
-	path = dependencies/--force
-	url = git@github.com:KhronosGroup/glslang.git

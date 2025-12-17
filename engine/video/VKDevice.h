@@ -1,6 +1,8 @@
 #pragma once
 #include "../core/VKRRenderPass.h"
+#include <string.h>
 #include <string>
+
 namespace VKR
 {
     namespace render

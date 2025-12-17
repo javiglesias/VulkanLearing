@@ -6,8 +6,10 @@
 #include "../core/Objects/VKRModel.h"
 #include "../core/Objects/VKRLight.h"
 #include <thread>
-#include <Windows.h>
 #include <unordered_map>
+#ifdef WIN32
+#include <Windows.h>
+#endif
 #define FRAMES_IN_FLIGHT 2
 
 struct GLFWwindow;
@@ -54,7 +56,7 @@ namespace VKR
         inline float zNear = 0.1f;
         inline float g_debugScale = 1.f;
         inline float g_cubemapDistance = 100.f;
-        inline char g_CubemapTexture[256] = { "resources/textures/cubemaps/office.png" };
+        inline const char* g_CubemapTexture = { "resources/Textures/cubemaps/cubemaps_skybox_0.png" };
         inline float g_ShadowAR = 1.f;
         inline float g_ShadowBias = 0.0025f;
         inline float g_MipLevel = 0.f;

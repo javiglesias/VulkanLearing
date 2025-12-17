@@ -8,6 +8,7 @@
 #include "../input/DeviceInput.h"
 #include "../perfmon/Custom.h"
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 #ifndef VMA_IMPLEMENTATION
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -288,7 +289,10 @@ namespace VKR
 				}
 			}
 			/// ahora vamos a establecer el swap extent, que es la resolucion de las imagnes de la swapchain
-			m_CurrentExtent = m_Capabilities.currentExtent;
+			if(m_Capabilities.currentExtent.width > m_Capabilities.maxImageExtent.width || m_Capabilities.currentExtent.height > m_Capabilities.maxImageExtent.height)
+				m_CurrentExtent = VkExtent2D(g_WindowWidth, g_WindowHeight);
+			else
+				m_CurrentExtent = m_Capabilities.currentExtent;
 			/// Ahora creamos la swapchain como tal.
 			m_SwapchainImagesCount = m_Capabilities.minImageCount;
 			VMA_Initialize(g_context.m_GpuInfo.m_Device, g_context.m_LogicDevice, m_Instance);
@@ -634,6 +638,7 @@ namespace VKR
 #if 1
 		void VKBackend::RecreateSwapChain()
 		{
+			return; 
 			// Si estamos minimizados, esperamos pacientemente a que se vuelva a ver la ventana
 			int width = 0, height = 0;
 #ifdef USE_GLFW
@@ -1223,15 +1228,15 @@ namespace VKR
 
 			_texture->vk_image.extent = _extent;
 			_texture->vk_image.format = _format;
-#if not USE_VMA
-			VK_ASSERT(vkCreateImage(renderContext.m_LogicDevice, &tImageInfo, nullptr, &vk_image.image));
+#ifndef USE_VMA
+			VK_ASSERT(vkCreateImage(renderContext.m_LogicDevice, &tImageInfo, nullptr, & _texture->vk_image.image));
 			VkMemoryRequirements memRequ;
-			vkGetImageMemoryRequirements(renderContext.m_LogicDevice, vk_image.image, &memRequ);
+			vkGetImageMemoryRequirements(renderContext.m_LogicDevice,  _texture->vk_image.image, &memRequ);
 			VkMemoryAllocateInfo tAllocInfo{};
 			tAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			tAllocInfo.allocationSize = memRequ.size;
 			tAllocInfo.memoryTypeIndex = renderContext.m_GpuInfo.FindMemoryType(memRequ.memoryTypeBits, _memProperties);
-			VK_ASSERT(vkAllocateMemory(renderContext.m_LogicDevice, &tAllocInfo, nullptr, &vk_image.memory));
+			VK_ASSERT(vkAllocateMemory(renderContext.m_LogicDevice, &tAllocInfo, nullptr, & _texture->vk_image.memory));
 #else
 			VMA_CreateImage(_memProperties, &tImageInfo, &_texture->vk_image.image, &_texture->vk_image.memory);
 #endif
@@ -1403,8 +1408,8 @@ namespace VKR
 
 		void VKBackend::BindTextureMemory(Texture* _texture)
 		{
-#if not USE_VMA
-			vkBindImageMemory(g_context.m_LogicDevice, vk_image.image, vk_image.memory, 0);
+#ifndef USE_VMA
+			vkBindImageMemory(g_context.m_LogicDevice,  _texture->vk_image.image,  _texture->vk_image.memory, 0);
 #else
 			VMA_BindTextureMemory(_texture->vk_image.image, _texture->vk_image.memory);
 #endif
@@ -1466,9 +1471,9 @@ namespace VKR
 			vkDestroySampler(_LogicDevice, _texture->m_Sampler, nullptr);
 			_texture->m_Sampler = nullptr;
 			vkDestroyImageView(_LogicDevice, _texture->vk_image.view, nullptr);
-#if not USE_VMA
-			vkDestroyImage(_LogicDevice, vk_image.image, nullptr);
-			vkFreeMemory(_LogicDevice, vk_image.memory, nullptr);
+#ifndef USE_VMA
+			vkDestroyImage(_LogicDevice,  _texture->vk_image.image, nullptr);
+			vkFreeMemory(_LogicDevice,  _texture->vk_image.memory, nullptr);
 #else
 			VMA_DestroyImage(_texture->vk_image.image, _texture->vk_image.memory);
 #endif

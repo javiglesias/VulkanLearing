@@ -40,21 +40,6 @@ namespace VKR
 		   "EMISSION_COLOR",
 		   "LIGHTMA"
 		};
-		bool LoadModel_ALT(const char* _filepath, const char* _modelName, render::R_Model* model_)
-		{
-			char filename[128];
-			if (model_ == nullptr)
-				tempModel = new render::R_Model();
-			else
-				tempModel = model_;
-			sprintf(filename, "%s%s", _filepath, _modelName);
-			sprintf(tempModel->m_Path, "%s", _modelName);
-			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
-			if (data == nullptr) return false;
-			/*render::m_PendingBuffersModels[render::m_CurrentPendingModels] = tempModel;
-			render::m_CurrentPendingModels++;*/
-			return true;
-		}
 
 		bool GenerateTextureMesh(const char* _filepath, aiTextureType _type, unsigned int _texIndex, aiMaterial* _material, unsigned int _matIndex, render::Texture** outTex_)
 		{
@@ -181,19 +166,36 @@ namespace VKR
 		}
 #pragma endregion
 #pragma region CGLTF
+		bool LoadModel_ALT(const char* _filepath, const char* _modelName, render::R_Model* model_)
+		{
+			char filename[128];
+			if (model_ == nullptr)
+				tempModel = new render::R_Model();
+			else
+				tempModel = model_;
+			sprintf(filename, "%s%s", _filepath, _modelName);
+			sprintf(tempModel->m_Path, "%s", _modelName);
+			auto data = filesystem::read_glTF(_filepath, _modelName, tempModel);
+			if (data == nullptr) return false;
+			/*render::m_PendingBuffersModels[render::m_CurrentPendingModels] = tempModel;
+			render::m_CurrentPendingModels++;*/
+			return true;
+		}
 		cgltf_data* read_glTF(const char* _filepath, const char* _modelName, render::R_Model* tempModel_)
 		{
 			cgltf_options options {};
 			char filename[128];
 			char filepath[128];
+			char gltf_path[128];
 			memset(filename, 0, 128);
 			memset(filepath, 0, 128);
-			sprintf(filepath, "%s%s/", _filepath, _modelName);
-			sprintf(filename, "%s%s.gltf", filepath, _modelName);
+			sprintf(filepath, "%s", _filepath);
+			sprintf(gltf_path, "%s/%s", _filepath,  _modelName);
+			sprintf(filename, "%s/%s.gltf", filepath, _modelName);
 			cgltf_data* modelData = NULL;
 			cgltf_parse_file(&options, filename, &modelData);
 			if(modelData == NULL) return nullptr;
-			if (cgltf_load_buffers(&options, modelData, filepath) != cgltf_result_success)
+			if (cgltf_load_buffers(&options, modelData, gltf_path) != cgltf_result_success)
 #ifdef _MSVC
 				__debugbreak();
 #else
@@ -224,7 +226,7 @@ namespace VKR
 							{
 								char pathTexture[256];
 								memset(pathTexture, 0, 256);
-								sprintf(pathTexture, "%s%s", filepath, material.normal_texture.texture->image->uri);
+								sprintf(pathTexture, "%s/%s", filepath, material.normal_texture.texture->image->uri);
 								tempModel_->m_Materials[materialID]->textures[1] = NEW(render::Texture);
 								tempModel_->m_Materials[materialID]->textures[1]->init(pathTexture);
 							}
